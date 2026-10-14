@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEditor.Animations;
+using UnityEditor.Build;
 using UnityEditor.Events;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -120,7 +121,7 @@ namespace SlimeBreaker.EditorTools
             var tank = CharacterPrefab("Assets/Prefabs/Enemies/ENM_Slime_Tank.prefab", "Assets/Art/Enemies/Slime/ENM_Slime_Tank.fbx", tankController, 1.15f, false, tankDef, xpPrefab);
             var boss = BossPrefab("Assets/Prefabs/Bosses/BOSS_SlimeKing.prefab", bossController, bossDef);
 
-            var ground = StaticPrefab("Assets/Prefabs/Environment/ENV_Forest_Ground.prefab", "Assets/Art/Environment/ForestArena/ENV_Forest_Ground.fbx", 1f, true);
+            var ground = StaticPrefab("Assets/Prefabs/Environment/ENV_Forest_Ground.prefab", "Assets/Art/Environment/ForestArena/ENV_Forest_Ground.fbx", 0.3f, true);
             var treeA = StaticPrefab("Assets/Prefabs/Environment/ENV_Forest_Tree_A.prefab", "Assets/Art/Environment/ForestArena/ENV_Forest_Tree_A.fbx", 2.2f, false);
             var treeB = StaticPrefab("Assets/Prefabs/Environment/ENV_Forest_Tree_B.prefab", "Assets/Art/Environment/ForestArena/ENV_Forest_Tree_B.fbx", 2.4f, false);
             var rockA = StaticPrefab("Assets/Prefabs/Environment/ENV_Forest_Rock_A.prefab", "Assets/Art/Environment/ForestArena/ENV_Forest_Rock_A.fbx", 0.7f, false);

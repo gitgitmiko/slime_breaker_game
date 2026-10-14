@@ -1,0 +1,122 @@
+[
+  {
+    "id": "CHR_Hero_Main",
+    "file": "Characters/Hero/CHR_Hero_Main.fbx",
+    "kind": "character",
+    "polygons": 2391,
+    "vertices": 2233,
+    "notes": "generic rig, in-place clips"
+  },
+  {
+    "id": "ENM_Slime_Normal",
+    "file": "Enemies/Slime/ENM_Slime_Normal.fbx",
+    "kind": "character",
+    "polygons": 336,
+    "vertices": 270,
+    "notes": "generic rig, in-place clips"
+  },
+  {
+    "id": "ENM_Slime_Fast",
+    "file": "Enemies/Slime/ENM_Slime_Fast.fbx",
+    "kind": "character",
+    "polygons": 354,
+    "vertices": 288,
+    "notes": "generic rig, in-place clips"
+  },
+  {
+    "id": "ENM_Slime_Tank",
+    "file": "Enemies/Slime/ENM_Slime_Tank.fbx",
+    "kind": "character",
+    "polygons": 354,
+    "vertices": 294,
+    "notes": "generic rig, in-place clips"
+  },
+  {
+    "id": "BOSS_SlimeKing",
+    "file": "Enemies/SlimeKing/BOSS_SlimeKing.fbx",
+    "kind": "character",
+    "polygons": 747,
+    "vertices": 667,
+    "notes": "generic rig, in-place clips"
+  },
+  {
+    "id": "ENV_Forest_Ground",
+    "file": "Environment/ForestArena/ENV_Forest_Ground.fbx",
+    "kind": "static",
+    "polygons": 400,
+    "vertices": 441,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Forest_Tree_A",
+    "file": "Environment/ForestArena/ENV_Forest_Tree_A.fbx",
+    "kind": "static",
+    "polygons": 169,
+    "vertices": 98,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Forest_Tree_B",
+    "file": "Environment/ForestArena/ENV_Forest_Tree_B.fbx",
+    "kind": "static",
+    "polygons": 169,
+    "vertices": 98,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Forest_Rock_A",
+    "file": "Environment/ForestArena/ENV_Forest_Rock_A.fbx",
+    "kind": "static",
+    "polygons": 20,
+    "vertices": 12,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Forest_Rock_B",
+    "file": "Environment/ForestArena/ENV_Forest_Rock_B.fbx",
+    "kind": "static",
+    "polygons": 20,
+    "vertices": 12,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Forest_Mushroom",
+    "file": "Environment/ForestArena/ENV_Forest_Mushroom.fbx",
+    "kind": "static",
+    "polygons": 106,
+    "vertices": 102,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Forest_Bush",
+    "file": "Environment/ForestArena/ENV_Forest_Bush.fbx",
+    "kind": "static",
+    "polygons": 40,
+    "vertices": 24,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Forest_RuinPillar",
+    "file": "Environment/ForestArena/ENV_Forest_RuinPillar.fbx",
+    "kind": "static",
+    "polygons": 16,
+    "vertices": 24,
+    "notes": "no rig"
+  },
+  {
+    "id": "VFX_Boss_Ring",
+    "file": "VFX/VFX_Boss_Ring.fbx",
+    "kind": "static",
+    "polygons": 224,
+    "vertices": 224,
+    "notes": "no rig"
+  },
+  {
+    "id": "VFX_XP_Orb",
+    "file": "VFX/VFX_XP_Orb.fbx",
+    "kind": "static",
+    "polygons": 20,
+    "vertices": 12,
+    "notes": "no rig"
+  }
+]

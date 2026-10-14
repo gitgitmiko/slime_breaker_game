@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using SlimeBreaker;
 
 namespace SlimeBreaker.Tests
 {

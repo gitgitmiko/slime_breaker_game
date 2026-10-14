@@ -18,31 +18,32 @@ Ekspor FBX diverifikasi lewat `bpy.ops.export_scene.fbx` (ada) dan `bpy.ops.expo
 
 ## Perintah produksi
 
-Dari root repositori:
+Dari root repositori, urutannya tekstur → mesh → audio/UI → Unity:
 
 ```bash
+python3 asset_work/scripts/build_textures.py asset_work/textures
+
 blender --background --python asset_work/scripts/build_assets.py -- \
   asset_work/output asset_work/previews asset_work/textures
 
 python3 asset_work/scripts/build_audio_ui.py
 ```
 
-`build_assets.py` sendiri memanggil:
+`build_textures.py` membuat `TEX_Forest_Ground` (1024) dan `TEX_Bark`, `TEX_Rock` (512) beserta `*_Normal.png` dari value noise tileable (numpy + Pillow). Blender menanamkan tekstur warna di FBX; normal map disalin ke `Assets/Art/Textures` dan dipasang `ProjectSetup` berdasarkan nama material.
+
+`build_assets.py` juga merender preview dan lembar frame animasi hero (`asset_work/previews/CHR_Hero_Main_<Clip>_<persen>.png`) untuk pemeriksaan visual tanpa editor.
+
+Musik ditulis sebagai MIDI oleh `build_audio_ui.py` lalu:
 
 ```bash
-magick -size 512x512 plasma:#2f6b32-#c4d98a -blur 0x1.2 -modulate 95,55,98 \
-  asset_work/textures/TEX_Forest_Ground.png
+fluidsynth -ni -g 0.8 -F /tmp/MUS_Arena.wav -r 44100 \
+  /usr/share/sounds/sf2/FluidR3_GM.sf2 /tmp/MUS_Arena.mid
+oggenc -q 5 /tmp/MUS_Arena.wav -o asset_work/output/Audio/Music/MUS_Arena.ogg
 ```
 
-Musik:
+Efek suara disintesis numpy 44,1 kHz (osilator, noise berfilter, envelope) ke WAV, lalu `oggenc -q 4`. Ikon dan panel UI dirender Pillow dengan supersampling 4×.
 
-```bash
-fluidsynth -ni -F asset_work/intermediate/MUS_Arena.wav -r 22050 \
-  /usr/share/sounds/sf2/FluidR3_GM.sf2 asset_work/intermediate/MUS_Arena.mid
-oggenc -Q asset_work/intermediate/MUS_Arena.wav -o Assets/Audio/Music/MUS_Arena.ogg
-```
-
-Efek suara ditulis sebagai WAV oleh `build_audio_ui.py`, lalu `oggenc -Q`.
+`ProjectSetup.BuildAll` menyalin `asset_work/output` dan `asset_work/textures` ke `Assets/` (mirror: file lama yang tidak ada lagi di output dihapus), jadi jangan menyunting file di `Assets/Art` atau `Assets/Audio` langsung.
 
 ## Konvensi ekspor
 
@@ -57,7 +58,7 @@ Efek suara ditulis sebagai WAV oleh `build_audio_ui.py`, lalu `oggenc -Q`.
 
 ## Integrasi Unity
 
-Skrip `SlimeBreaker.EditorTools.ProjectSetup.BuildAll` mengubah material ke URP Lit, membuat Animator Controller, prefab, scene, dan VFX partikel. Perintahnya ada di `docs/build_android.md`. Editor belum bisa menjalankannya karena lisensi Unity Personal belum aktif.
+Skrip `SlimeBreaker.EditorTools.ProjectSetup.BuildAll` menyalin aset, mengatur importer (sprite, normal map, klip animasi), mengubah material ke URP Lit dengan tabel look, membuat Animator Controller, prefab (hero, musuh, boss, proyektil, skill, power-up, VFX), ScriptableObject (musuh, upgrade, skill, balance), scene Boot/MainMenu/GameArena, dan menyetel URP Mobile (render scale 1, MSAA 2×, HDR mati, bayangan 28 m). Perintahnya ada di `docs/build_android.md`.
 
 ## Lisensi aset
 

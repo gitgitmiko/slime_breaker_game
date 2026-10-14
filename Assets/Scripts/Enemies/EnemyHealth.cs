@@ -213,11 +213,11 @@ namespace SlimeBreaker
                 block = new MaterialPropertyBlock();
             Color emission = Color.black;
             if (flashTimer > 0f)
-                emission = Color.white * 0.9f;
+                emission = Color.white * 0.4f;
             else if (burnTicks > 0)
-                emission = BurnTint * 0.6f;
+                emission = BurnTint * 0.5f;
             else if (slowTimer > 0f)
-                emission = SlowTint * 0.45f;
+                emission = SlowTint * 0.35f;
             for (int i = 0; i < renderers.Length; i++)
             {
                 var renderer = renderers[i];

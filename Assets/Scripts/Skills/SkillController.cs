@@ -164,6 +164,8 @@ namespace SlimeBreaker
                         Destroy(collider);
                 }
                 shard.name = "IceShard";
+                if (iceShardPrefab != null)
+                    shard.transform.localScale = Vector3.one * 1.4f;
                 skill.shards.Add(shard.transform);
             }
             float radius = skill.definition.RadiusAt(skill.level);

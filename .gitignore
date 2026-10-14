@@ -43,3 +43,6 @@ asset_work/intermediate/
 # Crash reports
 sysinfo.txt
 crashlytics-buildid.txt
+
+# Android frame pacing / cmake intermediates
+.utmp/

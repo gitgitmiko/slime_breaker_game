@@ -49,14 +49,19 @@ xvfb-run -a -s "-screen 0 1280x1024x24" unity-editor -batchmode \
   -testResults "$PWD/Logs/playmode.xml" -logFile Logs/playmode.log
 ```
 
-Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: hero dan slime menapak tanah, properti tegak, material VFX valid, tombol Main membuka arena, joystick sentuh menggerakkan hero, dan bot bertahan satu menit. Baris `PLAYTEST` di log memuat angka ukurnya. Screenshot ada di `Logs/playtest/`.
+Exit 0 berarti semua 10 test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: hero dan slime menapak tanah, properti tegak, semua material (termasuk prefab skill dan VFX) valid, tombol Main membuka arena, joystick sentuh menggerakkan hero, bot bertahan satu menit, AudioListener + 60 fps terpasang, power-up muncul tepat di level 5 dan 10 lalu memberi skill, Cincin Es melukai dan memperlambat musuh, bolt mengenai musuh. Baris `PLAYTEST` di log memuat angka ukurnya. Screenshot ada di `Logs/playtest/` (00_menu … 08_ice_orbit).
 
-## Hasil 14 Oktober 2026
+## Hasil 14 Oktober 2026 (putaran 1)
 
 - Setup: `SLIMEBREAKER_SETUP_OK`, exit 0.
-- APK: `Builds/SlimeBreaker.apk` (31 MB), juga disalin ke `~/Downloads/SlimeBreaker.apk`.
-- Paket: `com.gitgitmiko.slimebreaker` 0.1.0, min SDK 25, target 36, native `arm64-v8a`, landscape.
-- Ditandatangani debug keystore Unity (bukan Play Store).
+- APK: `Builds/SlimeBreaker.apk` (31 MB), paket `com.gitgitmiko.slimebreaker` 0.1.0.
+
+## Hasil 14 Oktober 2026 (putaran 2 — hero anime, skill, audio)
+
+- Setup: `SLIMEBREAKER_SETUP_OK`; PlayMode 10/10 lolos; APK: `SLIMEBREAKER_APK_OK`.
+- APK: `Builds/SlimeBreaker.apk` (37 MB), disalin ke `~/Downloads/SlimeBreaker.apk`.
+- Paket: `com.gitgitmiko.slimebreaker` 0.2.0 (versionCode 2), min SDK 25, native `arm64-v8a`, landscape, Vulkan dengan fallback GLES3, optimized frame pacing.
+- Ditandatangani debug keystore Unity (bukan Play Store). Pasang di atas 0.1.0 berjalan karena keystore sama.
 - Tidak ada perangkat ADB terhubung, jadi pasang di HP masih manual.
 
 ## Pasang di HP

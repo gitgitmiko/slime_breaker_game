@@ -5,7 +5,7 @@ namespace SlimeBreaker
     public class FollowCamera : MonoBehaviour
     {
         public Transform target;
-        public Vector3 offset = new Vector3(0f, 9.5f, -8f);
+        public Vector3 offset = new Vector3(0f, 8.3f, -6.9f);
         public float lookHeight = 0.9f;
         public float follow = 7f;
         /// <summary>How far the camera leans toward the hero's travel direction so there is more room to see ahead.</summary>

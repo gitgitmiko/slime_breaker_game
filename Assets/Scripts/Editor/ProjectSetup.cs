@@ -478,10 +478,15 @@ namespace SlimeBreaker.EditorTools
                     mat.SetFloat("_Smoothness", 0.9f);
                     Emissive(0.8f);
                 }
-                else if (name.Contains("ice") || name.Contains("arcane") || name.Contains("fire") || name.Contains("powerup") || name.Contains("rune") || name.Contains("xp") || name.Contains("ring"))
+                else if (name.Contains("ice") || name.Contains("rune"))
                 {
                     mat.SetFloat("_Smoothness", 0.85f);
-                    Emissive(1.3f);
+                    Emissive(0.55f);
+                }
+                else if (name.Contains("arcane") || name.Contains("fire") || name.Contains("powerup") || name.Contains("xp") || name.Contains("ring"))
+                {
+                    mat.SetFloat("_Smoothness", 0.85f);
+                    Emissive(1.1f);
                 }
                 else if (name.Contains("slime") || name.Contains("king"))
                 {
@@ -861,16 +866,17 @@ namespace SlimeBreaker.EditorTools
             var crystal = (GameObject)PrefabUtility.InstantiatePrefab(LoadModel("Assets/Art/VFX/VFX_PowerUp_Crystal.fbx"));
             crystal.name = "Crystal";
             crystal.transform.SetParent(root.transform, false);
-            crystal.transform.localPosition = new Vector3(0f, 0.95f, 0f);
+            crystal.transform.localPosition = new Vector3(0f, 1f, 0f);
+            crystal.transform.localScale = Vector3.one * 1.45f;
 
             var beam = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             beam.name = "Beam";
             UnityEngine.Object.DestroyImmediate(beam.GetComponent<Collider>());
             beam.transform.SetParent(root.transform, false);
-            beam.transform.localPosition = new Vector3(0f, 1.6f, 0f);
-            beam.transform.localScale = new Vector3(0.45f, 1.6f, 0.45f);
+            beam.transform.localPosition = new Vector3(0f, 2.2f, 0f);
+            beam.transform.localScale = new Vector3(0.28f, 2.2f, 0.28f);
             var beamRenderer = beam.GetComponent<MeshRenderer>();
-            beamRenderer.sharedMaterial = TranslucentMaterial("Assets/Art/VFX/Materials/MAT_PowerUp_Beam.mat", new Color(1f, 1f, 1f, 0.22f));
+            beamRenderer.sharedMaterial = TranslucentMaterial("Assets/Art/VFX/Materials/MAT_PowerUp_Beam.mat", new Color(1f, 1f, 1f, 0.12f));
             beamRenderer.shadowCastingMode = ShadowCastingMode.Off;
             beamRenderer.receiveShadows = false;
 
@@ -1065,12 +1071,12 @@ namespace SlimeBreaker.EditorTools
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var camera = MakeCamera("Camera", new Color(0.09f, 0.12f, 0.2f));
-            camera.fieldOfView = 34f;
-            camera.transform.position = new Vector3(1.1f, 1.25f, -4.1f);
-            camera.transform.rotation = Quaternion.LookRotation(new Vector3(1.55f, 0.78f, 0f) - camera.transform.position, Vector3.up);
+            camera.fieldOfView = 36f;
+            camera.transform.position = new Vector3(0.1f, 1.35f, -4.3f);
+            camera.transform.rotation = Quaternion.LookRotation(new Vector3(0.85f, 0.9f, 0f) - camera.transform.position, Vector3.up);
             new GameObject("UrpBootstrap").AddComponent<UrpSceneBootstrap>();
             var sun = Light();
-            sun.transform.rotation = Quaternion.Euler(38f, 150f, 0f);
+            sun.transform.rotation = Quaternion.Euler(42f, 18f, 0f);
             RenderSettings.ambientMode = AmbientMode.Trilight;
             RenderSettings.ambientSkyColor = new Color(0.45f, 0.5f, 0.75f);
             RenderSettings.ambientEquatorColor = new Color(0.3f, 0.3f, 0.45f);
@@ -1090,7 +1096,7 @@ namespace SlimeBreaker.EditorTools
             rune.transform.localScale = Vector3.one * 0.55f;
             var showcase = new GameObject("HeroShowcase");
             showcase.transform.position = new Vector3(1.55f, 0f, 0f);
-            showcase.transform.rotation = Quaternion.Euler(0f, 200f, 0f);
+            showcase.transform.rotation = Quaternion.Euler(0f, 195f, 0f);
             var model = (GameObject)PrefabUtility.InstantiatePrefab(LoadModel("Assets/Art/Characters/Hero/CHR_Hero_Main.fbx"));
             model.transform.SetParent(showcase.transform, false);
             var animator = model.GetComponentInChildren<Animator>();

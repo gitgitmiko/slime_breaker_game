@@ -399,9 +399,19 @@ namespace SlimeBreaker.EditorTools
                 shader = Shader.Find("Universal Render Pipeline/Unlit");
             if (shader == null)
                 shader = Shader.Find("Sprites/Default");
-            renderer.material = new Material(shader);
-            if (renderer.material.HasProperty("_BaseColor"))
-                renderer.material.SetColor("_BaseColor", color);
+            var materialPath = "Assets/Art/VFX/Materials/MAT_" + Path.GetFileNameWithoutExtension(path) + ".mat";
+            Directory.CreateDirectory(Path.GetDirectoryName(materialPath));
+            var material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
+            if (material == null)
+            {
+                material = new Material(shader);
+                AssetDatabase.CreateAsset(material, materialPath);
+            }
+            material.shader = shader;
+            if (material.HasProperty("_BaseColor"))
+                material.SetColor("_BaseColor", color);
+            EditorUtility.SetDirty(material);
+            renderer.sharedMaterial = material;
             var prefab = SavePrefab(go, path);
             UnityEngine.Object.DestroyImmediate(go);
             return prefab;
@@ -531,6 +541,8 @@ namespace SlimeBreaker.EditorTools
             var root = new GameObject(Path.GetFileNameWithoutExtension(path));
             instance.transform.SetParent(root.transform, false);
             instance.name = "Visual";
+            // The camera looks ~17 m past the hero, so a 30 m mesh leaves void visible from the arena edge.
+            root.transform.localScale = new Vector3(2f, 1f, 2f);
             var box = root.AddComponent<BoxCollider>();
             box.center = new Vector3(0f, -0.5f, 0f);
             box.size = new Vector3(48f, 1f, 48f);
@@ -819,7 +831,7 @@ namespace SlimeBreaker.EditorTools
                 float angle = (i + 0.5f) * Mathf.PI * 2f / count;
                 var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
                 instance.transform.position = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
-                instance.transform.rotation = Quaternion.Euler(0f, -angle * Mathf.Rad2Deg, 0f);
+                instance.transform.rotation = Quaternion.Euler(0f, -angle * Mathf.Rad2Deg, 0f) * prefab.transform.rotation;
             }
         }
 

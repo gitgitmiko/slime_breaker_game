@@ -71,11 +71,15 @@ namespace SlimeBreaker
 
         void StickToArena()
         {
-            Vector3 flat = new Vector3(transform.position.x, 0f, transform.position.z);
+            Vector3 pos = transform.position;
+            Vector3 flat = new Vector3(pos.x, 0f, pos.z);
             if (flat.magnitude > arenaRadius)
                 flat = flat.normalized * arenaRadius;
-            var grounded = new Vector3(flat.x, 0f, flat.z);
-            if ((transform.position - grounded).sqrMagnitude > 0.0000001f)
+            float y = pos.y;
+            if (y < 0f || y > 0.25f)
+                y = 0f;
+            var grounded = new Vector3(flat.x, y, flat.z);
+            if ((pos - grounded).sqrMagnitude > 0.0000001f)
                 transform.position = grounded;
         }
 

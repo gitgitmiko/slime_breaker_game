@@ -12,16 +12,25 @@ namespace SlimeBreaker
         void Awake()
         {
             TargetCamera = GetComponent<Camera>();
+            Snap(1f);
         }
 
         void LateUpdate()
         {
+            Snap(1f - Mathf.Exp(-follow * Time.unscaledDeltaTime));
+        }
+
+        void Snap(float t)
+        {
             if (target == null)
                 return;
             var desired = target.position + offset;
-            transform.position = Vector3.Lerp(transform.position, desired, 1f - Mathf.Exp(-follow * Time.unscaledDeltaTime));
+            transform.position = Vector3.Lerp(transform.position, desired, t);
             var look = target.position + Vector3.up * 0.8f;
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(look - transform.position, Vector3.up), 1f - Mathf.Exp(-follow * Time.unscaledDeltaTime));
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                Quaternion.LookRotation(look - transform.position, Vector3.up),
+                t);
         }
     }
 }

@@ -10,6 +10,8 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -18,6 +20,10 @@ namespace SlimeBreaker.EditorTools
     public static class ProjectSetup
     {
         const string ArtRoot = "Assets/Art";
+        static Sprite panelSprite;
+        static Sprite buttonSprite;
+        static Sprite dangerSprite;
+        static Sprite whiteSprite;
 
         [MenuItem("Slime Breaker/Build Android APK")]
         public static void BuildAndroidApk()
@@ -114,6 +120,7 @@ namespace SlimeBreaker.EditorTools
             AssetDatabase.Refresh();
 
             ConfigureSprites();
+            LoadUiArt();
             var models = AssetDatabase.FindAssets("t:Model", new[] { ArtRoot });
             foreach (var guid in models)
                 ConfigureModel(AssetDatabase.GUIDToAssetPath(guid));
@@ -210,6 +217,12 @@ namespace SlimeBreaker.EditorTools
                 importer.spriteImportMode = SpriteImportMode.Single;
                 importer.alphaIsTransparency = true;
                 importer.mipmapEnabled = false;
+                importer.spriteMeshType = SpriteMeshType.FullRect;
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                if (path.Contains("UI_Panel"))
+                    importer.spriteBorder = new Vector4(48f, 48f, 48f, 48f);
+                else if (path.Contains("UI_Button"))
+                    importer.spriteBorder = new Vector4(60f, 58f, 60f, 58f);
                 importer.SaveAndReimport();
             }
         }
@@ -545,9 +558,8 @@ namespace SlimeBreaker.EditorTools
         static void BuildBoot()
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            var camera = new GameObject("Camera");
-            camera.AddComponent<Camera>();
-            camera.tag = "MainCamera";
+            MakeCamera("Camera", new Color(0.08f, 0.16f, 0.18f));
+            new GameObject("UrpBootstrap").AddComponent<UrpSceneBootstrap>();
             new GameObject("Boot").AddComponent<BootLoader>();
             EditorSceneManager.SaveScene(scene, "Assets/Scenes/Boot.unity");
         }
@@ -555,11 +567,8 @@ namespace SlimeBreaker.EditorTools
         static void BuildMenu()
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            var cameraObject = new GameObject("Camera");
-            var camera = cameraObject.AddComponent<Camera>();
-            camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = new Color(0.08f, 0.16f, 0.18f);
-            cameraObject.tag = "MainCamera";
+            MakeCamera("Camera", new Color(0.08f, 0.16f, 0.18f));
+            new GameObject("UrpBootstrap").AddComponent<UrpSceneBootstrap>();
             Light();
             EventSystem();
             var canvas = Canvas(out var safe);
@@ -571,13 +580,13 @@ namespace SlimeBreaker.EditorTools
             Place(gold.gameObject, safe, new Vector2(0.5f, 0.64f), new Vector2(500f, 60f));
             var best = Text(safe, "Best", "Rekor 00:00", 28, TextAnchor.MiddleCenter, font);
             Place(best.gameObject, safe, new Vector2(0.5f, 0.57f), new Vector2(500f, 50f));
-            var play = Button(safe, "Play", "Main", font, new Color(0.12f, 0.55f, 0.62f));
+            var play = Button(safe, "Play", "Main", font, Color.white, buttonSprite);
             Place(play.gameObject, safe, new Vector2(0.5f, 0.42f), new Vector2(420f, 110f));
-            var damage = Button(safe, "Damage", "Damage", font, new Color(0.1f, 0.22f, 0.26f));
+            var damage = Button(safe, "Damage", "Damage", font, Color.white, buttonSprite);
             Place(damage.gameObject, safe, new Vector2(0.28f, 0.22f), new Vector2(360f, 120f));
-            var health = Button(safe, "Health", "Nyawa", font, new Color(0.1f, 0.22f, 0.26f));
+            var health = Button(safe, "Health", "Nyawa", font, Color.white, buttonSprite);
             Place(health.gameObject, safe, new Vector2(0.5f, 0.22f), new Vector2(360f, 120f));
-            var speed = Button(safe, "Speed", "Laju", font, new Color(0.1f, 0.22f, 0.26f));
+            var speed = Button(safe, "Speed", "Laju", font, Color.white, buttonSprite);
             Place(speed.gameObject, safe, new Vector2(0.72f, 0.22f), new Vector2(360f, 120f));
             menu.goldText = gold;
             menu.bestText = best;
@@ -625,17 +634,21 @@ namespace SlimeBreaker.EditorTools
 
             var player = (GameObject)PrefabUtility.InstantiatePrefab(hero);
             player.transform.position = new Vector3(0f, 0.05f, 0f);
-            var cameraObject = new GameObject("Camera");
-            var camera = cameraObject.AddComponent<Camera>();
+            var camera = MakeCamera("Camera", new Color(0.38f, 0.58f, 0.68f));
             camera.fieldOfView = 48f;
             camera.nearClipPlane = 0.2f;
             camera.farClipPlane = 80f;
-            cameraObject.tag = "MainCamera";
-            cameraObject.transform.position = new Vector3(0f, 11.5f, -9.5f);
-            var follow = cameraObject.AddComponent<FollowCamera>();
+            camera.transform.position = new Vector3(0f, 11.5f, -9.5f);
+            var follow = camera.gameObject.AddComponent<FollowCamera>();
             follow.target = player.transform;
             player.GetComponent<PlayerController>().followCamera = follow;
-            Light();
+            new GameObject("UrpBootstrap").AddComponent<UrpSceneBootstrap>();
+            var sun = Light();
+            RenderSettings.ambientMode = AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = new Color(0.55f, 0.68f, 0.72f);
+            RenderSettings.ambientEquatorColor = new Color(0.38f, 0.48f, 0.36f);
+            RenderSettings.ambientGroundColor = new Color(0.16f, 0.18f, 0.12f);
+            RenderSettings.sun = sun;
             EventSystem();
 
             var systems = new GameObject("Systems");
@@ -703,17 +716,16 @@ namespace SlimeBreaker.EditorTools
             Place(level.gameObject, safe, new Vector2(0.34f, 0.93f), new Vector2(160f, 40f));
             var timer = Text(safe, "Timer", "00:00", 36, TextAnchor.MiddleCenter, font);
             Place(timer.gameObject, safe, new Vector2(0.5f, 0.93f), new Vector2(220f, 50f));
-            var pause = Button(safe, "Pause", "II", font, new Color(0.1f, 0.2f, 0.24f));
+            var pause = Button(safe, "Pause", "II", font, Color.white, buttonSprite);
             Place(pause.gameObject, safe, new Vector2(0.94f, 0.92f), new Vector2(90f, 70f));
 
             var stick = new GameObject("Joystick", typeof(RectTransform), typeof(Image), typeof(VirtualJoystick));
-            var stickImage = stick.GetComponent<Image>();
-            stickImage.color = new Color(1f, 1f, 1f, 0.18f);
-            stickImage.raycastTarget = true;
+            ApplyImage(stick.GetComponent<Image>(), panelSprite, Image.Type.Sliced, new Color(1f, 1f, 1f, 0.55f));
+            stick.GetComponent<Image>().raycastTarget = true;
             var stickRect = Place(stick, safe, new Vector2(0.12f, 0.18f), new Vector2(220f, 220f));
             var handle = new GameObject("Handle", typeof(RectTransform), typeof(Image));
             handle.transform.SetParent(stick.transform, false);
-            handle.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.45f);
+            ApplyImage(handle.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(1f, 1f, 1f, 0.7f));
             var handleRect = handle.GetComponent<RectTransform>();
             handleRect.sizeDelta = new Vector2(90f, 90f);
             handleRect.anchoredPosition = Vector2.zero;
@@ -721,13 +733,12 @@ namespace SlimeBreaker.EditorTools
             joystick.handle = handleRect;
             joystick.radius = 70f;
 
-            var dashButton = Button(safe, "Dash", "Dash", font, new Color(0.9f, 0.55f, 0.18f));
+            var dashButton = Button(safe, "Dash", "Dash", font, Color.white, buttonSprite);
             Place(dashButton.gameObject, safe, new Vector2(0.88f, 0.16f), new Vector2(170f, 170f));
             var dashFillObject = new GameObject("DashFill", typeof(RectTransform), typeof(Image));
             dashFillObject.transform.SetParent(dashButton.transform, false);
             var dashFill = dashFillObject.GetComponent<Image>();
-            dashFill.color = new Color(1f, 1f, 1f, 0.35f);
-            dashFill.type = Image.Type.Filled;
+            ApplyImage(dashFill, whiteSprite, Image.Type.Filled, new Color(1f, 1f, 0.7f, 0.45f));
             dashFill.fillMethod = Image.FillMethod.Radial360;
             dashFill.fillAmount = 1f;
             Stretch(dashFill.rectTransform);
@@ -738,22 +749,23 @@ namespace SlimeBreaker.EditorTools
             var icons = new Image[3];
             for (int i = 0; i < 3; i++)
             {
-                choices[i] = Button(levelPanel.transform, "Choice" + i, "Upgrade", font, new Color(0.12f, 0.45f, 0.52f));
+                choices[i] = Button(levelPanel.transform, "Choice" + i, "Upgrade", font, Color.white, buttonSprite);
                 Place(choices[i].gameObject, levelPanel.transform, new Vector2(0.22f + i * 0.28f, 0.38f), new Vector2(280f, 220f));
                 labels[i] = choices[i].GetComponentInChildren<Text>();
                 var iconObject = new GameObject("Icon", typeof(RectTransform), typeof(Image));
                 iconObject.transform.SetParent(choices[i].transform, false);
                 var iconRect = Place(iconObject, choices[i].transform, new Vector2(0.5f, 0.72f), new Vector2(72f, 72f));
                 icons[i] = iconObject.GetComponent<Image>();
+                ApplyImage(icons[i], whiteSprite, Image.Type.Simple, Color.white);
                 iconRect.anchorMin = new Vector2(0.5f, 0.72f);
                 iconRect.anchorMax = new Vector2(0.5f, 0.72f);
             }
             levelPanel.SetActive(false);
 
             var pausePanel = Panel(safe, "Pause", font, "Jeda");
-            var resume = Button(pausePanel.transform, "Resume", "Lanjut", font, new Color(0.12f, 0.55f, 0.62f));
+            var resume = Button(pausePanel.transform, "Resume", "Lanjut", font, Color.white, buttonSprite);
             Place(resume.gameObject, pausePanel.transform, new Vector2(0.5f, 0.48f), new Vector2(360f, 90f));
-            var menu = Button(pausePanel.transform, "Menu", "Menu", font, new Color(0.45f, 0.2f, 0.28f));
+            var menu = Button(pausePanel.transform, "Menu", "Menu", font, Color.white, dangerSprite);
             Place(menu.gameObject, pausePanel.transform, new Vector2(0.5f, 0.28f), new Vector2(360f, 90f));
             pausePanel.SetActive(false);
 
@@ -761,9 +773,9 @@ namespace SlimeBreaker.EditorTools
             var resultTitle = resultPanel.GetComponentInChildren<Text>();
             var resultBody = Text(resultPanel.transform, "Body", "", 32, TextAnchor.MiddleCenter, font);
             Place(resultBody.gameObject, resultPanel.transform, new Vector2(0.5f, 0.48f), new Vector2(700f, 140f));
-            var retry = Button(resultPanel.transform, "Retry", "Ulangi", font, new Color(0.12f, 0.55f, 0.62f));
+            var retry = Button(resultPanel.transform, "Retry", "Ulangi", font, Color.white, buttonSprite);
             Place(retry.gameObject, resultPanel.transform, new Vector2(0.35f, 0.22f), new Vector2(280f, 90f));
-            var exit = Button(resultPanel.transform, "Exit", "Menu", font, new Color(0.45f, 0.2f, 0.28f));
+            var exit = Button(resultPanel.transform, "Exit", "Menu", font, Color.white, dangerSprite);
             Place(exit.gameObject, resultPanel.transform, new Vector2(0.65f, 0.22f), new Vector2(280f, 90f));
             resultPanel.SetActive(false);
 
@@ -831,14 +843,29 @@ namespace SlimeBreaker.EditorTools
             return clip;
         }
 
-        static void Light()
+        static Camera MakeCamera(string name, Color background)
+        {
+            var go = new GameObject(name);
+            go.tag = "MainCamera";
+            var camera = go.AddComponent<Camera>();
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = background;
+            camera.GetUniversalAdditionalCameraData();
+            go.AddComponent<UrpCameraRig>();
+            return camera;
+        }
+
+        static Light Light()
         {
             var lightObject = new GameObject("Sun");
             var light = lightObject.AddComponent<Light>();
             light.type = LightType.Directional;
             light.intensity = 1.15f;
+            light.color = new Color(1f, 0.96f, 0.88f);
             light.shadows = LightShadows.Soft;
             lightObject.transform.rotation = Quaternion.Euler(48f, -35f, 0f);
+            light.GetUniversalAdditionalLightData();
+            return light;
         }
 
         static void EventSystem()
@@ -850,7 +877,7 @@ namespace SlimeBreaker.EditorTools
 
         static Canvas Canvas(out RectTransform safe)
         {
-            var canvasObject = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            var canvasObject = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster), typeof(EnsureUiSprites));
             var canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             var scaler = canvasObject.GetComponent<CanvasScaler>();
@@ -868,7 +895,7 @@ namespace SlimeBreaker.EditorTools
         {
             var panel = new GameObject(name, typeof(RectTransform), typeof(Image));
             panel.transform.SetParent(parent, false);
-            panel.GetComponent<Image>().color = new Color(0.05f, 0.1f, 0.12f, 0.92f);
+            ApplyImage(panel.GetComponent<Image>(), panelSprite, Image.Type.Sliced, Color.white);
             Stretch(panel.GetComponent<RectTransform>());
             var label = Text(panel.transform, "Title", title, 48, TextAnchor.MiddleCenter, font);
             Place(label.gameObject, panel.transform, new Vector2(0.5f, 0.78f), new Vector2(800f, 80f));
@@ -887,14 +914,17 @@ namespace SlimeBreaker.EditorTools
             text.color = Color.white;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Overflow;
+            var shadow = go.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.7f);
+            shadow.effectDistance = new Vector2(2f, -2f);
             return text;
         }
 
-        static Button Button(Transform parent, string name, string label, Font font, Color color)
+        static Button Button(Transform parent, string name, string label, Font font, Color color, Sprite sprite = null)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
             go.transform.SetParent(parent, false);
-            go.GetComponent<Image>().color = color;
+            ApplyImage(go.GetComponent<Image>(), sprite != null ? sprite : buttonSprite, Image.Type.Sliced, color);
             var button = go.GetComponent<Button>();
             var text = Text(go.transform, "Label", label, 28, TextAnchor.MiddleCenter, font);
             Stretch(text.rectTransform);
@@ -907,13 +937,13 @@ namespace SlimeBreaker.EditorTools
             root.transform.SetParent(parent, false);
             var background = new GameObject("Background", typeof(RectTransform), typeof(Image));
             background.transform.SetParent(root.transform, false);
-            background.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.45f);
+            ApplyImage(background.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(0f, 0f, 0f, 0.45f));
             Stretch(background.GetComponent<RectTransform>());
             var fill = new GameObject("Fill", typeof(RectTransform), typeof(Image));
             fill.transform.SetParent(root.transform, false);
             var fillRect = fill.GetComponent<RectTransform>();
             Stretch(fillRect);
-            fill.GetComponent<Image>().color = color;
+            ApplyImage(fill.GetComponent<Image>(), whiteSprite, Image.Type.Simple, color);
             var slider = root.AddComponent<Slider>();
             slider.targetGraphic = fill.GetComponent<Image>();
             slider.fillRect = fillRect;
@@ -926,10 +956,62 @@ namespace SlimeBreaker.EditorTools
 
         static Font Font()
         {
-            var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            var font = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/Roboto-Regular.ttf");
+            if (font == null)
+                font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (font == null)
                 font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            if (font == null)
+                throw new InvalidOperationException("Font UI tidak ditemukan.");
             return font;
+        }
+
+        static void LoadUiArt()
+        {
+            whiteSprite = EnsureWhiteSprite();
+            panelSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Panels/UI_Panel.png") ?? whiteSprite;
+            buttonSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Panels/UI_Button.png") ?? whiteSprite;
+            dangerSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Panels/UI_Button_Danger.png") ?? buttonSprite;
+            if (panelSprite == null || buttonSprite == null || whiteSprite == null)
+                throw new InvalidOperationException("Sprite UI tidak ter-load.");
+        }
+
+        static Sprite EnsureWhiteSprite()
+        {
+            const string path = "Assets/Art/UI/Panels/UI_White.png";
+            if (!File.Exists(path))
+            {
+                var tex = new Texture2D(8, 8, TextureFormat.RGBA32, false);
+                var pixels = new Color[64];
+                for (int i = 0; i < pixels.Length; i++)
+                    pixels[i] = Color.white;
+                tex.SetPixels(pixels);
+                tex.Apply();
+                Directory.CreateDirectory(Path.GetDirectoryName(path) ?? "Assets/Art/UI/Panels");
+                File.WriteAllBytes(path, tex.EncodeToPNG());
+                UnityEngine.Object.DestroyImmediate(tex);
+                AssetDatabase.ImportAsset(path);
+            }
+
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer != null)
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.alphaIsTransparency = true;
+                importer.mipmapEnabled = false;
+                importer.spriteMeshType = SpriteMeshType.FullRect;
+                importer.SaveAndReimport();
+            }
+
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+
+        static void ApplyImage(Image image, Sprite sprite, Image.Type type, Color color)
+        {
+            image.sprite = sprite != null ? sprite : whiteSprite;
+            image.type = type;
+            image.color = color;
         }
 
         static RectTransform Place(GameObject go, Transform parent, Vector2 anchor, Vector2 size)

@@ -472,12 +472,15 @@ namespace SlimeBreaker.EditorTools
             if (animator == null)
                 animator = visual.AddComponent<Animator>();
             animator.runtimeAnimatorController = controller;
+            animator.applyRootMotion = false;
             if (player)
             {
                 var body = root.AddComponent<CharacterController>();
                 body.height = 1.25f;
                 body.radius = 0.28f;
-                body.center = new Vector3(0f, 0.64f, 0f);
+                body.center = new Vector3(0f, 0.625f, 0f);
+                body.skinWidth = 0.03f;
+                body.stepOffset = 0.2f;
                 root.AddComponent<PlayerHealth>();
                 root.AddComponent<PlayerController>();
                 root.AddComponent<DashController>();
@@ -504,6 +507,7 @@ namespace SlimeBreaker.EditorTools
             if (animator == null)
                 animator = visual.AddComponent<Animator>();
             animator.runtimeAnimatorController = controller;
+            animator.applyRootMotion = false;
             var ringModel = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Art/VFX/VFX_Boss_Ring.fbx");
             var ring = (GameObject)PrefabUtility.InstantiatePrefab(ringModel);
             ring.transform.SetParent(root.transform, false);
@@ -521,18 +525,16 @@ namespace SlimeBreaker.EditorTools
             var instance = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(modelPath));
             instance.name = Path.GetFileNameWithoutExtension(path);
             FitHeight(instance, expectedHeight);
-            if (ground)
-            {
-                var renderer = instance.GetComponentInChildren<Renderer>();
-                var box = instance.AddComponent<BoxCollider>();
-                if (renderer != null)
-                {
-                    var bounds = renderer.bounds;
-                    box.center = instance.transform.InverseTransformPoint(bounds.center) + Vector3.down * 0.5f;
-                    box.size = new Vector3(Mathf.Max(1f, bounds.size.x), 1f, Mathf.Max(1f, bounds.size.z));
-                }
-            }
-            return SavePrefab(instance, path);
+            if (!ground)
+                return SavePrefab(instance, path);
+
+            var root = new GameObject(Path.GetFileNameWithoutExtension(path));
+            instance.transform.SetParent(root.transform, false);
+            instance.name = "Visual";
+            var box = root.AddComponent<BoxCollider>();
+            box.center = new Vector3(0f, -0.5f, 0f);
+            box.size = new Vector3(48f, 1f, 48f);
+            return SavePrefab(root, path);
         }
 
         static void FitHeight(GameObject visual, float expectedHeight)
@@ -623,6 +625,10 @@ namespace SlimeBreaker.EditorTools
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var groundInstance = (GameObject)PrefabUtility.InstantiatePrefab(ground);
             groundInstance.transform.position = Vector3.zero;
+            var floor = new GameObject("ArenaFloor");
+            var floorBox = floor.AddComponent<BoxCollider>();
+            floorBox.center = new Vector3(0f, -0.5f, 0f);
+            floorBox.size = new Vector3(48f, 1f, 48f);
             Ring(treeA, 8, 14.2f);
             Ring(treeB, 6, 15.4f);
             Ring(rockA, 8, 12.4f);
@@ -632,7 +638,7 @@ namespace SlimeBreaker.EditorTools
             Ring(pillar, 4, 13.2f);
 
             var player = (GameObject)PrefabUtility.InstantiatePrefab(hero);
-            player.transform.position = new Vector3(0f, 0.05f, 0f);
+            player.transform.position = Vector3.zero;
             var camera = MakeCamera("Camera", new Color(0.38f, 0.58f, 0.68f));
             camera.fieldOfView = 48f;
             camera.nearClipPlane = 0.2f;

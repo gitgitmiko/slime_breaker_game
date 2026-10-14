@@ -151,10 +151,8 @@ namespace SlimeBreaker
         {
             Vector3 flat = new Vector3(transform.position.x, 0f, transform.position.z);
             if (flat.magnitude > arenaRadius)
-            {
                 flat = flat.normalized * arenaRadius;
-                transform.position = new Vector3(flat.x, transform.position.y, flat.z);
-            }
+            transform.position = new Vector3(flat.x, 0f, flat.z);
         }
     }
 }

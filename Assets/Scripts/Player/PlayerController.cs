@@ -52,15 +52,9 @@ namespace SlimeBreaker
             if (dash != null && dash.IsDashing)
                 velocity = dash.Direction * (flow.balance != null ? flow.balance.dashSpeed : 16f);
 
-            velocity.y = -6f;
+            velocity.y = 0f;
             body.Move(velocity * Time.deltaTime);
-
-            Vector3 flat = new Vector3(transform.position.x, 0f, transform.position.z);
-            if (flat.magnitude > arenaRadius)
-            {
-                flat = flat.normalized * arenaRadius;
-                transform.position = new Vector3(flat.x, transform.position.y, flat.z);
-            }
+            StickToArena();
 
             Vector3 face = dash != null && dash.IsDashing ? dash.Direction : wish;
             if (face.sqrMagnitude > 0.001f)
@@ -74,6 +68,16 @@ namespace SlimeBreaker
         }
 
         public Vector3 WishDirection => wish;
+
+        void StickToArena()
+        {
+            Vector3 flat = new Vector3(transform.position.x, 0f, transform.position.z);
+            if (flat.magnitude > arenaRadius)
+                flat = flat.normalized * arenaRadius;
+            var grounded = new Vector3(flat.x, 0f, flat.z);
+            if ((transform.position - grounded).sqrMagnitude > 0.0000001f)
+                transform.position = grounded;
+        }
 
         Vector2 ReadMove()
         {

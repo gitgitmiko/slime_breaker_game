@@ -27,7 +27,6 @@ namespace SlimeBreaker.EditorTools
                 ConfigurePlayerSettings();
                 PlayerSettings.Android.useCustomKeystore = false;
                 EditorUserBuildSettings.buildAppBundle = false;
-                EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.Generic;
 
                 var output = AndroidOutputPath();
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output)) ?? "Builds");

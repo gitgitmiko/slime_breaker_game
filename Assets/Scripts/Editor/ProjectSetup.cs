@@ -4,6 +4,7 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEditor.Build;
+using UnityEditor.Build.Reporting;
 using UnityEditor.Events;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -17,6 +18,65 @@ namespace SlimeBreaker.EditorTools
     public static class ProjectSetup
     {
         const string ArtRoot = "Assets/Art";
+
+        [MenuItem("Slime Breaker/Build Android APK")]
+        public static void BuildAndroidApk()
+        {
+            try
+            {
+                ConfigurePlayerSettings();
+                PlayerSettings.Android.useCustomKeystore = false;
+                EditorUserBuildSettings.buildAppBundle = false;
+                EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.Generic;
+
+                var output = AndroidOutputPath();
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output)) ?? "Builds");
+
+                var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+                {
+                    scenes = new[]
+                    {
+                        "Assets/Scenes/Boot.unity",
+                        "Assets/Scenes/MainMenu.unity",
+                        "Assets/Scenes/GameArena.unity"
+                    },
+                    locationPathName = output,
+                    target = BuildTarget.Android,
+                    options = BuildOptions.CompressWithLz4
+                });
+
+                if (report.summary.result != BuildResult.Succeeded)
+                {
+                    Debug.LogError("SLIMEBREAKER_APK_FAIL " + report.summary.result);
+                    if (Application.isBatchMode)
+                        EditorApplication.Exit(1);
+                    return;
+                }
+
+                Debug.Log("SLIMEBREAKER_APK_OK " + Path.GetFullPath(output));
+                if (Application.isBatchMode)
+                    EditorApplication.Exit(0);
+            }
+            catch (Exception error)
+            {
+                Debug.LogError("SLIMEBREAKER_APK_FAIL\n" + error);
+                if (Application.isBatchMode)
+                    EditorApplication.Exit(1);
+                else
+                    throw;
+            }
+        }
+
+        static string AndroidOutputPath()
+        {
+            var args = Environment.GetCommandLineArgs();
+            for (var i = 0; i < args.Length - 1; i++)
+            {
+                if (args[i] == "-buildOutput")
+                    return args[i + 1];
+            }
+            return "Builds/SlimeBreaker.apk";
+        }
 
         [MenuItem("Slime Breaker/Build Project")]
         public static void BuildAll()

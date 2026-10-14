@@ -29,14 +29,19 @@ namespace SlimeBreaker
             var definition = health.definition;
             if (distance > definition.contactRange * 0.85f && distance > 0.05f)
             {
-                transform.position += to.normalized * definition.moveSpeed * Time.deltaTime;
+                float speed = definition.moveSpeed * health.SpeedMultiplier;
+                transform.position += to.normalized * speed * Time.deltaTime;
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(to.normalized, Vector3.up), 10f * Time.deltaTime);
                 if (animator != null)
+                {
                     animator.SetFloat("Speed", 1f);
+                    animator.speed = Mathf.Lerp(0.55f, 1f, health.SpeedMultiplier);
+                }
             }
             else if (animator != null)
             {
                 animator.SetFloat("Speed", 0f);
+                animator.speed = 1f;
             }
 
             Vector3 flat = new Vector3(transform.position.x, 0f, transform.position.z);

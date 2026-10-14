@@ -63,6 +63,11 @@ namespace SlimeBreaker
             if (animator != null)
                 animator.SetTrigger("Hit");
             AudioService.Instance?.Play("playerhit");
+            VfxPlayer.Instance?.Play("playerhit", transform.position + Vector3.up * 0.8f);
+            var camera = Camera.main != null ? Camera.main.GetComponent<FollowCamera>() : null;
+            if (camera != null)
+                camera.Shake(0.18f);
+            GiveInvulnerability(0.35f);
             if (Current <= 0)
             {
                 IsDead = true;

@@ -59,6 +59,8 @@ namespace SlimeBreaker
             currentChoices = upgrades != null ? upgrades.RollThree() : null;
             ui?.ShowLevelUp(currentChoices);
             audioService?.Play("levelup");
+            if (PlayerHealth.Instance != null)
+                VfxPlayer.Instance?.Play("levelup", PlayerHealth.Instance.transform.position + Vector3.up * 0.6f);
         }
 
         public void ChooseUpgrade(int index)
@@ -66,7 +68,10 @@ namespace SlimeBreaker
             if (State != GameState.LevelUp || currentChoices == null)
                 return;
             if (index >= 0 && index < currentChoices.Length && currentChoices[index] != null)
+            {
                 upgrades.Apply(currentChoices[index], Stats);
+                audioService?.Play("ui");
+            }
             if (queuedLevelUps > 0)
             {
                 queuedLevelUps--;

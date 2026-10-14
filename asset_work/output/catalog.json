@@ -3,120 +3,192 @@
     "id": "CHR_Hero_Main",
     "file": "Characters/Hero/CHR_Hero_Main.fbx",
     "kind": "character",
-    "polygons": 2391,
-    "vertices": 2233,
+    "triangles": 20914,
+    "vertices": 10643,
     "notes": "generic rig, in-place clips"
   },
   {
     "id": "ENM_Slime_Normal",
     "file": "Enemies/Slime/ENM_Slime_Normal.fbx",
     "kind": "character",
-    "polygons": 336,
-    "vertices": 270,
+    "triangles": 3668,
+    "vertices": 1856,
     "notes": "generic rig, in-place clips"
   },
   {
     "id": "ENM_Slime_Fast",
     "file": "Enemies/Slime/ENM_Slime_Fast.fbx",
     "kind": "character",
-    "polygons": 354,
-    "vertices": 288,
+    "triangles": 3722,
+    "vertices": 1889,
     "notes": "generic rig, in-place clips"
   },
   {
     "id": "ENM_Slime_Tank",
     "file": "Enemies/Slime/ENM_Slime_Tank.fbx",
     "kind": "character",
-    "polygons": 354,
-    "vertices": 294,
+    "triangles": 3852,
+    "vertices": 1962,
     "notes": "generic rig, in-place clips"
   },
   {
     "id": "BOSS_SlimeKing",
     "file": "Enemies/SlimeKing/BOSS_SlimeKing.fbx",
     "kind": "character",
-    "polygons": 747,
-    "vertices": 667,
+    "triangles": 4584,
+    "vertices": 2356,
     "notes": "generic rig, in-place clips"
   },
   {
     "id": "ENV_Forest_Ground",
     "file": "Environment/ForestArena/ENV_Forest_Ground.fbx",
     "kind": "static",
-    "polygons": 400,
-    "vertices": 441,
+    "triangles": 7200,
+    "vertices": 3721,
     "notes": "no rig"
   },
   {
     "id": "ENV_Forest_Tree_A",
     "file": "Environment/ForestArena/ENV_Forest_Tree_A.fbx",
     "kind": "static",
-    "polygons": 169,
-    "vertices": 98,
+    "triangles": 948,
+    "vertices": 492,
     "notes": "no rig"
   },
   {
     "id": "ENV_Forest_Tree_B",
     "file": "Environment/ForestArena/ENV_Forest_Tree_B.fbx",
     "kind": "static",
-    "polygons": 169,
-    "vertices": 98,
+    "triangles": 948,
+    "vertices": 492,
     "notes": "no rig"
   },
   {
     "id": "ENV_Forest_Rock_A",
     "file": "Environment/ForestArena/ENV_Forest_Rock_A.fbx",
     "kind": "static",
-    "polygons": 20,
-    "vertices": 12,
+    "triangles": 80,
+    "vertices": 42,
     "notes": "no rig"
   },
   {
     "id": "ENV_Forest_Rock_B",
     "file": "Environment/ForestArena/ENV_Forest_Rock_B.fbx",
     "kind": "static",
-    "polygons": 20,
-    "vertices": 12,
+    "triangles": 80,
+    "vertices": 42,
     "notes": "no rig"
   },
   {
     "id": "ENV_Forest_Mushroom",
     "file": "Environment/ForestArena/ENV_Forest_Mushroom.fbx",
     "kind": "static",
-    "polygons": 106,
-    "vertices": 102,
+    "triangles": 916,
+    "vertices": 485,
     "notes": "no rig"
   },
   {
     "id": "ENV_Forest_Bush",
     "file": "Environment/ForestArena/ENV_Forest_Bush.fbx",
     "kind": "static",
-    "polygons": 40,
-    "vertices": 24,
+    "triangles": 720,
+    "vertices": 376,
     "notes": "no rig"
   },
   {
     "id": "ENV_Forest_RuinPillar",
     "file": "Environment/ForestArena/ENV_Forest_RuinPillar.fbx",
     "kind": "static",
-    "polygons": 16,
-    "vertices": 24,
+    "triangles": 420,
+    "vertices": 218,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Forest_Grass",
+    "file": "Environment/ForestArena/ENV_Forest_Grass.fbx",
+    "kind": "static",
+    "triangles": 70,
+    "vertices": 49,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Forest_Flower",
+    "file": "Environment/ForestArena/ENV_Forest_Flower.fbx",
+    "kind": "static",
+    "triangles": 740,
+    "vertices": 384,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Forest_BoundaryStone",
+    "file": "Environment/ForestArena/ENV_Forest_BoundaryStone.fbx",
+    "kind": "static",
+    "triangles": 100,
+    "vertices": 54,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Arena_RuneRing",
+    "file": "Environment/ForestArena/ENV_Arena_RuneRing.fbx",
+    "kind": "static",
+    "triangles": 1536,
+    "vertices": 768,
     "notes": "no rig"
   },
   {
     "id": "VFX_Boss_Ring",
     "file": "VFX/VFX_Boss_Ring.fbx",
     "kind": "static",
-    "polygons": 224,
-    "vertices": 224,
+    "triangles": 768,
+    "vertices": 384,
     "notes": "no rig"
   },
   {
     "id": "VFX_XP_Orb",
     "file": "VFX/VFX_XP_Orb.fbx",
     "kind": "static",
-    "polygons": 20,
+    "triangles": 80,
+    "vertices": 42,
+    "notes": "no rig"
+  },
+  {
+    "id": "VFX_Ice_Shard",
+    "file": "VFX/VFX_Ice_Shard.fbx",
+    "kind": "static",
+    "triangles": 20,
     "vertices": 12,
+    "notes": "no rig"
+  },
+  {
+    "id": "VFX_Arcane_Missile",
+    "file": "VFX/VFX_Arcane_Missile.fbx",
+    "kind": "static",
+    "triangles": 20,
+    "vertices": 12,
+    "notes": "no rig"
+  },
+  {
+    "id": "VFX_Magic_Bolt",
+    "file": "VFX/VFX_Magic_Bolt.fbx",
+    "kind": "static",
+    "triangles": 20,
+    "vertices": 12,
+    "notes": "no rig"
+  },
+  {
+    "id": "VFX_Fire_Ring",
+    "file": "VFX/VFX_Fire_Ring.fbx",
+    "kind": "static",
+    "triangles": 960,
+    "vertices": 480,
+    "notes": "no rig"
+  },
+  {
+    "id": "VFX_PowerUp_Crystal",
+    "file": "VFX/VFX_PowerUp_Crystal.fbx",
+    "kind": "static",
+    "triangles": 660,
+    "vertices": 332,
     "notes": "no rig"
   }
 ]

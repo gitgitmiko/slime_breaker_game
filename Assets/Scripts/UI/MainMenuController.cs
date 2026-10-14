@@ -15,8 +15,16 @@ namespace SlimeBreaker
         public Text healthLabel;
         public Text speedLabel;
         public int baseCost = 30;
+        public Transform showcase;
+        public float showcaseSpin = 16f;
 
         SaveData save;
+
+        void Update()
+        {
+            if (showcase != null)
+                showcase.Rotate(0f, showcaseSpin * Time.deltaTime, 0f, Space.World);
+        }
 
         void Start()
         {
@@ -32,6 +40,7 @@ namespace SlimeBreaker
 
         public void Play()
         {
+            AudioService.Instance?.Play("ui");
             SceneManager.LoadScene("GameArena");
         }
 
@@ -40,6 +49,7 @@ namespace SlimeBreaker
             int cost = baseCost * (rank + 1);
             if (save.gold < cost)
                 return;
+            AudioService.Instance?.Play("ui");
             save.gold -= cost;
             rank++;
             SaveService.Save(save);

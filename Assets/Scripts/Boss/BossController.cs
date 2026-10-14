@@ -44,7 +44,7 @@ namespace SlimeBreaker
             switch (pattern)
             {
                 case Pattern.Idle:
-                    Chase(player.transform.position, health.definition != null ? health.definition.moveSpeed : 2.2f);
+                    Chase(player.transform.position, (health.definition != null ? health.definition.moveSpeed : 2.2f) * health.SpeedMultiplier);
                     if (timer <= 0f)
                         BeginTelegraph(player.transform.position);
                     break;
@@ -57,13 +57,14 @@ namespace SlimeBreaker
                         BeginCharge(player.transform.position);
                     break;
                 case Pattern.Charge:
-            transform.position += chargeDirection * 9.5f * Time.deltaTime;
-            ClampArena();
-            if (!chargeHit && (player.transform.position - transform.position).sqrMagnitude < 1.6f * 1.6f)
-            {
-                chargeHit = true;
-                player.TakeDamage(health.definition != null ? health.definition.contactDamage : 16);
-            }
+                    transform.position += chargeDirection * 9.5f * health.SpeedMultiplier * Time.deltaTime;
+                    ClampArena();
+                    if (!chargeHit && (player.transform.position - transform.position).sqrMagnitude < 1.6f * 1.6f)
+                    {
+                        chargeHit = true;
+                        player.TakeDamage(health.definition != null ? health.definition.contactDamage : 16);
+                        VfxPlayer.Instance?.Play("hit", player.transform.position + Vector3.up * 0.7f);
+                    }
                     if (timer <= 0f)
                     {
                         pattern = Pattern.Idle;
@@ -141,10 +142,8 @@ namespace SlimeBreaker
             chargeDirection.Normalize();
             transform.rotation = Quaternion.LookRotation(chargeDirection, Vector3.up);
             if (animator != null)
-            {
-                animator.SetTrigger("Attack");
                 animator.SetFloat("Speed", 1f);
-            }
+            VfxPlayer.Instance?.Play("dash", transform.position + Vector3.up * 0.5f);
         }
 
         void ClampArena()

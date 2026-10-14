@@ -3,22 +3,33 @@ using UnityEngine;
 
 namespace SlimeBreaker
 {
+    /// <summary>The sorceress auto-casts a homing magic bolt from her staff at the nearest enemy in range.</summary>
     public class AutoAttackController : MonoBehaviour
     {
+        public GameObject boltPrefab;
+        public float boltSpeed = 17f;
+        /// <summary>Delay between the cast animation starting and the bolt leaving the staff.</summary>
+        public float releaseDelay = 0.14f;
+
         float cooldown;
-        bool swinging;
+        bool casting;
         Animator animator;
+        Transform staffTip;
+        PlayerHealth health;
+
+        public Transform StaffTip => staffTip;
 
         void Awake()
         {
             animator = GetComponentInChildren<Animator>();
+            health = GetComponent<PlayerHealth>();
+            staffTip = SkillController.FindDeep(transform, "StaffTip");
         }
 
         void Update()
         {
-            if (!GameFlowController.IsPlaying || swinging)
+            if (!GameFlowController.IsPlaying || casting)
                 return;
-            var health = GetComponent<PlayerHealth>();
             if (health != null && health.IsDead)
                 return;
             if (cooldown > 0f)
@@ -32,7 +43,7 @@ namespace SlimeBreaker
             if (target == null)
                 return;
             cooldown = stats.attackCooldown;
-            StartCoroutine(Strike(target, stats.damage, stats.attackRange));
+            StartCoroutine(Cast(target, stats.damage, stats.attackRange));
         }
 
         EnemyHealth FindNearest(float range)
@@ -55,9 +66,19 @@ namespace SlimeBreaker
             return best;
         }
 
-        IEnumerator Strike(EnemyHealth target, int damage, float range)
+        Vector3 CastOrigin
         {
-            swinging = true;
+            get
+            {
+                if (staffTip != null)
+                    return staffTip.position;
+                return transform.position + Vector3.up * 1.15f + transform.forward * 0.45f;
+            }
+        }
+
+        IEnumerator Cast(EnemyHealth target, int damage, float range)
+        {
+            casting = true;
             if (target != null)
             {
                 Vector3 to = target.transform.position - transform.position;
@@ -67,17 +88,38 @@ namespace SlimeBreaker
             }
             if (animator != null)
                 animator.SetTrigger("Attack");
-            yield return new WaitForSeconds(0.12f);
+            AudioService.Instance?.Play("cast");
+
+            float t = 0f;
+            while (t < releaseDelay)
+            {
+                if (!GameFlowController.IsPlaying)
+                {
+                    yield return null;
+                    continue;
+                }
+                t += Time.deltaTime;
+                yield return null;
+            }
+
+            if (target == null || target.IsDead)
+                target = FindNearest(range + 1.5f);
+
             if (target != null && !target.IsDead)
             {
-                float limit = range + 0.8f;
-                if ((target.transform.position - transform.position).sqrMagnitude <= limit * limit)
+                Vector3 origin = CastOrigin;
+                VfxPlayer.Instance?.Play("cast", origin);
+                if (boltPrefab != null)
+                {
+                    HomingProjectile.Launch(boltPrefab, origin, target, damage, boltSpeed);
+                }
+                else
                 {
                     target.TakeDamage(damage);
-                    VfxPlayer.Instance?.Play("hit", target.transform.position + Vector3.up * 0.6f);
+                    VfxPlayer.Instance?.Play("hit", target.transform.position + Vector3.up * target.HitHeight);
                 }
             }
-            swinging = false;
+            casting = false;
         }
     }
 }

@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-2590717083721580755
+--- !u!114 &-3637141956434617518
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
@@ -27,7 +27,7 @@ Material:
   m_ValidKeywords:
   - _EMISSION
   m_InvalidKeywords: []
-  m_LightmapFlags: 2
+  m_LightmapFlags: 1
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
@@ -121,7 +121,7 @@ Material:
     - _Parallax: 0.02
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _Smoothness: 0.28
+    - _Smoothness: 0.78
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
@@ -132,9 +132,9 @@ Material:
     - _XRMotionVectorsPass: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.6799757, g: 0.58383137, b: 0.7673755, a: 1}
-    - _Color: {r: 0.6799757, g: 0.58383137, b: 0.7673755, a: 1}
-    - _EmissionColor: {r: 0.37398663, g: 0.32110727, b: 0.42205656, a: 0.55}
+    - _BaseColor: {r: 0.7083696, g: 0.60124326, b: 0.8094681, a: 1}
+    - _Color: {r: 0.7083696, g: 0.60124326, b: 0.8094681, a: 1}
+    - _EmissionColor: {r: 0.24792936, g: 0.21043514, b: 0.28331384, a: 0.35}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

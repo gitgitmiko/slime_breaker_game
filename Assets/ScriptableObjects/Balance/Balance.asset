@@ -15,8 +15,8 @@ MonoBehaviour:
   baseDamage: 12
   baseMoveSpeed: 5.2
   baseHealth: 100
-  baseAttackCooldown: 0.48
-  baseAttackRange: 2.15
+  baseAttackCooldown: 0.55
+  baseAttackRange: 4.4
   baseDashCooldown: 1.25
   dashDuration: 0.16
   dashSpeed: 16

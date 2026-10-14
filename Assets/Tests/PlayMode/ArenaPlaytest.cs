@@ -229,12 +229,152 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
+        public IEnumerator AudioAndFrameRateAreConfigured()
+        {
+            yield return null;
+            Assert.IsNotNull(Object.FindAnyObjectByType<AudioListener>(), "GameArena has no AudioListener, so nothing can be heard");
+            Assert.AreEqual(60, Application.targetFrameRate, "target frame rate is not 60");
+            var audio = AudioService.Instance;
+            Assert.IsNotNull(audio, "GameArena has no AudioService");
+            foreach (var id in new[] { "hit", "cast", "bolthit", "enemydeath", "playerhit", "dash", "pickup", "levelup", "powerup", "powerupspawn", "freeze", "lightning", "fire", "arcane", "bosswarn", "slam", "ui" })
+                Assert.IsTrue(audio.Has(id), "AudioService has no clip for '" + id + "'");
+            Assert.IsNotNull(audio.music, "GameArena has no music clip");
+        }
+
+        [UnityTest]
+        public IEnumerator PowerUpSpawnsEveryFiveLevelsAndGrantsASkill()
+        {
+            var flow = GameFlowController.Instance;
+            var spawner = Object.FindAnyObjectByType<PowerUpSpawner>();
+            Assert.IsNotNull(spawner, "GameArena has no PowerUpSpawner");
+            Assert.IsNotNull(spawner.pickupPrefab, "PowerUpSpawner has no pickup prefab");
+            Assert.GreaterOrEqual(spawner.skills.Length, 4, "PowerUpSpawner knows fewer than four skills");
+            var hero = PlayerHealth.Instance;
+            Assert.IsNotNull(SkillController.Instance, "hero has no SkillController");
+            Assert.AreEqual(0, PowerUpPickup.Active.Count, "a power-up exists before level 5");
+
+            while (flow.Stats.level < 4)
+            {
+                flow.BeginLevelUp();
+                flow.ChooseUpgrade(0);
+            }
+            yield return null;
+            Assert.AreEqual(0, PowerUpPickup.Active.Count, "a power-up spawned before level 5");
+            flow.BeginLevelUp();
+            flow.ChooseUpgrade(0);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(5, flow.Stats.level);
+            Assert.AreEqual(1, PowerUpPickup.Active.Count, "exactly one power-up should spawn at level 5");
+            var pickup = PowerUpPickup.Active[0];
+            Assert.IsNotNull(pickup.skill, "power-up carries no skill");
+            Vector3 flat = pickup.transform.position - hero.transform.position;
+            flat.y = 0f;
+            Assert.Greater(flat.magnitude, 2f, "power-up spawned on top of the hero");
+            Assert.Less(new Vector2(pickup.transform.position.x, pickup.transform.position.z).magnitude, 11.2f, "power-up spawned outside the arena");
+            yield return Hold(0.4f);
+            Capture("07_powerup");
+
+            pickup.Collect();
+            yield return null;
+            Assert.AreEqual(0, PowerUpPickup.Active.Count, "power-up was not consumed");
+            Assert.AreEqual(1, SkillController.Instance.Count, "collecting the power-up did not grant a skill");
+
+            // Levels 6..9 must not spawn more; level 10 spawns the second tier.
+            while (flow.Stats.level < 9)
+            {
+                flow.BeginLevelUp();
+                flow.ChooseUpgrade(0);
+            }
+            yield return null;
+            Assert.AreEqual(0, PowerUpPickup.Active.Count, "a power-up spawned between tiers");
+            flow.BeginLevelUp();
+            flow.ChooseUpgrade(0);
+            yield return null;
+            Assert.AreEqual(1, PowerUpPickup.Active.Count, "no power-up at level 10");
+        }
+
+        [UnityTest]
+        public IEnumerator IceOrbitDamagesAndSlowsEnemies()
+        {
+            var controller = SkillController.Instance;
+            var spawner = Object.FindAnyObjectByType<PowerUpSpawner>();
+            Assert.IsNotNull(controller);
+            SkillDefinition ice = null;
+            foreach (var skill in spawner.skills)
+            {
+                if (skill != null && skill.kind == SkillKind.IceOrbit)
+                    ice = skill;
+            }
+            Assert.IsNotNull(ice, "no IceOrbit skill definition");
+            Assert.AreEqual(1, controller.Grant(ice));
+            Assert.AreEqual(2, controller.Grant(ice), "granting twice should raise the level");
+            var active = controller.Find(SkillKind.IceOrbit);
+            Assert.IsNotNull(active);
+            yield return null;
+            Assert.AreEqual(ice.CountAt(2), active.shards.Count, "shard count does not follow the skill level");
+
+            var enemySpawner = Object.FindAnyObjectByType<EnemySpawner>();
+            var hero = PlayerHealth.Instance.transform;
+            var enemyObject = Object.Instantiate(enemySpawner.tankPrefab, hero.position + hero.forward * ice.RadiusAt(2), Quaternion.identity);
+            var enemy = enemyObject.GetComponent<EnemyHealth>();
+            int start = enemy.Current;
+            bool slowed = false;
+            float t = 0f;
+            while (t < 3f && !(enemy.Current < start && slowed))
+            {
+                enemyObject.transform.position = hero.position + hero.forward * ice.RadiusAt(2);
+                yield return null;
+                SkipLevelUp();
+                if (enemy != null && !enemy.IsDead && enemy.IsSlowed)
+                    slowed = true;
+                t += Time.deltaTime;
+            }
+            Capture("08_ice_orbit");
+            Assert.IsTrue(enemy == null || enemy.IsDead || enemy.Current < start, "ice shards never damaged the enemy");
+            Assert.IsTrue(slowed, "ice shards never slowed the enemy");
+            if (enemy != null && !enemy.IsDead)
+                Assert.Less(enemy.SpeedMultiplier, 1f, "slowed enemy still moves at full speed");
+        }
+
+        [UnityTest]
+        public IEnumerator HeroBoltHitsEnemies()
+        {
+            var attack = Object.FindAnyObjectByType<AutoAttackController>();
+            Assert.IsNotNull(attack);
+            Assert.IsNotNull(attack.boltPrefab, "hero has no bolt prefab");
+            Assert.IsNotNull(attack.StaffTip, "hero model has no StaffTip bone");
+            var enemySpawner = Object.FindAnyObjectByType<EnemySpawner>();
+            var hero = PlayerHealth.Instance.transform;
+            var enemyObject = Object.Instantiate(enemySpawner.normalPrefab, hero.position + Vector3.forward * 3f, Quaternion.identity);
+            var enemy = enemyObject.GetComponent<EnemyHealth>();
+            int start = enemy.Current;
+            float t = 0f;
+            while (t < 3f && enemy != null && !enemy.IsDead && enemy.Current == start)
+            {
+                yield return null;
+                SkipLevelUp();
+                t += Time.deltaTime;
+            }
+            Assert.IsTrue(enemy == null || enemy.IsDead || enemy.Current < start, "the bolt never damaged a nearby enemy");
+        }
+
+        [UnityTest]
         public IEnumerator EveryRendererHasAWorkingMaterial()
         {
             yield return null;
             var vfx = VfxPlayer.Instance;
             Assert.IsNotNull(vfx);
             var roots = new List<GameObject> { vfx.hit, vfx.dash, vfx.levelUp, vfx.slam };
+            foreach (var entry in vfx.entries)
+                roots.Add(entry.prefab);
+            var skills = SkillController.Instance;
+            roots.Add(skills.iceShardPrefab);
+            roots.Add(skills.missilePrefab);
+            roots.Add(skills.fireRingPrefab);
+            roots.Add(skills.lightningPrefab);
+            roots.Add(Object.FindAnyObjectByType<AutoAttackController>().boltPrefab);
+            roots.Add(Object.FindAnyObjectByType<PowerUpSpawner>().pickupPrefab);
             foreach (var renderer in Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
                 roots.Add(renderer.gameObject);
             foreach (var root in roots)

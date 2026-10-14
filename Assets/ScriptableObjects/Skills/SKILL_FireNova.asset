@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0835f4da015099ba9aebdd9fde6519cd, type: 3}
+  m_Name: SKILL_FireNova
+  m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.SkillDefinition
+  kind: 2
+  title: Nova Api
+  description: Gelombang api meledak di sekitar penyihir dan membakar musuh.
+  icon: {fileID: 21300000, guid: d68d533f69e90c3d6a5d1b77e4ae4299, type: 3}
+  color: {r: 1, g: 0.5, b: 0.2, a: 1}
+  maxLevel: 4
+  baseDamage: 14
+  cooldown: 4.2
+  radius: 2.6
+  count: 0
+  slowFactor: 1
+  effectDuration: 1.5

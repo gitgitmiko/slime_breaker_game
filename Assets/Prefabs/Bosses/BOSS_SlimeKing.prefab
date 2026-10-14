@@ -112,6 +112,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 6ef077d3eef33897bbfdcb59babc4aae, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 6ef077d3eef33897bbfdcb59babc4aae, type: 3}
       propertyPath: m_Name
       value: VFX_Boss_Ring

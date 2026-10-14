@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: BOSS_SlimeKing
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.EnemyDefinition
   displayName: Slime King
-  maxHealth: 460
+  maxHealth: 520
   moveSpeed: 2.05
   contactDamage: 16
   contactRange: 1.7

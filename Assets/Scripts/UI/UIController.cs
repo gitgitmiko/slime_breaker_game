@@ -8,6 +8,7 @@ namespace SlimeBreaker
     {
         public Slider hpSlider;
         public Slider xpSlider;
+        public Text hpText;
         public Text levelText;
         public Text timerText;
         public Image dashFill;
@@ -21,15 +22,32 @@ namespace SlimeBreaker
         public Text resultBody;
         public Button pauseButton;
 
+        [Header("Skills")]
+        public GameObject[] skillSlots;
+        public Image[] skillIcons;
+        public Text[] skillLevels;
+        public Image[] skillFrames;
+
+        [Header("Toast")]
+        public CanvasGroup toastGroup;
+        public Text toastText;
+        public Image toastBackground;
+        public float toastDuration = 2.4f;
+
         PlayerHealth health;
         DashController dash;
+        SkillController skills;
+        float toastTimer;
 
         void Start()
         {
             health = PlayerHealth.Instance;
             dash = health != null ? health.GetComponent<DashController>() : null;
+            skills = health != null ? health.GetComponent<SkillController>() : SkillController.Instance;
             if (health != null)
                 health.Changed += RefreshHealth;
+            if (skills != null)
+                skills.Changed += RefreshSkills;
             if (choiceButtons != null)
             {
                 for (int i = 0; i < choiceButtons.Length; i++)
@@ -39,18 +57,23 @@ namespace SlimeBreaker
                 }
             }
             RefreshHealth();
+            RefreshSkills();
             if (levelUpPanel != null)
                 levelUpPanel.SetActive(false);
             if (pausePanel != null)
                 pausePanel.SetActive(false);
             if (resultPanel != null)
                 resultPanel.SetActive(false);
+            if (toastGroup != null)
+                toastGroup.alpha = 0f;
         }
 
         void OnDestroy()
         {
             if (health != null)
                 health.Changed -= RefreshHealth;
+            if (skills != null)
+                skills.Changed -= RefreshSkills;
         }
 
         void Update()
@@ -70,9 +93,34 @@ namespace SlimeBreaker
                 xpSlider.value = xp.XpToNext <= 0 ? 0f : (float)xp.Xp / xp.XpToNext;
             if (dashFill != null && dash != null)
                 dashFill.fillAmount = dash.Cooldown01;
+
+            if (toastGroup != null && toastTimer > 0f)
+            {
+                toastTimer -= Time.unscaledDeltaTime;
+                float fadeIn = Mathf.Clamp01((toastDuration - toastTimer) / 0.18f);
+                float fadeOut = Mathf.Clamp01(toastTimer / 0.45f);
+                toastGroup.alpha = Mathf.Min(fadeIn, fadeOut);
+                var rect = toastGroup.transform as RectTransform;
+                if (rect != null)
+                    rect.localScale = Vector3.one * Mathf.Lerp(0.92f, 1f, fadeIn);
+            }
+
             var keyboard = Keyboard.current;
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
                 flow.TogglePause();
+        }
+
+        public void ShowToast(string message, Color color)
+        {
+            if (toastText != null)
+                toastText.text = message;
+            if (toastBackground != null)
+                toastBackground.color = new Color(color.r * 0.35f, color.g * 0.35f, color.b * 0.35f, 0.82f);
+            if (toastText != null)
+                toastText.color = Color.Lerp(color, Color.white, 0.55f);
+            toastTimer = toastDuration;
+            if (toastGroup != null)
+                toastGroup.alpha = 0f;
         }
 
         public void ShowLevelUp(UpgradeDefinition[] choices)
@@ -88,9 +136,12 @@ namespace SlimeBreaker
                 choiceButtons[i].gameObject.SetActive(visible);
                 if (!visible)
                     continue;
-                choiceLabels[i].text = choices[i].title + "\n" + choices[i].description;
+                choiceLabels[i].text = choices[i].title + "\n<size=22>" + choices[i].description + "</size>";
                 if (choiceIcons != null && i < choiceIcons.Length && choiceIcons[i] != null)
+                {
                     choiceIcons[i].sprite = choices[i].icon;
+                    choiceIcons[i].enabled = choices[i].icon != null;
+                }
             }
         }
 
@@ -111,7 +162,7 @@ namespace SlimeBreaker
             if (resultPanel != null)
                 resultPanel.SetActive(true);
             if (resultTitle != null)
-                resultTitle.text = victory ? "Menang" : "Kalah";
+                resultTitle.text = victory ? "Menang!" : "Kalah";
             int seconds = Mathf.FloorToInt(elapsed);
             if (resultBody != null)
                 resultBody.text = "Waktu " + (seconds / 60).ToString("00") + ":" + (seconds % 60).ToString("00")
@@ -120,9 +171,38 @@ namespace SlimeBreaker
 
         void RefreshHealth()
         {
-            if (hpSlider == null || health == null || health.Max <= 0)
+            if (health == null || health.Max <= 0)
                 return;
-            hpSlider.value = (float)health.Current / health.Max;
+            if (hpSlider != null)
+                hpSlider.value = (float)health.Current / health.Max;
+            if (hpText != null)
+                hpText.text = health.Current + " / " + health.Max;
+        }
+
+        void RefreshSkills()
+        {
+            if (skillSlots == null)
+                return;
+            int count = skills != null ? skills.Count : 0;
+            for (int i = 0; i < skillSlots.Length; i++)
+            {
+                bool visible = i < count;
+                if (skillSlots[i] != null)
+                    skillSlots[i].SetActive(visible);
+                if (!visible)
+                    continue;
+                var skill = skills.Skills[i];
+                var definition = skill.definition;
+                if (skillIcons != null && i < skillIcons.Length && skillIcons[i] != null)
+                {
+                    skillIcons[i].sprite = definition != null ? definition.icon : null;
+                    skillIcons[i].enabled = definition != null && definition.icon != null;
+                }
+                if (skillLevels != null && i < skillLevels.Length && skillLevels[i] != null)
+                    skillLevels[i].text = "Lv " + skill.level;
+                if (skillFrames != null && i < skillFrames.Length && skillFrames[i] != null && definition != null)
+                    skillFrames[i].color = Color.Lerp(definition.color, Color.white, 0.25f);
+            }
         }
     }
 }

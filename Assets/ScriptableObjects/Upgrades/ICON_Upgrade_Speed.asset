@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.UpgradeDefinition
   kind: 1
   title: Laju
-  description: +12% kecepatan
+  description: +12% kecepatan gerak
   amount: 0.12
   icon: {fileID: 21300000, guid: e78ed38802669f30397ec96db51d9145, type: 3}

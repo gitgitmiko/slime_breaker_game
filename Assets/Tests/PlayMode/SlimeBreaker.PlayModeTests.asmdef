@@ -4,6 +4,7 @@
   "references": [
     "UnityEngine.TestRunner",
     "Unity.InputSystem",
+    "UnityEngine.UI",
     "SlimeBreaker"
   ],
   "includePlatforms": [],

@@ -7,6 +7,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 
 namespace SlimeBreaker.Tests
 {
@@ -15,7 +16,9 @@ namespace SlimeBreaker.Tests
         const float FeetTolerance = 0.12f;
 
         Keyboard keyboard;
-        readonly List<Vector3> groundVertices = new List<Vector3>();
+        InputSettings previousSettings;
+        float dashTimer = 0.3f;
+        readonly List<MeshCollider> groundColliders = new List<MeshCollider>();
 
         [UnitySetUp]
         public IEnumerator LoadArena()
@@ -23,6 +26,11 @@ namespace SlimeBreaker.Tests
             SceneManager.LoadScene("GameArena");
             yield return null;
             yield return null;
+            previousSettings = InputSystem.settings;
+            var settings = Object.Instantiate(previousSettings);
+            settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
+            settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
+            InputSystem.settings = settings;
             keyboard = InputSystem.AddDevice<Keyboard>();
             keyboard.MakeCurrent();
             CollectGroundVertices();
@@ -33,6 +41,8 @@ namespace SlimeBreaker.Tests
         {
             if (keyboard != null)
                 InputSystem.RemoveDevice(keyboard);
+            if (previousSettings != null)
+                InputSystem.settings = previousSettings;
             Time.timeScale = 1f;
             yield return null;
         }
@@ -42,7 +52,9 @@ namespace SlimeBreaker.Tests
         {
             var player = Object.FindAnyObjectByType<PlayerController>();
             Assert.IsNotNull(player, "GameArena has no PlayerController");
-            Assert.IsNotEmpty(groundVertices, "GameArena has no ground mesh");
+            Assert.IsNotEmpty(groundColliders, "GameArena has no ground mesh");
+            Assert.Greater(GroundSurface(Vector3.zero), -5f, "ground mesh does not lie under the arena centre");
+            Assert.Greater(GroundSurface(new Vector3(26f, 0f, 26f)), -5f, "ground mesh ends inside the camera view");
 
             yield return Hold(0.5f);
             Capture("01_spawn");
@@ -53,11 +65,13 @@ namespace SlimeBreaker.Tests
             float highest = float.MinValue;
             foreach (var key in route)
             {
+                var before = player.transform.position;
                 float t = 0f;
                 Press(key);
                 while (t < 1.2f)
                 {
                     yield return null;
+                    SkipLevelUp();
                     t += Time.deltaTime;
                     lowest = Mathf.Min(lowest, player.transform.position.y);
                     highest = Mathf.Max(highest, player.transform.position.y);
@@ -65,6 +79,7 @@ namespace SlimeBreaker.Tests
                         Tap(Key.Space);
                 }
                 AssertOnGround(player.gameObject, "hero after moving " + key);
+                Assert.Greater(Vector3.Distance(before, player.transform.position), 1f, "hero did not move with " + key);
             }
             Release();
             Debug.Log("PLAYTEST hero y range " + lowest.ToString("F3") + " .. " + highest.ToString("F3"));
@@ -76,7 +91,8 @@ namespace SlimeBreaker.Tests
             while (EnemyHealth.Active.Count < 3 && wait < 15f)
             {
                 yield return null;
-                wait += Time.deltaTime;
+                SkipLevelUp();
+                wait += Time.unscaledDeltaTime;
             }
             Assert.GreaterOrEqual(EnemyHealth.Active.Count, 1, "no enemies spawned");
             yield return Hold(1.5f);
@@ -97,13 +113,20 @@ namespace SlimeBreaker.Tests
             float t = 0f;
             int kills = 0;
             var tracked = new HashSet<EnemyHealth>();
-            while (t < 40f && flow.State != GameState.Defeat)
+            var player = PlayerHealth.Instance;
+            float nextLog = 0f;
+            while (t < 60f && flow.State != GameState.Defeat)
             {
                 if (flow.State == GameState.LevelUp)
                     flow.ChooseUpgrade(0);
                 foreach (var enemy in EnemyHealth.Active)
                     tracked.Add(enemy);
-                Press(((int)(t / 2f) % 2) == 0 ? Key.A : Key.D);
+                Steer(player.transform.position);
+                if (t >= nextLog)
+                {
+                    Debug.Log("PLAYTEST t=" + t.ToString("F0") + " hp=" + player.Current + "/" + player.Max + " level=" + flow.Stats.level + " alive=" + EnemyHealth.Active.Count);
+                    nextLog += 5f;
+                }
                 yield return null;
                 t += Time.unscaledDeltaTime;
             }
@@ -116,7 +139,117 @@ namespace SlimeBreaker.Tests
             Debug.Log("PLAYTEST run state=" + flow.State + " level=" + flow.Stats.level + " kills=" + kills + " alive=" + EnemyHealth.Active.Count);
             Capture("04_run");
             Assert.Greater(kills, 0, "auto attack never killed an enemy");
+            Assert.AreNotEqual(GameState.Defeat, flow.State, "a kiting player died in the first minute");
             Assert.Greater(flow.Stats.level, startLevel, "the hero never levelled up");
+        }
+
+        [UnityTest]
+        public IEnumerator PropsStandUpright()
+        {
+            yield return null;
+            foreach (var name in new[] { "ENV_Forest_Tree_A", "ENV_Forest_Tree_B", "ENV_Forest_RuinPillar", "ENV_Forest_Mushroom" })
+            {
+                int found = 0;
+                foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsSortMode.None))
+                {
+                    if (t.name != name || t.parent != null)
+                        continue;
+                    found++;
+                    var bounds = t.GetComponentInChildren<Renderer>().bounds;
+                    Debug.Log("PLAYTEST prop " + name + " size=" + bounds.size.ToString("F2") + " bottom=" + bounds.min.y.ToString("F2"));
+                    Assert.Greater(Vector3.Dot(t.forward, Vector3.up), 0.99f, name + " is lying on its side");
+                    Assert.That(bounds.min.y, Is.EqualTo(0f).Within(0.2f), name + " is not resting on the ground");
+                }
+                Assert.Greater(found, 0, name + " missing from GameArena");
+            }
+            Capture("05_props");
+        }
+
+        [UnityTest]
+        public IEnumerator MenuPlayButtonOpensArena()
+        {
+            SceneManager.LoadScene("MainMenu");
+            yield return null;
+            yield return null;
+            Capture("00_menu");
+            var menu = Object.FindAnyObjectByType<MainMenuController>();
+            Assert.IsNotNull(menu, "MainMenu has no MainMenuController");
+            Button play = null;
+            foreach (var button in Object.FindObjectsByType<Button>(FindObjectsSortMode.None))
+            {
+                if (button.name == "Play")
+                    play = button;
+            }
+            Assert.IsNotNull(play, "MainMenu has no Play button");
+            play.onClick.Invoke();
+            yield return null;
+            yield return null;
+            Assert.AreEqual("GameArena", SceneManager.GetActiveScene().name);
+            Assert.IsNotNull(Object.FindAnyObjectByType<PlayerController>());
+        }
+
+        [UnityTest]
+        public IEnumerator TouchJoystickMovesHero()
+        {
+            var touch = InputSystem.AddDevice<Touchscreen>();
+            try
+            {
+                yield return null;
+                var player = Object.FindAnyObjectByType<PlayerController>();
+                Assert.IsNotNull(player.joystick, "hero has no joystick");
+                var rect = (RectTransform)player.joystick.transform;
+                var canvas = rect.GetComponentInParent<Canvas>().rootCanvas;
+                var cam = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+                Vector2 centre = RectTransformUtility.WorldToScreenPoint(cam, rect.TransformPoint(rect.rect.center));
+                Debug.Log("PLAYTEST joystick centre " + centre + " screen " + Screen.width + "x" + Screen.height);
+                var start = player.transform.position;
+                InputSystem.QueueStateEvent(touch, new TouchState { touchId = 1, phase = UnityEngine.InputSystem.TouchPhase.Began, position = centre });
+                yield return null;
+                float t = 0f;
+                while (t < 1f)
+                {
+                    InputSystem.QueueStateEvent(touch, new TouchState { touchId = 1, phase = UnityEngine.InputSystem.TouchPhase.Moved, position = centre + new Vector2(60f, 0f) });
+                    yield return null;
+                    SkipLevelUp();
+                    t += Time.deltaTime;
+                }
+                Debug.Log("PLAYTEST joystick direction " + player.joystick.Direction);
+                Capture("06_hud_touch");
+                InputSystem.QueueStateEvent(touch, new TouchState { touchId = 1, phase = UnityEngine.InputSystem.TouchPhase.Ended, position = centre + new Vector2(60f, 0f) });
+                yield return null;
+                var moved = player.transform.position - start;
+                Debug.Log("PLAYTEST touch moved " + moved.ToString("F2"));
+                Assert.Greater(moved.x, 1.5f, "dragging the joystick right did not move the hero right");
+                Assert.AreEqual(Vector2.zero, player.joystick.Direction, "joystick did not reset on release");
+            }
+            finally
+            {
+                InputSystem.RemoveDevice(touch);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator EveryRendererHasAWorkingMaterial()
+        {
+            yield return null;
+            var vfx = VfxPlayer.Instance;
+            Assert.IsNotNull(vfx);
+            var roots = new List<GameObject> { vfx.hit, vfx.dash, vfx.levelUp, vfx.slam };
+            foreach (var renderer in Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+                roots.Add(renderer.gameObject);
+            foreach (var root in roots)
+            {
+                Assert.IsNotNull(root, "VfxPlayer has an empty slot");
+                foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+                {
+                    foreach (var material in renderer.sharedMaterials)
+                    {
+                        Assert.IsNotNull(material, renderer.name + " has no material");
+                        Assert.IsTrue(material.shader != null && material.shader.isSupported && material.shader.name != "Hidden/InternalErrorShader",
+                            renderer.name + " uses a broken shader " + (material.shader != null ? material.shader.name : "null"));
+                    }
+                }
+            }
         }
 
         IEnumerator Hold(float seconds)
@@ -125,8 +258,74 @@ namespace SlimeBreaker.Tests
             while (t < seconds)
             {
                 yield return null;
-                t += Time.deltaTime;
+                SkipLevelUp();
+                t += Time.unscaledDeltaTime;
             }
+        }
+
+        static void SkipLevelUp()
+        {
+            var flow = GameFlowController.Instance;
+            if (flow != null && flow.State == GameState.LevelUp)
+                flow.ChooseUpgrade(0);
+        }
+
+        void Steer(Vector3 hero)
+        {
+            EnemyHealth nearest = null;
+            float nearestDistance = float.MaxValue;
+            Vector3 crowd = Vector3.zero;
+            foreach (var enemy in EnemyHealth.Active)
+            {
+                if (enemy == null || enemy.IsDead)
+                    continue;
+                Vector3 d = hero - enemy.transform.position;
+                d.y = 0f;
+                float m = Mathf.Max(0.3f, d.magnitude);
+                if (m < nearestDistance)
+                {
+                    nearestDistance = m;
+                    nearest = enemy;
+                }
+                if (m < 3f)
+                    crowd += d / (m * m);
+            }
+            Vector3 flat = new Vector3(hero.x, 0f, hero.z);
+            Vector3 wish;
+            if (nearest == null)
+            {
+                wish = -flat;
+            }
+            else
+            {
+                Vector3 toEnemy = nearest.transform.position - hero;
+                toEnemy.y = 0f;
+                Vector3 tangent = Vector3.Cross(Vector3.up, toEnemy.normalized);
+                if (nearestDistance < 1.6f)
+                    wish = crowd.normalized * 1.5f + tangent * 0.5f;
+                else if (nearestDistance > 2f)
+                    wish = toEnemy.normalized + crowd * 0.5f;
+                else
+                    wish = tangent + crowd * 0.5f;
+            }
+            if (flat.magnitude > 8f)
+                wish -= flat.normalized;
+            if (wish.sqrMagnitude < 0.0001f)
+                wish = Vector3.forward;
+            if (nearest != null && nearestDistance < 1.3f)
+                dashTimer -= Time.unscaledDeltaTime;
+            var keys = new List<Key>();
+            if (wish.z > 0.38f * wish.magnitude) keys.Add(Key.W);
+            if (wish.z < -0.38f * wish.magnitude) keys.Add(Key.S);
+            if (wish.x > 0.38f * wish.magnitude) keys.Add(Key.D);
+            if (wish.x < -0.38f * wish.magnitude) keys.Add(Key.A);
+            if (dashTimer <= 0f)
+            {
+                keys.Add(Key.Space);
+                dashTimer = 0.3f;
+            }
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState(keys.ToArray()));
+            InputSystem.Update();
         }
 
         void Press(Key key)
@@ -149,7 +348,7 @@ namespace SlimeBreaker.Tests
 
         void CollectGroundVertices()
         {
-            groundVertices.Clear();
+            groundColliders.Clear();
             var ground = GameObject.Find("ENV_Forest_Ground");
             if (ground == null)
                 return;
@@ -157,48 +356,35 @@ namespace SlimeBreaker.Tests
             {
                 if (filter.sharedMesh == null)
                     continue;
-                var matrix = filter.transform.localToWorldMatrix;
-                foreach (var v in filter.sharedMesh.vertices)
-                    groundVertices.Add(matrix.MultiplyPoint3x4(v));
+                var probe = filter.gameObject.AddComponent<MeshCollider>();
+                probe.sharedMesh = filter.sharedMesh;
+                groundColliders.Add(probe);
             }
         }
 
         float GroundSurface(Vector3 at)
         {
             float best = float.MinValue;
-            float reach = 0.9f;
-            foreach (var v in groundVertices)
+            var origin = new Vector3(at.x, 20f, at.z);
+            foreach (var probe in groundColliders)
             {
-                float dx = v.x - at.x;
-                float dz = v.z - at.z;
-                if (dx * dx + dz * dz <= reach * reach && v.y > best)
-                    best = v.y;
+                if (probe.Raycast(new Ray(origin, Vector3.down), out var hit, 60f))
+                    best = Mathf.Max(best, hit.point.y);
             }
-            return best == float.MinValue ? 0f : best;
+            return best;
         }
 
         static float Feet(GameObject target)
         {
             float lowest = float.MaxValue;
-            var baked = new Mesh();
-            foreach (var skinned in target.GetComponentsInChildren<SkinnedMeshRenderer>())
+            foreach (var renderer in target.GetComponentsInChildren<Renderer>())
             {
-                skinned.BakeMesh(baked, true);
-                var t = skinned.transform;
-                foreach (var v in baked.vertices)
-                    lowest = Mathf.Min(lowest, (t.position + t.rotation * v).y);
-            }
-            foreach (var filter in target.GetComponentsInChildren<MeshFilter>())
-            {
-                if (filter.sharedMesh == null)
+                if (!renderer.enabled || !renderer.gameObject.activeInHierarchy || renderer is ParticleSystemRenderer)
                     continue;
-                if (filter.GetComponent<MeshRenderer>() == null || !filter.GetComponent<MeshRenderer>().enabled || !filter.gameObject.activeInHierarchy)
-                    continue;
-                var matrix = filter.transform.localToWorldMatrix;
-                foreach (var v in filter.sharedMesh.vertices)
-                    lowest = Mathf.Min(lowest, matrix.MultiplyPoint3x4(v).y);
+                if (renderer is SkinnedMeshRenderer skinned)
+                    skinned.updateWhenOffscreen = true;
+                lowest = Mathf.Min(lowest, renderer.bounds.min.y);
             }
-            Object.Destroy(baked);
             return lowest;
         }
 
@@ -215,9 +401,20 @@ namespace SlimeBreaker.Tests
             var camera = Camera.main != null ? Camera.main : Object.FindAnyObjectByType<Camera>();
             if (camera == null || SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null)
                 return;
-            var rt = new RenderTexture(720, 1280, 24);
+            var rt = new RenderTexture(1280, 720, 24);
             var previous = camera.targetTexture;
+            var overlays = new List<Canvas>();
+            foreach (var canvas in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+            {
+                if (!canvas.isRootCanvas || canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+                    continue;
+                canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                canvas.worldCamera = camera;
+                canvas.planeDistance = camera.nearClipPlane + 0.1f;
+                overlays.Add(canvas);
+            }
             camera.targetTexture = rt;
+            Canvas.ForceUpdateCanvases();
             camera.Render();
             RenderTexture.active = rt;
             var image = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);
@@ -225,6 +422,8 @@ namespace SlimeBreaker.Tests
             image.Apply();
             camera.targetTexture = previous;
             RenderTexture.active = null;
+            foreach (var canvas in overlays)
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             var dir = Path.Combine(Application.dataPath, "..", "Logs", "playtest");
             Directory.CreateDirectory(dir);
             File.WriteAllBytes(Path.Combine(dir, name + ".png"), image.EncodeToPNG());

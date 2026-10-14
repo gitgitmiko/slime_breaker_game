@@ -24,37 +24,31 @@ unity-editor -batchmode -nographics -quit \
 
 Berhasil jika log memuat `SLIMEBREAKER_SETUP_OK`.
 
-## Percobaan yang sudah dijalankan
+## Build APK
 
-Perintah di atas dijalankan pada 14 Oktober 2026 dan berhenti dengan kode 198. Log:
-
-```text
-No valid Unity Editor license found. Please activate your license.
-```
-
-`unity license activate --personal --accept-eula` menolak dengan `NOT_SIGNED_IN`. `unity auth status` melaporkan `loggedIn: false`. Tidak ada file `.ulf` di mesin ini.
-
-APK belum dibuat. Jangan menganggap build Android berhasil sebelum log editor memuat setup OK dan file APK benar-benar ada.
-
-## Mengaktifkan lisensi
-
-Masuk ke akun Unity, lalu aktifkan lisensi Personal:
+CLI `unity build --target Android` pada Unity 6.3 di mesin ini menolak tanpa `--execute-method` atau build profile. Gunakan method di `ProjectSetup`:
 
 ```bash
-unity auth login
-unity license activate --personal --accept-eula
+cd /home/gitgitmiko/github-repos/slime-breaker
+unity-editor -batchmode -nographics -quit \
+  -projectPath "$PWD" \
+  -executeMethod SlimeBreaker.EditorTools.ProjectSetup.BuildAndroidApk \
+  -logFile Logs/android-build.log
 ```
 
-Akun layanan bisa memakai `unity auth login --client-id ... --secret-from-stdin`. Setelah itu ulangi perintah setup di atas.
+Berhasil jika log memuat `SLIMEBREAKER_APK_OK` dan file `Builds/SlimeBreaker.apk` ada.
 
-## Perintah build yang belum dijalankan
+## Hasil 14 Oktober 2026
 
-`unity build --help` sudah dicek. Flag yang cocok adalah `--target`, `--output-path`, dan `--android-export-type`. Perintah ini belum dieksekusi:
+- Setup: `SLIMEBREAKER_SETUP_OK`, exit 0.
+- APK: `Builds/SlimeBreaker.apk` (31 MB), juga disalin ke `~/Downloads/SlimeBreaker.apk`.
+- Paket: `com.gitgitmiko.slimebreaker` 0.1.0, min SDK 25, target 36, native `arm64-v8a`, landscape.
+- Ditandatangani debug keystore Unity (bukan Play Store).
+- Tidak ada perangkat ADB terhubung, jadi pasang di HP masih manual.
 
-```bash
-unity build --target Android --android-export-type apk \
-  --output-path Builds/SlimeBreaker.apk \
-  --log-file Logs/android-build.log
-```
+## Pasang di HP
 
-Target pemain: ARM64, IL2CPP, orientasi Landscape Left, min SDK 25, id `com.gitgitmiko.slimebreaker`. Tidak ada perangkat Android yang terhubung untuk uji pasang, jadi uji di perangkat masih tertunda.
+1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).
+2. Di Android, izinkan pasang dari sumber tidak dikenal untuk aplikasi yang dipakai transfer.
+3. Buka file APK, pasang, lalu jalankan **Slime Breaker**.
+4. Putar HP ke landscape. Butuh Android 7.1 atau lebih baru, CPU ARM64.

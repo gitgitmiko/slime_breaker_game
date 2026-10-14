@@ -20,4 +20,4 @@ python3 asset_work/scripts/build_audio_ui.py
 
 ## Membuka proyek
 
-Unity 6000.3.26f1. Render pipeline: URP 17.0.1. Modul Android sudah terpasang di editor, tetapi lisensi Unity belum aktif, jadi impor dan APK belum bisa dijalankan. Langkahnya ada di `docs/build_android.md`.
+Unity 6000.3.26f1. Render pipeline: URP 17.0.1. APK ARM64 ada di `Builds/SlimeBreaker.apk`. Langkah setup, build, dan pasang di HP ada di `docs/build_android.md`.

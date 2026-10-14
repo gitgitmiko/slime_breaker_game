@@ -619,13 +619,14 @@ namespace SlimeBreaker.EditorTools
 
             var ui = BuildHud(player.GetComponent<DashController>(), flow);
             flow.ui = ui;
+            EditorSceneManager.SaveScene(scene, "Assets/Scenes/GameArena.unity");
+            AssetDatabase.ImportAsset("Assets/Scenes/GameArena.unity");
             EditorBuildSettings.scenes = new[]
             {
                 new EditorBuildSettingsScene("Assets/Scenes/Boot.unity", true),
                 new EditorBuildSettingsScene("Assets/Scenes/MainMenu.unity", true),
                 new EditorBuildSettingsScene("Assets/Scenes/GameArena.unity", true)
             };
-            EditorSceneManager.SaveScene(scene, "Assets/Scenes/GameArena.unity");
             Debug.Log("Arena built. XP manager " + (xp != null));
         }
 

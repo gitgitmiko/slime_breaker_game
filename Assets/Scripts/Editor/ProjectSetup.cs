@@ -217,7 +217,6 @@ namespace SlimeBreaker.EditorTools
                 importer.spriteImportMode = SpriteImportMode.Single;
                 importer.alphaIsTransparency = true;
                 importer.mipmapEnabled = false;
-                importer.spriteMeshType = SpriteMeshType.FullRect;
                 var path = AssetDatabase.GUIDToAssetPath(guid);
                 if (path.Contains("UI_Panel"))
                     importer.spriteBorder = new Vector4(48f, 48f, 48f, 48f);
@@ -1000,7 +999,6 @@ namespace SlimeBreaker.EditorTools
                 importer.spriteImportMode = SpriteImportMode.Single;
                 importer.alphaIsTransparency = true;
                 importer.mipmapEnabled = false;
-                importer.spriteMeshType = SpriteMeshType.FullRect;
                 importer.SaveAndReimport();
             }
 

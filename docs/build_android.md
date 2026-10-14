@@ -38,6 +38,19 @@ unity-editor -batchmode -nographics -quit \
 
 Berhasil jika log memuat `SLIMEBREAKER_APK_OK` dan file `Builds/SlimeBreaker.apk` ada.
 
+## Playtest sebelum build
+
+Jalankan setelah `BuildAll`, sebelum `BuildAndroidApk`. Tanpa `-nographics` dan di bawah Xvfb supaya kamera bisa merender screenshot:
+
+```bash
+cd /home/gitgitmiko/github-repos/slime-breaker
+xvfb-run -a -s "-screen 0 1280x1024x24" unity-editor -batchmode \
+  -projectPath "$PWD" -runTests -testPlatform PlayMode \
+  -testResults "$PWD/Logs/playmode.xml" -logFile Logs/playmode.log
+```
+
+Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: hero dan slime menapak tanah, properti tegak, material VFX valid, tombol Main membuka arena, joystick sentuh menggerakkan hero, dan bot bertahan satu menit. Baris `PLAYTEST` di log memuat angka ukurnya. Screenshot ada di `Logs/playtest/`.
+
 ## Hasil 14 Oktober 2026
 
 - Setup: `SLIMEBREAKER_SETUP_OK`, exit 0.

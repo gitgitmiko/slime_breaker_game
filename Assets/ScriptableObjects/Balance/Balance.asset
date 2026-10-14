@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6711e429e44e933ddae539c81c8e4939, type: 3}
+  m_Name: Balance
+  m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.BalanceConfig
+  baseDamage: 12
+  baseMoveSpeed: 5.2
+  baseHealth: 100
+  baseAttackCooldown: 0.48
+  baseAttackRange: 2.15
+  baseDashCooldown: 1.25
+  dashDuration: 0.16
+  dashSpeed: 16
+  bossTime: 300
+  maxAliveEnemies: 22
+  victoryGold: 40
+  defeatGold: 12
+  goldPerLevel: 4
+  permanentBaseCost: 30
+  phases:
+  - untilSeconds: 45
+    interval: 2.3
+    normal: 1
+    fast: 0
+    tank: 0
+  - untilSeconds: 120
+    interval: 1.7
+    normal: 3
+    fast: 2
+    tank: 0
+  - untilSeconds: 210
+    interval: 1.35
+    normal: 3
+    fast: 2
+    tank: 1
+  - untilSeconds: 300
+    interval: 1
+    normal: 2
+    fast: 3
+    tank: 2

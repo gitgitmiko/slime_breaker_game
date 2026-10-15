@@ -15,11 +15,23 @@ namespace SlimeBreaker
         public Kind kind = Kind.Rock;
         /// <summary>Horizontal radius used to keep obstacles apart and away from spawn points.</summary>
         public float footprint = 1f;
+        /// <summary>If set, this prop only appears in these biomes. Empty means the default kind rules apply.</summary>
+        public Biome[] allowedBiomes;
 
         public bool AllowedIn(Biome biome)
         {
-            // Deserts have no living trees; everything else fits every biome.
-            return !(biome == Biome.Desert && kind == Kind.Tree);
+            if (allowedBiomes != null && allowedBiomes.Length > 0)
+            {
+                for (int i = 0; i < allowedBiomes.Length; i++)
+                {
+                    if (allowedBiomes[i] == biome)
+                        return true;
+                }
+                return false;
+            }
+            if (kind == Kind.Tree)
+                return biome == Biome.Forest || biome == Biome.Snow || biome == Biome.Thunder || biome == Biome.Swamp || biome == Biome.Royal;
+            return true;
         }
     }
 

@@ -51,6 +51,14 @@
 - Prop pohon/batu/pilar/boulder yang sebelumnya tembus kini punya collider di layer Obstacle.
 - Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 12/12. PlayMode 22/22. APK `SLIMEBREAKER_APK_OK` 0.6.0.
 
+### Putaran 7 — biome per 10 lantai, cuaca tiap lantai, damage boss
+
+- Tiap naik lantai arena di-roll ulang: cuaca + siang/malam berganti, seed layout baru.
+- Tiap 10 lantai biome baru: hutan (1–10), gurun (11–20), salju (21–30), petir, rawa, bayangan, magma, badai, kristal, kerajaan.
+- Aset baru: 7 tekstur tanah + 11 mesh biome (kaktus, duri es, spire, akar rawa, obelisk, lava, gerbang, kolom).
+- Damage boss: basic 50, skill 100, skill enrage 200.
+- Versi 0.7.0.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

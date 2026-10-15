@@ -91,6 +91,48 @@ namespace SlimeBreaker.Tests
         }
 
         [Test]
+        public void BiomeBandsMatchTenFloorThemes()
+        {
+            Assert.AreEqual(Biome.Forest, ArenaTheme.BiomeAtFloor(1));
+            Assert.AreEqual(Biome.Forest, ArenaTheme.BiomeAtFloor(10));
+            Assert.AreEqual(Biome.Desert, ArenaTheme.BiomeAtFloor(11));
+            Assert.AreEqual(Biome.Desert, ArenaTheme.BiomeAtFloor(20));
+            Assert.AreEqual(Biome.Snow, ArenaTheme.BiomeAtFloor(21));
+            Assert.AreEqual(Biome.Thunder, ArenaTheme.BiomeAtFloor(40));
+            Assert.AreEqual(Biome.Swamp, ArenaTheme.BiomeAtFloor(41));
+            Assert.AreEqual(Biome.Shadow, ArenaTheme.BiomeAtFloor(60));
+            Assert.AreEqual(Biome.Volcano, ArenaTheme.BiomeAtFloor(70));
+            Assert.AreEqual(Biome.Storm, ArenaTheme.BiomeAtFloor(71));
+            Assert.AreEqual(Biome.Crystal, ArenaTheme.BiomeAtFloor(90));
+            Assert.AreEqual(Biome.Royal, ArenaTheme.BiomeAtFloor(100));
+        }
+
+        [Test]
+        public void FloorThemeRotatesWeatherAndTimeOfDay()
+        {
+            var floor1 = ArenaTheme.ForFloor(1, 42);
+            var floor2 = ArenaTheme.ForFloor(2, 42, floor1);
+            Assert.AreEqual(Biome.Forest, floor1.biome);
+            Assert.AreEqual(Weather.Clear, floor1.weather);
+            Assert.AreEqual(TimeOfDay.Day, floor1.time);
+            Assert.AreEqual(Biome.Forest, floor2.biome);
+            Assert.AreEqual(TimeOfDay.Night, floor2.time);
+            Assert.AreNotEqual(floor1.weather, floor2.weather);
+            Assert.AreNotEqual(floor1.seed, floor2.seed);
+            var desert = ArenaTheme.ForFloor(15, 42);
+            Assert.AreEqual(Biome.Desert, desert.biome);
+        }
+
+        [Test]
+        public void BossAttacksUseFixedDamageTiers()
+        {
+            Assert.AreEqual(50, BossCatalog.ContactDamageForFloor(10));
+            Assert.AreEqual(50, BossCatalog.ContactDamageForFloor(100));
+            Assert.AreEqual(100, BossCatalog.SkillDamage(false));
+            Assert.AreEqual(200, BossCatalog.SkillDamage(true));
+        }
+
+        [Test]
         public void CombatMathWithoutRunReturnsBaseDamage()
         {
             int rolled = CombatMath.ApplyCrit(12, out bool crit);

@@ -26,6 +26,15 @@ Sumber geometri: Blender 5.2.2, skrip `asset_work/scripts/build_assets.py`. Teks
 | ENV_Forest_Flower | 740 | ditabur 20× |
 | ENV_Forest_BoundaryStone | 100 | 24 batu di r ≈ 23 m menghadap pusat |
 | ENV_Arena_RuneRing | 1536 | cincin rune emisif, di-scale ke arena radius 22 m |
+| ENV_Desert_Cactus | 404 | kaktus tiga lengan + bunga |
+| ENV_Snow_IceSpike | 56 | kluster duri es |
+| ENV_Thunder_Spire | 406 | menara kilat |
+| ENV_Swamp_Root / Reed | 456 / 48 | akar rawa dan reed |
+| ENV_Shadow_Obelisk | 32 | obelisk ungu |
+| ENV_Volcano_Rock / Pillar | 100 / 304 | batu lava dan pilar magma |
+| ENV_Storm_Arch | 36 | gerbang batu badai |
+| ENV_Crystal_Spire | 80 | spire kristal |
+| ENV_Royal_Column | 600 | kolom marmer + emas |
 
 ## VFX mesh
 
@@ -46,7 +55,7 @@ Partikel (hit, dash, levelup, slam, ice, zap, fire, burn, arcane, powerup, cast,
 - Ikon 256 px: 9 upgrade (`ICON_Upgrade_*`, termasuk Lifesteal) dan 4 skill (`ICON_Skill_Ice`, `_Lightning`, `_Fire`, `_Arcane`).
 - Panel: `UI_Panel`, `UI_Button`, `UI_Button_Danger`, `UI_Button_Gold`, `UI_Slot`, `UI_Bar_Back`, `UI_Joystick_Base`, `UI_Joystick_Knob`, `UI_Circle`.
 - SFX 23 file (`Assets/Audio/SFX`): 20 SFX lama plus Portal, Rain, Wind (ambien cuaca). Semua disintesis numpy.
-- Tekstur tanah tambahan: `TEX_Snow_Ground`, `TEX_Sand_Ground` (+ normal).
+- Tekstur tanah: hutan, salju, pasir, plus `TEX_Thunder_Ground`, `TEX_Swamp_Ground`, `TEX_Shadow_Ground`, `TEX_Volcano_Ground`, `TEX_Storm_Ground`, `TEX_Crystal_Ground`, `TEX_Royal_Ground` (+ normal).
 - Musik: `MUS_Arena.ogg` (40 s loop) dan `MUS_Menu.ogg` (26 s loop), MIDI orisinal dirender FluidSynth.
 
 Preview Blender ada di `asset_work/previews/` (termasuk lembar frame animasi hero). Material berwarna ikut di dalam FBX dan dikonversi ke URP Lit oleh `ProjectSetup` memakai tabel nama material (smoothness, metallic, emisi, normal map).

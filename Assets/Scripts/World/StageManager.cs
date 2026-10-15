@@ -4,7 +4,8 @@ using UnityEngine;
 namespace SlimeBreaker
 {
     /// <summary>
-    /// One large map for the whole run. Floors 1–100. Power-ups drop every five hero levels.
+    /// Floors 1–100. Each floor rebuilds the arena: weather and day/night rotate every floor,
+    /// biome changes every ten floors. Power-ups drop every five hero levels.
     /// Clearing a floor (or beating a boss) opens an exit portal; walking in advances the floor.
     /// Every ten floors a unique boss is announced, the camera zooms in, and regular spawning
     /// pauses until that boss falls. Bosses summon minions so the hero can keep levelling.
@@ -36,6 +37,7 @@ namespace SlimeBreaker
         public BossKind ActiveBoss { get; private set; }
 
         bool introducing;
+        bool transitioning;
 
         void Awake()
         {
@@ -79,15 +81,15 @@ namespace SlimeBreaker
                     if (resume.intermission)
                         spawner.Paused = true;
                 }
-                generator?.Generate(Theme);
+                ApplyTheme(true);
                 if (resume.intermission)
                     StartCoroutine(RestoreBoss());
             }
             else
             {
                 RunSeed = Random.Range(1, int.MaxValue);
-                Theme = ArenaTheme.First(RunSeed);
-                generator?.Generate(Theme);
+                Theme = ArenaTheme.ForFloor(1, RunSeed);
+                ApplyTheme(true);
                 if (spawner != null)
                     spawner.Stage = 1;
             }
@@ -95,7 +97,7 @@ namespace SlimeBreaker
 
         void Update()
         {
-            if (introducing)
+            if (introducing || transitioning)
                 return;
             var flow = GameFlowController.Instance;
             if (flow == null || flow.Stats == null)
@@ -262,10 +264,13 @@ namespace SlimeBreaker
             HandledBossTiers = (Floor - 1) / RunRules.BossEvery;
             Intermission = false;
             introducing = false;
+            transitioning = false;
             ActiveBoss = BossKind.None;
             VanishMinions();
             if (ExitPortal.Active != null)
                 Destroy(ExitPortal.Active.gameObject);
+            Theme = ArenaTheme.ForFloor(Floor, RunSeed != 0 ? RunSeed : 2024, Theme);
+            ApplyTheme(true);
             if (spawner != null)
             {
                 spawner.Stage = Floor;
@@ -277,18 +282,59 @@ namespace SlimeBreaker
         {
             if (portal != null)
                 Destroy(portal.gameObject);
-            if (Floor >= RunRules.MaxFloor)
+            if (Floor >= RunRules.MaxFloor || transitioning)
                 return;
+            StartCoroutine(AdvanceFloor());
+        }
+
+        IEnumerator AdvanceFloor()
+        {
+            transitioning = true;
+            if (spawner != null)
+                spawner.Paused = true;
+            if (fader != null)
+                yield return fader.FadeOut(0.32f);
+
             Floor++;
             FloorKills = 0;
+            Theme = ArenaTheme.ForFloor(Floor, RunSeed != 0 ? RunSeed : 2024, Theme);
+            ApplyTheme(false);
+            PlaceHero(Vector3.zero);
             if (spawner != null)
             {
                 spawner.Stage = Floor;
-                spawner.Paused = false;
+                spawner.Paused = RunRules.IsBossFloor(Floor);
             }
+
+            if (fader != null)
+                yield return fader.FadeIn(0.32f);
+            transitioning = false;
             if (!RunRules.IsBossFloor(Floor))
-                GameFlowController.Instance?.ui?.ShowToast("Lantai " + Floor, new Color(0.55f, 0.9f, 1f));
+                GameFlowController.Instance?.ui?.ShowToast("Lantai " + Floor + " — " + Theme.Title, new Color(0.55f, 0.9f, 1f));
             GameFlowController.Instance?.PersistRun();
+        }
+
+        void ApplyTheme(bool immediate)
+        {
+            generator?.Generate(Theme);
+            if (immediate)
+                PlaceHero(PlayerHealth.Instance != null ? PlayerHealth.Instance.transform.position : Vector3.zero);
+        }
+
+        static void PlaceHero(Vector3 position)
+        {
+            var hero = PlayerHealth.Instance;
+            if (hero == null)
+                return;
+            position.y = 0f;
+            if (Obstacles.Overlaps(position, 0.6f))
+                position = Vector3.zero;
+            var body = hero.GetComponent<CharacterController>();
+            if (body != null)
+                body.enabled = false;
+            hero.transform.position = position;
+            if (body != null)
+                body.enabled = true;
         }
 
         static void VanishMinions()

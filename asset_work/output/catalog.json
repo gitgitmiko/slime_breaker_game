@@ -190,5 +190,93 @@
     "triangles": 660,
     "vertices": 332,
     "notes": "no rig"
+  },
+  {
+    "id": "ENV_Desert_Cactus",
+    "file": "Environment/Biomes/ENV_Desert_Cactus.fbx",
+    "kind": "static",
+    "triangles": 404,
+    "vertices": 212,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Snow_IceSpike",
+    "file": "Environment/Biomes/ENV_Snow_IceSpike.fbx",
+    "kind": "static",
+    "triangles": 56,
+    "vertices": 36,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Thunder_Spire",
+    "file": "Environment/Biomes/ENV_Thunder_Spire.fbx",
+    "kind": "static",
+    "triangles": 406,
+    "vertices": 209,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Swamp_Root",
+    "file": "Environment/Biomes/ENV_Swamp_Root.fbx",
+    "kind": "static",
+    "triangles": 456,
+    "vertices": 240,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Swamp_Reed",
+    "file": "Environment/Biomes/ENV_Swamp_Reed.fbx",
+    "kind": "static",
+    "triangles": 48,
+    "vertices": 36,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Shadow_Obelisk",
+    "file": "Environment/Biomes/ENV_Shadow_Obelisk.fbx",
+    "kind": "static",
+    "triangles": 32,
+    "vertices": 20,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Volcano_Rock",
+    "file": "Environment/Biomes/ENV_Volcano_Rock.fbx",
+    "kind": "static",
+    "triangles": 100,
+    "vertices": 54,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Volcano_Pillar",
+    "file": "Environment/Biomes/ENV_Volcano_Pillar.fbx",
+    "kind": "static",
+    "triangles": 304,
+    "vertices": 158,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Storm_Arch",
+    "file": "Environment/Biomes/ENV_Storm_Arch.fbx",
+    "kind": "static",
+    "triangles": 36,
+    "vertices": 24,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Crystal_Spire",
+    "file": "Environment/Biomes/ENV_Crystal_Spire.fbx",
+    "kind": "static",
+    "triangles": 80,
+    "vertices": 48,
+    "notes": "no rig"
+  },
+  {
+    "id": "ENV_Royal_Column",
+    "file": "Environment/Biomes/ENV_Royal_Column.fbx",
+    "kind": "static",
+    "triangles": 600,
+    "vertices": 308,
+    "notes": "no rig"
   }
 ]

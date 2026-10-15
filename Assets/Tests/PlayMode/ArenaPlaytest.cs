@@ -570,6 +570,7 @@ namespace SlimeBreaker.Tests
             }
             Assert.IsNotNull(boss, "Rock Slime was not spawned");
             Assert.AreEqual(10000, boss.Max, "floor 10 boss HP should be 10000");
+            Assert.AreEqual(RunRules.BossBasicDamage, boss.ContactDamage, "boss basic attack should deal 50");
             Capture("13_boss_intro");
             wait = 0f;
             while (flow.State == GameState.BossIntro && wait < 3.2f)
@@ -621,11 +622,42 @@ namespace SlimeBreaker.Tests
             Assert.AreEqual(1, stage.Floor, "clearing the quota should open a door, not skip the floor");
             Assert.IsNotNull(ExitPortal.Active, "exit portal did not appear after the kill quota");
             Capture("15_portal");
+            var firstTheme = stage.Theme;
+            Assert.AreEqual(Biome.Forest, firstTheme.biome);
             ExitPortal.Active.Enter();
-            yield return null;
+            float wait = 0f;
+            while (stage.Floor < 2 && wait < 3f)
+            {
+                yield return null;
+                wait += Time.unscaledDeltaTime;
+            }
             Assert.AreEqual(2, stage.Floor, "entering the portal should move to lantai 2");
             Assert.AreEqual(0, stage.FloorKills);
             Assert.IsNull(ExitPortal.Active);
+            Assert.AreEqual(Biome.Forest, stage.Theme.biome, "floors 1-10 stay on the grass biome");
+            Assert.AreEqual(TimeOfDay.Night, stage.Theme.time, "floor 2 should be night");
+            Assert.AreNotEqual(firstTheme.seed, stage.Theme.seed, "layout seed should change every floor");
+        }
+
+        [UnityTest]
+        public IEnumerator BiomeChangesEveryTenFloors()
+        {
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            var generator = Object.FindAnyObjectByType<ArenaGenerator>();
+            Assert.IsNotNull(stage);
+            Assert.IsNotNull(generator);
+            stage.ForceFloor(11);
+            yield return null;
+            Assert.AreEqual(Biome.Desert, stage.Theme.biome);
+            Assert.AreEqual(generator.sandGround, generator.groundRenderer.sharedMaterial);
+            stage.ForceFloor(21);
+            yield return null;
+            Assert.AreEqual(Biome.Snow, stage.Theme.biome);
+            Assert.AreEqual(generator.snowGround, generator.groundRenderer.sharedMaterial);
+            stage.ForceFloor(31);
+            yield return null;
+            Assert.AreEqual(Biome.Thunder, stage.Theme.biome);
+            Capture("17_biome_thunder");
         }
 
         [UnityTest]

@@ -64,6 +64,19 @@ PALETTE = {
     "petal_center": (1.0, 0.86, 0.30, 1),
     "boundary": (0.42, 0.44, 0.50, 1),
     "rune": (0.30, 0.90, 1.0, 1),
+    "cactus": (0.22, 0.58, 0.24, 1),
+    "cactus_dark": (0.14, 0.40, 0.16, 1),
+    "sandstone": (0.78, 0.58, 0.32, 1),
+    "ice_env": (0.72, 0.90, 1.0, 1),
+    "pine": (0.18, 0.38, 0.32, 1),
+    "swamp_bark": (0.28, 0.20, 0.12, 1),
+    "reed": (0.42, 0.52, 0.22, 1),
+    "shadow_stone": (0.16, 0.10, 0.24, 1),
+    "lava": (1.0, 0.32, 0.06, 1),
+    "basalt": (0.18, 0.14, 0.14, 1),
+    "slate": (0.42, 0.46, 0.52, 1),
+    "marble": (0.86, 0.82, 0.74, 1),
+    "thunder_glow": (1.0, 0.92, 0.40, 1),
     # vfx
     "ring": (0.95, 0.45, 0.18, 1),
     "xp": (0.55, 0.95, 0.35, 1),
@@ -89,6 +102,9 @@ EMISSIVE = {
     "fire": 1.0,
     "powerup": 1.0,
     "rune": 1.0,
+    "ice_env": 0.55,
+    "lava": 1.4,
+    "thunder_glow": 1.1,
 }
 
 
@@ -98,11 +114,12 @@ def parse_args():
         raise SystemExit("Pass output, preview, and texture directories after --")
     args = argv[argv.index("--") + 1 :]
     if len(args) < 3:
-        raise SystemExit("Expected: <out_dir> <preview_dir> <texture_dir>")
-    return args[0], args[1], args[2]
+        raise SystemExit("Expected: <out_dir> <preview_dir> <texture_dir> [env]")
+    mode = args[3] if len(args) >= 4 else "all"
+    return args[0], args[1], args[2], mode
 
 
-OUT, PREVIEW, TEX = parse_args()
+OUT, PREVIEW, TEX, MODE = parse_args()
 os.makedirs(OUT, exist_ok=True)
 os.makedirs(PREVIEW, exist_ok=True)
 os.makedirs(TEX, exist_ok=True)
@@ -1041,6 +1058,125 @@ def build_boundary_stone(name, mats):
     return join([stone, rune], name)
 
 
+def build_cactus(name, mats):
+    trunk = static_mesh(add_cylinder(name + "_trunk", 0.16, 1.35, (0, 0, 0.67), vertices=12, radius2=0.13), mats["cactus"])
+    arm = static_mesh(add_cylinder(name + "_arm", 0.09, 0.55, (0.32, 0, 0.85), vertices=10, rot=(0, 1.15, 0)), mats["cactus_dark"])
+    tip = static_mesh(add_sphere(name + "_tip", 0.11, (0.52, 0, 1.05), seg=12, rings=8), mats["cactus"])
+    arm2 = static_mesh(add_cylinder(name + "_arm2", 0.08, 0.42, (-0.26, 0.05, 0.7), vertices=10, rot=(0, -1.05, 0.2)), mats["cactus"])
+    blossom = static_mesh(add_sphere(name + "_flower", 0.08, (0, 0, 1.38), scale=(1.1, 1.1, 0.55), seg=12, rings=6), mats["petal"])
+    return join([trunk, arm, tip, arm2, blossom], name)
+
+
+def build_ice_spike(name, mats):
+    parts = []
+    specs = [
+        (0.22, 1.35, (0, 0, 0.67)),
+        (0.14, 0.9, (0.22, -0.08, 0.45)),
+        (0.12, 0.7, (-0.18, 0.14, 0.35)),
+        (0.1, 0.5, (0.08, 0.2, 0.25)),
+    ]
+    for index, (radius, height, loc) in enumerate(specs):
+        spike = add_cone(f"{name}_{index}", radius, height, loc, vertices=8)
+        displace(spike, 0.03, seed=20 + index)
+        parts.append(static_mesh(spike, mats["ice_env"]))
+    return join(parts, name)
+
+
+def build_thunder_spire(name, mats):
+    base = bevel(add_cube(name + "_base", 0.7, (0, 0, 0.1), scale=(1, 1, 0.28)), 0.02)
+    base.data.materials.append(mats["ruin"])
+    shaft = static_mesh(add_cylinder(name + "_shaft", 0.12, 1.8, (0, 0, 1.05), vertices=8, radius2=0.06), mats["slate"])
+    tip = static_mesh(add_cone(name + "_tip", 0.08, 0.35, (0, 0, 2.05), vertices=8), mats["thunder_glow"])
+    ring = static_mesh(add_torus(name + "_ring", 0.22, 0.03, (0, 0, 1.55), major_segments=16, minor_segments=8), mats["thunder_glow"])
+    return join([base, shaft, tip, ring], name)
+
+
+def build_swamp_root(name, mats):
+    trunk = static_mesh(add_cylinder(name + "_trunk", 0.18, 1.1, (0, 0, 0.55), vertices=10, radius2=0.1), mats["swamp_bark"])
+    displace(trunk, 0.04, seed=33)
+    parts = [trunk]
+    for index in range(4):
+        angle = index / 4 * math.tau + 0.3
+        loc = (math.cos(angle) * 0.28, math.sin(angle) * 0.28, 0.2)
+        root = add_sphere(f"{name}_root{index}", 0.12, loc, scale=(1.6, 0.7, 0.45), seg=10, rings=6, rot=(0, 0, angle))
+        parts.append(static_mesh(root, mats["swamp_bark"]))
+    moss = static_mesh(add_ico(name + "_moss", 0.22, (0.05, -0.08, 0.85), scale=(1.2, 0.9, 0.6), subdiv=1), mats["moss"])
+    return join(parts + [moss], name)
+
+
+def build_swamp_reed(name, mats):
+    parts = []
+    for index in range(6):
+        angle = index / 6 * math.tau
+        r = 0.07 if index else 0.0
+        h = 0.55 + hash01(index, 3, 5) * 0.28
+        parts.append(static_mesh(add_cone(f"{name}_{index}", 0.025, h, (math.cos(angle) * r, math.sin(angle) * r, h / 2), rot=(math.sin(angle) * 0.2, -math.cos(angle) * 0.2, 0), vertices=5), mats["reed"]))
+    return join(parts, name)
+
+
+def build_shadow_obelisk(name, mats):
+    body = add_cube(name + "_body", 0.55, (0, 0, 0.85), scale=(0.7, 0.7, 3.1))
+    for vert in body.data.vertices:
+        if vert.co.z > 1.2:
+            vert.co.x *= 0.45
+            vert.co.y *= 0.45
+    apply_xform(body)
+    static_mesh(body, mats["shadow_stone"])
+    gem = static_mesh(add_ico(name + "_gem", 0.12, (0, -0.18, 1.15), scale=(0.7, 0.4, 1.4), subdiv=1), mats["arcane"])
+    return join([body, gem], name)
+
+
+def build_volcano_rock(name, mats):
+    rock = add_ico(name, 0.5, (0, 0, 0.32), scale=(1.2, 1.0, 0.85), subdiv=2)
+    displace(rock, 0.16, seed=44)
+    for vert in rock.data.vertices:
+        vert.co.z = max(vert.co.z, 0.0)
+    smooth(rock, math.radians(35))
+    static_mesh(rock, mats["basalt"])
+    glow = static_mesh(add_ico(name + "_lava", 0.18, (0.08, -0.05, 0.28), scale=(1.3, 0.8, 0.5), subdiv=1), mats["lava"])
+    return join([rock, glow], name)
+
+
+def build_volcano_pillar(name, mats):
+    base = bevel(add_cube(name + "_base", 0.75, (0, 0, 0.12), scale=(1, 1, 0.3)), 0.03)
+    base.data.materials.append(mats["basalt"])
+    shaft = static_mesh(add_cylinder(name + "_shaft", 0.22, 1.35, (0, 0, 0.85), vertices=8, radius2=0.18), mats["basalt"])
+    cap = static_mesh(add_sphere(name + "_cap", 0.2, (0, 0, 1.55), scale=(1, 1, 0.45), seg=12, rings=8), mats["lava"])
+    return join([base, shaft, cap], name)
+
+
+def build_storm_arch(name, mats):
+    left = static_mesh(add_cube(name + "_l", 0.7, (-0.45, 0, 0.7), scale=(0.35, 0.35, 2.0)), mats["slate"])
+    right = static_mesh(add_cube(name + "_r", 0.7, (0.45, 0, 0.7), scale=(0.35, 0.35, 2.0)), mats["slate"])
+    beam = static_mesh(add_cube(name + "_beam", 0.7, (0, 0, 1.42), scale=(1.55, 0.32, 0.28)), mats["ruin"])
+    return join([left, right, beam], name)
+
+
+def build_crystal_spire(name, mats):
+    parts = []
+    specs = [
+        ((0, 0, 0.7), (0.55, 0.55, 1.8), 0.28),
+        ((0.22, -0.1, 0.4), (0.45, 0.45, 1.3), 0.18),
+        ((-0.2, 0.12, 0.32), (0.4, 0.4, 1.1), 0.15),
+        ((0.05, 0.22, 0.22), (0.35, 0.35, 0.8), 0.12),
+    ]
+    for index, (loc, scale, radius) in enumerate(specs):
+        shard = add_ico(f"{name}_{index}", radius, loc, scale=scale, subdiv=1)
+        parts.append(static_mesh(shard, mats["crystal"] if index == 0 else mats["ice_env"]))
+    return join(parts, name)
+
+
+def build_royal_column(name, mats):
+    base = bevel(add_cube(name + "_base", 0.85, (0, 0, 0.12), scale=(1, 1, 0.28)), 0.04)
+    base.data.materials.append(mats["marble"])
+    shaft = static_mesh(add_cylinder(name + "_shaft", 0.2, 1.5, (0, 0, 0.95), vertices=12), mats["marble"])
+    ring = static_mesh(add_torus(name + "_ring", 0.24, 0.035, (0, 0, 1.35), major_segments=20, minor_segments=8), mats["gold"])
+    cap = bevel(add_cube(name + "_cap", 0.72, (0, 0, 1.75), scale=(1, 1, 0.28)), 0.03)
+    cap.data.materials.append(mats["gold"])
+    gem = static_mesh(add_ico(name + "_gem", 0.1, (0, 0, 1.95), subdiv=1), mats["crystal"])
+    return join([base, shaft, ring, cap, gem], name)
+
+
 def build_ground(mats):
     # 80 m so the camera never sees the edge; the rim rises into gentle hills past the play area.
     size = 80
@@ -1110,6 +1246,21 @@ def produce_static(asset_id, folder, obj, distance, height, target_z):
     cleanup_objects()
 
 
+def produce_biome_props(mats):
+    biomes = "Environment/Biomes"
+    produce_static("ENV_Desert_Cactus", biomes, build_cactus("ENV_Desert_Cactus", mats), 3.6, 1.5, 0.7)
+    produce_static("ENV_Snow_IceSpike", biomes, build_ice_spike("ENV_Snow_IceSpike", mats), 3.4, 1.5, 0.6)
+    produce_static("ENV_Thunder_Spire", biomes, build_thunder_spire("ENV_Thunder_Spire", mats), 4.4, 2.1, 0.9)
+    produce_static("ENV_Swamp_Root", biomes, build_swamp_root("ENV_Swamp_Root", mats), 3.6, 1.5, 0.55)
+    produce_static("ENV_Swamp_Reed", biomes, build_swamp_reed("ENV_Swamp_Reed", mats), 2.4, 1.1, 0.3)
+    produce_static("ENV_Shadow_Obelisk", biomes, build_shadow_obelisk("ENV_Shadow_Obelisk", mats), 4.8, 2.2, 0.95)
+    produce_static("ENV_Volcano_Rock", biomes, build_volcano_rock("ENV_Volcano_Rock", mats), 2.8, 1.2, 0.3)
+    produce_static("ENV_Volcano_Pillar", biomes, build_volcano_pillar("ENV_Volcano_Pillar", mats), 4.2, 1.9, 0.85)
+    produce_static("ENV_Storm_Arch", biomes, build_storm_arch("ENV_Storm_Arch", mats), 4.0, 1.8, 0.8)
+    produce_static("ENV_Crystal_Spire", biomes, build_crystal_spire("ENV_Crystal_Spire", mats), 4.0, 1.8, 0.7)
+    produce_static("ENV_Royal_Column", biomes, build_royal_column("ENV_Royal_Column", mats), 4.6, 2.0, 0.95)
+
+
 def main():
     textures = make_textures()
     reset_file()
@@ -1119,58 +1270,72 @@ def main():
     mats["gem"] = material("MAT_gem", PALETTE["gem"], emission=0.9, rough=0.2)
     mats["xp"] = material("MAT_xp", PALETTE["xp"], emission=0.9, rough=0.25)
     mats["ring"] = material("MAT_ring", PALETTE["ring"], emission=0.7, rough=0.35)
+    mats["ice_env"] = material("MAT_ice_env", PALETTE["ice_env"], emission=0.55, rough=0.12)
+    mats["lava"] = material("MAT_lava", PALETTE["lava"], emission=1.4, rough=0.25)
+    mats["thunder_glow"] = material("MAT_thunder_glow", PALETTE["thunder_glow"], emission=1.1, rough=0.2)
     mats["ground"] = material("MAT_Forest_Ground", PALETTE["moss"], rough=0.95, image_path=textures["ground"])
     mats["bark"] = material("MAT_bark", PALETTE["bark"], rough=0.9, image_path=textures["bark"])
     mats["rock_tex"] = material("MAT_rock_tex", PALETTE["rock"], rough=0.85, image_path=textures["rock"])
 
-    produce_character(
-        "CHR_Hero_Main",
-        "Characters/Hero",
-        lambda: build_hero(mats),
-        4.2,
-        1.5,
-        0.85,
-        action_sheet=[("Attack", (0.25, 0.45, 0.7)), ("Run", (0.0, 0.25, 0.5)), ("Hit", (0.2,)), ("Death", (1.0,)), ("Dash", (0.5,))],
-    )
-    produce_character("ENM_Slime_Normal", "Enemies/Slime", lambda: build_slime("ENM_Slime_Normal", mats["slime"], 0.48, 0.9, "normal", mats), 3.2, 1.2, 0.4)
-    produce_character("ENM_Slime_Fast", "Enemies/Slime", lambda: build_slime("ENM_Slime_Fast", mats["slime_fast"], 0.36, 0.72, "fast", mats), 2.8, 1.05, 0.3)
-    produce_character("ENM_Slime_Tank", "Enemies/Slime", lambda: build_slime("ENM_Slime_Tank", mats["slime_tank"], 0.62, 1.05, "tank", mats), 3.8, 1.45, 0.55)
-    produce_character("BOSS_SlimeKing", "Enemies/SlimeKing", lambda: build_slime("BOSS_SlimeKing", mats["king"], 0.95, 1.05, "king", mats), 5.5, 2.1, 0.9)
+    env_only = MODE == "env"
+    if not env_only:
+        produce_character(
+            "CHR_Hero_Main",
+            "Characters/Hero",
+            lambda: build_hero(mats),
+            4.2,
+            1.5,
+            0.85,
+            action_sheet=[("Attack", (0.25, 0.45, 0.7)), ("Run", (0.0, 0.25, 0.5)), ("Hit", (0.2,)), ("Death", (1.0,)), ("Dash", (0.5,))],
+        )
+        produce_character("ENM_Slime_Normal", "Enemies/Slime", lambda: build_slime("ENM_Slime_Normal", mats["slime"], 0.48, 0.9, "normal", mats), 3.2, 1.2, 0.4)
+        produce_character("ENM_Slime_Fast", "Enemies/Slime", lambda: build_slime("ENM_Slime_Fast", mats["slime_fast"], 0.36, 0.72, "fast", mats), 2.8, 1.05, 0.3)
+        produce_character("ENM_Slime_Tank", "Enemies/Slime", lambda: build_slime("ENM_Slime_Tank", mats["slime_tank"], 0.62, 1.05, "tank", mats), 3.8, 1.45, 0.55)
+        produce_character("BOSS_SlimeKing", "Enemies/SlimeKing", lambda: build_slime("BOSS_SlimeKing", mats["king"], 0.95, 1.05, "king", mats), 5.5, 2.1, 0.9)
 
-    env = "Environment/ForestArena"
-    produce_static("ENV_Forest_Ground", env, build_ground(mats), 26, 16, 0)
-    produce_static("ENV_Forest_Tree_A", env, build_tree("ENV_Forest_Tree_A", mats, 1.0, seed=1), 5.0, 2.0, 1.2)
-    produce_static("ENV_Forest_Tree_B", env, build_tree("ENV_Forest_Tree_B", mats, 1.25, seed=7), 5.6, 2.2, 1.3)
-    produce_static("ENV_Forest_Rock_A", env, build_rock("ENV_Forest_Rock_A", mats, (1.3, 1.0, 0.7), seed=2), 2.6, 1.2, 0.25)
-    produce_static("ENV_Forest_Rock_B", env, build_rock("ENV_Forest_Rock_B", mats, (0.8, 1.1, 0.9), seed=4), 2.4, 1.1, 0.25)
-    produce_static("ENV_Forest_Mushroom", env, build_mushroom("ENV_Forest_Mushroom", mats), 2.2, 1.0, 0.25)
-    produce_static("ENV_Forest_Bush", env, build_bush("ENV_Forest_Bush", mats), 2.2, 1.0, 0.25)
-    produce_static("ENV_Forest_RuinPillar", env, build_pillar("ENV_Forest_RuinPillar", mats), 4.6, 1.9, 0.9)
-    produce_static("ENV_Forest_Grass", env, build_grass("ENV_Forest_Grass", mats), 1.6, 0.7, 0.15)
-    produce_static("ENV_Forest_Flower", env, build_flower("ENV_Forest_Flower", mats), 1.4, 0.6, 0.2)
-    produce_static("ENV_Forest_BoundaryStone", env, build_boundary_stone("ENV_Forest_BoundaryStone", mats), 2.4, 1.1, 0.3)
-    rune_ring = static_mesh(add_torus("ENV_Arena_RuneRing", 11.3, 0.09, (0, 0, 0.02), scale=(1, 1, 0.35), major_segments=96, minor_segments=8), mats["rune"])
-    produce_static("ENV_Arena_RuneRing", env, rune_ring, 30, 18, 0)
+        env = "Environment/ForestArena"
+        produce_static("ENV_Forest_Ground", env, build_ground(mats), 26, 16, 0)
+        produce_static("ENV_Forest_Tree_A", env, build_tree("ENV_Forest_Tree_A", mats, 1.0, seed=1), 5.0, 2.0, 1.2)
+        produce_static("ENV_Forest_Tree_B", env, build_tree("ENV_Forest_Tree_B", mats, 1.25, seed=7), 5.6, 2.2, 1.3)
+        produce_static("ENV_Forest_Rock_A", env, build_rock("ENV_Forest_Rock_A", mats, (1.3, 1.0, 0.7), seed=2), 2.6, 1.2, 0.25)
+        produce_static("ENV_Forest_Rock_B", env, build_rock("ENV_Forest_Rock_B", mats, (0.8, 1.1, 0.9), seed=4), 2.4, 1.1, 0.25)
+        produce_static("ENV_Forest_Mushroom", env, build_mushroom("ENV_Forest_Mushroom", mats), 2.2, 1.0, 0.25)
+        produce_static("ENV_Forest_Bush", env, build_bush("ENV_Forest_Bush", mats), 2.2, 1.0, 0.25)
+        produce_static("ENV_Forest_RuinPillar", env, build_pillar("ENV_Forest_RuinPillar", mats), 4.6, 1.9, 0.9)
+        produce_static("ENV_Forest_Grass", env, build_grass("ENV_Forest_Grass", mats), 1.6, 0.7, 0.15)
+        produce_static("ENV_Forest_Flower", env, build_flower("ENV_Forest_Flower", mats), 1.4, 0.6, 0.2)
+        produce_static("ENV_Forest_BoundaryStone", env, build_boundary_stone("ENV_Forest_BoundaryStone", mats), 2.4, 1.1, 0.3)
+        rune_ring = static_mesh(add_torus("ENV_Arena_RuneRing", 11.3, 0.09, (0, 0, 0.02), scale=(1, 1, 0.35), major_segments=96, minor_segments=8), mats["rune"])
+        produce_static("ENV_Arena_RuneRing", env, rune_ring, 30, 18, 0)
 
-    ring = static_mesh(add_torus("VFX_Boss_Ring", 1.0, 0.08, (0, 0, 0.02), scale=(1, 1, 0.5), major_segments=48, minor_segments=8), mats["ring"])
-    produce_static("VFX_Boss_Ring", "VFX", ring, 3.4, 2.2, 0.1)
-    orb = static_mesh(add_ico("VFX_XP_Orb", 0.16, (0, 0, 0.16), subdiv=2), mats["xp"])
-    produce_static("VFX_XP_Orb", "VFX", orb, 1.6, 0.7, 0.16)
-    shard = static_mesh(add_ico("VFX_Ice_Shard", 0.18, (0, 0, 0.0), scale=(0.55, 0.55, 1.7), subdiv=0), mats["ice"])
-    produce_static("VFX_Ice_Shard", "VFX", shard, 1.6, 0.7, 0.0)
-    missile = static_mesh(add_ico("VFX_Arcane_Missile", 0.14, (0, 0, 0.0), scale=(0.7, 0.7, 1.6), subdiv=1), mats["arcane"])
-    produce_static("VFX_Arcane_Missile", "VFX", missile, 1.6, 0.7, 0.0)
-    bolt = static_mesh(add_ico("VFX_Magic_Bolt", 0.12, (0, 0, 0.0), subdiv=1), mats["crystal"])
-    produce_static("VFX_Magic_Bolt", "VFX", bolt, 1.4, 0.6, 0.0)
-    fire_ring = static_mesh(add_torus("VFX_Fire_Ring", 1.0, 0.16, (0, 0, 0.1), scale=(1, 1, 0.6), major_segments=48, minor_segments=10), mats["fire"])
-    produce_static("VFX_Fire_Ring", "VFX", fire_ring, 3.4, 2.2, 0.1)
-    crystal = static_mesh(add_ico("VFX_PowerUp_Crystal", 0.3, (0, 0, 0.0), scale=(0.8, 0.8, 1.6), subdiv=1), mats["powerup"])
-    halo = static_mesh(add_torus("VFX_PowerUp_Crystal_ring", 0.5, 0.03, (0, 0, 0.0), major_segments=40, minor_segments=8), mats["gold"])
-    produce_static("VFX_PowerUp_Crystal", "VFX", join([crystal, halo], "VFX_PowerUp_Crystal"), 2.4, 1.0, 0.0)
+    produce_biome_props(mats)
+
+    if not env_only:
+        ring = static_mesh(add_torus("VFX_Boss_Ring", 1.0, 0.08, (0, 0, 0.02), scale=(1, 1, 0.5), major_segments=48, minor_segments=8), mats["ring"])
+        produce_static("VFX_Boss_Ring", "VFX", ring, 3.4, 2.2, 0.1)
+        orb = static_mesh(add_ico("VFX_XP_Orb", 0.16, (0, 0, 0.16), subdiv=2), mats["xp"])
+        produce_static("VFX_XP_Orb", "VFX", orb, 1.6, 0.7, 0.16)
+        shard = static_mesh(add_ico("VFX_Ice_Shard", 0.18, (0, 0, 0.0), scale=(0.55, 0.55, 1.7), subdiv=0), mats["ice"])
+        produce_static("VFX_Ice_Shard", "VFX", shard, 1.6, 0.7, 0.0)
+        missile = static_mesh(add_ico("VFX_Arcane_Missile", 0.14, (0, 0, 0.0), scale=(0.7, 0.7, 1.6), subdiv=1), mats["arcane"])
+        produce_static("VFX_Arcane_Missile", "VFX", missile, 1.6, 0.7, 0.0)
+        bolt = static_mesh(add_ico("VFX_Magic_Bolt", 0.12, (0, 0, 0.0), subdiv=1), mats["crystal"])
+        produce_static("VFX_Magic_Bolt", "VFX", bolt, 1.4, 0.6, 0.0)
+        fire_ring = static_mesh(add_torus("VFX_Fire_Ring", 1.0, 0.16, (0, 0, 0.1), scale=(1, 1, 0.6), major_segments=48, minor_segments=10), mats["fire"])
+        produce_static("VFX_Fire_Ring", "VFX", fire_ring, 3.4, 2.2, 0.1)
+        crystal = static_mesh(add_ico("VFX_PowerUp_Crystal", 0.3, (0, 0, 0.0), scale=(0.8, 0.8, 1.6), subdiv=1), mats["powerup"])
+        halo = static_mesh(add_torus("VFX_PowerUp_Crystal_ring", 0.5, 0.03, (0, 0, 0.0), major_segments=40, minor_segments=8), mats["gold"])
+        produce_static("VFX_PowerUp_Crystal", "VFX", join([crystal, halo], "VFX_PowerUp_Crystal"), 2.4, 1.0, 0.0)
 
     catalog_path = os.path.join(OUT, "catalog.json")
+    merged = CATALOG
+    if env_only and os.path.isfile(catalog_path):
+        with open(catalog_path, "r", encoding="utf-8") as handle:
+            existing = json.load(handle)
+        seen = {entry.get("id") for entry in CATALOG}
+        merged = [entry for entry in existing if entry.get("id") not in seen] + CATALOG
     with open(catalog_path, "w", encoding="utf-8") as handle:
-        json.dump(CATALOG, handle, indent=2)
+        json.dump(merged, handle, indent=2)
     print("CATALOG", catalog_path, flush=True)
 
 

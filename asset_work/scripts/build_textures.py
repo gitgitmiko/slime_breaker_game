@@ -168,6 +168,27 @@ def rock(path, size=512):
     normal_map(low * 0.5 + fine * 0.5, path.replace(".png", "_Normal.png"), strength=2.4)
 
 
+def colored_ground(path, size, seed, dark, mid, light, accent, accent_thresh=0.78, strength=2.0):
+    """Tileable dirt/stone/biome floor used by later arena themes."""
+    low = tileable_noise(size, seed, octaves=4, base_cells=4)
+    midn = tileable_noise(size, seed + 1, octaves=5, base_cells=14)
+    fine = tileable_noise(size, seed + 2, octaves=3, base_cells=48)
+    colour = np.zeros((size, size, 3))
+    dark = np.array(dark)
+    mid = np.array(mid)
+    light = np.array(light)
+    accent = np.array(accent)
+    for channel in range(3):
+        base = lerp(dark[channel], mid[channel], low)
+        base = lerp(base, light[channel], np.clip((midn - 0.45) * 1.6, 0.0, 1.0) * 0.65)
+        patch = np.clip((low - accent_thresh) * 6.0, 0.0, 1.0)
+        base = lerp(base, accent[channel], patch * 0.55)
+        base += (fine - 0.5) * 0.06
+        colour[..., channel] = base
+    Image.fromarray(to_rgb(colour), mode="RGB").save(path, optimize=True)
+    normal_map(low * 0.5 + midn * 0.35 + fine * 0.15, path.replace(".png", "_Normal.png"), strength=strength)
+
+
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else "asset_work/textures"
     os.makedirs(out, exist_ok=True)
@@ -176,6 +197,34 @@ def main():
     rock(os.path.join(out, "TEX_Rock.png"))
     snow(os.path.join(out, "TEX_Snow_Ground.png"))
     sand(os.path.join(out, "TEX_Sand_Ground.png"))
+    colored_ground(
+        os.path.join(out, "TEX_Thunder_Ground.png"), 1024, 61,
+        (0.16, 0.20, 0.14), (0.28, 0.32, 0.20), (0.40, 0.42, 0.26), (0.18, 0.14, 0.10), 0.74, 2.1,
+    )
+    colored_ground(
+        os.path.join(out, "TEX_Swamp_Ground.png"), 1024, 71,
+        (0.14, 0.18, 0.10), (0.26, 0.36, 0.16), (0.34, 0.46, 0.20), (0.12, 0.26, 0.22), 0.70, 1.8,
+    )
+    colored_ground(
+        os.path.join(out, "TEX_Shadow_Ground.png"), 1024, 81,
+        (0.05, 0.04, 0.09), (0.13, 0.09, 0.18), (0.22, 0.14, 0.30), (0.32, 0.10, 0.42), 0.76, 1.7,
+    )
+    colored_ground(
+        os.path.join(out, "TEX_Volcano_Ground.png"), 1024, 91,
+        (0.10, 0.07, 0.07), (0.26, 0.14, 0.10), (0.40, 0.24, 0.14), (0.82, 0.22, 0.05), 0.72, 2.4,
+    )
+    colored_ground(
+        os.path.join(out, "TEX_Storm_Ground.png"), 1024, 101,
+        (0.24, 0.28, 0.32), (0.38, 0.42, 0.46), (0.54, 0.57, 0.60), (0.28, 0.40, 0.48), 0.73, 1.9,
+    )
+    colored_ground(
+        os.path.join(out, "TEX_Crystal_Ground.png"), 1024, 111,
+        (0.20, 0.14, 0.30), (0.40, 0.30, 0.54), (0.70, 0.60, 0.86), (0.50, 0.82, 1.0), 0.77, 2.0,
+    )
+    colored_ground(
+        os.path.join(out, "TEX_Royal_Ground.png"), 1024, 121,
+        (0.30, 0.24, 0.18), (0.54, 0.40, 0.28), (0.78, 0.66, 0.44), (0.86, 0.70, 0.28), 0.80, 1.8,
+    )
     print("TEXTURES_OK", out, flush=True)
 
 

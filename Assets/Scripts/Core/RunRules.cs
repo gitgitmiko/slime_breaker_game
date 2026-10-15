@@ -1,8 +1,8 @@
 namespace SlimeBreaker
 {
     /// <summary>
-    /// Shared run limits: one large map, 100 floors, hero levels to 999,
-    /// a power-up every five hero levels, and a boss every ten floors.
+    /// Shared run limits: 100 floors, hero levels to 999, a power-up every five
+    /// hero levels, a biome every ten floors, and a boss every ten floors.
     /// </summary>
     public static class RunRules
     {
@@ -12,6 +12,9 @@ namespace SlimeBreaker
         public const int PowerUpEvery = 5;
         public const int BossHealthPerTier = 10000;
         public const float BossEnrageHealth = 0.3f;
+        public const int BossBasicDamage = 50;
+        public const int BossSkillDamage = 100;
+        public const int BossEnrageDamage = 200;
         public const float ArenaRadius = 22f;
 
         public static bool IsBossFloor(int floor)

@@ -38,7 +38,12 @@ namespace SlimeBreaker
 
         public static int ContactDamageForFloor(int floor)
         {
-            return 12 + Mathf.Max(1, RunRules.BossTier(floor)) * 6;
+            return RunRules.BossBasicDamage;
+        }
+
+        public static int SkillDamage(bool enraged)
+        {
+            return enraged ? RunRules.BossEnrageDamage : RunRules.BossSkillDamage;
         }
 
         public static string DisplayName(BossKind kind)

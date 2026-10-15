@@ -39,6 +39,13 @@ namespace SlimeBreaker.EditorTools
         static Material forestGroundMaterial;
         static Material snowGroundMaterial;
         static Material sandGroundMaterial;
+        static Material thunderGroundMaterial;
+        static Material swampGroundMaterial;
+        static Material shadowGroundMaterial;
+        static Material volcanoGroundMaterial;
+        static Material stormGroundMaterial;
+        static Material crystalGroundMaterial;
+        static Material royalGroundMaterial;
         static RenderPipelineAsset[] graphicsPresets;
 
         [MenuItem("Slime Breaker/Build Android APK")]
@@ -177,18 +184,19 @@ namespace SlimeBreaker.EditorTools
             var fastDef = Enemy("Assets/ScriptableObjects/Enemies/ENM_Slime_Fast.asset", "Slime Cepat", 14, 3.9f, 6, 1.0f, 0.6f, 4, false);
             var tankDef = Enemy("Assets/ScriptableObjects/Enemies/ENM_Slime_Tank.asset", "Slime Tank", 64, 1.35f, 14, 1.4f, 0.9f, 8, false);
             var rangedDef = Enemy("Assets/ScriptableObjects/Enemies/ENM_Slime_Ranged.asset", "Slime Jarak", 18, 2.15f, 7, 6.4f, 1.35f, 4, false, ranged: true, tint: new Color(0.95f, 0.48f, 0.78f));
-            var bossDef = Enemy("Assets/ScriptableObjects/Enemies/BOSS_SlimeKing.asset", "Royal Slime", 100000, 2.1f, 72, 1.7f, 0.8f, 80, true, kind: BossKind.Royal);
+            int bossHit = RunRules.BossBasicDamage;
+            var bossDef = Enemy("Assets/ScriptableObjects/Enemies/BOSS_SlimeKing.asset", "Royal Slime", 100000, 2.1f, bossHit, 1.7f, 0.8f, 80, true, kind: BossKind.Royal);
             var bossDefs = new[]
             {
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_RockSlime.asset", "Rock Slime", 10000, 1.8f, 18, 1.8f, 0.85f, 40, true, incoming: 0.65f, kind: BossKind.Rock, tint: BossCatalog.Tint(BossKind.Rock)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_FlameSlime.asset", "Flame Slime", 20000, 2.15f, 24, 1.7f, 0.8f, 45, true, kind: BossKind.Flame, tint: BossCatalog.Tint(BossKind.Flame)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_FrostSlime.asset", "Frost Slime", 30000, 1.9f, 30, 1.7f, 0.8f, 50, true, kind: BossKind.Frost, tint: BossCatalog.Tint(BossKind.Frost)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_VoltSlime.asset", "Volt Slime", 40000, 2.55f, 36, 1.6f, 0.7f, 55, true, kind: BossKind.Volt, tint: BossCatalog.Tint(BossKind.Volt)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_ToxicSlime.asset", "Toxic Slime", 50000, 2.0f, 42, 1.7f, 0.8f, 60, true, kind: BossKind.Toxic, tint: BossCatalog.Tint(BossKind.Toxic)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_ShadowSlime.asset", "Shadow Slime", 60000, 2.4f, 48, 1.6f, 0.7f, 65, true, kind: BossKind.Shadow, tint: BossCatalog.Tint(BossKind.Shadow)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_MagmaSlime.asset", "Magma Slime", 70000, 1.85f, 54, 1.8f, 0.85f, 70, true, kind: BossKind.Magma, tint: BossCatalog.Tint(BossKind.Magma)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_StormSlime.asset", "Storm Slime", 80000, 2.2f, 60, 1.7f, 0.75f, 75, true, kind: BossKind.Storm, tint: BossCatalog.Tint(BossKind.Storm)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_CrystalSlime.asset", "Crystal Slime", 90000, 1.7f, 66, 1.7f, 0.8f, 80, true, incoming: 0.8f, kind: BossKind.Crystal, tint: BossCatalog.Tint(BossKind.Crystal)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_RockSlime.asset", "Rock Slime", 10000, 1.8f, bossHit, 1.8f, 0.85f, 40, true, incoming: 0.65f, kind: BossKind.Rock, tint: BossCatalog.Tint(BossKind.Rock)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_FlameSlime.asset", "Flame Slime", 20000, 2.15f, bossHit, 1.7f, 0.8f, 45, true, kind: BossKind.Flame, tint: BossCatalog.Tint(BossKind.Flame)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_FrostSlime.asset", "Frost Slime", 30000, 1.9f, bossHit, 1.7f, 0.8f, 50, true, kind: BossKind.Frost, tint: BossCatalog.Tint(BossKind.Frost)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_VoltSlime.asset", "Volt Slime", 40000, 2.55f, bossHit, 1.6f, 0.7f, 55, true, kind: BossKind.Volt, tint: BossCatalog.Tint(BossKind.Volt)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_ToxicSlime.asset", "Toxic Slime", 50000, 2.0f, bossHit, 1.7f, 0.8f, 60, true, kind: BossKind.Toxic, tint: BossCatalog.Tint(BossKind.Toxic)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_ShadowSlime.asset", "Shadow Slime", 60000, 2.4f, bossHit, 1.6f, 0.7f, 65, true, kind: BossKind.Shadow, tint: BossCatalog.Tint(BossKind.Shadow)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_MagmaSlime.asset", "Magma Slime", 70000, 1.85f, bossHit, 1.8f, 0.85f, 70, true, kind: BossKind.Magma, tint: BossCatalog.Tint(BossKind.Magma)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_StormSlime.asset", "Storm Slime", 80000, 2.2f, bossHit, 1.7f, 0.75f, 75, true, kind: BossKind.Storm, tint: BossCatalog.Tint(BossKind.Storm)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_CrystalSlime.asset", "Crystal Slime", 90000, 1.7f, bossHit, 1.7f, 0.8f, 80, true, incoming: 0.8f, kind: BossKind.Crystal, tint: BossCatalog.Tint(BossKind.Crystal)),
                 bossDef
             };
 
@@ -264,23 +272,46 @@ namespace SlimeBreaker.EditorTools
             foreach (var pair in propHeights)
                 env[pair.Key] = StaticPrefab("Assets/Prefabs/Environment/ENV_Forest_" + pair.Key + ".prefab", "Assets/Art/Environment/ForestArena/ENV_Forest_" + pair.Key + ".fbx", pair.Value, false);
             env["RuneRing"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Arena_RuneRing.prefab", "Assets/Art/Environment/ForestArena/ENV_Arena_RuneRing.fbx", 0.05f, false);
+            env["Cactus"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Desert_Cactus.prefab", "Assets/Art/Environment/Biomes/ENV_Desert_Cactus.fbx", 1.7f, false);
+            env["IceSpike"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Snow_IceSpike.prefab", "Assets/Art/Environment/Biomes/ENV_Snow_IceSpike.fbx", 1.4f, false);
+            env["ThunderSpire"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Thunder_Spire.prefab", "Assets/Art/Environment/Biomes/ENV_Thunder_Spire.fbx", 2.2f, false);
+            env["SwampRoot"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Swamp_Root.prefab", "Assets/Art/Environment/Biomes/ENV_Swamp_Root.fbx", 1.4f, false);
+            env["SwampReed"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Swamp_Reed.prefab", "Assets/Art/Environment/Biomes/ENV_Swamp_Reed.fbx", 0.7f, false);
+            env["ShadowObelisk"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Shadow_Obelisk.prefab", "Assets/Art/Environment/Biomes/ENV_Shadow_Obelisk.fbx", 2.1f, false);
+            env["VolcanoRock"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Volcano_Rock.prefab", "Assets/Art/Environment/Biomes/ENV_Volcano_Rock.fbx", 0.8f, false);
+            env["VolcanoPillar"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Volcano_Pillar.prefab", "Assets/Art/Environment/Biomes/ENV_Volcano_Pillar.fbx", 1.8f, false);
+            env["StormArch"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Storm_Arch.prefab", "Assets/Art/Environment/Biomes/ENV_Storm_Arch.fbx", 1.7f, false);
+            env["CrystalSpire"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Crystal_Spire.prefab", "Assets/Art/Environment/Biomes/ENV_Crystal_Spire.fbx", 1.8f, false);
+            env["RoyalColumn"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Royal_Column.prefab", "Assets/Art/Environment/Biomes/ENV_Royal_Column.fbx", 2.1f, false);
 
             var obstacles = new[]
             {
                 ObstaclePrefab("Assets/Prefabs/Environment/OBS_RockCluster.prefab", Obstacle.Kind.Rock, 1.15f, env["Rock_A"], env["Rock_B"]),
                 ObstaclePrefab("Assets/Prefabs/Environment/OBS_Tree.prefab", Obstacle.Kind.Tree, 0.85f, env["Tree_A"]),
                 ObstaclePrefab("Assets/Prefabs/Environment/OBS_Pillar.prefab", Obstacle.Kind.Ruin, 0.7f, env["RuinPillar"]),
-                ObstaclePrefab("Assets/Prefabs/Environment/OBS_Boulder.prefab", Obstacle.Kind.Rock, 1.25f, env["Rock_A"])
+                ObstaclePrefab("Assets/Prefabs/Environment/OBS_Boulder.prefab", Obstacle.Kind.Rock, 1.25f, env["Rock_A"]),
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_Cactus.prefab", Obstacle.Kind.Tree, 0.7f, env["Cactus"], Biome.Desert),
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_IceSpike.prefab", Obstacle.Kind.Rock, 0.7f, env["IceSpike"], Biome.Snow, Biome.Crystal),
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_ThunderSpire.prefab", Obstacle.Kind.Ruin, 0.65f, env["ThunderSpire"], Biome.Thunder),
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_SwampRoot.prefab", Obstacle.Kind.Tree, 0.8f, env["SwampRoot"], Biome.Swamp),
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_Obelisk.prefab", Obstacle.Kind.Ruin, 0.7f, env["ShadowObelisk"], Biome.Shadow),
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_VolcanoRock.prefab", Obstacle.Kind.Rock, 1.05f, env["VolcanoRock"], Biome.Volcano),
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_StormArch.prefab", Obstacle.Kind.Ruin, 1.1f, env["StormArch"], Biome.Storm),
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_CrystalSpire.prefab", Obstacle.Kind.Ruin, 0.75f, env["CrystalSpire"], Biome.Crystal),
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_RoyalColumn.prefab", Obstacle.Kind.Ruin, 0.75f, env["RoyalColumn"], Biome.Royal)
             };
             var rain = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Rain.prefab", new Color(0.65f, 0.75f, 0.9f), 280, 14f, 0.08f, 2.4f, ParticleSystemShapeType.Box, 20f, "rain", true);
             var snowWx = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Snow.prefab", new Color(0.92f, 0.96f, 1f), 120, 1.4f, 0.12f, 0.25f, ParticleSystemShapeType.Box, 20f, "wind", false);
             var fireflies = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Fireflies.prefab", new Color(1f, 0.92f, 0.45f), 36, 0.35f, 0.08f, -0.05f, ParticleSystemShapeType.Sphere, 10f, null, false);
             var dust = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Dust.prefab", new Color(1f, 0.82f, 0.5f, 0.5f), 56, 0.4f, 0.16f, -0.08f, ParticleSystemShapeType.Box, 18f, "wind", false);
+            var ash = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Ash.prefab", new Color(0.55f, 0.32f, 0.18f, 0.7f), 70, 0.55f, 0.14f, 0.12f, ParticleSystemShapeType.Box, 18f, "wind", false);
+            var spores = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Spores.prefab", new Color(0.55f, 0.85f, 0.3f, 0.55f), 48, 0.28f, 0.12f, -0.04f, ParticleSystemShapeType.Box, 16f, null, false);
+            var sparks = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Sparks.prefab", new Color(1f, 0.92f, 0.45f), 40, 0.9f, 0.07f, 0.05f, ParticleSystemShapeType.Box, 16f, null, false);
             var portal = PortalPrefab("Assets/Prefabs/Environment/ENV_Exit_Portal.prefab", env["RuneRing"]);
 
             BuildBoot();
             BuildMenu(hero, heroController, env);
-            BuildArena(balance, upgrades, skills, hero, normal, fast, tank, ranged, boss, bossDefs, hostileBolt, lightning, env, vfx, powerUp, portal, obstacles, rain, snowWx, fireflies, dust);
+            BuildArena(balance, upgrades, skills, hero, normal, fast, tank, ranged, boss, bossDefs, hostileBolt, lightning, env, vfx, powerUp, portal, obstacles, rain, snowWx, fireflies, dust, ash, spores, sparks);
             ConfigurePlayerSettings();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -517,6 +548,11 @@ namespace SlimeBreaker.EditorTools
                     mat.SetFloat("_Smoothness", 0.9f);
                     Emissive(0.8f);
                 }
+                else if (name.Contains("lava") || name.Contains("thunder"))
+                {
+                    mat.SetFloat("_Smoothness", 0.62f);
+                    Emissive(1.3f);
+                }
                 else if (name.Contains("ice") || name.Contains("rune"))
                 {
                     mat.SetFloat("_Smoothness", 0.85f);
@@ -527,6 +563,10 @@ namespace SlimeBreaker.EditorTools
                     mat.SetFloat("_Smoothness", 0.85f);
                     Emissive(1.1f);
                 }
+                else if (name.Contains("marble"))
+                    mat.SetFloat("_Smoothness", 0.62f);
+                else if (name.Contains("cactus") || name.Contains("reed"))
+                    mat.SetFloat("_Smoothness", 0.22f);
                 else if (name.Contains("slime") || name.Contains("king"))
                 {
                     mat.SetFloat("_Smoothness", 0.78f);
@@ -550,6 +590,13 @@ namespace SlimeBreaker.EditorTools
             forestGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Forest.mat", "TEX_Forest_Ground", "TEX_Forest_Ground_Normal");
             snowGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Snow.mat", "TEX_Snow_Ground", "TEX_Snow_Ground_Normal");
             sandGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Sand.mat", "TEX_Sand_Ground", "TEX_Sand_Ground_Normal");
+            thunderGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Thunder.mat", "TEX_Thunder_Ground", "TEX_Thunder_Ground_Normal");
+            swampGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Swamp.mat", "TEX_Swamp_Ground", "TEX_Swamp_Ground_Normal");
+            shadowGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Shadow.mat", "TEX_Shadow_Ground", "TEX_Shadow_Ground_Normal");
+            volcanoGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Volcano.mat", "TEX_Volcano_Ground", "TEX_Volcano_Ground_Normal");
+            stormGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Storm.mat", "TEX_Storm_Ground", "TEX_Storm_Ground_Normal");
+            crystalGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Crystal.mat", "TEX_Crystal_Ground", "TEX_Crystal_Ground_Normal");
+            royalGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Royal.mat", "TEX_Royal_Ground", "TEX_Royal_Ground_Normal");
         }
 
         static Material GroundMaterial(string path, string albedoName, string normalName)
@@ -1092,6 +1139,19 @@ namespace SlimeBreaker.EditorTools
             return SavePrefab(root, path);
         }
 
+        static GameObject BiomeObstacle(string path, Obstacle.Kind kind, float footprint, GameObject part, params Biome[] biomes)
+        {
+            var prefab = ObstaclePrefab(path, kind, footprint, part);
+            var marker = prefab.GetComponent<Obstacle>();
+            if (marker != null)
+            {
+                marker.allowedBiomes = biomes;
+                EditorUtility.SetDirty(prefab);
+                PrefabUtility.SavePrefabAsset(prefab);
+            }
+            return prefab;
+        }
+
         static GameObject ObstaclePrefab(string path, Obstacle.Kind kind, float footprint, params GameObject[] parts)
         {
             var root = new GameObject(Path.GetFileNameWithoutExtension(path));
@@ -1597,7 +1657,10 @@ namespace SlimeBreaker.EditorTools
             GameObject rain,
             GameObject snowWx,
             GameObject fireflies,
-            GameObject dust)
+            GameObject dust,
+            GameObject ash,
+            GameObject spores,
+            GameObject sparks)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var groundInstance = (GameObject)PrefabUtility.InstantiatePrefab(env["ground"]);
@@ -1672,17 +1735,38 @@ namespace SlimeBreaker.EditorTools
                 grass = env["Grass"],
                 flower = env["Flower"],
                 boundaryStone = env["BoundaryStone"],
-                runeRing = env["RuneRing"]
+                runeRing = env["RuneRing"],
+                cactus = env["Cactus"],
+                iceSpike = env["IceSpike"],
+                thunderSpire = env["ThunderSpire"],
+                swampRoot = env["SwampRoot"],
+                swampReed = env["SwampReed"],
+                shadowObelisk = env["ShadowObelisk"],
+                volcanoRock = env["VolcanoRock"],
+                volcanoPillar = env["VolcanoPillar"],
+                stormArch = env["StormArch"],
+                crystalSpire = env["CrystalSpire"],
+                royalColumn = env["RoyalColumn"]
             };
             generator.obstaclePrefabs = obstaclePrefabs;
             generator.groundRenderer = groundInstance.GetComponentInChildren<Renderer>();
             generator.forestGround = forestGroundMaterial;
             generator.snowGround = snowGroundMaterial;
             generator.sandGround = sandGroundMaterial;
+            generator.thunderGround = thunderGroundMaterial;
+            generator.swampGround = swampGroundMaterial;
+            generator.shadowGround = shadowGroundMaterial;
+            generator.volcanoGround = volcanoGroundMaterial;
+            generator.stormGround = stormGroundMaterial;
+            generator.crystalGround = crystalGroundMaterial;
+            generator.royalGround = royalGroundMaterial;
             generator.rainRig = rain;
             generator.snowRig = snowWx;
             generator.firefliesRig = fireflies;
             generator.dustRig = dust;
+            generator.ashRig = ash;
+            generator.sporesRig = spores;
+            generator.sparksRig = sparks;
             generator.sun = sun;
             generator.arenaCamera = camera;
             generator.arenaRadius = RunRules.ArenaRadius;
@@ -2085,8 +2169,8 @@ namespace SlimeBreaker.EditorTools
         {
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
-            PlayerSettings.bundleVersion = "0.6.0";
-            PlayerSettings.Android.bundleVersionCode = 6;
+            PlayerSettings.bundleVersion = "0.7.0";
+            PlayerSettings.Android.bundleVersionCode = 7;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

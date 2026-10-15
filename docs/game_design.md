@@ -2,11 +2,11 @@
 
 Slime Breaker adalah action roguelite 3D offline untuk Android, landscape, target 60 fps.
 
-Satu run berlangsung di **satu arena besar** (radius 22 m) selama **100 lantai**. Level hero terpisah, maksimum **999**. Setiap 10 lantai muncul slime boss unik. Mengalahkan **Royal Slime** di lantai 100 menamatkan permainan.
+Satu run berlangsung di arena radius 22 m selama **100 lantai**. Level hero terpisah, maksimum **999**. Setiap lantai, cuaca dan siang/malam berganti. Setiap 10 lantai biome map berganti. Setiap 10 lantai muncul slime boss unik. Mengalahkan **Royal Slime** di lantai 100 menamatkan permainan.
 
 ## Loop
 
-Menu → satu arena besar → gerak dan dash → penyihir otomatis menembakkan bolt sihir pelacak ke musuh terdekat yang terlihat (jangkauan 4,4 m; batu/pohon memblokir tembakan) → orb EXP → level-up menjeda permainan dan menawarkan 3 upgrade (hero max Lv 999) → setiap kelipatan 5 **level hero** satu kristal power-up muncul di map yang sama → clear kuota slime membuka **pintu**; hero masuk dulu baru naik lantai → setiap kelipatan 10 **lantai** slime biasa lenyap, peringatan **BOSS LANTAI N**, kamera zoom ke bos, lalu pertarungan (boss memanggil 10 slime kecil tiap 20 detik) → Royal Slime di lantai 100 = tamat → emas disimpan → upgrade permanen di menu. Keluar di tengah run menyimpan progres ke `slimebreaker-run.json`; tombol **Lanjutkan** di menu memulihkan lantai, level, skill, HP, dan EXP.
+Menu → arena lantai 1 (hutan siang cerah) → gerak dan dash → penyihir otomatis menembakkan bolt sihir pelacak ke musuh terdekat yang terlihat (jangkauan 4,4 m; batu/pohon memblokir tembakan) → orb EXP → level-up menjeda permainan dan menawarkan 3 upgrade (hero max Lv 999) → setiap kelipatan 5 **level hero** satu kristal power-up muncul di map yang sama → clear kuota slime membuka **pintu**; hero masuk dulu baru naik lantai → setiap kelipatan 10 **lantai** slime biasa lenyap, peringatan **BOSS LANTAI N**, kamera zoom ke bos, lalu pertarungan (boss memanggil 10 slime kecil tiap 20 detik) → Royal Slime di lantai 100 = tamat → emas disimpan → upgrade permanen di menu. Keluar di tengah run menyimpan progres ke `slimebreaker-run.json`; tombol **Lanjutkan** di menu memulihkan lantai, level, skill, HP, dan EXP.
 
 HUD menampilkan **Lantai**, **Lv**, **ATK** (damage output hero), timer, HP, dan **EXP**. Panah wayfinder menunjuk pintu dan power-up yang aktif. Angka damage mengambang di atas musuh (krem), critical (**CRIT** emas lebih besar), dan damage yang diterima hero (merah).
 
@@ -30,7 +30,24 @@ HUD menampilkan **Lantai**, **Lv**, **ATK** (damage output hero), timer, HP, dan
 
 Saat lantai mencapai kelipatan 10, arena masuk mode boss: minion lenyap, spawner berhenti, banner **BOSS LANTAI N** muncul, kamera zoom ke bos selama ~2,5 detik, lalu pertarungan dimulai. Boss memanggil **10 slime kecil setiap 20 detik** (maks ~14 hidup) supaya hero tetap bisa naik level dan mengambil power-up tiap 5 level. Setelah boss kalah, pintu muncul; masuk pintu baru ke lantai berikutnya.
 
-HP boss = lantai × 1000 (lantai 10 = 10.000, lantai 20 = 20.000, … lantai 100 = 100.000). Ketika HP boss turun di bawah 30%, ia **enrage** dan memakai N skill elemental (N = lantai / 10). Skill memakai telegraf sesuai elemen: batu/es/racun/magma jatuh dari langit dengan **bayangan di tanah**, api menembak bolt api, petir menyambar.
+HP boss = lantai × 1000 (lantai 10 = 10.000, lantai 20 = 20.000, … lantai 100 = 100.000). Damage boss tetap: **basic 50**, **skill 100**, **skill enrage 200**. Ketika HP boss turun di bawah 30%, ia **enrage** dan memakai N skill elemental (N = lantai / 10). Skill memakai telegraf sesuai elemen: batu/es/racun/magma jatuh dari langit dengan **bayangan di tanah**, api menembak bolt api, petir menyambar.
+
+## Map dan cuaca
+
+Masuk pintu meregenerasi arena (fade). Cuaca dan siang/malam berganti setiap lantai. Biome berganti setiap 10 lantai:
+
+| Lantai | Biome | Nuansa |
+|---|---|---|
+| 1–10 | Hutan Rune | rumput, pohon, jamur |
+| 11–20 | Reruntuhan Gurun | pasir, kaktus |
+| 21–30 | Lembah Salju | es, duri es |
+| 31–40 | Padang Petir | spire kilat |
+| 41–50 | Rawa Beracun | akar, reed, spora |
+| 51–60 | Lembah Bayangan | obelisk gelap |
+| 61–70 | Kaldera Magma | batu lava, hujan abu |
+| 71–80 | Puncak Badai | gerbang batu, hujan |
+| 81–90 | Gua Kristal | spire kristal |
+| 91–100 | Taman Kerajaan | kolom marmer emas |
 
 | Lantai | Nama | HP | Skill enrage | Keunikan |
 |---|---|---|---|---|

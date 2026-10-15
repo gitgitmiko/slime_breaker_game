@@ -140,7 +140,8 @@ namespace SlimeBreaker
             return CastElement(player, 1);
         }
 
-        int EnrageDamage => 24 + (int)kind * 6;
+        int BasicDamage => RunRules.BossBasicDamage;
+        int SkillDamage => BossCatalog.SkillDamage(Enraged);
 
         void TickEnrage()
         {
@@ -163,7 +164,7 @@ namespace SlimeBreaker
         {
             Vector3 here = transform.position;
             Vector3 target = player.transform.position;
-            int dmg = Enraged ? EnrageDamage : health.ContactDamage;
+            int dmg = SkillDamage;
             int count = Mathf.Clamp(intensity, 1, 10);
             switch (kind)
             {
@@ -350,7 +351,7 @@ namespace SlimeBreaker
             if (!chargeHit && (player.transform.position - transform.position).sqrMagnitude < 1.6f * 1.6f)
             {
                 chargeHit = true;
-                player.TakeDamage(health.ContactDamage);
+                player.TakeDamage(BasicDamage);
                 VfxPlayer.Instance?.Play("hit", player.transform.position + Vector3.up * 0.7f);
             }
             if (timer <= 0f)
@@ -415,7 +416,7 @@ namespace SlimeBreaker
             flat.y = 0f;
             if (flat.magnitude <= slamRadius)
             {
-                player.TakeDamage(health.ContactDamage + 6);
+                player.TakeDamage(BasicDamage);
                 if (kind == BossKind.Frost)
                     player.Chill(0.45f, 2f);
                 if (kind == BossKind.Flame)
@@ -473,7 +474,7 @@ namespace SlimeBreaker
             Vector3 to = player.transform.position + Vector3.up * 0.8f;
             LightningBolt.Flash(lightningPrefab, from, to);
             if (!Obstacles.Blocked(from, to))
-                player.TakeDamage(Mathf.Max(6, health.ContactDamage));
+                player.TakeDamage(SkillDamage);
             VfxPlayer.Instance?.Play("zap", to);
             AudioService.Instance?.Play("lightning");
         }
@@ -513,7 +514,7 @@ namespace SlimeBreaker
             HazardZone.Drop(target, new Color(1f, 0.25f, 0.05f), 6, 1.8f, 2.2f);
             var player = PlayerHealth.Instance;
             if (player != null && (player.transform.position - target).sqrMagnitude < 2.1f * 2.1f)
-                player.TakeDamage(health.ContactDamage + 4);
+                player.TakeDamage(SkillDamage);
             if (ring != null)
                 ring.gameObject.SetActive(false);
         }
@@ -542,7 +543,7 @@ namespace SlimeBreaker
             AudioService.Instance?.Play("lightning");
             var player = PlayerHealth.Instance;
             if (player != null && (player.transform.position - target).sqrMagnitude < 1.8f * 1.8f)
-                player.TakeDamage(health.ContactDamage);
+                player.TakeDamage(SkillDamage);
         }
 
         void SpikeRing(Vector3 center)
@@ -556,7 +557,7 @@ namespace SlimeBreaker
                 return;
             float d = Vector3.Distance(new Vector3(player.transform.position.x, 0f, player.transform.position.z), new Vector3(center.x, 0f, center.z));
             if (d > 1.6f && d < 4.2f)
-                player.TakeDamage(health.ContactDamage);
+                player.TakeDamage(SkillDamage);
         }
 
         void TickFrostAura(PlayerHealth player)

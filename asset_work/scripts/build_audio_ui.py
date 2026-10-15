@@ -269,6 +269,29 @@ def build_sfx():
     defeat = chime((392.0, 349.23, 311.13, 233.08), 0.28, 0.9, release=0.7)
     sfx("SFX_Defeat", mix(defeat, pad(tone(116.54, 1.8, attack=0.1, release=1.2) * 0.35, 1.8)))
 
+    # Exit portal: airy swirl plus a bright chime.
+    swirl = bandpass(noise(0.7), sweep(400, 2800, 0.7, 0.7), sweep(1200, 7000, 0.7, 0.7)) * envelope(int(0.7 * RATE), attack=0.08, release=0.4)
+    portal_chime = chime((659.25, 987.77, 1318.5), 0.08, 0.45, release=0.35)
+    sfx("SFX_Portal", mix(swirl * 0.7, portal_chime * 0.55))
+
+    # Loopable rain and wind ambience (a few seconds, faded at the ends so they tile).
+    rain = highpass(bandpass(noise(4.0), 800, 9000), 400)
+    rain *= envelope(len(rain), attack=0.4, release=0.4)
+    drops = np.zeros_like(rain)
+    for _ in range(80):
+        start = int(RNG.uniform(0.2, 3.6) * RATE)
+        tick = highpass(noise(0.04), 4000) * envelope(int(0.04 * RATE), attack=0.001, release=0.03) * RNG.uniform(0.15, 0.4)
+        end = min(len(drops), start + len(tick))
+        drops[start:end] += tick[: end - start]
+    sfx("SFX_Rain", mix(rain * 0.55, drops), peak=0.55)
+
+    wind = lowpass(noise(5.0), 700)
+    t = np.arange(len(wind)) / RATE
+    wind *= 0.55 + 0.45 * np.sin(t * 0.7) * np.sin(t * 1.3 + 0.4)
+    wind *= envelope(len(wind), attack=0.5, release=0.5)
+    gust = bandpass(noise(5.0), 200, 1400) * (0.3 + 0.2 * np.sin(t * 0.45 + 1.1))
+    sfx("SFX_Wind", mix(wind * 0.8, gust * 0.25), peak=0.5)
+
 
 # ---------------------------------------------------------------- music
 

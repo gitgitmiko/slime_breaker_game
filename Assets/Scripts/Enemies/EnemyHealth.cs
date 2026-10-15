@@ -28,6 +28,9 @@ namespace SlimeBreaker
         public float HitHeight { get; private set; } = 0.5f;
         /// <summary>Horizontal body radius used to widen contact checks.</summary>
         public float HitRadius { get; private set; } = 0.45f;
+        /// <summary>Contact damage after per-stage scaling.</summary>
+        public int ContactDamage { get; private set; }
+        int extraDamage;
 
         Animator animator;
         Renderer[] renderers;
@@ -44,6 +47,7 @@ namespace SlimeBreaker
         {
             animator = GetComponentInChildren<Animator>();
             Current = definition != null ? definition.maxHealth : 20;
+            ContactDamage = definition != null ? definition.contactDamage : 8;
             renderers = GetComponentsInChildren<Renderer>();
             MeasureBody();
         }
@@ -130,6 +134,47 @@ namespace SlimeBreaker
             burnInterval = Mathf.Max(0.1f, interval);
             if (burnTimer <= 0f)
                 burnTimer = burnInterval;
+        }
+
+        /// <summary>Raises health and contact damage for later arenas. Stage 1 is the authored baseline.</summary>
+        public void Scale(int stage)
+        {
+            if (definition == null || stage <= 1)
+                return;
+            float hpMul = Mathf.Pow(1.18f, stage - 1);
+            Current = Mathf.Max(1, Mathf.RoundToInt(definition.maxHealth * hpMul));
+            extraDamage = Mathf.RoundToInt(definition.contactDamage * (Mathf.Pow(1.10f, stage - 1) - 1f));
+            ContactDamage = definition.contactDamage + extraDamage;
+        }
+
+        /// <summary>Removes the enemy without XP, death VFX, or notifying the run (used when an arena is cleared).</summary>
+        public void Vanish()
+        {
+            if (IsDead)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            IsDead = true;
+            slowTimer = 0f;
+            burnTicks = 0;
+            var chase = GetComponent<EnemyChaseAI>();
+            if (chase != null)
+                chase.enabled = false;
+            var boss = GetComponent<BossController>();
+            if (boss != null)
+                boss.enabled = false;
+            Destroy(gameObject);
+        }
+
+        public static void VanishAll()
+        {
+            var snapshot = Active.ToArray();
+            for (int i = 0; i < snapshot.Length; i++)
+            {
+                if (snapshot[i] != null)
+                    snapshot[i].Vanish();
+            }
         }
 
         public void TakeDamage(int amount)

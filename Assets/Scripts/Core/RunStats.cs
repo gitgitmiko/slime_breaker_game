@@ -1,5 +1,8 @@
+using System;
+
 namespace SlimeBreaker
 {
+    [Serializable]
     public class RunStats
     {
         public int damage = 12;

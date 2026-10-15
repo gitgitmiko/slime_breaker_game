@@ -104,6 +104,7 @@ namespace SlimeBreaker
             }
             AudioService.Instance?.Play("powerup");
             VfxPlayer.Instance?.Play("powerup", transform.position + Vector3.up * 0.8f, skill != null ? skill.color : Color.white);
+            GameFlowController.Instance?.PersistRun();
             Destroy(gameObject);
         }
     }

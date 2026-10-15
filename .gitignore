@@ -46,3 +46,4 @@ crashlytics-buildid.txt
 
 # Android frame pacing / cmake intermediates
 .utmp/
+__pycache__/

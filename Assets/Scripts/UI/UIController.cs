@@ -21,6 +21,8 @@ namespace SlimeBreaker
         public Text resultTitle;
         public Text resultBody;
         public Button pauseButton;
+        public SettingsPanel settings;
+        public ScreenFader fader;
 
         [Header("Skills")]
         public GameObject[] skillSlots;
@@ -155,6 +157,13 @@ namespace SlimeBreaker
         {
             if (pausePanel != null)
                 pausePanel.SetActive(paused);
+            if (!paused)
+                settings?.Hide();
+        }
+
+        public void OpenSettings()
+        {
+            settings?.Show();
         }
 
         public void ShowResult(bool victory, int gold, float elapsed, int totalGold)

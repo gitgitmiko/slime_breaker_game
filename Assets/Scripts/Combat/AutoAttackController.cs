@@ -49,21 +49,31 @@ namespace SlimeBreaker
         EnemyHealth FindNearest(float range)
         {
             EnemyHealth best = null;
+            EnemyHealth fallback = null;
             float bestDistance = range * range;
+            float fallbackDistance = range * range;
             Vector3 origin = transform.position;
+            Vector3 eye = CastOrigin;
             for (int i = 0; i < EnemyHealth.Active.Count; i++)
             {
                 var enemy = EnemyHealth.Active[i];
                 if (enemy == null || enemy.IsDead)
                     continue;
                 float distance = (enemy.transform.position - origin).sqrMagnitude;
-                if (distance <= bestDistance)
+                if (distance > bestDistance && distance > fallbackDistance)
+                    continue;
+                if (distance <= fallbackDistance)
+                {
+                    fallbackDistance = distance;
+                    fallback = enemy;
+                }
+                if (distance <= bestDistance && !Obstacles.Blocked(eye, enemy.transform.position + Vector3.up * enemy.HitHeight))
                 {
                     bestDistance = distance;
                     best = enemy;
                 }
             }
-            return best;
+            return best != null ? best : fallback;
         }
 
         Vector3 CastOrigin

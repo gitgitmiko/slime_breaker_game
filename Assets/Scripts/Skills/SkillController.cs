@@ -260,29 +260,34 @@ namespace SlimeBreaker
             float radius = skill.definition.RadiusAt(skill.level);
             int damage = skill.definition.DamageAt(skill.level);
             Vector3 center = transform.position;
+            int burn = Mathf.Max(1, damage / 4);
             if (fireRingPrefab != null)
             {
                 var ring = Instantiate(fireRingPrefab, center + Vector3.up * 0.08f, Quaternion.identity);
-                var pulse = ring.GetComponent<RingPulse>();
-                if (pulse == null)
-                    pulse = ring.AddComponent<RingPulse>();
-                pulse.targetRadius = radius;
+                var nova = ring.GetComponent<FireNova>();
+                if (nova == null)
+                    nova = ring.AddComponent<FireNova>();
+                nova.Begin(radius, damage, burn);
+            }
+            else
+            {
+                // No prefab (tests without art): apply the damage instantly.
+                for (int i = 0; i < EnemyHealth.Active.Count; i++)
+                {
+                    var enemy = EnemyHealth.Active[i];
+                    if (enemy == null || enemy.IsDead)
+                        continue;
+                    Vector3 flat = enemy.transform.position - center;
+                    flat.y = 0f;
+                    if (flat.magnitude <= radius + enemy.HitRadius)
+                    {
+                        enemy.TakeDamage(damage, playHitSound: false);
+                        enemy.ApplyBurn(burn, 3, 0.5f);
+                    }
+                }
             }
             VfxPlayer.Instance?.Play("fire", center + Vector3.up * 0.3f);
             AudioService.Instance?.Play("fire");
-            for (int i = 0; i < EnemyHealth.Active.Count; i++)
-            {
-                var enemy = EnemyHealth.Active[i];
-                if (enemy == null || enemy.IsDead)
-                    continue;
-                Vector3 flat = enemy.transform.position - center;
-                flat.y = 0f;
-                if (flat.magnitude <= radius + enemy.HitRadius)
-                {
-                    enemy.TakeDamage(damage, playHitSound: false);
-                    enemy.ApplyBurn(Mathf.Max(1, damage / 4), 3, 0.5f);
-                }
-            }
             return true;
         }
 
@@ -325,6 +330,7 @@ namespace SlimeBreaker
         {
             EnemyHealth best = null;
             float bestDistance = range * range;
+            Vector3 eye = from + Vector3.up * 0.6f;
             for (int i = 0; i < EnemyHealth.Active.Count; i++)
             {
                 var enemy = EnemyHealth.Active[i];
@@ -333,13 +339,36 @@ namespace SlimeBreaker
                 if (exclude != null && exclude.Contains(enemy))
                     continue;
                 float distance = (enemy.transform.position - from).sqrMagnitude;
-                if (distance <= bestDistance)
-                {
-                    bestDistance = distance;
-                    best = enemy;
-                }
+                if (distance > bestDistance)
+                    continue;
+                if (Obstacles.Blocked(eye, enemy.transform.position + Vector3.up * enemy.HitHeight))
+                    continue;
+                bestDistance = distance;
+                best = enemy;
             }
             return best;
+        }
+
+        /// <summary>Re-grants saved skills (used by the continue feature). Levels are clamped to each skill's maximum.</summary>
+        public void RestoreFrom(int[] kinds, int[] levels, SkillDefinition[] catalog)
+        {
+            if (kinds == null || levels == null || catalog == null)
+                return;
+            for (int i = 0; i < kinds.Length && i < levels.Length; i++)
+            {
+                SkillDefinition definition = null;
+                foreach (var candidate in catalog)
+                {
+                    if (candidate != null && (int)candidate.kind == kinds[i])
+                        definition = candidate;
+                }
+                if (definition == null)
+                    continue;
+                int target = Mathf.Clamp(levels[i], 1, definition.maxLevel);
+                int level = Grant(definition);
+                while (level < target)
+                    level = Grant(definition);
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 # Slime Breaker
 
-Game action roguelite 3D untuk Android, 60 fps. Seorang penyihir anime melawan gerombolan slime di arena hutan, memungut power-up skill tiap 5 level, lalu menghadapi Slime King. Offline, tanpa akun.
+Game action roguelite 3D untuk Android, 60 fps. Seorang penyihir anime melawan gerombolan slime di arena acak (hutan / salju / gurun, cuaca, siang atau malam). Tiap 5 level musuh lenyap, power-up dan portal muncul menuju peta berikutnya. Batu dan pohon memblokir serangan. Progres run bisa dilanjutkan. Offline, tanpa akun.
 
 ## Isi
 

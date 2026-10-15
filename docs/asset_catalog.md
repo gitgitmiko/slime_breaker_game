@@ -16,7 +16,7 @@ Sumber geometri: Blender 5.2.2, skrip `asset_work/scripts/build_assets.py`. Teks
 
 | ID | Tris | Catatan |
 |---|---|---|
-| ENV_Forest_Ground | 7200 | grid 80 m, tepi naik jadi bukit di r > 13 m; tekstur 1024 + normal map |
+| ENV_Forest_Ground | 7200 | grid 80 m; material runtime `MAT_Ground_Forest` / `_Snow` / `_Sand` + normal map |
 | ENV_Forest_Tree_A / B | 948 | kulit kayu bertekstur + normal map |
 | ENV_Forest_Rock_A / B | 80 | tekstur batu + normal map |
 | ENV_Forest_Mushroom | 916 | |
@@ -36,7 +36,7 @@ Sumber geometri: Blender 5.2.2, skrip `asset_work/scripts/build_assets.py`. Teks
 | VFX_Magic_Bolt | 20 | serangan dasar hero (`HomingProjectile`) |
 | VFX_Ice_Shard | 20 | skill Cincin Es |
 | VFX_Arcane_Missile | 20 | skill Misil Arkana |
-| VFX_Fire_Ring | 960 | skill Nova Api (`RingPulse`) |
+| VFX_Fire_Ring | 960 | mesh Blender cadangan; Nova Api memakai `MESH_Annulus` + `FireNova` |
 | VFX_PowerUp_Crystal | 660 | pickup power-up (`PowerUpPickup`) |
 
 Partikel (hit, dash, levelup, slam, ice, zap, fire, burn, arcane, powerup, cast, death, pickup, playerhit) dibuat skrip editor dengan material aditif `MAT_Particle_Additive`.
@@ -45,7 +45,8 @@ Partikel (hit, dash, levelup, slam, ice, zap, fire, burn, arcane, powerup, cast,
 
 - Ikon 256 px: 8 upgrade (`ICON_Upgrade_*`) dan 4 skill (`ICON_Skill_Ice`, `_Lightning`, `_Fire`, `_Arcane`).
 - Panel: `UI_Panel`, `UI_Button`, `UI_Button_Danger`, `UI_Button_Gold`, `UI_Slot`, `UI_Bar_Back`, `UI_Joystick_Base`, `UI_Joystick_Knob`, `UI_Circle`.
-- SFX 20 file (`Assets/Audio/SFX`): Cast, Hit, BoltHit, EnemyDeath, PlayerHit, Dash, Pickup, LevelUp, PowerUpSpawn, PowerUp, Ice, Freeze, Lightning, Fire, Arcane, BossWarn, BossSlam, UI, Victory, Defeat. Semua disintesis numpy.
+- SFX 23 file (`Assets/Audio/SFX`): 20 SFX lama plus Portal, Rain, Wind (ambien cuaca). Semua disintesis numpy.
+- Tekstur tanah tambahan: `TEX_Snow_Ground`, `TEX_Sand_Ground` (+ normal).
 - Musik: `MUS_Arena.ogg` (40 s loop) dan `MUS_Menu.ogg` (26 s loop), MIDI orisinal dirender FluidSynth.
 
 Preview Blender ada di `asset_work/previews/` (termasuk lembar frame animasi hero). Material berwarna ikut di dalam FBX dan dikonversi ke URP Lit oleh `ProjectSetup` memakai tabel nama material (smoothness, metallic, emisi, normal map).

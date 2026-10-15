@@ -57,12 +57,23 @@ namespace SlimeBreaker
                         BeginCharge(player.transform.position);
                     break;
                 case Pattern.Charge:
-                    transform.position += chargeDirection * 9.5f * health.SpeedMultiplier * Time.deltaTime;
+                    Vector3 step = chargeDirection * 9.5f * health.SpeedMultiplier * Time.deltaTime;
+                    if (Obstacles.Cast(transform.position + Vector3.up * 0.6f, step, 0.7f, out _))
+                    {
+                        transform.position = Obstacles.Resolve(transform.position, 0.7f);
+                        pattern = Pattern.Idle;
+                        timer = patternTimer;
+                        if (animator != null)
+                            animator.SetFloat("Speed", 0f);
+                        break;
+                    }
+                    transform.position += step;
+                    transform.position = Obstacles.Resolve(transform.position, 0.7f);
                     ClampArena();
                     if (!chargeHit && (player.transform.position - transform.position).sqrMagnitude < 1.6f * 1.6f)
                     {
                         chargeHit = true;
-                        player.TakeDamage(health.definition != null ? health.definition.contactDamage : 16);
+                        player.TakeDamage(health.ContactDamage);
                         VfxPlayer.Instance?.Play("hit", player.transform.position + Vector3.up * 0.7f);
                     }
                     if (timer <= 0f)
@@ -82,8 +93,11 @@ namespace SlimeBreaker
             to.y = 0f;
             if (to.sqrMagnitude > 4f)
             {
-                transform.position += to.normalized * speed * Time.deltaTime;
-                transform.rotation = Quaternion.LookRotation(to.normalized, Vector3.up);
+                Vector3 steer = Obstacles.Steer(transform.position, to.normalized, 0.7f, 1.8f);
+                transform.position += steer * speed * Time.deltaTime;
+                transform.position = Obstacles.Resolve(transform.position, 0.7f);
+                if (steer.sqrMagnitude > 0.001f)
+                    transform.rotation = Quaternion.LookRotation(steer.normalized, Vector3.up);
                 if (animator != null)
                     animator.SetFloat("Speed", 1f);
             }
@@ -125,7 +139,7 @@ namespace SlimeBreaker
             Vector3 flat = player.transform.position - transform.position;
             flat.y = 0f;
             if (flat.magnitude <= slamRadius)
-                player.TakeDamage(health.definition != null ? health.definition.contactDamage + 6 : 20);
+                player.TakeDamage(health.ContactDamage + 6);
         }
 
         void BeginCharge(Vector3 playerPosition)

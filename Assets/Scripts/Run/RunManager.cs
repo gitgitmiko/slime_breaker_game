@@ -9,6 +9,13 @@ namespace SlimeBreaker
         public float Elapsed { get; private set; }
         bool bossSpawned;
 
+        public void Restore(float elapsed)
+        {
+            Elapsed = Mathf.Max(0f, elapsed);
+            if (balance != null && Elapsed >= balance.bossTime)
+                bossSpawned = true;
+        }
+
         void OnEnable()
         {
             EnemyHealth.AnyDied += OnEnemyDied;

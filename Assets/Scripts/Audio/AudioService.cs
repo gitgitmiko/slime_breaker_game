@@ -115,5 +115,30 @@ namespace SlimeBreaker
             if (musicSource != null)
                 musicSource.volume = musicVolume * Mathf.Clamp01(volume01);
         }
+
+        /// <summary>Loops a weather ambience (rain, wind) from the entry table; null stops the loop.</summary>
+        public void SetAmbience(string id)
+        {
+            if (ambienceSource == null)
+            {
+                ambienceSource = gameObject.AddComponent<AudioSource>();
+                ambienceSource.loop = true;
+                ambienceSource.playOnAwake = false;
+                ambienceSource.spatialBlend = 0f;
+            }
+            if (string.IsNullOrEmpty(id) || lookup == null || !lookup.TryGetValue(id, out var entry) || entry.clip == null)
+            {
+                ambienceSource.Stop();
+                ambienceSource.clip = null;
+                return;
+            }
+            if (ambienceSource.clip == entry.clip && ambienceSource.isPlaying)
+                return;
+            ambienceSource.clip = entry.clip;
+            ambienceSource.volume = entry.volume;
+            ambienceSource.Play();
+        }
+
+        AudioSource ambienceSource;
     }
 }

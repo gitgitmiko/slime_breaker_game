@@ -6,7 +6,7 @@ namespace SlimeBreaker
 {
     public static class SaveService
     {
-        public const int CurrentSchema = 1;
+        public const int CurrentSchema = 2;
 
         public static string SavePath => Path.Combine(Application.persistentDataPath, "slimebreaker-save.json");
 
@@ -48,6 +48,9 @@ namespace SlimeBreaker
             data.healthRank = Mathf.Max(0, data.healthRank);
             data.speedRank = Mathf.Max(0, data.speedRank);
             data.bestRunTime = Mathf.Max(0f, data.bestRunTime);
+            if (data.schemaVersion < 2)
+                data.graphicsLevel = 2;
+            data.graphicsLevel = Mathf.Clamp(data.graphicsLevel, 0, 2);
             return data;
         }
 

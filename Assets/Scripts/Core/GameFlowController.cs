@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -15,6 +16,7 @@ namespace SlimeBreaker
         public UpgradeManager upgrades;
         public RunManager run;
         public AudioService audioService;
+        public PowerUpSpawner powerUps;
 
         int queuedLevelUps;
         UpgradeDefinition[] currentChoices;
@@ -23,18 +25,51 @@ namespace SlimeBreaker
         {
             Instance = this;
             var save = SaveService.Load();
-            Stats = new RunStats();
-            if (balance != null)
+            var resume = RunSaveService.PeekResume();
+            if (resume != null && resume.stats != null)
             {
-                Stats.damage = balance.baseDamage + save.damageRank * 2;
-                Stats.moveSpeed = balance.baseMoveSpeed * (1f + 0.05f * save.speedRank);
-                Stats.maxHealth = balance.baseHealth + save.healthRank * 15;
-                Stats.attackCooldown = balance.baseAttackCooldown;
-                Stats.attackRange = balance.baseAttackRange;
-                Stats.dashCooldown = balance.baseDashCooldown;
+                Stats = resume.stats;
+                Stats.level = Mathf.Max(1, resume.level);
+            }
+            else
+            {
+                Stats = new RunStats();
+                if (balance != null)
+                {
+                    Stats.damage = balance.baseDamage + save.damageRank * 2;
+                    Stats.moveSpeed = balance.baseMoveSpeed * (1f + 0.05f * save.speedRank);
+                    Stats.maxHealth = balance.baseHealth + save.healthRank * 15;
+                    Stats.attackCooldown = balance.baseAttackCooldown;
+                    Stats.attackRange = balance.baseAttackRange;
+                    Stats.dashCooldown = balance.baseDashCooldown;
+                }
             }
             Time.timeScale = 1f;
             State = GameState.Playing;
+        }
+
+        IEnumerator Start()
+        {
+            var resume = RunSaveService.PeekResume();
+            if (resume != null)
+                ApplyResume(resume);
+            yield return null;
+            RunSaveService.FinishResume();
+            PersistRun();
+        }
+
+        void ApplyResume(RunSave data)
+        {
+            if (data.stats != null)
+            {
+                Stats = data.stats;
+                Stats.level = Mathf.Max(1, data.level);
+            }
+            PlayerHealth.Instance?.Restore(data.hp);
+            XPManager.Instance?.Restore(data.xp);
+            run?.Restore(data.elapsed);
+            var catalog = powerUps != null ? powerUps.skills : null;
+            SkillController.Instance?.RestoreFrom(data.skillKinds, data.skillLevels, catalog);
         }
 
         void OnDestroy()
@@ -42,6 +77,17 @@ namespace SlimeBreaker
             if (Instance == this)
                 Instance = null;
             Time.timeScale = 1f;
+        }
+
+        void OnApplicationPause(bool paused)
+        {
+            if (paused)
+                PersistRun();
+        }
+
+        void OnApplicationQuit()
+        {
+            PersistRun();
         }
 
         public void BeginLevelUp()
@@ -82,6 +128,7 @@ namespace SlimeBreaker
             ui?.HideLevelUp();
             State = GameState.Playing;
             Time.timeScale = 1f;
+            PersistRun();
         }
 
         public void TogglePause()
@@ -91,6 +138,7 @@ namespace SlimeBreaker
                 State = GameState.Paused;
                 Time.timeScale = 0f;
                 ui?.SetPaused(true);
+                PersistRun();
             }
             else if (State == GameState.Paused)
             {
@@ -106,6 +154,7 @@ namespace SlimeBreaker
                 return;
             State = victory ? GameState.Victory : GameState.Defeat;
             Time.timeScale = 0f;
+            RunSaveService.Clear();
             var save = SaveService.Load();
             int level = Stats != null ? Stats.level : 1;
             int gold = balance == null
@@ -122,14 +171,64 @@ namespace SlimeBreaker
 
         public void Restart()
         {
+            RunSaveService.Clear();
             Time.timeScale = 1f;
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
 
         public void QuitToMenu()
         {
+            PersistRun();
             Time.timeScale = 1f;
             SceneManager.LoadScene("MainMenu");
+        }
+
+        public void PersistRun()
+        {
+            if (Stats == null)
+                return;
+            if (State == GameState.Victory || State == GameState.Defeat)
+                return;
+            var health = PlayerHealth.Instance;
+            if (health != null && health.IsDead)
+                return;
+            RunSaveService.Save(CaptureRun());
+        }
+
+        public RunSave CaptureRun()
+        {
+            var data = new RunSave
+            {
+                level = Stats != null ? Stats.level : 1,
+                stats = Stats ?? new RunStats(),
+                elapsed = run != null ? run.Elapsed : 0f,
+                xp = XPManager.Instance != null ? XPManager.Instance.Xp : 0,
+                hp = PlayerHealth.Instance != null ? PlayerHealth.Instance.Current : (Stats != null ? Stats.maxHealth : 100)
+            };
+            var stage = StageManager.Instance;
+            if (stage != null)
+            {
+                data.stage = stage.Stage;
+                data.runSeed = stage.RunSeed;
+                data.intermission = stage.Intermission;
+                data.biome = (int)stage.Theme.biome;
+                data.weather = (int)stage.Theme.weather;
+                data.time = (int)stage.Theme.time;
+                data.themeSeed = stage.Theme.seed;
+            }
+            var skills = SkillController.Instance;
+            if (skills != null && skills.Count > 0)
+            {
+                data.skillKinds = new int[skills.Count];
+                data.skillLevels = new int[skills.Count];
+                for (int i = 0; i < skills.Count; i++)
+                {
+                    var skill = skills.Skills[i];
+                    data.skillKinds[i] = skill.definition != null ? (int)skill.definition.kind : 0;
+                    data.skillLevels[i] = skill.level;
+                }
+            }
+            return data;
         }
     }
 }

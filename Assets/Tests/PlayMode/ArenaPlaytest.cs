@@ -152,7 +152,7 @@ namespace SlimeBreaker.Tests
                 int found = 0;
                 foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsSortMode.None))
                 {
-                    if (t.name != name || t.parent != null)
+                    if (t.name != name)
                         continue;
                     found++;
                     var bounds = t.GetComponentInChildren<Renderer>().bounds;
@@ -236,7 +236,7 @@ namespace SlimeBreaker.Tests
             Assert.AreEqual(60, Application.targetFrameRate, "target frame rate is not 60");
             var audio = AudioService.Instance;
             Assert.IsNotNull(audio, "GameArena has no AudioService");
-            foreach (var id in new[] { "hit", "cast", "bolthit", "enemydeath", "playerhit", "dash", "pickup", "levelup", "powerup", "powerupspawn", "freeze", "lightning", "fire", "arcane", "bosswarn", "slam", "ui" })
+            foreach (var id in new[] { "hit", "cast", "bolthit", "enemydeath", "playerhit", "dash", "pickup", "levelup", "powerup", "powerupspawn", "freeze", "lightning", "fire", "arcane", "bosswarn", "slam", "ui", "portal" })
                 Assert.IsTrue(audio.Has(id), "AudioService has no clip for '" + id + "'");
             Assert.IsNotNull(audio.music, "GameArena has no music clip");
         }
@@ -253,6 +253,8 @@ namespace SlimeBreaker.Tests
             Assert.IsNotNull(SkillController.Instance, "hero has no SkillController");
             Assert.AreEqual(0, PowerUpPickup.Active.Count, "a power-up exists before level 5");
 
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            Assert.IsNotNull(stage, "GameArena has no StageManager");
             while (flow.Stats.level < 4)
             {
                 flow.BeginLevelUp();
@@ -265,6 +267,7 @@ namespace SlimeBreaker.Tests
             yield return null;
             yield return null;
             Assert.AreEqual(5, flow.Stats.level);
+            Assert.IsTrue(stage.Intermission, "level 5 should clear the arena");
             Assert.AreEqual(1, PowerUpPickup.Active.Count, "exactly one power-up should spawn at level 5");
             var pickup = PowerUpPickup.Active[0];
             Assert.IsNotNull(pickup.skill, "power-up carries no skill");
@@ -272,15 +275,28 @@ namespace SlimeBreaker.Tests
             flat.y = 0f;
             Assert.Greater(flat.magnitude, 2f, "power-up spawned on top of the hero");
             Assert.Less(new Vector2(pickup.transform.position.x, pickup.transform.position.z).magnitude, 11.2f, "power-up spawned outside the arena");
-            yield return Hold(0.4f);
+            yield return Hold(1.4f);
             Capture("07_powerup");
+            Assert.IsNotNull(ExitPortal.Active, "exit portal did not appear after the arena was cleared");
 
             pickup.Collect();
             yield return null;
             Assert.AreEqual(0, PowerUpPickup.Active.Count, "power-up was not consumed");
             Assert.AreEqual(1, SkillController.Instance.Count, "collecting the power-up did not grant a skill");
 
-            // Levels 6..9 must not spawn more; level 10 spawns the second tier.
+            int previousStage = stage.Stage;
+            var previousBiome = stage.Theme.biome;
+            ExitPortal.Active.Enter();
+            float wait = 0f;
+            while (stage.Stage == previousStage && wait < 3f)
+            {
+                yield return null;
+                wait += Time.unscaledDeltaTime;
+            }
+            Assert.AreEqual(previousStage + 1, stage.Stage, "entering the portal did not advance the arena");
+            Assert.AreNotEqual(previousBiome, stage.Theme.biome, "the next arena reused the previous biome");
+            Assert.IsFalse(stage.Intermission);
+
             while (flow.Stats.level < 9)
             {
                 flow.BeginLevelUp();
@@ -290,6 +306,7 @@ namespace SlimeBreaker.Tests
             Assert.AreEqual(0, PowerUpPickup.Active.Count, "a power-up spawned between tiers");
             flow.BeginLevelUp();
             flow.ChooseUpgrade(0);
+            yield return null;
             yield return null;
             Assert.AreEqual(1, PowerUpPickup.Active.Count, "no power-up at level 10");
         }
@@ -390,6 +407,95 @@ namespace SlimeBreaker.Tests
                     }
                 }
             }
+        }
+
+        [UnityTest]
+        public IEnumerator FireNovaDamagesNearbyEnemies()
+        {
+            var controller = SkillController.Instance;
+            var power = Object.FindAnyObjectByType<PowerUpSpawner>();
+            SkillDefinition fire = null;
+            foreach (var skill in power.skills)
+            {
+                if (skill != null && skill.kind == SkillKind.FireNova)
+                    fire = skill;
+            }
+            Assert.IsNotNull(fire);
+            Assert.AreEqual(1, controller.Grant(fire));
+            var enemySpawner = Object.FindAnyObjectByType<EnemySpawner>();
+            var hero = PlayerHealth.Instance.transform;
+            var enemyObject = Object.Instantiate(enemySpawner.normalPrefab, hero.position + Vector3.forward * 2.2f, Quaternion.identity);
+            var enemy = enemyObject.GetComponent<EnemyHealth>();
+            int start = enemy.Current;
+            float t = 0f;
+            while (t < 1.2f && enemy != null && !enemy.IsDead && enemy.Current == start)
+            {
+                yield return null;
+                SkipLevelUp();
+                t += Time.deltaTime;
+            }
+            Capture("09_fire_nova");
+            Assert.IsTrue(enemy == null || enemy.IsDead || enemy.Current < start, "fire nova never damaged a nearby enemy");
+        }
+
+        [UnityTest]
+        public IEnumerator ObstaclesBlockBolts()
+        {
+            var generator = Object.FindAnyObjectByType<ArenaGenerator>();
+            Assert.IsNotNull(generator);
+            Assert.Greater(generator.PlacedObstacles.Count, 0, "arena has no solid obstacles");
+            int layer = LayerMask.NameToLayer("Obstacle");
+            Assert.Greater(layer, 0, "Obstacle layer is missing");
+
+            var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wall.name = "TestWall";
+            wall.layer = layer;
+            wall.transform.position = new Vector3(0f, 0.6f, 2f);
+            wall.transform.localScale = new Vector3(4f, 1.6f, 0.5f);
+
+            var enemySpawner = Object.FindAnyObjectByType<EnemySpawner>();
+            var enemyObject = Object.Instantiate(enemySpawner.normalPrefab, new Vector3(0f, 0f, 4.2f), Quaternion.identity);
+            var enemy = enemyObject.GetComponent<EnemyHealth>();
+            int start = enemy.Current;
+            var bolt = Object.FindAnyObjectByType<AutoAttackController>().boltPrefab;
+            HomingProjectile.Launch(bolt, new Vector3(0f, 0.7f, 0.2f), enemy, 20, 22f);
+            yield return Hold(0.6f);
+            Capture("10_obstacle");
+            Assert.AreEqual(start, enemy.Current, "the bolt passed through a solid obstacle");
+        }
+
+        [UnityTest]
+        public IEnumerator RunSaveRoundTripKeepsLevelAndStage()
+        {
+            var flow = GameFlowController.Instance;
+            while (flow.Stats.level < 7)
+            {
+                flow.BeginLevelUp();
+                flow.ChooseUpgrade(0);
+            }
+            yield return null;
+            flow.PersistRun();
+            var saved = RunSaveService.Load();
+            Assert.IsNotNull(saved, "PersistRun did not write slimebreaker-run.json");
+            Assert.AreEqual(flow.Stats.level, saved.level);
+            Assert.GreaterOrEqual(saved.stage, 1);
+            Assert.AreEqual(flow.Stats.damage, saved.stats.damage);
+            RunSaveService.Clear();
+            Assert.IsFalse(RunSaveService.Exists());
+        }
+
+        [UnityTest]
+        public IEnumerator GraphicsPresetsApply()
+        {
+            yield return null;
+            var graphics = Object.FindAnyObjectByType<GraphicsService>();
+            Assert.IsNotNull(graphics, "GameArena has no GraphicsService");
+            Assert.GreaterOrEqual(graphics.presets.Length, 3);
+            graphics.Apply(GraphicsService.Low, persist: false);
+            Assert.AreEqual(GraphicsService.Low, graphics.Level);
+            graphics.Apply(GraphicsService.High, persist: false);
+            Assert.AreEqual(GraphicsService.High, graphics.Level);
+            Assert.IsNotNull(QualitySettings.renderPipeline);
         }
 
         IEnumerator Hold(float seconds)

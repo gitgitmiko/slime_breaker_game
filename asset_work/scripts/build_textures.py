@@ -116,6 +116,43 @@ def bark(path, size=512):
     normal_map(grain, path.replace(".png", "_Normal.png"), strength=1.6)
 
 
+def snow(path, size=1024):
+    low = tileable_noise(size, 41, octaves=4, base_cells=4)
+    mid = tileable_noise(size, 42, octaves=5, base_cells=14)
+    fine = tileable_noise(size, 43, octaves=3, base_cells=48)
+    shadow = np.array([0.62, 0.70, 0.80])
+    ice = np.array([0.86, 0.92, 0.98])
+    bright = np.array([0.97, 0.98, 1.0])
+    rock = np.array([0.55, 0.58, 0.64])
+    colour = np.zeros((size, size, 3))
+    for channel in range(3):
+        base = lerp(shadow[channel], ice[channel], low)
+        base = lerp(base, bright[channel], np.clip((mid - 0.5) * 1.8, 0.0, 1.0) * 0.7)
+        patch = np.clip((low - 0.78) * 6.0, 0.0, 1.0)
+        base = lerp(base, rock[channel], patch * 0.45)
+        base += (fine - 0.5) * 0.05
+        colour[..., channel] = base
+    Image.fromarray(to_rgb(colour), mode="RGB").save(path, optimize=True)
+    normal_map(low * 0.45 + mid * 0.35 + fine * 0.2, path.replace(".png", "_Normal.png"), strength=1.6)
+
+
+def sand(path, size=1024):
+    dunes = tileable_noise(size, 51, octaves=4, base_cells=3)
+    ripples = tileable_noise(size, 52, octaves=5, base_cells=18)
+    grit = tileable_noise(size, 53, octaves=3, base_cells=64)
+    dark = np.array([0.55, 0.38, 0.20])
+    mid = np.array([0.82, 0.64, 0.36])
+    light = np.array([0.94, 0.82, 0.52])
+    colour = np.zeros((size, size, 3))
+    for channel in range(3):
+        base = lerp(dark[channel], mid[channel], dunes)
+        base = lerp(base, light[channel], np.clip((ripples - 0.45) * 1.6, 0.0, 1.0) * 0.65)
+        base += (grit - 0.5) * 0.06
+        colour[..., channel] = base
+    Image.fromarray(to_rgb(colour), mode="RGB").save(path, optimize=True)
+    normal_map(dunes * 0.55 + ripples * 0.35 + grit * 0.1, path.replace(".png", "_Normal.png"), strength=2.0)
+
+
 def rock(path, size=512):
     low = tileable_noise(size, 31, octaves=4, base_cells=4)
     fine = tileable_noise(size, 32, octaves=4, base_cells=32)
@@ -137,6 +174,8 @@ def main():
     ground(os.path.join(out, "TEX_Forest_Ground.png"))
     bark(os.path.join(out, "TEX_Bark.png"))
     rock(os.path.join(out, "TEX_Rock.png"))
+    snow(os.path.join(out, "TEX_Snow_Ground.png"))
+    sand(os.path.join(out, "TEX_Sand_Ground.png"))
     print("TEXTURES_OK", out, flush=True)
 
 

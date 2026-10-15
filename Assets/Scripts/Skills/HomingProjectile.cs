@@ -64,7 +64,15 @@ namespace SlimeBreaker
                 Vector3 desired = (AimPoint() - transform.position).normalized * speed;
                 velocity = Vector3.Lerp(velocity, desired, 1f - Mathf.Exp(-turnRate * Time.deltaTime));
             }
-            transform.position += velocity * Time.deltaTime;
+            Vector3 delta = velocity * Time.deltaTime;
+            if (Obstacles.Cast(transform.position, delta, 0.12f, out var blocked))
+            {
+                VfxPlayer.Instance?.Play(hitVfx, blocked.point);
+                AudioService.Instance?.Play(hitSfx);
+                Destroy(gameObject);
+                return;
+            }
+            transform.position += delta;
             if (velocity.sqrMagnitude > 0.001f)
                 transform.rotation = Quaternion.LookRotation(velocity);
             if (spinner != null)

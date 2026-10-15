@@ -51,6 +51,16 @@ namespace SlimeBreaker
             Changed?.Invoke();
         }
 
+        public void Restore(int hp)
+        {
+            Max = GameFlowController.Instance != null && GameFlowController.Instance.Stats != null
+                ? Mathf.Max(1, GameFlowController.Instance.Stats.maxHealth)
+                : Mathf.Max(1, Max);
+            Current = Mathf.Clamp(hp, 1, Max);
+            IsDead = false;
+            Changed?.Invoke();
+        }
+
         public void TakeDamage(int amount)
         {
             if (IsInvulnerable || amount <= 0)

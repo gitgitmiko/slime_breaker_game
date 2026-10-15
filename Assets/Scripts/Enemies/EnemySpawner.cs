@@ -14,10 +14,12 @@ namespace SlimeBreaker
 
         float timer = 1.2f;
         bool stopped;
+        public bool Paused { get; set; }
+        public int Stage { get; set; } = 1;
 
         void Update()
         {
-            if (stopped || !GameFlowController.IsPlaying || balance == null || balance.phases == null)
+            if (stopped || Paused || !GameFlowController.IsPlaying || balance == null || balance.phases == null)
                 return;
             timer -= Time.deltaTime;
             if (timer > 0f)
@@ -38,7 +40,8 @@ namespace SlimeBreaker
                     break;
                 }
             }
-            timer = Mathf.Max(0.35f, phase.interval);
+            float interval = phase.interval * Mathf.Pow(0.93f, Mathf.Max(0, Stage - 1));
+            timer = Mathf.Max(0.28f, interval);
             Spawn(Pick(phase));
         }
 
@@ -60,10 +63,18 @@ namespace SlimeBreaker
         {
             if (prefab == null)
                 return;
-            float angle = Random.Range(0f, Mathf.PI * 2f);
-            float radius = Random.Range(arenaRadius * 0.72f, arenaRadius * 0.98f);
-            var position = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
-            Instantiate(prefab, position, Quaternion.identity);
+            Vector3 position = Vector3.zero;
+            for (int attempt = 0; attempt < 14; attempt++)
+            {
+                float angle = Random.Range(0f, Mathf.PI * 2f);
+                float radius = Random.Range(arenaRadius * 0.72f, arenaRadius * 0.98f);
+                position = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
+                if (!Obstacles.Overlaps(position, 0.7f))
+                    break;
+            }
+            var instance = Instantiate(prefab, position, Quaternion.identity);
+            var health = instance.GetComponent<EnemyHealth>();
+            health?.Scale(Stage);
         }
 
         public void StopAndSpawnBoss()
@@ -71,7 +82,11 @@ namespace SlimeBreaker
             stopped = true;
             if (bossPrefab == null)
                 return;
-            Instantiate(bossPrefab, new Vector3(0f, 0f, arenaRadius * 0.55f), Quaternion.identity);
+            Vector3 bossPosition = new Vector3(0f, 0f, arenaRadius * 0.55f);
+            if (Obstacles.Overlaps(bossPosition, 1.2f))
+                bossPosition = new Vector3(arenaRadius * 0.45f, 0f, 0f);
+            var instance = Instantiate(bossPrefab, bossPosition, Quaternion.identity);
+            instance.GetComponent<EnemyHealth>()?.Scale(Stage);
             AudioService.Instance?.Play("bosswarn");
         }
     }

@@ -30,8 +30,11 @@ namespace SlimeBreaker
             if (distance > definition.contactRange * 0.85f && distance > 0.05f)
             {
                 float speed = definition.moveSpeed * health.SpeedMultiplier;
-                transform.position += to.normalized * speed * Time.deltaTime;
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(to.normalized, Vector3.up), 10f * Time.deltaTime);
+                Vector3 steer = Obstacles.Steer(transform.position, to.normalized, 0.38f, 1.5f);
+                transform.position += steer * speed * Time.deltaTime;
+                transform.position = Obstacles.Resolve(transform.position, 0.38f);
+                if (steer.sqrMagnitude > 0.001f)
+                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(steer.normalized, Vector3.up), 10f * Time.deltaTime);
                 if (animator != null)
                 {
                     animator.SetFloat("Speed", 1f);
@@ -52,7 +55,7 @@ namespace SlimeBreaker
             contactTimer -= Time.deltaTime;
             if (distance <= definition.contactRange && contactTimer <= 0f)
             {
-                player.TakeDamage(definition.contactDamage);
+                player.TakeDamage(health.ContactDamage);
                 contactTimer = definition.contactCooldown;
             }
         }

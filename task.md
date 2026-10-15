@@ -18,6 +18,14 @@
 - PlayMode test 10/10 lolos (termasuk power-up level 5/10, es melukai + memperlambat, bolt mengenai musuh, AudioListener + 60 fps).
 - APK ARM64 `Builds/SlimeBreaker.apk`, `SLIMEBREAKER_APK_OK`; disalin ke `~/Downloads/SlimeBreaker.apk`.
 
+### Putaran 3 — nova api, grafis, obstacle, arena acak, lanjutkan
+
+- Nova Api: cincin api annulus yang membesar dari hero (`FireNova`), damage saat tepi cincin menjangkau musuh.
+- Grafis default High (bayangan 4096, soft, 2 cascade) plus panel Pengaturan Low/Medium/High di menu dan jeda.
+- Obstacle padat (batu, pohon, pilar) di layer `Obstacle`; bolt, petir, nova, dan gerak musuh terhalang.
+- Tiap level 5/10/15… slime lenyap, power-up + portal keluar; arena berikutnya di-roll `ArenaTheme` (bioma × cuaca × waktu).
+- Fitur Lanjutkan: `RunSaveService` menulis `slimebreaker-run.json` saat jeda/keluar/naik level/ganti arena.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

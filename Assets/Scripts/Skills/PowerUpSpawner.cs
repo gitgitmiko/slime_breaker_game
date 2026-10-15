@@ -15,37 +15,26 @@ namespace SlimeBreaker
 
         public int SpawnedTiers { get; private set; }
 
-        void Update()
-        {
-            var flow = GameFlowController.Instance;
-            if (flow == null || flow.Stats == null || everyLevels <= 0)
-                return;
-            if (flow.State == GameState.Victory || flow.State == GameState.Defeat)
-                return;
-            int tier = flow.Stats.level / everyLevels;
-            while (SpawnedTiers < tier)
-            {
-                SpawnedTiers++;
-                Spawn();
-            }
-        }
-
         public PowerUpPickup Spawn()
         {
             var definition = Choose();
             if (definition == null || pickupPrefab == null)
                 return null;
+            SpawnedTiers++;
             Vector3 hero = PlayerHealth.Instance != null ? PlayerHealth.Instance.transform.position : Vector3.zero;
             Vector3 position = Vector3.zero;
-            for (int attempt = 0; attempt < 12; attempt++)
+            for (int attempt = 0; attempt < 16; attempt++)
             {
                 float angle = Random.Range(0f, Mathf.PI * 2f);
                 float radius = Random.Range(minRadius, maxRadius);
                 position = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
                 Vector3 flat = position - hero;
                 flat.y = 0f;
-                if (flat.magnitude >= minDistanceFromHero)
-                    break;
+                if (flat.magnitude < minDistanceFromHero)
+                    continue;
+                if (Obstacles.Overlaps(position, 0.9f))
+                    continue;
+                break;
             }
             var instance = Instantiate(pickupPrefab, position, Quaternion.identity);
             var pickup = instance.GetComponent<PowerUpPickup>();

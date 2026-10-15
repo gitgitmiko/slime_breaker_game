@@ -20,6 +20,11 @@ namespace SlimeBreaker
                 Instance = null;
         }
 
+        public void Restore(int xp)
+        {
+            Xp = Mathf.Max(0, xp);
+        }
+
         public void Add(int amount)
         {
             if (!GameFlowController.IsPlaying || amount <= 0)

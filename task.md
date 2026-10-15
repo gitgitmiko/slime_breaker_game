@@ -66,6 +66,7 @@
 - HUD status di kiri atas di bawah HP/EXP: DMG, CRIT, CRIT RATE, ATK SPD, MOVE, LS.
 - Pewarnaan boss per bahan: tubuh elemen, jubah merah, mahkota emas, permata elemen.
 - Critical hanya keluar setelah upgrade Crit Rate atau Critical (awal crit chance 0).
+- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 17/17. PlayMode 24/24. APK `SLIMEBREAKER_APK_OK` 0.8.0.
 
 ## Berikutnya
 

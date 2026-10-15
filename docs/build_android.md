@@ -102,9 +102,10 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 ## Hasil 15 Oktober 2026 (putaran 8 — bayangan, serangan sambil jalan, HUD status, palet boss)
 
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 17/17; PlayMode 24/24 lolos; APK: `SLIMEBREAKER_APK_OK`.
-- APK: `Builds/SlimeBreaker.apk`, disalin ke `~/Downloads/SlimeBreaker.apk`.
+- APK: `Builds/SlimeBreaker.apk` (42 MB), disalin ke `~/Downloads/SlimeBreaker.apk`.
 - Paket: `com.gitgitmiko.slimebreaker` 0.8.0 (versionCode 8).
 - PlayMode menambah tes bolt mengenai musuh saat hero berjalan, HUD status (DMG/CRIT/CRIT RATE/ATK SPD/MOVE/LS), bayangan skyfall umbra/penumbra, dan jubah merah + mahkota emas pada Rock Slime.
+- Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
 
 ## Pasang di HP
 

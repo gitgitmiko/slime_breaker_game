@@ -188,6 +188,15 @@ namespace SlimeBreaker.Tests
         }
 
         [Test]
+        public void SlimeHealthGrowsEveryFloor()
+        {
+            Assert.AreEqual(24, RunRules.SlimeMaxHealth(24, 1));
+            Assert.Greater(RunRules.SlimeMaxHealth(24, 2), RunRules.SlimeMaxHealth(24, 1));
+            Assert.AreEqual(UnityEngine.Mathf.RoundToInt(24 * 1.9f), RunRules.SlimeMaxHealth(24, 10));
+            Assert.Greater(RunRules.SlimeMaxHealth(24, 20), RunRules.SlimeMaxHealth(24, 10));
+        }
+
+        [Test]
         public void LevelUpAddsTenBasicAttack()
         {
             var stats = new RunStats { damage = 12, level = 1 };

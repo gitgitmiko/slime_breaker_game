@@ -407,6 +407,32 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
+        public IEnumerator DashDoesNotQueueDuringCooldown()
+        {
+            var dash = Object.FindAnyObjectByType<DashController>();
+            Assert.IsNotNull(dash);
+            Assert.IsTrue(dash.CanDash);
+            dash.QueueDash();
+            yield return null;
+            Assert.IsFalse(dash.CanDash, "dash did not start");
+            dash.QueueDash();
+            Tap(Key.Space);
+            dash.QueueDash();
+            float wait = 0f;
+            while (!dash.CanDash && wait < 2.5f)
+            {
+                yield return null;
+                SkipLevelUp();
+                wait += Time.deltaTime;
+            }
+            Assert.IsTrue(dash.CanDash, "dash cooldown never ended");
+            yield return null;
+            yield return null;
+            Assert.IsFalse(dash.IsDashing, "a second dash fired after cooldown without a new press");
+            Assert.IsTrue(dash.CanDash);
+        }
+
+        [UnityTest]
         public IEnumerator EveryRendererHasAWorkingMaterial()
         {
             yield return null;
@@ -738,6 +764,8 @@ namespace SlimeBreaker.Tests
             Assert.IsTrue(flow.ui.statusText.text.Contains("ATK SPD"), flow.ui.statusText.text);
             Assert.IsTrue(flow.ui.statusText.text.Contains("MOVE"), flow.ui.statusText.text);
             Assert.IsTrue(flow.ui.statusText.text.Contains("LS"), flow.ui.statusText.text);
+            Assert.IsTrue(flow.ui.statusText.text.Contains("RANGE"), flow.ui.statusText.text);
+            Assert.IsTrue(flow.ui.statusText.text.Contains("EXP +"), flow.ui.statusText.text);
             Assert.AreEqual("EXP", flow.ui.xpSlider.gameObject.name);
             Assert.IsNotNull(Object.FindAnyObjectByType<Wayfinder>(), "HUD has no wayfinder arrows");
             var upgrades = Object.FindAnyObjectByType<UpgradeManager>();

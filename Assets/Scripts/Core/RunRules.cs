@@ -18,6 +18,7 @@ namespace SlimeBreaker
         public const int KillsPerFloorStep = 10;
         public const int HeroDamagePerLevel = 10;
         public const int SlimeDamagePerFloor = 1;
+        public const float SlimeHealthPerFloor = 0.1f;
         public const int BossDamagePerFloor = 3;
         public const float ArenaRadius = 22f;
 
@@ -44,6 +45,12 @@ namespace SlimeBreaker
         public static int SlimeContactDamage(int baseDamage, int floor)
         {
             return UnityEngine.Mathf.Max(1, baseDamage + UnityEngine.Mathf.Max(0, floor - 1) * SlimeDamagePerFloor);
+        }
+
+        public static int SlimeMaxHealth(int baseHealth, int floor)
+        {
+            int extra = UnityEngine.Mathf.Max(0, floor - 1);
+            return UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(baseHealth * (1f + extra * SlimeHealthPerFloor)));
         }
 
         public static int BossContactDamage(int floor)

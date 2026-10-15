@@ -8,13 +8,13 @@ Satu run berlangsung di arena radius 22 m selama **100 lantai**. Level hero terp
 
 Menu → arena lantai 1 (hutan siang cerah) → gerak dan dash → penyihir otomatis menembakkan bolt sihir pelacak **hanya saat diam** ke musuh terdekat yang terlihat (jangkauan 4,4 m; batu/pohon memblokir tembakan) → orb EXP → setiap naik **level hero**, serangan dasar **+10**, lalu permainan jeda dan menawarkan 3 upgrade (hero max Lv 999) → setiap kelipatan 5 **level hero** satu kristal power-up muncul di map yang sama → lantai N butuh **N×10** slime (lantai 1 = 10, lantai 2 = 20, …) sebelum **pintu** muncul; hero masuk dulu baru naik lantai → setiap kelipatan 10 **lantai** slime biasa lenyap, peringatan **BOSS LANTAI N**, kamera zoom ke bos, lalu pertarungan (boss memanggil 10 slime kecil tiap 20 detik) → Royal Slime di lantai 100 = tamat → emas disimpan → upgrade permanen di menu. Keluar di tengah run menyimpan progres ke `slimebreaker-run.json`; tombol **Lanjutkan** di menu memulihkan lantai, level, skill, HP, dan EXP.
 
-HUD menampilkan **Lantai**, progres bunuh slime lantai itu (misalnya `3 / 10`), **Lv**, timer, HP, **EXP**, dan panel status di kiri atas di bawah bar HP: **DMG**, **CRIT**, **CRIT RATE**, **ATK SPD**, **MOVE**, **LS**. Panah wayfinder menunjuk pintu dan power-up yang aktif. Angka damage mengambang di atas musuh (krem), critical (**CRIT** emas lebih besar), dan damage yang diterima hero (merah). Bolt sihir dasar hanya tembak saat hero diam; jalan atau dash menahan serangan dasar. Skill power-up tetap jalan sambil bergerak.
+HUD menampilkan **Lantai**, progres bunuh slime lantai itu (misalnya `3 / 10`), **Lv**, timer, HP, **EXP**, dan panel status di kiri atas di bawah bar HP: **DMG**, **CRIT**, **CRIT RATE**, **ATK SPD**, **RANGE**, **MOVE**, **EXP** (bonus), **LS**. Panah wayfinder menunjuk pintu dan power-up yang aktif. Angka damage mengambang di atas musuh (krem), critical (**CRIT** emas lebih besar), dan damage yang diterima hero (merah). Bolt sihir dasar hanya tembak saat hero diam; jalan atau dash menahan serangan dasar. Skill power-up tetap jalan sambil bergerak.
 
 ## Kontrol
 
 - Kiri bawah: joystick. Di editor, WASD atau tombol panah juga berjalan.
 - Kanan bawah: dash. Di editor, spasi.
-- Dash punya cooldown dan jendela kebal singkat. Terkena damage juga memberi kebal 0,35 s.
+- Dash punya cooldown dan jendela kebal singkat. Tombol dash dan spasi diabaikan selama cooldown — tekan beruntun tidak mengantri dash berikutnya. Terkena damage juga memberi kebal 0,35 s.
 - Jeda: tombol II atau Escape. Dari jeda atau menu, ⚙ / Pengaturan memilih grafis Low / Medium / High (default High: bayangan 4096, soft, 2 cascade).
 
 ## Musuh
@@ -25,7 +25,7 @@ HUD menampilkan **Lantai**, progres bunuh slime lantai itu (misalnya `3 / 10`), 
 - Jarak: menjaga jarak dan menembakkan bolt (`HostileProjectile`) yang terhalang obstacle.
 - Semua slime menampilkan bar darah world-space di atas kepala.
 - Kuota slime di lantai N adalah **N×10** (lantai 1 = 10, lantai 2 = 20, dst.). HUD di atas menampilkan progres itu. Lantai naik setelah hero **masuk pintu**, bukan otomatis. Slime sisa dihapus saat masuk pintu supaya kuota lantai berikutnya mulai dari nol.
-- Setiap naik lantai, damage kontak slime **+1**. Boss menambah damage basic/skill/enrage **+3** per lantai.
+- Setiap naik lantai, damage kontak slime **+1** dan HP slime **+10%** dari nyawa dasar. Boss menambah damage basic/skill/enrage **+3** per lantai.
 
 ## Boss (setiap 10 lantai)
 

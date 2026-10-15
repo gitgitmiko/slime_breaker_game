@@ -117,7 +117,12 @@ namespace SlimeBreaker
             if (xpSlider != null && xp != null)
                 xpSlider.value = xp.XpToNext <= 0 ? 0f : (float)xp.Xp / xp.XpToNext;
             if (dashFill != null && dash != null)
+            {
                 dashFill.fillAmount = dash.Cooldown01;
+                var dashButton = dashFill.GetComponentInParent<Button>();
+                if (dashButton != null)
+                    dashButton.interactable = dash.CanDash;
+            }
 
             if (toastGroup != null && toastTimer > 0f)
             {
@@ -291,10 +296,12 @@ namespace SlimeBreaker
             string crit = stats.HasCrit ? stats.critMultiplier.ToString("0.0") + "x" : "—";
             string rate = stats.HasCrit ? Mathf.RoundToInt(stats.critChance * 100f) + "%" : "0%";
             string steal = Mathf.RoundToInt(stats.lifesteal * 100f) + "%";
+            int expBonus = Mathf.RoundToInt(Mathf.Max(0f, stats.xpMultiplier - 1f) * 100f);
             statusText.text =
                 "DMG " + stats.damage + "     CRIT " + crit + "\n"
                 + "CRIT RATE " + rate + "     ATK SPD " + stats.AttacksPerSecond.ToString("0.00") + "\n"
-                + "MOVE " + stats.moveSpeed.ToString("0.0") + "     LS " + steal;
+                + "RANGE " + stats.attackRange.ToString("0.0") + "     MOVE " + stats.moveSpeed.ToString("0.0") + "\n"
+                + "EXP +" + expBonus + "%     LS " + steal;
         }
 
         void RefreshHealth()

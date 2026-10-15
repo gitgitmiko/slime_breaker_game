@@ -78,6 +78,12 @@
 - Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 19/19. PlayMode 24/24. APK `SLIMEBREAKER_APK_OK` 0.9.0.
 - Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
 
+### Putaran 10 — RANGE/EXP HUD, dash tanpa antrian, HP slime per lantai
+
+- Panel status kiri atas menambah **RANGE** dan **EXP +%**.
+- Dash tidak bisa diantrikan: tekan saat cooldown diabaikan, tombol nonaktif sampai cooldown habis.
+- HP slime +10% dari dasar setiap naik lantai.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

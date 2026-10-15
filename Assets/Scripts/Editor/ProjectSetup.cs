@@ -1899,7 +1899,7 @@ namespace SlimeBreaker.EditorTools
             var statusPanel = new GameObject("Status", typeof(RectTransform), typeof(Image));
             ApplyImage(statusPanel.GetComponent<Image>(), panelSprite, Image.Type.Sliced, new Color(0.08f, 0.07f, 0.12f, 0.72f));
             statusPanel.GetComponent<Image>().raycastTarget = false;
-            Place(statusPanel, safe, new Vector2(0.16f, 0.795f), new Vector2(470f, 92f));
+            Place(statusPanel, safe, new Vector2(0.16f, 0.775f), new Vector2(470f, 128f));
             var status = Text(statusPanel.transform, "Stats", "DMG 12     CRIT —", 16, TextAnchor.UpperLeft, font);
             status.raycastTarget = false;
             var statusRect = status.rectTransform;
@@ -2188,8 +2188,8 @@ namespace SlimeBreaker.EditorTools
         {
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
-            PlayerSettings.bundleVersion = "0.9.0";
-            PlayerSettings.Android.bundleVersionCode = 9;
+            PlayerSettings.bundleVersion = "0.10.0";
+            PlayerSettings.Android.bundleVersionCode = 10;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

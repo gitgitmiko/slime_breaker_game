@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: BOSS_MagmaSlime
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.EnemyDefinition
   displayName: Magma Slime
-  maxHealth: 380
+  maxHealth: 70000
   moveSpeed: 1.85
-  contactDamage: 18
+  contactDamage: 54
   contactRange: 1.8
   contactCooldown: 0.85
-  xp: 0
+  xp: 70
   isBoss: 1
   isRanged: 0
   incomingDamageScale: 1

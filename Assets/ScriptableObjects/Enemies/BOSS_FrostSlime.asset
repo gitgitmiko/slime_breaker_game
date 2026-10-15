@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: BOSS_FrostSlime
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.EnemyDefinition
   displayName: Frost Slime
-  maxHealth: 300
+  maxHealth: 30000
   moveSpeed: 1.9
-  contactDamage: 15
+  contactDamage: 30
   contactRange: 1.7
   contactCooldown: 0.8
-  xp: 0
+  xp: 50
   isBoss: 1
   isRanged: 0
   incomingDamageScale: 1

@@ -78,6 +78,11 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Paket: `com.gitgitmiko.slimebreaker` 0.4.0 (versionCode 4).
 - Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
 
+## Hasil 15 Oktober 2026 (putaran 5 — lantai, hero 999, boss enrage)
+
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 9/9; PlayMode 20/20 lolos.
+- Paket: `com.gitgitmiko.slimebreaker` 0.5.0 (versionCode 5).
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

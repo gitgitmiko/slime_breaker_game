@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: BOSS_SlimeKing
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.EnemyDefinition
   displayName: Royal Slime
-  maxHealth: 800
+  maxHealth: 100000
   moveSpeed: 2.1
-  contactDamage: 20
+  contactDamage: 72
   contactRange: 1.7
   contactCooldown: 0.8
-  xp: 0
+  xp: 80
   isBoss: 1
   isRanged: 0
   incomingDamageScale: 1

@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: BOSS_VoltSlime
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.EnemyDefinition
   displayName: Volt Slime
-  maxHealth: 260
+  maxHealth: 40000
   moveSpeed: 2.55
-  contactDamage: 14
+  contactDamage: 36
   contactRange: 1.6
   contactCooldown: 0.7
-  xp: 0
+  xp: 55
   isBoss: 1
   isRanged: 0
   incomingDamageScale: 1

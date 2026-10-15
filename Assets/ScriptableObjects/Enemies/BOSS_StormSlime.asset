@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: BOSS_StormSlime
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.EnemyDefinition
   displayName: Storm Slime
-  maxHealth: 340
+  maxHealth: 80000
   moveSpeed: 2.2
-  contactDamage: 16
+  contactDamage: 60
   contactRange: 1.7
   contactCooldown: 0.75
-  xp: 0
+  xp: 75
   isBoss: 1
   isRanged: 0
   incomingDamageScale: 1

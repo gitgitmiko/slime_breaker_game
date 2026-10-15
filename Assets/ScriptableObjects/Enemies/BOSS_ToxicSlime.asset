@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: BOSS_ToxicSlime
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.EnemyDefinition
   displayName: Toxic Slime
-  maxHealth: 320
+  maxHealth: 50000
   moveSpeed: 2
-  contactDamage: 15
+  contactDamage: 42
   contactRange: 1.7
   contactCooldown: 0.8
-  xp: 0
+  xp: 60
   isBoss: 1
   isRanged: 0
   incomingDamageScale: 1

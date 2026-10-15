@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: BOSS_FlameSlime
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.EnemyDefinition
   displayName: Flame Slime
-  maxHealth: 300
+  maxHealth: 20000
   moveSpeed: 2.15
-  contactDamage: 16
+  contactDamage: 24
   contactRange: 1.7
   contactCooldown: 0.8
-  xp: 0
+  xp: 45
   isBoss: 1
   isRanged: 0
   incomingDamageScale: 1

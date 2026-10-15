@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: BOSS_ShadowSlime
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.EnemyDefinition
   displayName: Shadow Slime
-  maxHealth: 280
+  maxHealth: 60000
   moveSpeed: 2.4
-  contactDamage: 15
+  contactDamage: 48
   contactRange: 1.6
   contactCooldown: 0.7
-  xp: 0
+  xp: 65
   isBoss: 1
   isRanged: 0
   incomingDamageScale: 1

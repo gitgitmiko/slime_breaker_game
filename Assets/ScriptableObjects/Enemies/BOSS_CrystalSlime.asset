@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: BOSS_CrystalSlime
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.EnemyDefinition
   displayName: Crystal Slime
-  maxHealth: 400
+  maxHealth: 90000
   moveSpeed: 1.7
-  contactDamage: 17
+  contactDamage: 66
   contactRange: 1.7
   contactCooldown: 0.8
-  xp: 0
+  xp: 80
   isBoss: 1
   isRanged: 0
   incomingDamageScale: 0.8

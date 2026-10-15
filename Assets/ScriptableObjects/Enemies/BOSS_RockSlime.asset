@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: BOSS_RockSlime
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.EnemyDefinition
   displayName: Rock Slime
-  maxHealth: 280
+  maxHealth: 10000
   moveSpeed: 1.8
   contactDamage: 18
   contactRange: 1.8
   contactCooldown: 0.85
-  xp: 0
+  xp: 40
   isBoss: 1
   isRanged: 0
   incomingDamageScale: 0.65

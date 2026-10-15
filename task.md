@@ -75,6 +75,8 @@
 - Bug pintu beruntun (lantai 8→9 langsung 10) diperbaiki: slime sisa tidak dihitung ke lantai berikutnya.
 - Kuota bunuh: lantai N = N×10 slime. HUD atas menampilkan progres `3 / 10`.
 - Setiap naik level hero, ATK dasar +10. Setiap lantai, damage slime +1 dan damage boss +3.
+- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 19/19. PlayMode 24/24. APK `SLIMEBREAKER_APK_OK` 0.9.0.
+- Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
 
 ## Berikutnya
 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ICON_Upgrade_Xp
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.UpgradeDefinition
   kind: 6
-  title: Pengalaman
-  description: +25% XP
+  title: EXP
+  description: +25% EXP
   amount: 0.25
   icon: {fileID: 21300000, guid: ebdb0033895100bf495d19ac41658905, type: 3}

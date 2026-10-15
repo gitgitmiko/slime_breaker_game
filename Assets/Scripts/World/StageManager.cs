@@ -136,8 +136,8 @@ namespace SlimeBreaker
 
             var flow = GameFlowController.Instance;
             flow?.BeginBossIntro();
-            flow?.ui?.ShowBossWarning(BossCatalog.DisplayName(ActiveBoss), BossCatalog.Color(ActiveBoss));
-            flow?.ui?.ShowToast("STAGE BOSS — " + BossCatalog.DisplayName(ActiveBoss), BossCatalog.Color(ActiveBoss));
+            flow?.ui?.ShowBossWarning(BossCatalog.DisplayName(ActiveBoss), BossCatalog.Tint(ActiveBoss));
+            flow?.ui?.ShowToast("STAGE BOSS — " + BossCatalog.DisplayName(ActiveBoss), BossCatalog.Tint(ActiveBoss));
             AudioService.Instance?.Play("bosswarn");
 
             var boss = SpawnBoss(ActiveBoss);
@@ -167,7 +167,7 @@ namespace SlimeBreaker
             var definition = DefinitionFor(kind);
             var health = instance.GetComponent<EnemyHealth>();
             health?.Bind(definition);
-            health?.TintBody(BossCatalog.Color(kind));
+            health?.TintBody(BossCatalog.Tint(kind));
             var boss = instance.GetComponent<BossController>();
             if (boss == null)
                 boss = instance.AddComponent<BossController>();
@@ -213,6 +213,12 @@ namespace SlimeBreaker
                 if (snapshot[i] != null && !snapshot[i].IsBoss)
                     snapshot[i].Vanish();
             }
+        }
+
+        public void EnterPortal(ExitPortal portal)
+        {
+            if (portal != null)
+                Destroy(portal.gameObject);
         }
 
         static bool BossAlive()

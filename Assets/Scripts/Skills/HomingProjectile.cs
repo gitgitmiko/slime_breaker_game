@@ -88,7 +88,7 @@ namespace SlimeBreaker
             var boss = target.GetComponent<BossController>();
             if (boss != null && boss.Shielded)
             {
-                VfxPlayer.Instance?.Play("arcane", transform.position, BossCatalog.Color(BossKind.Crystal));
+                VfxPlayer.Instance?.Play("arcane", transform.position, BossCatalog.Tint(BossKind.Crystal));
                 AudioService.Instance?.Play(hitSfx);
                 Destroy(gameObject);
                 return;

@@ -43,7 +43,7 @@ namespace SlimeBreaker
             boltPrefab = bolt;
             lightningPrefab = lightning;
             minionPrefab = minion;
-            tint = BossCatalog.Color(kind);
+            tint = BossCatalog.Tint(kind);
             slamRadius = kind == BossKind.Rock ? 4.1f : 3.6f;
             patternTimer = kind == BossKind.Volt || kind == BossKind.Shadow ? 0.95f : 1.3f;
         }
@@ -59,7 +59,7 @@ namespace SlimeBreaker
         void Start()
         {
             if (kind != BossKind.None)
-                health?.TintBody(BossCatalog.Color(kind));
+                health?.TintBody(BossCatalog.Tint(kind));
         }
 
         void Update()
@@ -435,7 +435,7 @@ namespace SlimeBreaker
                 Shielded = true;
                 shieldUntil = Time.time + 2.4f;
                 specialTimer = 4f;
-                VfxPlayer.Instance?.Play("powerup", transform.position + Vector3.up, BossCatalog.Color(BossKind.Crystal));
+                VfxPlayer.Instance?.Play("powerup", transform.position + Vector3.up, BossCatalog.Tint(BossKind.Crystal));
             }
         }
 

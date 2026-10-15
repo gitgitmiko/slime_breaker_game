@@ -180,15 +180,15 @@ namespace SlimeBreaker.EditorTools
             var bossDef = Enemy("Assets/ScriptableObjects/Enemies/BOSS_SlimeKing.asset", "Royal Slime", 800, 2.1f, 20, 1.7f, 0.8f, 0, true, kind: BossKind.Royal);
             var bossDefs = new[]
             {
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_RockSlime.asset", "Rock Slime", 280, 1.8f, 18, 1.8f, 0.85f, 0, true, incoming: 0.65f, kind: BossKind.Rock, tint: BossCatalog.Color(BossKind.Rock)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_FlameSlime.asset", "Flame Slime", 300, 2.15f, 16, 1.7f, 0.8f, 0, true, kind: BossKind.Flame, tint: BossCatalog.Color(BossKind.Flame)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_FrostSlime.asset", "Frost Slime", 300, 1.9f, 15, 1.7f, 0.8f, 0, true, kind: BossKind.Frost, tint: BossCatalog.Color(BossKind.Frost)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_VoltSlime.asset", "Volt Slime", 260, 2.55f, 14, 1.6f, 0.7f, 0, true, kind: BossKind.Volt, tint: BossCatalog.Color(BossKind.Volt)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_ToxicSlime.asset", "Toxic Slime", 320, 2.0f, 15, 1.7f, 0.8f, 0, true, kind: BossKind.Toxic, tint: BossCatalog.Color(BossKind.Toxic)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_ShadowSlime.asset", "Shadow Slime", 280, 2.4f, 15, 1.6f, 0.7f, 0, true, kind: BossKind.Shadow, tint: BossCatalog.Color(BossKind.Shadow)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_MagmaSlime.asset", "Magma Slime", 380, 1.85f, 18, 1.8f, 0.85f, 0, true, kind: BossKind.Magma, tint: BossCatalog.Color(BossKind.Magma)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_StormSlime.asset", "Storm Slime", 340, 2.2f, 16, 1.7f, 0.75f, 0, true, kind: BossKind.Storm, tint: BossCatalog.Color(BossKind.Storm)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_CrystalSlime.asset", "Crystal Slime", 400, 1.7f, 17, 1.7f, 0.8f, 0, true, incoming: 0.8f, kind: BossKind.Crystal, tint: BossCatalog.Color(BossKind.Crystal)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_RockSlime.asset", "Rock Slime", 280, 1.8f, 18, 1.8f, 0.85f, 0, true, incoming: 0.65f, kind: BossKind.Rock, tint: BossCatalog.Tint(BossKind.Rock)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_FlameSlime.asset", "Flame Slime", 300, 2.15f, 16, 1.7f, 0.8f, 0, true, kind: BossKind.Flame, tint: BossCatalog.Tint(BossKind.Flame)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_FrostSlime.asset", "Frost Slime", 300, 1.9f, 15, 1.7f, 0.8f, 0, true, kind: BossKind.Frost, tint: BossCatalog.Tint(BossKind.Frost)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_VoltSlime.asset", "Volt Slime", 260, 2.55f, 14, 1.6f, 0.7f, 0, true, kind: BossKind.Volt, tint: BossCatalog.Tint(BossKind.Volt)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_ToxicSlime.asset", "Toxic Slime", 320, 2.0f, 15, 1.7f, 0.8f, 0, true, kind: BossKind.Toxic, tint: BossCatalog.Tint(BossKind.Toxic)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_ShadowSlime.asset", "Shadow Slime", 280, 2.4f, 15, 1.6f, 0.7f, 0, true, kind: BossKind.Shadow, tint: BossCatalog.Tint(BossKind.Shadow)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_MagmaSlime.asset", "Magma Slime", 380, 1.85f, 18, 1.8f, 0.85f, 0, true, kind: BossKind.Magma, tint: BossCatalog.Tint(BossKind.Magma)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_StormSlime.asset", "Storm Slime", 340, 2.2f, 16, 1.7f, 0.75f, 0, true, kind: BossKind.Storm, tint: BossCatalog.Tint(BossKind.Storm)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_CrystalSlime.asset", "Crystal Slime", 400, 1.7f, 17, 1.7f, 0.8f, 0, true, incoming: 0.8f, kind: BossKind.Crystal, tint: BossCatalog.Tint(BossKind.Crystal)),
                 bossDef
             };
 

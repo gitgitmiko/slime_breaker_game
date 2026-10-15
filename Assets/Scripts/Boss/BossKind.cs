@@ -50,7 +50,7 @@ namespace SlimeBreaker
             return "STAGE BOSS\n" + DisplayName(kind);
         }
 
-        public static Color Color(BossKind kind)
+        public static Color Tint(BossKind kind)
         {
             return kind switch
             {
@@ -64,7 +64,7 @@ namespace SlimeBreaker
                 BossKind.Storm => new Color(0.55f, 0.7f, 1f),
                 BossKind.Crystal => new Color(0.85f, 0.7f, 1f),
                 BossKind.Royal => new Color(0.85f, 0.25f, 0.7f),
-                _ => Color.white
+                _ => UnityEngine.Color.white
             };
         }
 

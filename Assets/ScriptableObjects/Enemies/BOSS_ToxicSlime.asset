@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Toxic Slime
   maxHealth: 50000
   moveSpeed: 2
-  contactDamage: 42
+  contactDamage: 50
   contactRange: 1.7
   contactCooldown: 0.8
   xp: 60

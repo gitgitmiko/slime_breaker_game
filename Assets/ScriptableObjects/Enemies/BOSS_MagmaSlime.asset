@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Magma Slime
   maxHealth: 70000
   moveSpeed: 1.85
-  contactDamage: 54
+  contactDamage: 50
   contactRange: 1.8
   contactCooldown: 0.85
   xp: 70

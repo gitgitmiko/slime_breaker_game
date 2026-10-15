@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Shadow Slime
   maxHealth: 60000
   moveSpeed: 2.4
-  contactDamage: 48
+  contactDamage: 50
   contactRange: 1.6
   contactCooldown: 0.7
   xp: 65

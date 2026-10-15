@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Volt Slime
   maxHealth: 40000
   moveSpeed: 2.55
-  contactDamage: 36
+  contactDamage: 50
   contactRange: 1.6
   contactCooldown: 0.7
   xp: 55

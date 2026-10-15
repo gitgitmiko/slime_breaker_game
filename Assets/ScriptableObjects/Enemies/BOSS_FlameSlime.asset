@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Flame Slime
   maxHealth: 20000
   moveSpeed: 2.15
-  contactDamage: 24
+  contactDamage: 50
   contactRange: 1.7
   contactCooldown: 0.8
   xp: 45

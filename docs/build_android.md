@@ -83,6 +83,7 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 9/9; PlayMode 20/20 lolos; APK: `SLIMEBREAKER_APK_OK`.
 - APK: `Builds/SlimeBreaker.apk` (38 MB), disalin ke `~/Downloads/SlimeBreaker.apk`.
 - Paket: `com.gitgitmiko.slimebreaker` 0.5.0 (versionCode 5).
+- Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
 
 ## Pasang di HP
 

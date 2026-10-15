@@ -137,7 +137,7 @@ namespace SlimeBreaker
         public static ArenaTheme First(int seed) => ForFloor(1, seed);
 
         /// <summary>Kept for older call sites; new floors use <see cref="ForFloor"/>.</summary>
-        public static ArenaTheme Roll(ArenaTheme previous, Random rng)
+        public static ArenaTheme Roll(ArenaTheme previous, System.Random rng)
         {
             int seed = rng != null ? rng.Next(1, int.MaxValue) : 2024;
             int floor = previous.seed == 0 ? 2 : 2;

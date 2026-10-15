@@ -914,6 +914,10 @@ namespace SlimeBreaker.Tests
                     crowd += d / (m * m);
             }
             Vector3 flat = new Vector3(hero.x, 0f, hero.z);
+            float attackRange = 4.4f;
+            var stats = GameFlowController.Instance != null ? GameFlowController.Instance.Stats : null;
+            if (stats != null)
+                attackRange = stats.attackRange;
             Vector3 wish;
             if (nearest == null)
             {
@@ -926,15 +930,19 @@ namespace SlimeBreaker.Tests
                 Vector3 tangent = Vector3.Cross(Vector3.up, toEnemy.normalized);
                 if (nearestDistance < 1.6f)
                     wish = crowd.normalized * 1.5f + tangent * 0.5f;
-                else if (nearestDistance > 2f)
-                    wish = toEnemy.normalized + crowd * 0.5f;
+                else if (nearestDistance <= attackRange * 0.9f)
+                    wish = Vector3.zero;
                 else
-                    wish = tangent + crowd * 0.5f;
+                    wish = toEnemy.normalized + crowd * 0.5f;
             }
             if (flat.magnitude > 16f)
                 wish -= flat.normalized;
             if (wish.sqrMagnitude < 0.0001f)
-                wish = Vector3.forward;
+            {
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+                InputSystem.Update();
+                return;
+            }
             if (nearest != null && nearestDistance < 1.3f)
                 dashTimer -= Time.unscaledDeltaTime;
             var keys = new List<Key>();

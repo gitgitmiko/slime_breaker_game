@@ -49,7 +49,7 @@ xvfb-run -a -s "-screen 0 1280x1024x24" unity-editor -batchmode \
   -testResults "$PWD/Logs/playmode.xml" -logFile Logs/playmode.log
 ```
 
-Exit 0 berarti semua 14 test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: hero dan slime menapak tanah, properti tegak, semua material valid, tombol Main membuka arena, joystick sentuh menggerakkan hero, bot bertahan satu menit, AudioListener + 60 fps terpasang, power-up + portal di level 5 lalu arena berganti, Cincin Es melukai dan memperlambat, bolt mengenai musuh, Nova Api merusak musuh dekat, obstacle memblokir bolt, run-save level/stage utuh, preset grafis Low/High terpasang. Baris `PLAYTEST` di log memuat angka ukurnya. Screenshot ada di `Logs/playtest/` (00_menu … 10_obstacle).
+Exit 0 berarti semua 18 test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: hero dan slime menapak tanah, properti tegak, semua material valid, tombol Main membuka arena, joystick sentuh menggerakkan hero, bot bertahan satu menit, AudioListener + 60 fps terpasang, power-up tiap 5 level di map yang sama, Cincin Es melukai dan memperlambat, bolt mengenai musuh, Nova Api merusak musuh dekat, obstacle memblokir bolt, run-save level/stage utuh, preset grafis Low/High terpasang, bar darah musuh, lifesteal, slime jarak menembak, dan Rock Slime + warning di level 10. Baris `PLAYTEST` di log memuat angka ukurnya. Screenshot ada di `Logs/playtest/` (00_menu … 13_boss_intro).
 
 ## Hasil 14 Oktober 2026 (putaran 1)
 
@@ -69,6 +69,13 @@ Exit 0 berarti semua 14 test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: 
 - Setup: `SLIMEBREAKER_SETUP_OK`; PlayMode 14/14 lolos; APK: `SLIMEBREAKER_APK_OK`.
 - APK: `Builds/SlimeBreaker.apk` (38 MB), disalin ke `~/Downloads/SlimeBreaker.apk`.
 - Paket: `com.gitgitmiko.slimebreaker` 0.3.0 (versionCode 3).
+- Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
+
+## Hasil 15 Oktober 2026 (putaran 4 — bar darah, boss, satu map, ranged, lifesteal)
+
+- Setup: `SLIMEBREAKER_SETUP_OK`; PlayMode 18/18 lolos; APK: `SLIMEBREAKER_APK_OK`.
+- APK: `Builds/SlimeBreaker.apk` (38 MB), disalin ke `~/Downloads/SlimeBreaker.apk`.
+- Paket: `com.gitgitmiko.slimebreaker` 0.4.0 (versionCode 4).
 - Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
 
 ## Pasang di HP

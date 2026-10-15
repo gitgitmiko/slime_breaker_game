@@ -85,6 +85,13 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Paket: `com.gitgitmiko.slimebreaker` 0.5.0 (versionCode 5).
 - Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
 
+## Hasil 15 Oktober 2026 (putaran 6 — damage, crit, pintu, skill elemental)
+
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 12/12; PlayMode 22/22 lolos; APK: `SLIMEBREAKER_APK_OK`.
+- APK: `Builds/SlimeBreaker.apk` (39 MB), disalin ke `~/Downloads/SlimeBreaker.apk`.
+- Paket: `com.gitgitmiko.slimebreaker` 0.6.0 (versionCode 6).
+- Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

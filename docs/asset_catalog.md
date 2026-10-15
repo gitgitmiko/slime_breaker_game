@@ -24,8 +24,8 @@ Sumber geometri: Blender 5.2.2, skrip `asset_work/scripts/build_assets.py`. Teks
 | ENV_Forest_RuinPillar | 420 | |
 | ENV_Forest_Grass | 70 | ditabur 54× di arena |
 | ENV_Forest_Flower | 740 | ditabur 20× |
-| ENV_Forest_BoundaryStone | 100 | 18 batu di r = 12 m menghadap pusat |
-| ENV_Arena_RuneRing | 1536 | cincin rune emisif r ≈ 11,4 m, batas arena |
+| ENV_Forest_BoundaryStone | 100 | 24 batu di r ≈ 23 m menghadap pusat |
+| ENV_Arena_RuneRing | 1536 | cincin rune emisif, di-scale ke arena radius 22 m |
 
 ## VFX mesh
 
@@ -33,7 +33,7 @@ Sumber geometri: Blender 5.2.2, skrip `asset_work/scripts/build_assets.py`. Teks
 |---|---|---|
 | VFX_Boss_Ring | 768 | telegraph boss |
 | VFX_XP_Orb | 80 | `XPOrb` |
-| VFX_Magic_Bolt | 20 | serangan dasar hero (`HomingProjectile`) |
+| VFX_Magic_Bolt | 20 | serangan dasar hero (`HomingProjectile`) dan bolt musuh (`HostileProjectile`) |
 | VFX_Ice_Shard | 20 | skill Cincin Es |
 | VFX_Arcane_Missile | 20 | skill Misil Arkana |
 | VFX_Fire_Ring | 960 | mesh Blender cadangan; Nova Api memakai `MESH_Annulus` + `FireNova` |
@@ -43,7 +43,7 @@ Partikel (hit, dash, levelup, slam, ice, zap, fire, burn, arcane, powerup, cast,
 
 ## UI dan audio
 
-- Ikon 256 px: 8 upgrade (`ICON_Upgrade_*`) dan 4 skill (`ICON_Skill_Ice`, `_Lightning`, `_Fire`, `_Arcane`).
+- Ikon 256 px: 9 upgrade (`ICON_Upgrade_*`, termasuk Lifesteal) dan 4 skill (`ICON_Skill_Ice`, `_Lightning`, `_Fire`, `_Arcane`).
 - Panel: `UI_Panel`, `UI_Button`, `UI_Button_Danger`, `UI_Button_Gold`, `UI_Slot`, `UI_Bar_Back`, `UI_Joystick_Base`, `UI_Joystick_Knob`, `UI_Circle`.
 - SFX 23 file (`Assets/Audio/SFX`): 20 SFX lama plus Portal, Rain, Wind (ambien cuaca). Semua disintesis numpy.
 - Tekstur tanah tambahan: `TEX_Snow_Ground`, `TEX_Sand_Ground` (+ normal).
@@ -51,4 +51,4 @@ Partikel (hit, dash, levelup, slam, ice, zap, fire, burn, arcane, powerup, cast,
 
 Preview Blender ada di `asset_work/previews/` (termasuk lembar frame animasi hero). Material berwarna ikut di dalam FBX dan dikonversi ke URP Lit oleh `ProjectSetup` memakai tabel nama material (smoothness, metallic, emisi, normal map).
 
-Collider gameplay tidak memakai mesh. Pemain memakai CharacterController. Musuh dan proyektil memakai jarak. Tanah memakai BoxCollider 80 m yang dipasang skrip editor.
+Collider gameplay tidak memakai mesh. Pemain memakai CharacterController. Musuh dan proyektil memakai jarak. Tanah memakai BoxCollider 100 m yang dipasang skrip editor. Arena bermain beradius 22 m.

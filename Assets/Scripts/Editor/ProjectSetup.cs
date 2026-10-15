@@ -176,18 +176,33 @@ namespace SlimeBreaker.EditorTools
             var normalDef = Enemy("Assets/ScriptableObjects/Enemies/ENM_Slime_Normal.asset", "Slime", 24, 2.35f, 8, 1.15f, 0.75f, 3, false);
             var fastDef = Enemy("Assets/ScriptableObjects/Enemies/ENM_Slime_Fast.asset", "Slime Cepat", 14, 3.9f, 6, 1.0f, 0.6f, 4, false);
             var tankDef = Enemy("Assets/ScriptableObjects/Enemies/ENM_Slime_Tank.asset", "Slime Tank", 64, 1.35f, 14, 1.4f, 0.9f, 8, false);
-            var bossDef = Enemy("Assets/ScriptableObjects/Enemies/BOSS_SlimeKing.asset", "Slime King", 520, 2.05f, 16, 1.7f, 0.8f, 0, true);
+            var rangedDef = Enemy("Assets/ScriptableObjects/Enemies/ENM_Slime_Ranged.asset", "Slime Jarak", 18, 2.15f, 7, 6.4f, 1.35f, 4, false, ranged: true, tint: new Color(0.95f, 0.48f, 0.78f));
+            var bossDef = Enemy("Assets/ScriptableObjects/Enemies/BOSS_SlimeKing.asset", "Royal Slime", 800, 2.1f, 20, 1.7f, 0.8f, 0, true, kind: BossKind.Royal);
+            var bossDefs = new[]
+            {
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_RockSlime.asset", "Rock Slime", 280, 1.8f, 18, 1.8f, 0.85f, 0, true, incoming: 0.65f, kind: BossKind.Rock, tint: BossCatalog.Color(BossKind.Rock)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_FlameSlime.asset", "Flame Slime", 300, 2.15f, 16, 1.7f, 0.8f, 0, true, kind: BossKind.Flame, tint: BossCatalog.Color(BossKind.Flame)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_FrostSlime.asset", "Frost Slime", 300, 1.9f, 15, 1.7f, 0.8f, 0, true, kind: BossKind.Frost, tint: BossCatalog.Color(BossKind.Frost)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_VoltSlime.asset", "Volt Slime", 260, 2.55f, 14, 1.6f, 0.7f, 0, true, kind: BossKind.Volt, tint: BossCatalog.Color(BossKind.Volt)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_ToxicSlime.asset", "Toxic Slime", 320, 2.0f, 15, 1.7f, 0.8f, 0, true, kind: BossKind.Toxic, tint: BossCatalog.Color(BossKind.Toxic)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_ShadowSlime.asset", "Shadow Slime", 280, 2.4f, 15, 1.6f, 0.7f, 0, true, kind: BossKind.Shadow, tint: BossCatalog.Color(BossKind.Shadow)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_MagmaSlime.asset", "Magma Slime", 380, 1.85f, 18, 1.8f, 0.85f, 0, true, kind: BossKind.Magma, tint: BossCatalog.Color(BossKind.Magma)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_StormSlime.asset", "Storm Slime", 340, 2.2f, 16, 1.7f, 0.75f, 0, true, kind: BossKind.Storm, tint: BossCatalog.Color(BossKind.Storm)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_CrystalSlime.asset", "Crystal Slime", 400, 1.7f, 17, 1.7f, 0.8f, 0, true, incoming: 0.8f, kind: BossKind.Crystal, tint: BossCatalog.Color(BossKind.Crystal)),
+                bossDef
+            };
 
             var upgrades = new[]
             {
                 Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Damage.asset", UpgradeKind.Damage, "Serangan", "+20% damage sihir", 0.2f, "Assets/Art/UI/Icons/ICON_Upgrade_Damage.png"),
                 Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Speed.asset", UpgradeKind.Speed, "Laju", "+12% kecepatan gerak", 0.12f, "Assets/Art/UI/Icons/ICON_Upgrade_Speed.png"),
                 Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Health.asset", UpgradeKind.Health, "Nyawa", "+25 nyawa maksimum", 25f, "Assets/Art/UI/Icons/ICON_Upgrade_Health.png"),
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_AttackRate.asset", UpgradeKind.AttackRate, "Ritme", "Mantra lebih cepat", 0.15f, "Assets/Art/UI/Icons/ICON_Upgrade_AttackRate.png"),
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_AttackRate.asset", UpgradeKind.AttackRate, "Attack Speed", "Cooldown serangan lebih pendek", 0.15f, "Assets/Art/UI/Icons/ICON_Upgrade_AttackRate.png"),
                 Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Dash.asset", UpgradeKind.Dash, "Dash", "Dash lebih sering", 0.15f, "Assets/Art/UI/Icons/ICON_Upgrade_Dash.png"),
                 Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Range.asset", UpgradeKind.Range, "Jangkauan", "+20% jangkauan mantra", 0.2f, "Assets/Art/UI/Icons/ICON_Upgrade_Range.png"),
                 Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Xp.asset", UpgradeKind.Xp, "Pengalaman", "+25% XP", 0.25f, "Assets/Art/UI/Icons/ICON_Upgrade_Xp.png"),
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Armor.asset", UpgradeKind.Armor, "Perisai", "Damage masuk -8%", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_Armor.png")
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Armor.asset", UpgradeKind.Armor, "Perisai", "Damage masuk -8%", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_Armor.png"),
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Lifesteal.asset", UpgradeKind.Lifesteal, "Lifesteal", "8% nyawa dari damage", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_Lifesteal.png")
             };
 
             var skills = new[]
@@ -209,18 +224,20 @@ namespace SlimeBreaker.EditorTools
             var balance = Scriptable("Assets/ScriptableObjects/Balance/Balance.asset", ScriptableObject.CreateInstance<BalanceConfig>());
             balance.baseAttackRange = 4.4f;
             balance.baseAttackCooldown = 0.55f;
+            balance.maxAliveEnemies = 28;
             balance.phases = new[]
             {
-                Phase(45f, 2.3f, 1, 0, 0),
-                Phase(120f, 1.7f, 3, 2, 0),
-                Phase(210f, 1.35f, 3, 2, 1),
-                Phase(300f, 1.0f, 2, 3, 2)
+                Phase(45f, 2.3f, 1, 0, 0, 0),
+                Phase(120f, 1.7f, 3, 2, 0, 1),
+                Phase(210f, 1.35f, 3, 2, 1, 2),
+                Phase(300f, 1.0f, 2, 3, 2, 2)
             };
             EditorUtility.SetDirty(balance);
 
             var xpPrefab = PickupPrefab<XPOrb>("Assets/Prefabs/Pickups/VFX_XP_Orb.prefab", "Assets/Art/VFX/VFX_XP_Orb.fbx");
             var bolt = ProjectilePrefab("Assets/Prefabs/Skills/PRJ_Magic_Bolt.prefab", "Assets/Art/VFX/VFX_Magic_Bolt.fbx", new Color(0.85f, 0.6f, 1f), 0.16f, 0.22f);
             var missile = ProjectilePrefab("Assets/Prefabs/Skills/PRJ_Arcane_Missile.prefab", "Assets/Art/VFX/VFX_Arcane_Missile.fbx", new Color(0.7f, 0.35f, 1f), 0.14f, 0.3f);
+            var hostileBolt = HostileBoltPrefab("Assets/Prefabs/Skills/PRJ_Hostile_Bolt.prefab", "Assets/Art/VFX/VFX_Magic_Bolt.fbx", new Color(1f, 0.45f, 0.2f), 0.16f, 0.2f);
             var shard = ModelOnlyPrefab("Assets/Prefabs/Skills/SKL_Ice_Shard.prefab", "Assets/Art/VFX/VFX_Ice_Shard.fbx");
             var fireRing = FireNovaPrefab("Assets/Prefabs/Skills/SKL_Fire_Nova.prefab");
             var lightning = LightningPrefab("Assets/Prefabs/Skills/SKL_Lightning.prefab");
@@ -231,6 +248,8 @@ namespace SlimeBreaker.EditorTools
             var normal = CharacterPrefab("Assets/Prefabs/Enemies/ENM_Slime_Normal.prefab", "Assets/Art/Enemies/Slime/ENM_Slime_Normal.fbx", normalController, 0.9f, false, normalDef, xpPrefab);
             var fast = CharacterPrefab("Assets/Prefabs/Enemies/ENM_Slime_Fast.prefab", "Assets/Art/Enemies/Slime/ENM_Slime_Fast.fbx", fastController, 0.7f, false, fastDef, xpPrefab);
             var tank = CharacterPrefab("Assets/Prefabs/Enemies/ENM_Slime_Tank.prefab", "Assets/Art/Enemies/Slime/ENM_Slime_Tank.fbx", tankController, 1.15f, false, tankDef, xpPrefab);
+            var ranged = CharacterPrefab("Assets/Prefabs/Enemies/ENM_Slime_Ranged.prefab", "Assets/Art/Enemies/Slime/ENM_Slime_Fast.fbx", fastController, 0.85f, false, rangedDef, xpPrefab);
+            WireRangedBolt(ranged, hostileBolt);
             var boss = BossPrefab("Assets/Prefabs/Bosses/BOSS_SlimeKing.prefab", bossController, bossDef);
 
             var env = new Dictionary<string, GameObject>();
@@ -251,15 +270,15 @@ namespace SlimeBreaker.EditorTools
                 ObstaclePrefab("Assets/Prefabs/Environment/OBS_Pillar.prefab", Obstacle.Kind.Ruin, 0.7f, env["RuinPillar"]),
                 ObstaclePrefab("Assets/Prefabs/Environment/OBS_Boulder.prefab", Obstacle.Kind.Rock, 1.25f, env["Rock_A"])
             };
-            var rain = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Rain.prefab", new Color(0.65f, 0.75f, 0.9f), 220, 14f, 0.08f, 2.4f, ParticleSystemShapeType.Box, 12f, "rain", true);
-            var snowWx = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Snow.prefab", new Color(0.92f, 0.96f, 1f), 90, 1.4f, 0.12f, 0.25f, ParticleSystemShapeType.Box, 12f, "wind", false);
-            var fireflies = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Fireflies.prefab", new Color(1f, 0.92f, 0.45f), 28, 0.35f, 0.08f, -0.05f, ParticleSystemShapeType.Sphere, 7f, null, false);
-            var dust = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Dust.prefab", new Color(1f, 0.82f, 0.5f, 0.5f), 40, 0.4f, 0.16f, -0.08f, ParticleSystemShapeType.Box, 10f, "wind", false);
+            var rain = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Rain.prefab", new Color(0.65f, 0.75f, 0.9f), 280, 14f, 0.08f, 2.4f, ParticleSystemShapeType.Box, 20f, "rain", true);
+            var snowWx = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Snow.prefab", new Color(0.92f, 0.96f, 1f), 120, 1.4f, 0.12f, 0.25f, ParticleSystemShapeType.Box, 20f, "wind", false);
+            var fireflies = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Fireflies.prefab", new Color(1f, 0.92f, 0.45f), 36, 0.35f, 0.08f, -0.05f, ParticleSystemShapeType.Sphere, 10f, null, false);
+            var dust = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Dust.prefab", new Color(1f, 0.82f, 0.5f, 0.5f), 56, 0.4f, 0.16f, -0.08f, ParticleSystemShapeType.Box, 18f, "wind", false);
             var portal = PortalPrefab("Assets/Prefabs/Environment/ENV_Exit_Portal.prefab", env["RuneRing"]);
 
             BuildBoot();
             BuildMenu(hero, heroController, env);
-            BuildArena(balance, upgrades, skills, hero, normal, fast, tank, boss, env, vfx, powerUp, portal, obstacles, rain, snowWx, fireflies, dust);
+            BuildArena(balance, upgrades, skills, hero, normal, fast, tank, ranged, boss, bossDefs, hostileBolt, lightning, env, vfx, powerUp, portal, obstacles, rain, snowWx, fireflies, dust);
             ConfigurePlayerSettings();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -835,7 +854,8 @@ namespace SlimeBreaker.EditorTools
             return asset;
         }
 
-        static EnemyDefinition Enemy(string path, string displayName, int health, float speed, int damage, float range, float cooldown, int xp, bool boss)
+        static EnemyDefinition Enemy(string path, string displayName, int health, float speed, int damage, float range, float cooldown, int xp, bool boss,
+            bool ranged = false, float incoming = 1f, BossKind kind = BossKind.None, Color tint = default)
         {
             var asset = ScriptableObject.CreateInstance<EnemyDefinition>();
             asset.displayName = displayName;
@@ -846,6 +866,10 @@ namespace SlimeBreaker.EditorTools
             asset.contactCooldown = cooldown;
             asset.xp = xp;
             asset.isBoss = boss;
+            asset.isRanged = ranged;
+            asset.incomingDamageScale = incoming;
+            asset.bossKind = kind;
+            asset.tint = tint == default ? Color.white : tint;
             return Scriptable(path, asset);
         }
 
@@ -882,9 +906,9 @@ namespace SlimeBreaker.EditorTools
             return Scriptable(path, asset);
         }
 
-        static SpawnPhase Phase(float until, float interval, int normal, int fast, int tank)
+        static SpawnPhase Phase(float until, float interval, int normal, int fast, int tank, int ranged = 0)
         {
-            return new SpawnPhase { untilSeconds = until, interval = interval, normal = normal, fast = fast, tank = tank };
+            return new SpawnPhase { untilSeconds = until, interval = interval, normal = normal, fast = fast, tank = tank, ranged = ranged };
         }
 
         // ------------------------------------------------------------------ prefabs
@@ -941,6 +965,36 @@ namespace SlimeBreaker.EditorTools
             var projectile = root.AddComponent<HomingProjectile>();
             projectile.speed = 17f;
             return SavePrefab(root, path);
+        }
+
+        static GameObject HostileBoltPrefab(string path, string modelPath, Color trailColor, float width, float time)
+        {
+            var prefab = ProjectilePrefab(path, modelPath, trailColor, width, time);
+            var contents = PrefabUtility.LoadPrefabContents(path);
+            var homing = contents.GetComponent<HomingProjectile>();
+            if (homing != null)
+                UnityEngine.Object.DestroyImmediate(homing);
+            var bolt = contents.GetComponent<HostileProjectile>();
+            if (bolt == null)
+                bolt = contents.AddComponent<HostileProjectile>();
+            bolt.speed = 9f;
+            PrefabUtility.SaveAsPrefabAsset(contents, path);
+            PrefabUtility.UnloadPrefabContents(contents);
+            return AssetDatabase.LoadAssetAtPath<GameObject>(path) ?? prefab;
+        }
+
+        static void WireRangedBolt(GameObject prefab, GameObject bolt)
+        {
+            var path = AssetDatabase.GetAssetPath(prefab);
+            var root = PrefabUtility.LoadPrefabContents(path);
+            var ai = root.GetComponent<EnemyChaseAI>();
+            if (ai != null)
+            {
+                ai.boltPrefab = bolt;
+                ai.arenaRadius = RunRules.ArenaRadius;
+            }
+            PrefabUtility.SaveAsPrefabAsset(root, path);
+            PrefabUtility.UnloadPrefabContents(root);
         }
 
         static GameObject FireNovaPrefab(string path)
@@ -1306,7 +1360,8 @@ namespace SlimeBreaker.EditorTools
                 body.skinWidth = 0.03f;
                 body.stepOffset = 0.2f;
                 root.AddComponent<PlayerHealth>();
-                root.AddComponent<PlayerController>();
+                var mover = root.AddComponent<PlayerController>();
+                mover.arenaRadius = RunRules.ArenaRadius;
                 root.AddComponent<DashController>();
                 root.AddComponent<AutoAttackController>();
                 root.AddComponent<SkillController>();
@@ -1316,7 +1371,8 @@ namespace SlimeBreaker.EditorTools
                 var health = root.AddComponent<EnemyHealth>();
                 health.definition = definition;
                 health.xpOrbPrefab = xp;
-                root.AddComponent<EnemyChaseAI>();
+                var chase = root.AddComponent<EnemyChaseAI>();
+                chase.arenaRadius = RunRules.ArenaRadius;
             }
             return SavePrefab(root, path);
         }
@@ -1359,6 +1415,7 @@ namespace SlimeBreaker.EditorTools
             health.definition = definition;
             var boss = root.AddComponent<BossController>();
             boss.ring = ring.transform;
+            boss.arenaRadius = RunRules.ArenaRadius;
             return SavePrefab(root, path);
         }
 
@@ -1382,7 +1439,7 @@ namespace SlimeBreaker.EditorTools
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
             var box = root.AddComponent<BoxCollider>();
             box.center = new Vector3(0f, -0.5f, 0f);
-            box.size = new Vector3(80f, 1f, 80f);
+            box.size = new Vector3(100f, 1f, 100f);
             return SavePrefab(root, path);
         }
 
@@ -1475,7 +1532,7 @@ namespace SlimeBreaker.EditorTools
             title.color = new Color(1f, 0.92f, 0.7f);
             title.fontStyle = FontStyle.Bold;
             Place(title.gameObject, safe, new Vector2(0.3f, 0.8f), new Vector2(760f, 120f));
-            var subtitle = Text(safe, "Subtitle", "Penyihir vs gerombolan slime", 30, TextAnchor.MiddleLeft, font);
+            var subtitle = Text(safe, "Subtitle", "Satu arena. 100 level. 10 slime boss.", 30, TextAnchor.MiddleLeft, font);
             subtitle.color = new Color(0.8f, 0.85f, 1f);
             Place(subtitle.gameObject, safe, new Vector2(0.3f, 0.715f), new Vector2(760f, 50f));
             var gold = Text(safe, "Gold", "Emas 0", 36, TextAnchor.MiddleLeft, font);
@@ -1525,7 +1582,11 @@ namespace SlimeBreaker.EditorTools
             GameObject normal,
             GameObject fast,
             GameObject tank,
+            GameObject ranged,
             GameObject boss,
+            EnemyDefinition[] bossDefs,
+            GameObject hostileBolt,
+            GameObject lightning,
             Dictionary<string, GameObject> env,
             List<VfxPlayer.Entry> vfxEntries,
             GameObject powerUpPrefab,
@@ -1536,6 +1597,7 @@ namespace SlimeBreaker.EditorTools
             GameObject fireflies,
             GameObject dust)
         {
+            _ = portalPrefab;
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var groundInstance = (GameObject)PrefabUtility.InstantiatePrefab(env["ground"]);
             groundInstance.transform.position = Vector3.zero;
@@ -1545,7 +1607,7 @@ namespace SlimeBreaker.EditorTools
             var camera = MakeCamera("Camera", new Color(0.36f, 0.56f, 0.7f));
             camera.fieldOfView = 50f;
             camera.nearClipPlane = 0.3f;
-            camera.farClipPlane = 70f;
+            camera.farClipPlane = 90f;
             var follow = camera.gameObject.AddComponent<FollowCamera>();
             follow.target = player.transform;
             camera.transform.position = follow.offset;
@@ -1562,7 +1624,7 @@ namespace SlimeBreaker.EditorTools
             RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogColor = new Color(0.52f, 0.68f, 0.76f);
             RenderSettings.fogStartDistance = 26f;
-            RenderSettings.fogEndDistance = 60f;
+            RenderSettings.fogEndDistance = 80f;
             EventSystem();
 
             var systems = new GameObject("Systems");
@@ -1589,7 +1651,10 @@ namespace SlimeBreaker.EditorTools
             spawner.normalPrefab = normal;
             spawner.fastPrefab = fast;
             spawner.tankPrefab = tank;
+            spawner.rangedPrefab = ranged;
             spawner.bossPrefab = boss;
+            spawner.hostileBolt = hostileBolt;
+            spawner.arenaRadius = RunRules.ArenaRadius;
             upgradeManager.pool = upgrades;
             powerUps.skills = skills;
             powerUps.pickupPrefab = powerUpPrefab;
@@ -1619,11 +1684,19 @@ namespace SlimeBreaker.EditorTools
             generator.dustRig = dust;
             generator.sun = sun;
             generator.arenaCamera = camera;
+            generator.arenaRadius = RunRules.ArenaRadius;
+            generator.minObstacles = 10;
+            generator.maxObstacles = 16;
             generator.generateOnStart = false;
             stage.generator = generator;
             stage.powerUps = powerUps;
             stage.spawner = spawner;
-            stage.portalPrefab = portalPrefab;
+            stage.bossPrefab = boss;
+            stage.bossDefinitions = bossDefs;
+            stage.hostileBolt = hostileBolt;
+            stage.lightningPrefab = lightning;
+            stage.minionPrefab = normal;
+            stage.cameraRig = follow;
             audio.music = Clip("Assets/Audio/Music/MUS_Arena.ogg");
             audio.entries = new[]
             {
@@ -1810,6 +1883,25 @@ namespace SlimeBreaker.EditorTools
             toastGroup.blocksRaycasts = false;
             toastGroup.interactable = false;
 
+            var warning = new GameObject("BossWarning", typeof(RectTransform), typeof(Image), typeof(CanvasGroup));
+            var warningImage = warning.GetComponent<Image>();
+            ApplyImage(warningImage, panelSprite, Image.Type.Sliced, new Color(0.18f, 0.05f, 0.04f, 0.88f));
+            warningImage.raycastTarget = false;
+            Place(warning, safe, new Vector2(0.5f, 0.62f), new Vector2(860f, 160f));
+            var warningTitle = Text(warning.transform, "Title", "STAGE BOSS", 42, TextAnchor.MiddleCenter, font);
+            warningTitle.fontStyle = FontStyle.Bold;
+            warningTitle.color = new Color(1f, 0.82f, 0.35f);
+            warningTitle.raycastTarget = false;
+            Place(warningTitle.gameObject, warning.transform, new Vector2(0.5f, 0.7f), new Vector2(820f, 60f));
+            var warningName = Text(warning.transform, "Name", "", 36, TextAnchor.MiddleCenter, font);
+            warningName.fontStyle = FontStyle.Bold;
+            warningName.raycastTarget = false;
+            Place(warningName.gameObject, warning.transform, new Vector2(0.5f, 0.32f), new Vector2(820f, 56f));
+            var warningGroup = warning.GetComponent<CanvasGroup>();
+            warningGroup.alpha = 0f;
+            warningGroup.blocksRaycasts = false;
+            warningGroup.interactable = false;
+
             // Level-up choice panel.
             var levelPanel = Panel(safe, "LevelUp", font, "Naik level! Pilih satu upgrade");
             var choices = new Button[3];
@@ -1880,6 +1972,9 @@ namespace SlimeBreaker.EditorTools
             ui.toastGroup = toastGroup;
             ui.toastText = toastText;
             ui.toastBackground = toastImage;
+            ui.bossWarningGroup = warningGroup;
+            ui.bossWarningTitle = warningTitle;
+            ui.bossWarningName = warningName;
             var fade = new GameObject("Fade", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(ScreenFader));
             fade.transform.SetParent(safe, false);
             var fadeImage = fade.GetComponent<Image>();
@@ -1947,8 +2042,8 @@ namespace SlimeBreaker.EditorTools
         {
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
-            PlayerSettings.bundleVersion = "0.3.0";
-            PlayerSettings.Android.bundleVersionCode = 3;
+            PlayerSettings.bundleVersion = "0.4.0";
+            PlayerSettings.Android.bundleVersionCode = 4;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

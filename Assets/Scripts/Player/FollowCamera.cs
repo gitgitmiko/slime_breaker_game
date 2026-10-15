@@ -15,6 +15,11 @@ namespace SlimeBreaker
         Vector3 lead;
         Vector3 lastTargetPosition;
         float shake;
+        Transform storedTarget;
+        Vector3 storedOffset;
+        float focusLeft;
+        bool focusing;
+        static readonly Vector3 CinematicOffset = new Vector3(0f, 4.8f, -5.1f);
 
         void Awake()
         {
@@ -24,8 +29,38 @@ namespace SlimeBreaker
             Snap(1f);
         }
 
+        public void Focus(Transform subject, float seconds)
+        {
+            if (subject == null || seconds <= 0f)
+                return;
+            if (!focusing)
+            {
+                storedTarget = target;
+                storedOffset = offset;
+            }
+            target = subject;
+            focusing = true;
+            focusLeft = seconds;
+            lastTargetPosition = subject.position;
+            lead = Vector3.zero;
+        }
+
         void LateUpdate()
         {
+            if (focusing)
+            {
+                focusLeft -= Time.unscaledDeltaTime;
+                offset = Vector3.Lerp(offset, CinematicOffset, 1f - Mathf.Exp(-5f * Time.unscaledDeltaTime));
+                if (focusLeft <= 0f)
+                {
+                    focusing = false;
+                    target = storedTarget != null ? storedTarget : target;
+                    offset = storedOffset;
+                    if (target != null)
+                        lastTargetPosition = target.position;
+                    lead = Vector3.zero;
+                }
+            }
             if (target == null)
                 return;
             float dt = Time.unscaledDeltaTime;

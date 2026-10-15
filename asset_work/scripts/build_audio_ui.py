@@ -571,6 +571,16 @@ def paint_xp(draw, s):
     draw.polygon(star_points(s / 2, s / 2, s * 0.14, s * 0.06), fill=WHITE)
 
 
+def paint_lifesteal(draw, s):
+    c = s / 2
+    r = s * 0.15
+    draw.ellipse((c - 2 * r, s * 0.3, c, s * 0.3 + 2 * r), fill=(255, 92, 120, 255))
+    draw.ellipse((c, s * 0.3, c + 2 * r, s * 0.3 + 2 * r), fill=(255, 92, 120, 255))
+    draw.polygon([(c - 2 * r + s * 0.01, s * 0.3 + r * 1.3), (c + 2 * r - s * 0.01, s * 0.3 + r * 1.3), (c, s * 0.78)], fill=(255, 92, 120, 255))
+    draw.rectangle((c - s * 0.035, s * 0.42, c + s * 0.035, s * 0.64), fill=GOLD)
+    draw.rectangle((c - s * 0.1, s * 0.5, c + s * 0.1, s * 0.56), fill=GOLD)
+
+
 def paint_armor(draw, s):
     c = s / 2
     draw.polygon([(c, s * 0.14), (s * 0.78, s * 0.26), (s * 0.74, s * 0.56), (c, s * 0.86), (s * 0.26, s * 0.56), (s * 0.22, s * 0.26)], fill=WHITE)
@@ -627,6 +637,7 @@ def icons():
         "ICON_Upgrade_Range": paint_range,
         "ICON_Upgrade_Xp": paint_xp,
         "ICON_Upgrade_Armor": paint_armor,
+        "ICON_Upgrade_Lifesteal": paint_lifesteal,
     }
     for name, painter in upgrades.items():
         icon(name, painter)

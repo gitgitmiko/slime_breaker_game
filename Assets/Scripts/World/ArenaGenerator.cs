@@ -39,9 +39,9 @@ namespace SlimeBreaker
         public GameObject dustRig;
         public Light sun;
         public Camera arenaCamera;
-        public float arenaRadius = 11.2f;
-        public int minObstacles = 6;
-        public int maxObstacles = 9;
+        public float arenaRadius = RunRules.ArenaRadius;
+        public int minObstacles = 10;
+        public int maxObstacles = 16;
         public bool generateOnStart = true;
 
         public ArenaTheme Current { get; private set; }
@@ -212,45 +212,46 @@ namespace SlimeBreaker
 
         void PlaceProps(ArenaTheme theme, System.Random rng)
         {
-            Place(props.runeRing, Vector3.zero, 0f, 1f, false);
-            Ring(props.boundaryStone, 18, 12.0f, true, rng);
+            float r = arenaRadius;
+            Place(props.runeRing, Vector3.zero, 0f, r / 11.2f, false);
+            Ring(props.boundaryStone, 24, r + 1.2f, true, rng);
             switch (theme.biome)
             {
                 case Biome.Snow:
-                    Ring(props.treeA, 8, 14.6f, false, rng);
-                    Ring(props.treeB, 7, 15.9f, false, rng, 0.5f);
-                    Ring(props.treeA, 10, 19.5f, false, rng, 0.25f, 1.2f);
-                    Ring(props.treeB, 9, 23f, false, rng, 0.1f, 1.35f);
-                    Ring(props.rockA, 10, 12.9f, false, rng, 0.2f, 1.1f);
-                    Ring(props.rockB, 6, 9.6f, false, rng, 0.4f);
-                    Ring(props.pillar, 4, 13.4f, true, rng);
-                    Ring(props.bush, 5, 13.8f, false, rng, 0.3f);
-                    Scatter(props.grass, 16, 2.4f, 10.5f, rng);
+                    Ring(props.treeA, 10, r + 2.6f, false, rng);
+                    Ring(props.treeB, 9, r + 4.2f, false, rng, 0.5f);
+                    Ring(props.treeA, 12, r + 8f, false, rng, 0.25f, 1.2f);
+                    Ring(props.treeB, 10, r + 11f, false, rng, 0.1f, 1.35f);
+                    Ring(props.rockA, 12, r * 0.62f, false, rng, 0.2f, 1.1f);
+                    Ring(props.rockB, 8, r * 0.44f, false, rng, 0.4f);
+                    Ring(props.pillar, 6, r * 0.7f, true, rng);
+                    Ring(props.bush, 8, r * 0.64f, false, rng, 0.3f);
+                    Scatter(props.grass, 28, 2.4f, r * 0.85f, rng);
                     break;
                 case Biome.Desert:
-                    Ring(props.treeA, 4, 16.2f, false, rng, 0.6f, 1.1f);
-                    Ring(props.treeB, 5, 21f, false, rng, 0.4f, 1.3f);
-                    Ring(props.rockA, 12, 12.9f, false, rng, 0.25f, 1.15f);
-                    Ring(props.rockB, 8, 9.8f, false, rng, 0.45f);
-                    Ring(props.rockA, 9, 17f, false, rng, 0.3f, 1.6f);
-                    Ring(props.pillar, 8, 13.4f, true, rng, 0.1f);
-                    Ring(props.pillar, 4, 9.2f, true, rng, 0.2f, 0.8f);
-                    Ring(props.bush, 5, 5.2f, false, rng, 0.4f, 0.8f);
-                    Scatter(props.grass, 8, 3f, 10f, rng);
+                    Ring(props.treeA, 6, r + 3.2f, false, rng, 0.6f, 1.1f);
+                    Ring(props.treeB, 7, r + 7f, false, rng, 0.4f, 1.3f);
+                    Ring(props.rockA, 14, r * 0.62f, false, rng, 0.25f, 1.15f);
+                    Ring(props.rockB, 10, r * 0.45f, false, rng, 0.45f);
+                    Ring(props.rockA, 10, r * 0.82f, false, rng, 0.3f, 1.6f);
+                    Ring(props.pillar, 8, r * 0.7f, true, rng, 0.1f);
+                    Ring(props.pillar, 5, r * 0.42f, true, rng, 0.2f, 0.8f);
+                    Ring(props.bush, 6, r * 0.24f, false, rng, 0.4f, 0.8f);
+                    Scatter(props.grass, 14, 3f, r * 0.8f, rng);
                     break;
                 default:
-                    Ring(props.treeA, 8, 14.6f, false, rng);
-                    Ring(props.treeB, 7, 15.9f, false, rng, 0.5f);
-                    Ring(props.treeA, 10, 19.5f, false, rng, 0.25f, 1.2f);
-                    Ring(props.treeB, 9, 23f, false, rng, 0.1f, 1.35f);
-                    Ring(props.rockA, 8, 12.9f, false, rng, 0.2f);
-                    Ring(props.rockB, 5, 9.6f, false, rng, 0.4f);
-                    Ring(props.pillar, 4, 13.4f, true, rng);
-                    Ring(props.mushroom, 7, 6.8f, false, rng, 0.3f);
-                    Ring(props.bush, 8, 4.8f, false, rng, 0.35f);
-                    Ring(props.bush, 10, 13.8f, false, rng, 0.3f);
-                    Scatter(props.grass, 54, 2.2f, 12.4f, rng);
-                    Scatter(props.flower, 20, 2.6f, 11.2f, rng);
+                    Ring(props.treeA, 10, r + 2.6f, false, rng);
+                    Ring(props.treeB, 9, r + 4.2f, false, rng, 0.5f);
+                    Ring(props.treeA, 12, r + 8f, false, rng, 0.25f, 1.2f);
+                    Ring(props.treeB, 10, r + 11f, false, rng, 0.1f, 1.35f);
+                    Ring(props.rockA, 10, r * 0.62f, false, rng, 0.2f);
+                    Ring(props.rockB, 7, r * 0.44f, false, rng, 0.4f);
+                    Ring(props.pillar, 6, r * 0.7f, true, rng);
+                    Ring(props.mushroom, 9, r * 0.32f, false, rng, 0.3f);
+                    Ring(props.bush, 10, r * 0.22f, false, rng, 0.35f);
+                    Ring(props.bush, 12, r * 0.64f, false, rng, 0.3f);
+                    Scatter(props.grass, 80, 2.2f, r * 0.9f, rng);
+                    Scatter(props.flower, 28, 2.6f, r * 0.85f, rng);
                     break;
             }
         }

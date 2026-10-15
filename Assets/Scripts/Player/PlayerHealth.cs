@@ -13,6 +13,8 @@ namespace SlimeBreaker
         public event Action Changed;
 
         float invulnerableFor;
+        float chillUntil;
+        float chillFactor = 1f;
         Animator animator;
 
         void Awake()
@@ -37,6 +39,7 @@ namespace SlimeBreaker
         }
 
         public bool IsInvulnerable => invulnerableFor > 0f || IsDead;
+        public float MoveScale => Time.time < chillUntil ? chillFactor : 1f;
 
         public void GiveInvulnerability(float seconds)
         {
@@ -59,6 +62,24 @@ namespace SlimeBreaker
             Current = Mathf.Clamp(hp, 1, Max);
             IsDead = false;
             Changed?.Invoke();
+        }
+
+        public void Heal(int amount)
+        {
+            if (IsDead || amount <= 0 || Current >= Max)
+                return;
+            Current = Mathf.Min(Max, Current + amount);
+            Changed?.Invoke();
+        }
+
+        public void Chill(float factor, float seconds)
+        {
+            if (IsDead || seconds <= 0f)
+                return;
+            factor = Mathf.Clamp(factor, 0.2f, 1f);
+            if (Time.time >= chillUntil || factor < chillFactor)
+                chillFactor = factor;
+            chillUntil = Mathf.Max(chillUntil, Time.time + seconds);
         }
 
         public void TakeDamage(int amount)

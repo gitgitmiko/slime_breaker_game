@@ -10,7 +10,7 @@ namespace SlimeBreaker
         public GameObject pickupPrefab;
         public int everyLevels = 5;
         public float minRadius = 3f;
-        public float maxRadius = 8.5f;
+        public float maxRadius = 16f;
         public float minDistanceFromHero = 3.5f;
 
         public int SpawnedTiers { get; private set; }

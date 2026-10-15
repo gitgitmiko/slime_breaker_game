@@ -13,5 +13,9 @@ namespace SlimeBreaker
         public float contactCooldown = 0.7f;
         public int xp = 3;
         public bool isBoss;
+        public bool isRanged;
+        public float incomingDamageScale = 1f;
+        public BossKind bossKind;
+        public Color tint = Color.white;
     }
 }

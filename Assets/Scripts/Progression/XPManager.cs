@@ -31,7 +31,7 @@ namespace SlimeBreaker
                 return;
             var stats = GameFlowController.Instance.Stats;
             Xp += Mathf.Max(1, Mathf.RoundToInt(amount * stats.xpMultiplier));
-            while (Xp >= XpToNext)
+            while (Xp >= XpToNext && GameFlowController.Instance.Stats.level < RunRules.MaxLevel)
             {
                 Xp -= XpToNext;
                 GameFlowController.Instance.BeginLevelUp();

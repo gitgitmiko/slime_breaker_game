@@ -9,6 +9,7 @@ namespace SlimeBreaker
         Dash,
         Range,
         Xp,
-        Armor
+        Armor,
+        Lifesteal
     }
 }

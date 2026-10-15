@@ -267,35 +267,21 @@ namespace SlimeBreaker.Tests
             yield return null;
             yield return null;
             Assert.AreEqual(5, flow.Stats.level);
-            Assert.IsTrue(stage.Intermission, "level 5 should clear the arena");
+            Assert.IsFalse(stage.Intermission, "level 5 is a power-up beat, not a boss stage");
             Assert.AreEqual(1, PowerUpPickup.Active.Count, "exactly one power-up should spawn at level 5");
             var pickup = PowerUpPickup.Active[0];
             Assert.IsNotNull(pickup.skill, "power-up carries no skill");
             Vector3 flat = pickup.transform.position - hero.transform.position;
             flat.y = 0f;
             Assert.Greater(flat.magnitude, 2f, "power-up spawned on top of the hero");
-            Assert.Less(new Vector2(pickup.transform.position.x, pickup.transform.position.z).magnitude, 11.2f, "power-up spawned outside the arena");
+            Assert.Less(new Vector2(pickup.transform.position.x, pickup.transform.position.z).magnitude, RunRules.ArenaRadius, "power-up spawned outside the arena");
             yield return Hold(1.4f);
             Capture("07_powerup");
-            Assert.IsNotNull(ExitPortal.Active, "exit portal did not appear after the arena was cleared");
 
             pickup.Collect();
             yield return null;
             Assert.AreEqual(0, PowerUpPickup.Active.Count, "power-up was not consumed");
             Assert.AreEqual(1, SkillController.Instance.Count, "collecting the power-up did not grant a skill");
-
-            int previousStage = stage.Stage;
-            var previousBiome = stage.Theme.biome;
-            ExitPortal.Active.Enter();
-            float wait = 0f;
-            while (stage.Stage == previousStage && wait < 3f)
-            {
-                yield return null;
-                wait += Time.unscaledDeltaTime;
-            }
-            Assert.AreEqual(previousStage + 1, stage.Stage, "entering the portal did not advance the arena");
-            Assert.AreNotEqual(previousBiome, stage.Theme.biome, "the next arena reused the previous biome");
-            Assert.IsFalse(stage.Intermission);
 
             while (flow.Stats.level < 9)
             {
@@ -485,6 +471,118 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
+        public IEnumerator EnemiesHaveHealthBars()
+        {
+            float wait = 0f;
+            while (EnemyHealth.Active.Count < 1 && wait < 12f)
+            {
+                yield return null;
+                SkipLevelUp();
+                wait += Time.unscaledDeltaTime;
+            }
+            Assert.Greater(EnemyHealth.Active.Count, 0, "no enemies spawned");
+            foreach (var enemy in EnemyHealth.Active.ToArray())
+            {
+                if (enemy == null || enemy.IsDead)
+                    continue;
+                var bar = enemy.GetComponentInChildren<EnemyHealthBar>();
+                Assert.IsNotNull(bar, enemy.name + " has no health bar");
+                Assert.Greater(enemy.Max, 0);
+                Assert.LessOrEqual(enemy.Current, enemy.Max);
+            }
+            Capture("11_healthbars");
+        }
+
+        [UnityTest]
+        public IEnumerator LifestealHealsOnHit()
+        {
+            var flow = GameFlowController.Instance;
+            var player = PlayerHealth.Instance;
+            Assert.IsNotNull(flow);
+            Assert.IsNotNull(player);
+            flow.Stats.lifesteal = 0.5f;
+            player.Restore(20);
+            int start = player.Current;
+            var enemySpawner = Object.FindAnyObjectByType<EnemySpawner>();
+            var enemyObject = Object.Instantiate(enemySpawner.normalPrefab, player.transform.position + Vector3.forward * 2.5f, Quaternion.identity);
+            var enemy = enemyObject.GetComponent<EnemyHealth>();
+            enemy.TakeDamage(20);
+            Assert.Greater(player.Current, start, "lifesteal did not heal the hero");
+            Assert.LessOrEqual(player.Current, player.Max);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator RangedEnemyShootsProjectile()
+        {
+            var enemySpawner = Object.FindAnyObjectByType<EnemySpawner>();
+            Assert.IsNotNull(enemySpawner.rangedPrefab, "no ranged slime prefab");
+            Assert.IsNotNull(enemySpawner.hostileBolt, "no hostile bolt prefab");
+            var hero = PlayerHealth.Instance.transform;
+            var enemyObject = Object.Instantiate(enemySpawner.rangedPrefab, hero.position + Vector3.forward * 5.2f, Quaternion.identity);
+            var ai = enemyObject.GetComponent<EnemyChaseAI>();
+            Assert.IsNotNull(ai);
+            if (ai.boltPrefab == null)
+                ai.boltPrefab = enemySpawner.hostileBolt;
+            Assert.IsTrue(enemyObject.GetComponent<EnemyHealth>().definition.isRanged);
+            float t = 0f;
+            HostileProjectile shot = null;
+            while (t < 3.5f && shot == null)
+            {
+                yield return null;
+                SkipLevelUp();
+                shot = Object.FindAnyObjectByType<HostileProjectile>();
+                t += Time.deltaTime;
+            }
+            Capture("12_ranged");
+            Assert.IsNotNull(shot, "ranged slime never fired a projectile");
+        }
+
+        [UnityTest]
+        public IEnumerator BossAppearsAtLevelTenWithWarning()
+        {
+            var flow = GameFlowController.Instance;
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            Assert.IsNotNull(stage);
+            while (flow.Stats.level < 9)
+            {
+                flow.BeginLevelUp();
+                flow.ChooseUpgrade(0);
+            }
+            yield return null;
+            flow.BeginLevelUp();
+            flow.ChooseUpgrade(0);
+            Assert.AreEqual(10, flow.Stats.level);
+            float wait = 0f;
+            while (stage.ActiveBoss == BossKind.None && wait < 2f)
+            {
+                yield return null;
+                wait += Time.unscaledDeltaTime;
+            }
+            Assert.AreEqual(BossKind.Rock, stage.ActiveBoss);
+            Assert.AreEqual("Rock Slime", BossCatalog.DisplayName(stage.ActiveBoss));
+            Assert.AreEqual(GameState.BossIntro, flow.State);
+            Assert.IsTrue(flow.ui.BossWarningVisible || flow.ui.BossWarningName == "Rock Slime" || flow.ui.bossWarningName.text == "Rock Slime",
+                "boss warning did not appear");
+            bool sawBoss = false;
+            foreach (var enemy in EnemyHealth.Active)
+            {
+                if (enemy != null && enemy.IsBoss)
+                    sawBoss = true;
+            }
+            Assert.IsTrue(sawBoss, "Rock Slime was not spawned");
+            Capture("13_boss_intro");
+            wait = 0f;
+            while (flow.State == GameState.BossIntro && wait < 3.2f)
+            {
+                yield return null;
+                wait += Time.unscaledDeltaTime;
+            }
+            Assert.AreEqual(GameState.Playing, flow.State, "boss intro never ended");
+            Assert.IsTrue(stage.Intermission, "regular spawning should pause during the boss");
+        }
+
+        [UnityTest]
         public IEnumerator GraphicsPresetsApply()
         {
             yield return null;
@@ -554,7 +652,7 @@ namespace SlimeBreaker.Tests
                 else
                     wish = tangent + crowd * 0.5f;
             }
-            if (flat.magnitude > 8f)
+            if (flat.magnitude > 16f)
                 wish -= flat.normalized;
             if (wish.sqrMagnitude < 0.0001f)
                 wish = Vector3.forward;

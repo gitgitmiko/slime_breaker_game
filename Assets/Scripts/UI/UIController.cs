@@ -36,10 +36,17 @@ namespace SlimeBreaker
         public Image toastBackground;
         public float toastDuration = 2.4f;
 
+        [Header("Boss")]
+        public CanvasGroup bossWarningGroup;
+        public Text bossWarningTitle;
+        public Text bossWarningName;
+        public float bossWarningDuration = 2.6f;
+
         PlayerHealth health;
         DashController dash;
         SkillController skills;
         float toastTimer;
+        float bossWarningTimer;
 
         void Start()
         {
@@ -68,6 +75,8 @@ namespace SlimeBreaker
                 resultPanel.SetActive(false);
             if (toastGroup != null)
                 toastGroup.alpha = 0f;
+            if (bossWarningGroup != null)
+                bossWarningGroup.alpha = 0f;
         }
 
         void OnDestroy()
@@ -106,10 +115,40 @@ namespace SlimeBreaker
                 if (rect != null)
                     rect.localScale = Vector3.one * Mathf.Lerp(0.92f, 1f, fadeIn);
             }
+            if (bossWarningGroup != null && bossWarningTimer > 0f)
+            {
+                bossWarningTimer -= Time.unscaledDeltaTime;
+                float fadeIn = Mathf.Clamp01((bossWarningDuration - bossWarningTimer) / 0.22f);
+                float fadeOut = Mathf.Clamp01(bossWarningTimer / 0.5f);
+                bossWarningGroup.alpha = Mathf.Min(fadeIn, fadeOut);
+                var rect = bossWarningGroup.transform as RectTransform;
+                if (rect != null)
+                    rect.localScale = Vector3.one * Mathf.Lerp(0.86f, 1f, fadeIn);
+            }
 
             var keyboard = Keyboard.current;
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
                 flow.TogglePause();
+        }
+
+        public bool BossWarningVisible => bossWarningGroup != null && bossWarningGroup.alpha > 0.15f;
+        public string BossWarningName => bossWarningName != null ? bossWarningName.text : string.Empty;
+
+        public void ShowBossWarning(string name, Color color)
+        {
+            if (bossWarningTitle != null)
+                bossWarningTitle.text = "STAGE BOSS";
+            if (bossWarningName != null)
+            {
+                bossWarningName.text = name;
+                bossWarningName.color = Color.Lerp(color, Color.white, 0.35f);
+            }
+            bossWarningTimer = bossWarningDuration;
+            if (bossWarningGroup != null)
+            {
+                bossWarningGroup.alpha = 0f;
+                bossWarningGroup.gameObject.SetActive(true);
+            }
         }
 
         public void ShowToast(string message, Color color)
@@ -171,7 +210,14 @@ namespace SlimeBreaker
             if (resultPanel != null)
                 resultPanel.SetActive(true);
             if (resultTitle != null)
-                resultTitle.text = victory ? "Menang!" : "Kalah";
+            {
+                int level = GameFlowController.Instance != null && GameFlowController.Instance.Stats != null
+                    ? GameFlowController.Instance.Stats.level
+                    : 1;
+                resultTitle.text = victory
+                    ? (level >= RunRules.MaxLevel ? "Tamat!" : "Menang!")
+                    : "Kalah";
+            }
             int seconds = Mathf.FloorToInt(elapsed);
             if (resultBody != null)
                 resultBody.text = "Waktu " + (seconds / 60).ToString("00") + ":" + (seconds % 60).ToString("00")

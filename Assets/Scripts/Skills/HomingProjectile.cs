@@ -85,6 +85,14 @@ namespace SlimeBreaker
                     Destroy(gameObject);
                 return;
             }
+            var boss = target.GetComponent<BossController>();
+            if (boss != null && boss.Shielded)
+            {
+                VfxPlayer.Instance?.Play("arcane", transform.position, BossCatalog.Color(BossKind.Crystal));
+                AudioService.Instance?.Play(hitSfx);
+                Destroy(gameObject);
+                return;
+            }
             float reach = hitRadius + target.HitRadius;
             if ((AimPoint() - transform.position).sqrMagnitude <= reach * reach)
             {

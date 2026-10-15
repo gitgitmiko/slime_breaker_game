@@ -4,8 +4,8 @@ using UnityEngine;
 namespace SlimeBreaker
 {
     /// <summary>
-    /// Every five hero levels the arena is cleared: living slimes vanish, a power-up drops, and an exit portal
-    /// opens to a new random arena (biome × weather × time of day).
+    /// One large map for the whole run. Power-ups drop every five levels. Every ten levels a unique boss
+    /// is announced, the camera zooms in, and regular spawning pauses until that boss falls.
     /// </summary>
     public class StageManager : MonoBehaviour
     {
@@ -14,18 +14,23 @@ namespace SlimeBreaker
         public ArenaGenerator generator;
         public PowerUpSpawner powerUps;
         public EnemySpawner spawner;
-        public GameObject portalPrefab;
         public ScreenFader fader;
-        public int everyLevels = 5;
-        public float portalDelay = 1.15f;
+        public GameObject bossPrefab;
+        public EnemyDefinition[] bossDefinitions;
+        public GameObject hostileBolt;
+        public GameObject lightningPrefab;
+        public GameObject minionPrefab;
+        public FollowCamera cameraRig;
 
         public int Stage { get; private set; } = 1;
         public bool Intermission { get; private set; }
         public ArenaTheme Theme { get; private set; }
-        public int HandledTier { get; private set; }
+        public int HandledPowerTiers { get; private set; }
+        public int HandledBossTiers { get; private set; }
         public int RunSeed { get; private set; }
+        public BossKind ActiveBoss { get; private set; }
 
-        bool transitioning;
+        bool introducing;
 
         void Awake()
         {
@@ -40,6 +45,16 @@ namespace SlimeBreaker
                 Instance = null;
         }
 
+        void OnEnable()
+        {
+            EnemyHealth.AnyDied += OnEnemyDied;
+        }
+
+        void OnDisable()
+        {
+            EnemyHealth.AnyDied -= OnEnemyDied;
+        }
+
         void Start()
         {
             var resume = RunSaveService.PeekResume();
@@ -48,9 +63,10 @@ namespace SlimeBreaker
                 Stage = Mathf.Max(1, resume.stage);
                 RunSeed = resume.runSeed != 0 ? resume.runSeed : resume.themeSeed;
                 Theme = resume.ToTheme();
-                HandledTier = resume.level / Mathf.Max(1, everyLevels);
+                HandledPowerTiers = resume.level / RunRules.PowerUpEvery;
+                HandledBossTiers = resume.level / RunRules.BossEvery;
                 if (resume.intermission)
-                    HandledTier = Mathf.Max(0, HandledTier - 1);
+                    HandledBossTiers = Mathf.Max(0, HandledBossTiers - 1);
                 if (spawner != null)
                 {
                     spawner.Stage = Stage;
@@ -58,9 +74,8 @@ namespace SlimeBreaker
                         spawner.Paused = true;
                 }
                 generator?.Generate(Theme);
-                Announce(false);
                 if (resume.intermission)
-                    StartCoroutine(RestoreIntermission());
+                    StartCoroutine(RestoreBoss());
             }
             else
             {
@@ -74,150 +89,130 @@ namespace SlimeBreaker
 
         void Update()
         {
-            if (Intermission || transitioning)
+            if (introducing)
                 return;
             var flow = GameFlowController.Instance;
             if (flow == null || flow.Stats == null)
                 return;
-            if (flow.State == GameState.Victory || flow.State == GameState.Defeat)
+            if (flow.State != GameState.Playing)
                 return;
-            if (BossAlive())
+
+            int level = flow.Stats.level;
+            int power = level / RunRules.PowerUpEvery;
+            while (HandledPowerTiers < power)
+            {
+                HandledPowerTiers++;
+                powerUps?.Spawn();
+            }
+
+            if (BossAlive() || Intermission)
                 return;
-            int tier = flow.Stats.level / Mathf.Max(1, everyLevels);
-            if (tier > HandledTier)
-                BeginIntermission();
+            int bosses = level / RunRules.BossEvery;
+            if (bosses > HandledBossTiers)
+                StartCoroutine(BeginBoss(bosses));
         }
 
-        public void BeginIntermission()
-        {
-            if (Intermission)
-                return;
-            Intermission = true;
-            HandledTier = (GameFlowController.Instance != null && GameFlowController.Instance.Stats != null)
-                ? GameFlowController.Instance.Stats.level / Mathf.Max(1, everyLevels)
-                : HandledTier + 1;
-            EnemyHealth.VanishAll();
-            if (spawner != null)
-                spawner.Paused = true;
-            powerUps?.Spawn();
-            GameFlowController.Instance?.ui?.ShowToast("Arena bersih! Ambil power-up dan masuk portal.", new Color(1f, 0.85f, 0.4f));
-            GameFlowController.Instance?.PersistRun();
-            StartCoroutine(SpawnPortalSoon());
-        }
-
-        IEnumerator RestoreIntermission()
+        IEnumerator RestoreBoss()
         {
             yield return null;
-            BeginIntermission();
+            var flow = GameFlowController.Instance;
+            int bosses = flow != null && flow.Stats != null ? flow.Stats.level / RunRules.BossEvery : 1;
+            if (bosses > 0)
+                StartCoroutine(BeginBoss(bosses));
         }
 
-        IEnumerator SpawnPortalSoon()
+        IEnumerator BeginBoss(int tier)
         {
-            float wait = portalDelay;
+            if (introducing)
+                yield break;
+            introducing = true;
+            Intermission = true;
+            HandledBossTiers = tier;
+            Stage = Mathf.Max(1, tier);
+            ActiveBoss = (BossKind)Mathf.Clamp(tier, 1, 10);
+            VanishMinions();
+            if (spawner != null)
+                spawner.Paused = true;
+
+            var flow = GameFlowController.Instance;
+            flow?.BeginBossIntro();
+            flow?.ui?.ShowBossWarning(BossCatalog.DisplayName(ActiveBoss), BossCatalog.Color(ActiveBoss));
+            flow?.ui?.ShowToast("STAGE BOSS — " + BossCatalog.DisplayName(ActiveBoss), BossCatalog.Color(ActiveBoss));
+            AudioService.Instance?.Play("bosswarn");
+
+            var boss = SpawnBoss(ActiveBoss);
+            if (boss != null && cameraRig != null)
+                cameraRig.Focus(boss.transform, 2.5f);
+
+            float wait = 2.6f;
             while (wait > 0f)
             {
-                wait -= Time.deltaTime;
+                wait -= Time.unscaledDeltaTime;
                 yield return null;
             }
-            if (!Intermission || portalPrefab == null)
-                yield break;
-            Vector3 position = FindPortalSpot();
-            var instance = Instantiate(portalPrefab, position, Quaternion.identity);
-            if (instance.GetComponent<ExitPortal>() == null)
-                instance.AddComponent<ExitPortal>();
-            AudioService.Instance?.Play("portal");
-            GameFlowController.Instance?.PersistRun();
+
+            flow?.EndBossIntro();
+            introducing = false;
+            flow?.PersistRun();
         }
 
-        Vector3 FindPortalSpot()
+        GameObject SpawnBoss(BossKind kind)
         {
-            Vector3 hero = PlayerHealth.Instance != null ? PlayerHealth.Instance.transform.position : Vector3.zero;
-            Vector3 pickup = PowerUpPickup.Active.Count > 0 ? PowerUpPickup.Active[0].transform.position : hero + Vector3.right * 4f;
-            Vector3 best = -hero.normalized * 6.5f;
-            if (best.sqrMagnitude < 1f)
-                best = Vector3.forward * 6.5f;
-            float bestScore = float.MinValue;
-            for (int i = 0; i < 16; i++)
-            {
-                float angle = i * Mathf.PI * 2f / 16f;
-                float radius = 6.2f + (i % 3) * 0.6f;
-                var candidate = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
-                if (Obstacles.Overlaps(candidate, 1.4f))
-                    continue;
-                if (generator != null && generator.TouchesObstacle(candidate, 1.4f))
-                    continue;
-                float fromHero = Vector3.Distance(candidate, hero);
-                float fromPickup = Vector3.Distance(candidate, pickup);
-                float score = fromHero + fromPickup * 0.7f;
-                if (fromHero < 3.2f)
-                    continue;
-                if (score > bestScore)
-                {
-                    bestScore = score;
-                    best = candidate;
-                }
-            }
-            return best;
+            if (bossPrefab == null)
+                return null;
+            Vector3 position = new Vector3(0f, 0f, 8.5f);
+            if (Obstacles.Overlaps(position, 1.4f))
+                position = new Vector3(7f, 0f, 0f);
+            var instance = Instantiate(bossPrefab, position, Quaternion.LookRotation(Vector3.back, Vector3.up));
+            var definition = DefinitionFor(kind);
+            var health = instance.GetComponent<EnemyHealth>();
+            health?.Bind(definition);
+            health?.TintBody(BossCatalog.Color(kind));
+            var boss = instance.GetComponent<BossController>();
+            if (boss == null)
+                boss = instance.AddComponent<BossController>();
+            boss.Configure(kind, hostileBolt, lightningPrefab, minionPrefab);
+            boss.arenaRadius = RunRules.ArenaRadius;
+            return instance;
         }
 
-        public void EnterPortal(ExitPortal portal)
+        EnemyDefinition DefinitionFor(BossKind kind)
         {
-            if (transitioning)
+            int index = (int)kind - 1;
+            if (bossDefinitions != null && index >= 0 && index < bossDefinitions.Length)
+                return bossDefinitions[index];
+            return null;
+        }
+
+        void OnEnemyDied(EnemyHealth enemy)
+        {
+            if (enemy == null || !enemy.IsBoss)
                 return;
-            StartCoroutine(Transition(portal));
-        }
-
-        IEnumerator Transition(ExitPortal portal)
-        {
-            transitioning = true;
-            Time.timeScale = 1f;
-            if (fader != null)
-                yield return fader.FadeOut(0.35f);
-
-            if (portal != null)
-                Destroy(portal.gameObject);
-            for (int i = PowerUpPickup.Active.Count - 1; i >= 0; i--)
-            {
-                if (PowerUpPickup.Active[i] != null)
-                    Destroy(PowerUpPickup.Active[i].gameObject);
-            }
-            EnemyHealth.VanishAll();
-
-            Stage++;
-            var rng = new System.Random(unchecked(RunSeed * 73856093 + Stage * 19349663));
-            Theme = ArenaTheme.Roll(Theme, rng);
-            generator?.Generate(Theme);
-
-            var hero = PlayerHealth.Instance;
-            if (hero != null)
-            {
-                var body = hero.GetComponent<CharacterController>();
-                if (body != null)
-                    body.enabled = false;
-                hero.transform.position = Vector3.zero;
-                hero.transform.rotation = Quaternion.identity;
-                if (body != null)
-                    body.enabled = true;
-            }
-
+            var kind = ActiveBoss;
+            ActiveBoss = BossKind.None;
             Intermission = false;
-            transitioning = false;
             if (spawner != null)
             {
-                spawner.Stage = Stage;
                 spawner.Paused = false;
+                spawner.Stage = Mathf.Max(1, HandledBossTiers);
             }
-            Announce(true);
+            if (BossCatalog.IsFinal(kind) || (GameFlowController.Instance != null && GameFlowController.Instance.Stats.level >= RunRules.MaxLevel))
+            {
+                GameFlowController.Instance?.EndRun(true);
+                return;
+            }
+            GameFlowController.Instance?.ui?.ShowToast(BossCatalog.DisplayName(kind) + " kalah!", new Color(1f, 0.85f, 0.4f));
             GameFlowController.Instance?.PersistRun();
-
-            if (fader != null)
-                yield return fader.FadeIn(0.45f);
         }
 
-        void Announce(bool arrived)
+        static void VanishMinions()
         {
-            string prefix = arrived ? "Arena baru: " : "Arena: ";
-            GameFlowController.Instance?.ui?.ShowToast(prefix + Theme.Title, new Color(0.7f, 0.9f, 1f));
+            var snapshot = EnemyHealth.Active.ToArray();
+            for (int i = 0; i < snapshot.Length; i++)
+            {
+                if (snapshot[i] != null && !snapshot[i].IsBoss)
+                    snapshot[i].Vanish();
+            }
         }
 
         static bool BossAlive()

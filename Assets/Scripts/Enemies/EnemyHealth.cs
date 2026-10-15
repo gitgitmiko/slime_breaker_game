@@ -16,6 +16,7 @@ namespace SlimeBreaker
         public EnemyDefinition definition;
         public GameObject xpOrbPrefab;
         public int Current { get; private set; }
+        public int Max { get; private set; }
         public bool IsDead { get; private set; }
         public bool IsBoss => definition != null && definition.isBoss;
 
@@ -42,14 +43,27 @@ namespace SlimeBreaker
         float burnTimer;
         bool tinted;
         float flashTimer;
+        Color bodyTint = Color.white;
+        bool hasBodyTint;
 
         void Awake()
         {
             animator = GetComponentInChildren<Animator>();
-            Current = definition != null ? definition.maxHealth : 20;
-            ContactDamage = definition != null ? definition.contactDamage : 8;
             renderers = GetComponentsInChildren<Renderer>();
+            Bind(definition);
             MeasureBody();
+            EnemyHealthBar.Attach(this);
+        }
+
+        public void Bind(EnemyDefinition def)
+        {
+            definition = def;
+            Max = def != null ? def.maxHealth : 20;
+            Current = Max;
+            ContactDamage = def != null ? def.contactDamage : 8;
+            extraDamage = 0;
+            if (def != null && def.tint != Color.white)
+                TintBody(def.tint);
         }
 
         void MeasureBody()
@@ -59,7 +73,7 @@ namespace SlimeBreaker
             for (int i = 0; i < renderers.Length; i++)
             {
                 var renderer = renderers[i];
-                if (renderer == null || renderer is ParticleSystemRenderer || !renderer.enabled)
+                if (renderer == null || renderer is ParticleSystemRenderer || !renderer.enabled || IsBarRenderer(renderer))
                     continue;
                 if (!any)
                 {
@@ -143,8 +157,17 @@ namespace SlimeBreaker
                 return;
             float hpMul = Mathf.Pow(1.18f, stage - 1);
             Current = Mathf.Max(1, Mathf.RoundToInt(definition.maxHealth * hpMul));
+            Max = Current;
             extraDamage = Mathf.RoundToInt(definition.contactDamage * (Mathf.Pow(1.10f, stage - 1) - 1f));
             ContactDamage = definition.contactDamage + extraDamage;
+        }
+
+        public void TintBody(Color color)
+        {
+            bodyTint = color;
+            hasBodyTint = true;
+            tinted = true;
+            RefreshTint();
         }
 
         /// <summary>Removes the enemy without XP, death VFX, or notifying the run (used when an arena is cleared).</summary>
@@ -186,7 +209,15 @@ namespace SlimeBreaker
         {
             if (IsDead || amount <= 0)
                 return;
+            if (definition != null && definition.incomingDamageScale > 0f && definition.incomingDamageScale < 0.999f)
+                amount = Mathf.Max(1, Mathf.RoundToInt(amount * definition.incomingDamageScale));
             Current = Mathf.Max(0, Current - amount);
+            if ((playHitSound || flash) && amount > 0)
+            {
+                var stats = GameFlowController.Instance != null ? GameFlowController.Instance.Stats : null;
+                if (stats != null && stats.lifesteal > 0f)
+                    PlayerHealth.Instance?.Heal(Mathf.Max(1, Mathf.RoundToInt(amount * stats.lifesteal)));
+            }
             if (flash)
             {
                 flashTimer = 0.09f;
@@ -251,7 +282,9 @@ namespace SlimeBreaker
 
         void RefreshTint()
         {
-            bool wants = slowTimer > 0f || burnTicks > 0 || flashTimer > 0f;
+            if (renderers == null)
+                return;
+            bool wants = slowTimer > 0f || burnTicks > 0 || flashTimer > 0f || hasBodyTint;
             if (!wants && !tinted)
                 return;
             if (block == null)
@@ -266,7 +299,7 @@ namespace SlimeBreaker
             for (int i = 0; i < renderers.Length; i++)
             {
                 var renderer = renderers[i];
-                if (renderer == null || renderer is ParticleSystemRenderer)
+                if (renderer == null || renderer is ParticleSystemRenderer || IsBarRenderer(renderer))
                     continue;
                 if (!wants)
                 {
@@ -274,10 +307,27 @@ namespace SlimeBreaker
                     continue;
                 }
                 renderer.GetPropertyBlock(block);
+                if (hasBodyTint)
+                {
+                    block.SetColor("_BaseColor", bodyTint);
+                    block.SetColor("_Color", bodyTint);
+                }
                 block.SetColor("_EmissionColor", emission);
                 renderer.SetPropertyBlock(block);
             }
             tinted = wants;
+        }
+
+        static bool IsBarRenderer(Renderer renderer)
+        {
+            var t = renderer.transform;
+            while (t != null)
+            {
+                if (t.name == "HealthBar")
+                    return true;
+                t = t.parent;
+            }
+            return false;
         }
     }
 }

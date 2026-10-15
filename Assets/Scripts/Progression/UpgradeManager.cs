@@ -61,6 +61,9 @@ namespace SlimeBreaker
                 case UpgradeKind.Armor:
                     stats.damageReduction = Mathf.Clamp(stats.damageReduction + upgrade.amount, 0f, 0.6f);
                     break;
+                case UpgradeKind.Lifesteal:
+                    stats.lifesteal = Mathf.Clamp(stats.lifesteal + upgrade.amount, 0f, 0.4f);
+                    break;
             }
         }
     }

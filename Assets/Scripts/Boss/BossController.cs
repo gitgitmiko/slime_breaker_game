@@ -2,27 +2,51 @@ using UnityEngine;
 
 namespace SlimeBreaker
 {
+    /// <summary>Unique slime bosses. Each kind keeps the slam/charge skeleton and adds a signature attack.</summary>
     public class BossController : MonoBehaviour
     {
         public Transform ring;
-        public float slamRadius = 3.4f;
-        public float arenaRadius = 11.2f;
+        public GameObject boltPrefab;
+        public GameObject lightningPrefab;
+        public GameObject minionPrefab;
+        public float slamRadius = 3.6f;
+        public float arenaRadius = RunRules.ArenaRadius;
+        public BossKind kind = BossKind.Rock;
+
+        public bool Shielded { get; private set; }
 
         enum Pattern
         {
             Idle,
             Telegraph,
             Slam,
-            Charge
+            Charge,
+            Cast
         }
 
         Pattern pattern = Pattern.Idle;
         float timer;
-        float patternTimer = 1.4f;
+        float patternTimer = 1.3f;
+        float specialTimer = 2.2f;
         Vector3 chargeDirection;
         bool chargeHit;
         Animator animator;
         EnemyHealth health;
+        Color tint = Color.white;
+        float hiddenUntil;
+        float shieldUntil;
+        float auraTick;
+
+        public void Configure(BossKind bossKind, GameObject bolt, GameObject lightning, GameObject minion)
+        {
+            kind = bossKind;
+            boltPrefab = bolt;
+            lightningPrefab = lightning;
+            minionPrefab = minion;
+            tint = BossCatalog.Color(kind);
+            slamRadius = kind == BossKind.Rock ? 4.1f : 3.6f;
+            patternTimer = kind == BossKind.Volt || kind == BossKind.Shadow ? 0.95f : 1.3f;
+        }
 
         void Awake()
         {
@@ -30,6 +54,12 @@ namespace SlimeBreaker
             health = GetComponent<EnemyHealth>();
             if (ring != null)
                 ring.gameObject.SetActive(false);
+        }
+
+        void Start()
+        {
+            if (kind != BossKind.None)
+                health?.TintBody(BossCatalog.Color(kind));
         }
 
         void Update()
@@ -40,11 +70,25 @@ namespace SlimeBreaker
             if (player == null || player.IsDead)
                 return;
 
+            if (kind == BossKind.Crystal)
+                TickShield();
+            if (kind == BossKind.Frost)
+                TickFrostAura(player);
+            if (kind == BossKind.Shadow)
+                TickShadowCloak();
+
             timer -= Time.deltaTime;
+            specialTimer -= Time.deltaTime;
             switch (pattern)
             {
                 case Pattern.Idle:
                     Chase(player.transform.position, (health.definition != null ? health.definition.moveSpeed : 2.2f) * health.SpeedMultiplier);
+                    if (specialTimer <= 0f)
+                    {
+                        specialTimer = SpecialCooldown();
+                        if (TrySpecial(player))
+                            break;
+                    }
                     if (timer <= 0f)
                         BeginTelegraph(player.transform.position);
                     break;
@@ -57,33 +101,117 @@ namespace SlimeBreaker
                         BeginCharge(player.transform.position);
                     break;
                 case Pattern.Charge:
-                    Vector3 step = chargeDirection * 9.5f * health.SpeedMultiplier * Time.deltaTime;
-                    if (Obstacles.Cast(transform.position + Vector3.up * 0.6f, step, 0.7f, out _))
-                    {
-                        transform.position = Obstacles.Resolve(transform.position, 0.7f);
-                        pattern = Pattern.Idle;
-                        timer = patternTimer;
-                        if (animator != null)
-                            animator.SetFloat("Speed", 0f);
-                        break;
-                    }
-                    transform.position += step;
-                    transform.position = Obstacles.Resolve(transform.position, 0.7f);
-                    ClampArena();
-                    if (!chargeHit && (player.transform.position - transform.position).sqrMagnitude < 1.6f * 1.6f)
-                    {
-                        chargeHit = true;
-                        player.TakeDamage(health.ContactDamage);
-                        VfxPlayer.Instance?.Play("hit", player.transform.position + Vector3.up * 0.7f);
-                    }
+                    TickCharge(player);
+                    break;
+                case Pattern.Cast:
                     if (timer <= 0f)
                     {
                         pattern = Pattern.Idle;
                         timer = patternTimer;
-                        if (animator != null)
-                            animator.SetFloat("Speed", 0f);
                     }
                     break;
+            }
+        }
+
+        float SpecialCooldown()
+        {
+            return kind switch
+            {
+                BossKind.Volt => 2.4f,
+                BossKind.Flame => 3.2f,
+                BossKind.Toxic => 2.1f,
+                BossKind.Storm => 2.8f,
+                BossKind.Magma => 3.4f,
+                BossKind.Royal => 2.6f,
+                _ => 3.6f
+            };
+        }
+
+        bool TrySpecial(PlayerHealth player)
+        {
+            Vector3 here = transform.position;
+            Vector3 target = player.transform.position;
+            switch (kind)
+            {
+                case BossKind.Rock:
+                    Throw(target + Vector3.up * 0.7f, health.ContactDamage + 4, 7.5f);
+                    AudioService.Instance?.Play("slam");
+                    return true;
+                case BossKind.Flame:
+                    FireBurst(here, 3.4f, health.ContactDamage);
+                    HazardZone.Drop(here, new Color(1f, 0.4f, 0.1f), Mathf.Max(3, health.ContactDamage / 4), 1.6f, 3.5f);
+                    return true;
+                case BossKind.Frost:
+                    Throw(target + Vector3.up * 0.7f, health.ContactDamage, 8f);
+                    player.Chill(0.5f, 1.8f);
+                    return true;
+                case BossKind.Volt:
+                    Blink(target);
+                    Zap(player);
+                    return true;
+                case BossKind.Toxic:
+                    Throw(target + Vector3.up * 0.7f, health.ContactDamage, 8.5f);
+                    HazardZone.Drop(target, new Color(0.4f, 0.9f, 0.2f), 4, 1.4f, 4f);
+                    return true;
+                case BossKind.Shadow:
+                    Blink(target + (here - target).normalized * 2.2f);
+                    hiddenUntil = Time.time + 1.1f;
+                    return true;
+                case BossKind.Magma:
+                    Erupt(target);
+                    return true;
+                case BossKind.Storm:
+                    Push(player, 3.4f);
+                    Strike(target);
+                    return true;
+                case BossKind.Crystal:
+                    SpikeRing(here);
+                    return true;
+                case BossKind.Royal:
+                    if (Random.value < 0.45f)
+                        Zap(player);
+                    else
+                        Throw(target + Vector3.up * 0.8f, health.ContactDamage + 2, 9f);
+                    if (minionPrefab != null && EnemyHealth.Active.Count < 8)
+                    {
+                        var minion = Instantiate(minionPrefab, here + transform.right * 2f, Quaternion.identity);
+                        minion.GetComponent<EnemyHealth>()?.Scale(10);
+                    }
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        void TickCharge(PlayerHealth player)
+        {
+            Vector3 step = chargeDirection * 9.5f * health.SpeedMultiplier * Time.deltaTime;
+            if (Obstacles.Cast(transform.position + Vector3.up * 0.6f, step, 0.7f, out _))
+            {
+                transform.position = Obstacles.Resolve(transform.position, 0.7f);
+                pattern = Pattern.Idle;
+                timer = patternTimer;
+                if (animator != null)
+                    animator.SetFloat("Speed", 0f);
+                return;
+            }
+            transform.position += step;
+            transform.position = Obstacles.Resolve(transform.position, 0.7f);
+            ClampArena();
+            if (kind == BossKind.Magma && Time.frameCount % 4 == 0)
+                HazardZone.Drop(transform.position, new Color(1f, 0.3f, 0.05f), 3, 0.9f, 1.6f);
+            if (!chargeHit && (player.transform.position - transform.position).sqrMagnitude < 1.6f * 1.6f)
+            {
+                chargeHit = true;
+                player.TakeDamage(health.ContactDamage);
+                VfxPlayer.Instance?.Play("hit", player.transform.position + Vector3.up * 0.7f);
+            }
+            if (timer <= 0f)
+            {
+                pattern = Pattern.Idle;
+                timer = patternTimer;
+                if (animator != null)
+                    animator.SetFloat("Speed", 0f);
             }
         }
 
@@ -139,7 +267,13 @@ namespace SlimeBreaker
             Vector3 flat = player.transform.position - transform.position;
             flat.y = 0f;
             if (flat.magnitude <= slamRadius)
+            {
                 player.TakeDamage(health.ContactDamage + 6);
+                if (kind == BossKind.Frost)
+                    player.Chill(0.45f, 2f);
+                if (kind == BossKind.Flame)
+                    HazardZone.Drop(player.transform.position, new Color(1f, 0.4f, 0.1f), 3, 1.2f, 2.4f);
+            }
         }
 
         void BeginCharge(Vector3 playerPosition)
@@ -158,6 +292,166 @@ namespace SlimeBreaker
             if (animator != null)
                 animator.SetFloat("Speed", 1f);
             VfxPlayer.Instance?.Play("dash", transform.position + Vector3.up * 0.5f);
+        }
+
+        void Throw(Vector3 target, int damage, float speed)
+        {
+            pattern = Pattern.Cast;
+            timer = 0.35f;
+            Vector3 origin = transform.position + Vector3.up * 1.2f + transform.forward * 0.6f;
+            HostileProjectile.Launch(boltPrefab, origin, target, damage, speed);
+            AudioService.Instance?.Play("cast");
+        }
+
+        void FireBurst(Vector3 center, float radius, int damage)
+        {
+            pattern = Pattern.Cast;
+            timer = 0.4f;
+            VfxPlayer.Instance?.Play("fire", center + Vector3.up * 0.3f);
+            AudioService.Instance?.Play("fire");
+            var player = PlayerHealth.Instance;
+            if (player == null)
+                return;
+            Vector3 flat = player.transform.position - center;
+            flat.y = 0f;
+            if (flat.magnitude <= radius)
+                player.TakeDamage(damage);
+        }
+
+        void Zap(PlayerHealth player)
+        {
+            pattern = Pattern.Cast;
+            timer = 0.3f;
+            Vector3 from = transform.position + Vector3.up * 1.3f;
+            Vector3 to = player.transform.position + Vector3.up * 0.8f;
+            LightningBolt.Flash(lightningPrefab, from, to);
+            if (!Obstacles.Blocked(from, to))
+                player.TakeDamage(Mathf.Max(6, health.ContactDamage));
+            VfxPlayer.Instance?.Play("zap", to);
+            AudioService.Instance?.Play("lightning");
+        }
+
+        void Blink(Vector3 around)
+        {
+            Vector3 dest = around + Random.insideUnitSphere * 1.6f;
+            dest.y = 0f;
+            if (dest.magnitude > arenaRadius - 1.5f)
+                dest = dest.normalized * (arenaRadius - 1.5f);
+            if (!Obstacles.Overlaps(dest, 0.8f))
+                transform.position = dest;
+            VfxPlayer.Instance?.Play("dash", transform.position + Vector3.up * 0.5f);
+            AudioService.Instance?.Play("dash");
+        }
+
+        void Erupt(Vector3 target)
+        {
+            pattern = Pattern.Cast;
+            timer = 0.55f;
+            if (ring != null)
+            {
+                ring.gameObject.SetActive(true);
+                ring.position = new Vector3(target.x, 0.05f, target.z);
+                ring.localScale = new Vector3(2.2f, 1f, 2.2f);
+            }
+            StartCoroutine(EruptAfter(target, 0.7f));
+        }
+
+        System.Collections.IEnumerator EruptAfter(Vector3 target, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            if (health == null || health.IsDead)
+                yield break;
+            VfxPlayer.Instance?.Play("slam", target);
+            AudioService.Instance?.Play("slam");
+            HazardZone.Drop(target, new Color(1f, 0.25f, 0.05f), 6, 1.8f, 2.2f);
+            var player = PlayerHealth.Instance;
+            if (player != null && (player.transform.position - target).sqrMagnitude < 2.1f * 2.1f)
+                player.TakeDamage(health.ContactDamage + 4);
+            if (ring != null)
+                ring.gameObject.SetActive(false);
+        }
+
+        void Push(PlayerHealth player, float distance)
+        {
+            Vector3 away = player.transform.position - transform.position;
+            away.y = 0f;
+            if (away.sqrMagnitude < 0.01f)
+                away = transform.forward;
+            var body = player.GetComponent<CharacterController>();
+            Vector3 dest = player.transform.position + away.normalized * distance;
+            if (dest.magnitude > arenaRadius)
+                dest = dest.normalized * arenaRadius;
+            if (body != null)
+                body.Move(dest - player.transform.position);
+            else
+                player.transform.position = dest;
+        }
+
+        void Strike(Vector3 target)
+        {
+            pattern = Pattern.Cast;
+            timer = 0.4f;
+            VfxPlayer.Instance?.Play("zap", target + Vector3.up);
+            AudioService.Instance?.Play("lightning");
+            var player = PlayerHealth.Instance;
+            if (player != null && (player.transform.position - target).sqrMagnitude < 1.8f * 1.8f)
+                player.TakeDamage(health.ContactDamage);
+        }
+
+        void SpikeRing(Vector3 center)
+        {
+            pattern = Pattern.Cast;
+            timer = 0.4f;
+            VfxPlayer.Instance?.Play("arcane", center + Vector3.up * 0.4f);
+            AudioService.Instance?.Play("arcane");
+            var player = PlayerHealth.Instance;
+            if (player == null)
+                return;
+            float d = Vector3.Distance(new Vector3(player.transform.position.x, 0f, player.transform.position.z), new Vector3(center.x, 0f, center.z));
+            if (d > 1.6f && d < 4.2f)
+                player.TakeDamage(health.ContactDamage);
+        }
+
+        void TickFrostAura(PlayerHealth player)
+        {
+            auraTick -= Time.deltaTime;
+            if (auraTick > 0f)
+                return;
+            auraTick = 0.6f;
+            if ((player.transform.position - transform.position).sqrMagnitude < 4.5f * 4.5f)
+                player.Chill(0.7f, 0.8f);
+        }
+
+        void TickShield()
+        {
+            if (Time.time < shieldUntil)
+            {
+                Shielded = true;
+                return;
+            }
+            Shielded = false;
+            if (specialTimer < -1.5f)
+            {
+                Shielded = true;
+                shieldUntil = Time.time + 2.4f;
+                specialTimer = 4f;
+                VfxPlayer.Instance?.Play("powerup", transform.position + Vector3.up, BossCatalog.Color(BossKind.Crystal));
+            }
+        }
+
+        void TickShadowCloak()
+        {
+            bool hide = Time.time < hiddenUntil;
+            foreach (var renderer in GetComponentsInChildren<Renderer>())
+            {
+                if (renderer is ParticleSystemRenderer || renderer.transform.name == "HealthBar" || renderer.transform.parent != null && renderer.transform.parent.name == "HealthBar")
+                    continue;
+                renderer.enabled = true;
+            }
+            if (hide)
+                health?.TintBody(Color.Lerp(tint, Color.black, 0.65f));
+            else
+                health?.TintBody(tint);
         }
 
         void ClampArena()

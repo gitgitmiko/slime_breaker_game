@@ -13,6 +13,7 @@ namespace SlimeBreaker
         public float dashCooldown = 1.25f;
         public float xpMultiplier = 1f;
         public float damageReduction;
+        public float lifesteal;
         public int level = 1;
     }
 }

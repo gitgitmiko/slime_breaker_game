@@ -90,9 +90,26 @@ namespace SlimeBreaker
             PersistRun();
         }
 
-        public void BeginLevelUp()
+        public void BeginBossIntro()
         {
             if (State == GameState.Victory || State == GameState.Defeat)
+                return;
+            State = GameState.BossIntro;
+        }
+
+        public void EndBossIntro()
+        {
+            if (State != GameState.BossIntro)
+                return;
+            State = GameState.Playing;
+            Time.timeScale = 1f;
+        }
+
+        public void BeginLevelUp()
+        {
+            if (State == GameState.Victory || State == GameState.Defeat || State == GameState.BossIntro)
+                return;
+            if (Stats.level >= RunRules.MaxLevel)
                 return;
             Stats.level++;
             if (State == GameState.LevelUp)
@@ -133,6 +150,8 @@ namespace SlimeBreaker
 
         public void TogglePause()
         {
+            if (State == GameState.BossIntro)
+                return;
             if (State == GameState.Playing)
             {
                 State = GameState.Paused;

@@ -5,6 +5,7 @@ namespace SlimeBreaker
         Boot,
         Menu,
         Playing,
+        BossIntro,
         LevelUp,
         Paused,
         Victory,

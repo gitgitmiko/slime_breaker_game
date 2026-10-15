@@ -8,18 +8,19 @@ namespace SlimeBreaker
         public GameObject normalPrefab;
         public GameObject fastPrefab;
         public GameObject tankPrefab;
+        public GameObject rangedPrefab;
         public GameObject bossPrefab;
+        public GameObject hostileBolt;
         public RunManager run;
-        public float arenaRadius = 11.2f;
+        public float arenaRadius = RunRules.ArenaRadius;
 
         float timer = 1.2f;
-        bool stopped;
         public bool Paused { get; set; }
         public int Stage { get; set; } = 1;
 
         void Update()
         {
-            if (stopped || Paused || !GameFlowController.IsPlaying || balance == null || balance.phases == null)
+            if (Paused || !GameFlowController.IsPlaying || balance == null || balance.phases == null)
                 return;
             timer -= Time.deltaTime;
             if (timer > 0f)
@@ -40,6 +41,10 @@ namespace SlimeBreaker
                     break;
                 }
             }
+            int level = GameFlowController.Instance != null && GameFlowController.Instance.Stats != null
+                ? GameFlowController.Instance.Stats.level
+                : 1;
+            Stage = Mathf.Max(1, level / 10);
             float interval = phase.interval * Mathf.Pow(0.93f, Mathf.Max(0, Stage - 1));
             timer = Mathf.Max(0.28f, interval);
             Spawn(Pick(phase));
@@ -47,7 +52,7 @@ namespace SlimeBreaker
 
         GameObject Pick(SpawnPhase phase)
         {
-            int total = Mathf.Max(0, phase.normal) + Mathf.Max(0, phase.fast) + Mathf.Max(0, phase.tank);
+            int total = Mathf.Max(0, phase.normal) + Mathf.Max(0, phase.fast) + Mathf.Max(0, phase.tank) + Mathf.Max(0, phase.ranged);
             if (total <= 0)
                 return normalPrefab;
             int roll = Random.Range(0, total);
@@ -56,7 +61,10 @@ namespace SlimeBreaker
             roll -= phase.normal;
             if (roll < phase.fast)
                 return fastPrefab;
-            return tankPrefab;
+            roll -= phase.fast;
+            if (roll < phase.tank)
+                return tankPrefab;
+            return rangedPrefab != null ? rangedPrefab : fastPrefab;
         }
 
         void Spawn(GameObject prefab)
@@ -74,20 +82,14 @@ namespace SlimeBreaker
             }
             var instance = Instantiate(prefab, position, Quaternion.identity);
             var health = instance.GetComponent<EnemyHealth>();
-            health?.Scale(Stage);
-        }
-
-        public void StopAndSpawnBoss()
-        {
-            stopped = true;
-            if (bossPrefab == null)
-                return;
-            Vector3 bossPosition = new Vector3(0f, 0f, arenaRadius * 0.55f);
-            if (Obstacles.Overlaps(bossPosition, 1.2f))
-                bossPosition = new Vector3(arenaRadius * 0.45f, 0f, 0f);
-            var instance = Instantiate(bossPrefab, bossPosition, Quaternion.identity);
-            instance.GetComponent<EnemyHealth>()?.Scale(Stage);
-            AudioService.Instance?.Play("bosswarn");
+            health?.Scale(Mathf.Max(1, Stage));
+            var ai = instance.GetComponent<EnemyChaseAI>();
+            if (ai != null)
+            {
+                ai.arenaRadius = arenaRadius;
+                if (ai.boltPrefab == null)
+                    ai.boltPrefab = hostileBolt;
+            }
         }
     }
 }

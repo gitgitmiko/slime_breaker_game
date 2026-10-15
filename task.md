@@ -26,6 +26,14 @@
 - Tiap level 5/10/15… slime lenyap, power-up + portal keluar; arena berikutnya di-roll `ArenaTheme` (bioma × cuaca × waktu).
 - Fitur Lanjutkan: `RunSaveService` menulis `slimebreaker-run.json` saat jeda/keluar/naik level/ganti arena.
 
+### Putaran 4 — bar darah, boss 10/20/…/100, satu map, ranged, lifesteal
+
+- Bar darah world-space di atas setiap slime dan boss.
+- Run tamat di level 100. Satu arena besar (radius 22 m); portal ganti-peta dihapus. Power-up tetap tiap 5 level di map yang sama.
+- Boss unik tiap 10 level (Rock … Royal Slime), banner STAGE BOSS, zoom kamera 2,5 d, skill sesuai keunikan.
+- Upgrade baru Lifesteal; Ritme diganti **Attack Speed**.
+- Slime jarak menembak `HostileProjectile`.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

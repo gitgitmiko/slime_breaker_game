@@ -11,6 +11,7 @@ namespace SlimeBreaker
         public int normal = 1;
         public int fast;
         public int tank;
+        public int ranged;
     }
 
     [CreateAssetMenu(fileName = "Balance", menuName = "Slime Breaker/Balance")]
@@ -25,7 +26,7 @@ namespace SlimeBreaker
         public float dashDuration = 0.16f;
         public float dashSpeed = 16f;
         public float bossTime = 300f;
-        public int maxAliveEnemies = 22;
+        public int maxAliveEnemies = 28;
         public int victoryGold = 40;
         public int defeatGold = 12;
         public int goldPerLevel = 4;

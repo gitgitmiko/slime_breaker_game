@@ -8,7 +8,7 @@ namespace SlimeBreaker
     {
         public VirtualJoystick joystick;
         public FollowCamera followCamera;
-        public float arenaRadius = 11.2f;
+        public float arenaRadius = RunRules.ArenaRadius;
 
         CharacterController body;
         DashController dash;
@@ -47,7 +47,7 @@ namespace SlimeBreaker
             if (wish.sqrMagnitude > 1f)
                 wish.Normalize();
 
-            float speed = stats != null ? stats.moveSpeed : 5f;
+            float speed = (stats != null ? stats.moveSpeed : 5f) * (health != null ? health.MoveScale : 1f);
             Vector3 velocity = wish * speed;
             if (dash != null && dash.IsDashing)
                 velocity = dash.Direction * (flow.balance != null ? flow.balance.dashSpeed : 16f);

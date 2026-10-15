@@ -40,7 +40,7 @@
 - Power-up tetap tiap 5 **level hero**. Boss tiap 10 **lantai**.
 - Boss lantai 10 HP 10.000 + 1 skill enrage di bawah 30% HP; lantai 20 HP 20.000 + 2 skill; … lantai 100 HP 100.000 + 10 skill.
 - HUD menampilkan Lantai, Lv, dan ATK.
-- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 9/9. PlayMode 20/20.
+- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 9/9. PlayMode 20/20. APK `SLIMEBREAKER_APK_OK` 0.5.0.
 
 ## Berikutnya
 

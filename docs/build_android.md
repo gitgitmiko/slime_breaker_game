@@ -94,7 +94,8 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 
 ## Hasil 15 Oktober 2026 (putaran 7 — biome, cuaca, damage boss)
 
-- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 15/15; PlayMode 23/23 lolos.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 15/15; PlayMode 23/23 lolos; APK: `SLIMEBREAKER_APK_OK`.
+- APK: `Builds/SlimeBreaker.apk` (42 MB), disalin ke `~/Downloads/SlimeBreaker.apk`.
 - Paket: `com.gitgitmiko.slimebreaker` 0.7.0 (versionCode 7).
 - PlayMode menambah tes biome gurun/salju/petir tiap 10 lantai, cuaca/malam di lantai 2, dan damage basic boss 50.
 

@@ -57,7 +57,7 @@
 - Tiap 10 lantai biome baru: hutan (1–10), gurun (11–20), salju (21–30), petir, rawa, bayangan, magma, badai, kristal, kerajaan.
 - Aset baru: 7 tekstur tanah + 11 mesh biome (kaktus, duri es, spire, akar rawa, obelisk, lava, gerbang, kolom).
 - Damage boss: basic 50, skill 100, skill enrage 200.
-- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 15/15. PlayMode 23/23. Versi 0.7.0.
+- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 15/15. PlayMode 23/23. APK `SLIMEBREAKER_APK_OK` 0.7.0.
 
 ## Berikutnya
 

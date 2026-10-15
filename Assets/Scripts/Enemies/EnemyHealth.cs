@@ -163,16 +163,21 @@ namespace SlimeBreaker
                 burnTimer = burnInterval;
         }
 
-        /// <summary>Raises health and contact damage for later arenas. Stage 1 is the authored baseline.</summary>
-        public void Scale(int stage)
+        /// <summary>Raises health by biome band and contact damage every floor. Floor 1 is the authored baseline.</summary>
+        public void Scale(int floor)
         {
-            if (definition == null || stage <= 1)
+            if (definition == null)
                 return;
-            float hpMul = Mathf.Pow(1.18f, stage - 1);
-            Current = Mathf.Max(1, Mathf.RoundToInt(definition.maxHealth * hpMul));
-            Max = Current;
-            extraDamage = Mathf.RoundToInt(definition.contactDamage * (Mathf.Pow(1.10f, stage - 1) - 1f));
-            ContactDamage = definition.contactDamage + extraDamage;
+            floor = Mathf.Max(1, floor);
+            int band = (floor - 1) / RunRules.BossEvery + 1;
+            if (band > 1)
+            {
+                float hpMul = Mathf.Pow(1.18f, band - 1);
+                Current = Mathf.Max(1, Mathf.RoundToInt(definition.maxHealth * hpMul));
+                Max = Current;
+            }
+            extraDamage = Mathf.Max(0, floor - 1) * RunRules.SlimeDamagePerFloor;
+            ContactDamage = RunRules.SlimeContactDamage(definition.contactDamage, floor);
         }
 
         public void TintBody(Color color)

@@ -164,12 +164,49 @@ namespace SlimeBreaker.Tests
         }
 
         [Test]
-        public void BossAttacksUseFixedDamageTiers()
+        public void KillQuotaIsTenTimesTheFloor()
         {
-            Assert.AreEqual(50, BossCatalog.ContactDamageForFloor(10));
-            Assert.AreEqual(50, BossCatalog.ContactDamageForFloor(100));
-            Assert.AreEqual(100, BossCatalog.SkillDamage(false));
-            Assert.AreEqual(200, BossCatalog.SkillDamage(true));
+            Assert.AreEqual(10, RunRules.KillQuota(1));
+            Assert.AreEqual(20, RunRules.KillQuota(2));
+            Assert.AreEqual(80, RunRules.KillQuota(8));
+            Assert.AreEqual(90, RunRules.KillQuota(9));
+            Assert.AreEqual(0, RunRules.KillQuota(10));
+            Assert.AreEqual(110, RunRules.KillQuota(11));
+        }
+
+        [Test]
+        public void SlimeAndBossDamageGrowEveryFloor()
+        {
+            Assert.AreEqual(8, RunRules.SlimeContactDamage(8, 1));
+            Assert.AreEqual(9, RunRules.SlimeContactDamage(8, 2));
+            Assert.AreEqual(17, RunRules.SlimeContactDamage(8, 10));
+            Assert.AreEqual(50, BossCatalog.ContactDamageForFloor(1));
+            Assert.AreEqual(50 + 9 * RunRules.BossDamagePerFloor, BossCatalog.ContactDamageForFloor(10));
+            Assert.AreEqual(50 + 99 * RunRules.BossDamagePerFloor, BossCatalog.ContactDamageForFloor(100));
+            Assert.Greater(BossCatalog.SkillDamage(20, false), BossCatalog.SkillDamage(10, false));
+            Assert.Greater(BossCatalog.SkillDamage(20, true), BossCatalog.SkillDamage(10, true));
+        }
+
+        [Test]
+        public void LevelUpAddsTenBasicAttack()
+        {
+            var host = new UnityEngine.GameObject("Flow");
+            try
+            {
+                var flow = host.AddComponent<GameFlowController>();
+                Assert.IsNotNull(flow.Stats);
+                int before = flow.Stats.damage;
+                int level = flow.Stats.level;
+                flow.BeginLevelUp();
+                Assert.AreEqual(level + 1, flow.Stats.level);
+                Assert.AreEqual(before + RunRules.HeroDamagePerLevel, flow.Stats.damage);
+                Assert.AreEqual(10, RunRules.HeroDamagePerLevel);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+                UnityEngine.Time.timeScale = 1f;
+            }
         }
 
         [Test]

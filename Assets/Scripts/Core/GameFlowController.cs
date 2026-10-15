@@ -112,6 +112,7 @@ namespace SlimeBreaker
             if (Stats.level >= RunRules.MaxHeroLevel)
                 return;
             Stats.level++;
+            Stats.damage += RunRules.HeroDamagePerLevel;
             if (State == GameState.LevelUp)
             {
                 queuedLevelUps++;

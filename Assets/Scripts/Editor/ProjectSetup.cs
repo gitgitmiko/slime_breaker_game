@@ -1909,7 +1909,12 @@ namespace SlimeBreaker.EditorTools
             statusRect.offsetMax = Vector2.zero;
             var floor = Text(safe, "Floor", "Lantai 1/100", 28, TextAnchor.MiddleCenter, font);
             floor.fontStyle = FontStyle.Bold;
-            Place(floor.gameObject, safe, new Vector2(0.52f, 0.935f), new Vector2(260f, 40f));
+            Place(floor.gameObject, safe, new Vector2(0.52f, 0.955f), new Vector2(280f, 36f));
+            var floorBar = Slider(safe, "FloorProgress", new Color(0.45f, 0.85f, 1f), barSprite);
+            Place(floorBar.gameObject, safe, new Vector2(0.52f, 0.908f), new Vector2(320f, 22f));
+            var floorProgressLabel = Text(floorBar.transform, "Value", "0 / 10", 16, TextAnchor.MiddleCenter, font);
+            floorProgressLabel.raycastTarget = false;
+            Stretch(floorProgressLabel.rectTransform);
             var timer = Text(safe, "Timer", "00:00", 34, TextAnchor.MiddleCenter, font);
             Place(timer.gameObject, safe, new Vector2(0.72f, 0.935f), new Vector2(180f, 48f));
             var pause = Button(safe, "Pause", "II", font, Color.white, circleSprite);
@@ -2068,6 +2073,8 @@ namespace SlimeBreaker.EditorTools
             ui.xpSlider = xp;
             ui.levelText = level;
             ui.floorText = floor;
+            ui.floorProgress = floorBar;
+            ui.floorProgressText = floorProgressLabel;
             ui.damageText = damage;
             ui.statusText = status;
             ui.timerText = timer;
@@ -2181,8 +2188,8 @@ namespace SlimeBreaker.EditorTools
         {
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
-            PlayerSettings.bundleVersion = "0.8.0";
-            PlayerSettings.Android.bundleVersionCode = 8;
+            PlayerSettings.bundleVersion = "0.9.0";
+            PlayerSettings.Android.bundleVersionCode = 9;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

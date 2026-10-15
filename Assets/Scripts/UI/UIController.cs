@@ -11,6 +11,8 @@ namespace SlimeBreaker
         public Text hpText;
         public Text levelText;
         public Text floorText;
+        public Slider floorProgress;
+        public Text floorProgressText;
         public Text damageText;
         public Text statusText;
         public Text timerText;
@@ -105,6 +107,7 @@ namespace SlimeBreaker
                 int floor = StageManager.Instance != null ? StageManager.Instance.Floor : 1;
                 floorText.text = "Lantai " + floor + "/" + RunRules.MaxFloor;
             }
+            RefreshFloorProgress();
             if (timerText != null && flow.run != null)
             {
                 int seconds = Mathf.FloorToInt(flow.run.Elapsed);
@@ -239,6 +242,42 @@ namespace SlimeBreaker
                     + "\nLv " + level + "   ATK " + damage
                     + "\nWaktu " + (seconds / 60).ToString("00") + ":" + (seconds % 60).ToString("00")
                     + "\nEmas +" + gold + "\nTotal " + totalGold;
+        }
+
+        void RefreshFloorProgress()
+        {
+            var stage = StageManager.Instance;
+            int floor = stage != null ? stage.Floor : 1;
+            int kills = stage != null ? stage.FloorKills : 0;
+            int quota = RunRules.KillQuota(floor);
+            bool boss = RunRules.IsBossFloor(floor);
+            if (floorProgressText != null)
+            {
+                if (boss)
+                    floorProgressText.text = stage != null && stage.FloorCleared ? "Masuk pintu" : "BOSS";
+                else if (stage != null && stage.FloorCleared)
+                    floorProgressText.text = kills + " / " + quota + "  pintu terbuka";
+                else
+                    floorProgressText.text = kills + " / " + quota;
+            }
+            if (floorProgress != null)
+            {
+                if (boss)
+                    floorProgress.value = stage != null && stage.FloorCleared ? 1f : BossHealth01();
+                else
+                    floorProgress.value = quota <= 0 ? 0f : Mathf.Clamp01((float)kills / quota);
+            }
+        }
+
+        static float BossHealth01()
+        {
+            for (int i = 0; i < EnemyHealth.Active.Count; i++)
+            {
+                var enemy = EnemyHealth.Active[i];
+                if (enemy != null && !enemy.IsDead && enemy.IsBoss && enemy.Max > 0)
+                    return 1f - (float)enemy.Current / enemy.Max;
+            }
+            return 0f;
         }
 
         void RefreshStatus(RunStats stats)

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace SlimeBreaker
 {
-    /// <summary>The sorceress auto-casts a homing magic bolt from her staff at the nearest enemy in range.</summary>
+    /// <summary>The sorceress auto-casts a homing magic bolt while standing still. Walking or dashing cancels basic attacks.</summary>
     public class AutoAttackController : MonoBehaviour
     {
         public GameObject boltPrefab;
@@ -37,10 +37,11 @@ namespace SlimeBreaker
             if (health != null && health.IsDead)
                 return;
             if (cooldown > 0f)
-            {
                 cooldown -= Time.deltaTime;
+            if (motor != null && motor.IsMoving)
                 return;
-            }
+            if (cooldown > 0f)
+                return;
 
             var stats = GameFlowController.Instance.Stats;
             var target = FindNearest(stats.attackRange);

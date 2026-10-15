@@ -15,6 +15,10 @@ namespace SlimeBreaker
         public const int BossBasicDamage = 50;
         public const int BossSkillDamage = 100;
         public const int BossEnrageDamage = 200;
+        public const int KillsPerFloorStep = 10;
+        public const int HeroDamagePerLevel = 10;
+        public const int SlimeDamagePerFloor = 1;
+        public const int BossDamagePerFloor = 3;
         public const float ArenaRadius = 22f;
 
         public static bool IsBossFloor(int floor)
@@ -29,12 +33,28 @@ namespace SlimeBreaker
             return floor / BossEvery;
         }
 
-        /// <summary>Regular slimes to clear before the floor advances. Boss floors skip this quota.</summary>
+        /// <summary>Regular slimes to clear before the floor advances. Floor N needs N×10 kills. Boss floors skip this quota.</summary>
         public static int KillQuota(int floor)
         {
             if (IsBossFloor(floor))
                 return 0;
-            return 8 + UnityEngine.Mathf.Min(floor, 16);
+            return UnityEngine.Mathf.Max(1, floor) * KillsPerFloorStep;
+        }
+
+        public static int SlimeContactDamage(int baseDamage, int floor)
+        {
+            return UnityEngine.Mathf.Max(1, baseDamage + UnityEngine.Mathf.Max(0, floor - 1) * SlimeDamagePerFloor);
+        }
+
+        public static int BossContactDamage(int floor)
+        {
+            return BossBasicDamage + UnityEngine.Mathf.Max(0, floor - 1) * BossDamagePerFloor;
+        }
+
+        public static int BossSkillDamageAt(int floor, bool enraged)
+        {
+            int baseline = enraged ? BossEnrageDamage : BossSkillDamage;
+            return baseline + UnityEngine.Mathf.Max(0, floor - 1) * BossDamagePerFloor;
         }
     }
 }

@@ -41,6 +41,7 @@ namespace SlimeBreaker
         int nextEnrage;
         bool announcedEnrage;
         float minionTimer = 8f;
+        int fightFloor = 10;
 
         public void Configure(BossKind bossKind, GameObject bolt, GameObject lightning, GameObject minion, int floor)
         {
@@ -48,6 +49,7 @@ namespace SlimeBreaker
             boltPrefab = bolt;
             lightningPrefab = lightning;
             minionPrefab = minion;
+            fightFloor = Mathf.Max(1, floor);
             tint = BossCatalog.Tint(kind);
             slamRadius = kind == BossKind.Rock ? 4.1f : 3.6f;
             patternTimer = kind == BossKind.Volt || kind == BossKind.Shadow ? 0.95f : 1.3f;
@@ -145,8 +147,8 @@ namespace SlimeBreaker
             return CastElement(player, 1);
         }
 
-        int BasicDamage => RunRules.BossBasicDamage;
-        int SkillDamage => BossCatalog.SkillDamage(Enraged);
+        int BasicDamage => BossCatalog.ContactDamageForFloor(fightFloor);
+        int SkillDamage => BossCatalog.SkillDamage(fightFloor, Enraged);
 
         void TickEnrage()
         {
@@ -269,7 +271,7 @@ namespace SlimeBreaker
         {
             if (minionPrefab == null || health == null || health.IsDead)
                 return;
-            int band = Mathf.Max(1, (int)kind);
+            int floor = StageManager.Instance != null ? StageManager.Instance.Floor : fightFloor;
             int live = 0;
             for (int i = 0; i < EnemyHealth.Active.Count; i++)
             {
@@ -283,7 +285,7 @@ namespace SlimeBreaker
                 if ((pos - transform.position).sqrMagnitude < 4f)
                     pos = Around(Vector3.zero, 8f);
                 var instance = Instantiate(minionPrefab, pos, Quaternion.identity);
-                instance.GetComponent<EnemyHealth>()?.Scale(band);
+                instance.GetComponent<EnemyHealth>()?.Scale(floor);
                 var ai = instance.GetComponent<EnemyChaseAI>();
                 if (ai != null)
                     ai.arenaRadius = arenaRadius;

@@ -69,6 +69,13 @@
 - Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 17/17. PlayMode 24/24. APK `SLIMEBREAKER_APK_OK` 0.8.0.
 - Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
 
+### Putaran 9 — serangan diam, kuota ×10, progres lantai, scaling damage
+
+- Basic attack hanya saat hero diam; jalan/dash menahan bolt.
+- Bug pintu beruntun (lantai 8→9 langsung 10) diperbaiki: slime sisa tidak dihitung ke lantai berikutnya.
+- Kuota bunuh: lantai N = N×10 slime. HUD atas menampilkan progres `3 / 10`.
+- Setiap naik level hero, ATK dasar +10. Setiap lantai, damage slime +1 dan damage boss +3.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

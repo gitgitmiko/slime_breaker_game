@@ -38,12 +38,17 @@ namespace SlimeBreaker
 
         public static int ContactDamageForFloor(int floor)
         {
-            return RunRules.BossBasicDamage;
+            return RunRules.BossContactDamage(floor);
         }
 
         public static int SkillDamage(bool enraged)
         {
-            return enraged ? RunRules.BossEnrageDamage : RunRules.BossSkillDamage;
+            return SkillDamage(1, enraged);
+        }
+
+        public static int SkillDamage(int floor, bool enraged)
+        {
+            return RunRules.BossSkillDamageAt(floor, enraged);
         }
 
         public static string DisplayName(BossKind kind)

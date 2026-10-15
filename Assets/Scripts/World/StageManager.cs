@@ -6,7 +6,7 @@ namespace SlimeBreaker
     /// <summary>
     /// Floors 1–100. Each floor rebuilds the arena: weather and day/night rotate every floor,
     /// biome changes every ten floors. Power-ups drop every five hero levels.
-    /// Clearing a floor (or beating a boss) opens an exit portal; walking in advances the floor.
+    /// Clearing the floor kill quota (N×10 slimes on lantai N) or beating a boss opens an exit portal; walking in advances the floor.
     /// Every ten floors a unique boss is announced, the camera zooms in, and regular spawning
     /// pauses until that boss falls. Bosses summon minions so the hero can keep levelling.
     /// </summary>
@@ -28,6 +28,8 @@ namespace SlimeBreaker
 
         public int Floor { get; private set; } = 1;
         public int FloorKills { get; private set; }
+        public int KillQuota => RunRules.KillQuota(Floor);
+        public bool FloorCleared { get; private set; }
         public int Stage => Floor;
         public bool Intermission { get; private set; }
         public ArenaTheme Theme { get; private set; }
@@ -69,6 +71,7 @@ namespace SlimeBreaker
             {
                 Floor = Mathf.Clamp(resume.floor > 0 ? resume.floor : Mathf.Max(1, resume.stage), 1, RunRules.MaxFloor);
                 FloorKills = Mathf.Max(0, resume.floorKills);
+                FloorCleared = FloorKills >= RunRules.KillQuota(Floor) && !RunRules.IsBossFloor(Floor);
                 RunSeed = resume.runSeed != 0 ? resume.runSeed : resume.themeSeed;
                 Theme = resume.ToTheme();
                 HandledPowerTiers = resume.level / RunRules.PowerUpEvery;
@@ -84,6 +87,8 @@ namespace SlimeBreaker
                 ApplyTheme(true);
                 if (resume.intermission)
                     StartCoroutine(RestoreBoss());
+                else if (FloorCleared)
+                    OfferPortal();
             }
             else
             {
@@ -217,9 +222,9 @@ namespace SlimeBreaker
                 return;
             }
 
-            if (introducing || Intermission || RunRules.IsBossFloor(Floor))
+            if (transitioning || introducing || Intermission || RunRules.IsBossFloor(Floor))
                 return;
-            if (ExitPortal.Active != null)
+            if (FloorCleared || ExitPortal.Active != null)
                 return;
             FloorKills++;
             if (FloorKills >= RunRules.KillQuota(Floor))
@@ -228,7 +233,10 @@ namespace SlimeBreaker
 
         void OfferPortal(string message = null)
         {
-            if (Floor >= RunRules.MaxFloor || ExitPortal.Active != null)
+            if (transitioning || Floor >= RunRules.MaxFloor)
+                return;
+            FloorCleared = true;
+            if (ExitPortal.Active != null)
                 return;
             SpawnPortal();
             GameFlowController.Instance?.ui?.ShowToast(message ?? "Pintu terbuka — masuk untuk naik lantai", new Color(0.55f, 0.9f, 1f));
@@ -262,6 +270,7 @@ namespace SlimeBreaker
         {
             Floor = Mathf.Clamp(floor, 1, RunRules.MaxFloor);
             FloorKills = 0;
+            FloorCleared = false;
             HandledBossTiers = (Floor - 1) / RunRules.BossEvery;
             Intermission = false;
             introducing = false;
@@ -291,6 +300,10 @@ namespace SlimeBreaker
         IEnumerator AdvanceFloor()
         {
             transitioning = true;
+            FloorCleared = true;
+            VanishMinions();
+            if (ExitPortal.Active != null)
+                Destroy(ExitPortal.Active.gameObject);
             if (spawner != null)
                 spawner.Paused = true;
             if (fader != null)
@@ -298,6 +311,7 @@ namespace SlimeBreaker
 
             Floor++;
             FloorKills = 0;
+            FloorCleared = false;
             Theme = ArenaTheme.ForFloor(Floor, RunSeed != 0 ? RunSeed : 2024, Theme);
             ApplyTheme(false);
             PlaceHero(Vector3.zero);

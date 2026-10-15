@@ -5,8 +5,9 @@ namespace SlimeBreaker
 {
     /// <summary>
     /// One large map for the whole run. Floors 1–100. Power-ups drop every five hero levels.
+    /// Clearing a floor (or beating a boss) opens an exit portal; walking in advances the floor.
     /// Every ten floors a unique boss is announced, the camera zooms in, and regular spawning
-    /// pauses until that boss falls.
+    /// pauses until that boss falls. Bosses summon minions so the hero can keep levelling.
     /// </summary>
     public class StageManager : MonoBehaviour
     {
@@ -21,6 +22,7 @@ namespace SlimeBreaker
         public GameObject hostileBolt;
         public GameObject lightningPrefab;
         public GameObject minionPrefab;
+        public GameObject portalPrefab;
         public FollowCamera cameraRig;
 
         public int Floor { get; private set; } = 1;
@@ -197,9 +199,10 @@ namespace SlimeBreaker
                 var kind = ActiveBoss;
                 ActiveBoss = BossKind.None;
                 Intermission = false;
+                VanishMinions();
                 if (spawner != null)
                 {
-                    spawner.Paused = false;
+                    spawner.Paused = true;
                     spawner.Stage = Floor;
                 }
                 if (BossCatalog.IsFinal(kind) || Floor >= RunRules.MaxFloor)
@@ -207,29 +210,48 @@ namespace SlimeBreaker
                     GameFlowController.Instance?.EndRun(true);
                     return;
                 }
-                GameFlowController.Instance?.ui?.ShowToast(BossCatalog.DisplayName(kind) + " kalah!", new Color(1f, 0.85f, 0.4f));
-                AdvanceFloor();
+                OfferPortal(BossCatalog.DisplayName(kind) + " kalah! Masuk pintu");
                 return;
             }
 
             if (introducing || Intermission || RunRules.IsBossFloor(Floor))
                 return;
+            if (ExitPortal.Active != null)
+                return;
             FloorKills++;
             if (FloorKills >= RunRules.KillQuota(Floor))
-                AdvanceFloor();
+                OfferPortal();
         }
 
-        void AdvanceFloor()
+        void OfferPortal(string message = null)
         {
-            if (Floor >= RunRules.MaxFloor)
+            if (Floor >= RunRules.MaxFloor || ExitPortal.Active != null)
                 return;
-            Floor++;
-            FloorKills = 0;
-            if (spawner != null)
-                spawner.Stage = Floor;
-            if (!RunRules.IsBossFloor(Floor))
-                GameFlowController.Instance?.ui?.ShowToast("Lantai " + Floor, new Color(0.55f, 0.9f, 1f));
+            SpawnPortal();
+            GameFlowController.Instance?.ui?.ShowToast(message ?? "Pintu terbuka — masuk untuk naik lantai", new Color(0.55f, 0.9f, 1f));
             GameFlowController.Instance?.PersistRun();
+        }
+
+        void SpawnPortal()
+        {
+            if (portalPrefab == null)
+                return;
+            Vector3 hero = PlayerHealth.Instance != null ? PlayerHealth.Instance.transform.position : Vector3.zero;
+            Vector3 position = Vector3.zero;
+            for (int attempt = 0; attempt < 16; attempt++)
+            {
+                float angle = Random.Range(0f, Mathf.PI * 2f);
+                float radius = Random.Range(5f, 12f);
+                position = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
+                Vector3 flat = position - hero;
+                flat.y = 0f;
+                if (flat.magnitude < 4f)
+                    continue;
+                if (Obstacles.Overlaps(position, 1.2f))
+                    continue;
+                break;
+            }
+            Instantiate(portalPrefab, position, Quaternion.identity);
         }
 
         /// <summary>Playtest helper: jump to a floor without walking the kill quota.</summary>
@@ -242,6 +264,8 @@ namespace SlimeBreaker
             introducing = false;
             ActiveBoss = BossKind.None;
             VanishMinions();
+            if (ExitPortal.Active != null)
+                Destroy(ExitPortal.Active.gameObject);
             if (spawner != null)
             {
                 spawner.Stage = Floor;
@@ -253,6 +277,18 @@ namespace SlimeBreaker
         {
             if (portal != null)
                 Destroy(portal.gameObject);
+            if (Floor >= RunRules.MaxFloor)
+                return;
+            Floor++;
+            FloorKills = 0;
+            if (spawner != null)
+            {
+                spawner.Stage = Floor;
+                spawner.Paused = false;
+            }
+            if (!RunRules.IsBossFloor(Floor))
+                GameFlowController.Instance?.ui?.ShowToast("Lantai " + Floor, new Color(0.55f, 0.9f, 1f));
+            GameFlowController.Instance?.PersistRun();
         }
 
         static void VanishMinions()

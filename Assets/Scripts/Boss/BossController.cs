@@ -40,6 +40,7 @@ namespace SlimeBreaker
         float auraTick;
         int nextEnrage;
         bool announcedEnrage;
+        float minionTimer = 8f;
 
         public void Configure(BossKind bossKind, GameObject bolt, GameObject lightning, GameObject minion, int floor)
         {
@@ -82,6 +83,7 @@ namespace SlimeBreaker
             if (kind == BossKind.Shadow)
                 TickShadowCloak();
             TickEnrage();
+            TickAdds();
 
             timer -= Time.deltaTime;
             specialTimer -= Time.deltaTime;
@@ -135,58 +137,7 @@ namespace SlimeBreaker
 
         bool TrySpecial(PlayerHealth player)
         {
-            Vector3 here = transform.position;
-            Vector3 target = player.transform.position;
-            switch (kind)
-            {
-                case BossKind.Rock:
-                    Throw(target + Vector3.up * 0.7f, health.ContactDamage + 4, 7.5f);
-                    AudioService.Instance?.Play("slam");
-                    return true;
-                case BossKind.Flame:
-                    FireBurst(here, 3.4f, health.ContactDamage);
-                    HazardZone.Drop(here, new Color(1f, 0.4f, 0.1f), Mathf.Max(3, health.ContactDamage / 4), 1.6f, 3.5f);
-                    return true;
-                case BossKind.Frost:
-                    Throw(target + Vector3.up * 0.7f, health.ContactDamage, 8f);
-                    player.Chill(0.5f, 1.8f);
-                    return true;
-                case BossKind.Volt:
-                    Blink(target);
-                    Zap(player);
-                    return true;
-                case BossKind.Toxic:
-                    Throw(target + Vector3.up * 0.7f, health.ContactDamage, 8.5f);
-                    HazardZone.Drop(target, new Color(0.4f, 0.9f, 0.2f), 4, 1.4f, 4f);
-                    return true;
-                case BossKind.Shadow:
-                    Blink(target + (here - target).normalized * 2.2f);
-                    hiddenUntil = Time.time + 1.1f;
-                    return true;
-                case BossKind.Magma:
-                    Erupt(target);
-                    return true;
-                case BossKind.Storm:
-                    Push(player, 3.4f);
-                    Strike(target);
-                    return true;
-                case BossKind.Crystal:
-                    SpikeRing(here);
-                    return true;
-                case BossKind.Royal:
-                    if (Random.value < 0.45f)
-                        Zap(player);
-                    else
-                        Throw(target + Vector3.up * 0.8f, health.ContactDamage + 2, 9f);
-                    if (minionPrefab != null && EnemyHealth.Active.Count < 8)
-                    {
-                        var minion = Instantiate(minionPrefab, here + transform.right * 2f, Quaternion.identity);
-                        minion.GetComponent<EnemyHealth>()?.Scale(10);
-                    }
-                    return true;
-                default:
-                    return false;
-            }
+            return CastElement(player, 1);
         }
 
         int EnrageDamage => 24 + (int)kind * 6;
@@ -203,57 +154,133 @@ namespace SlimeBreaker
 
         bool TryEnrage(PlayerHealth player)
         {
-            if (EnrageSkillCount <= 0)
-                return TrySpecial(player);
-            int skill = nextEnrage % EnrageSkillCount;
             nextEnrage++;
+            int extra = Mathf.Max(1, EnrageSkillCount);
+            return CastElement(player, extra);
+        }
+
+        bool CastElement(PlayerHealth player, int intensity)
+        {
             Vector3 here = transform.position;
             Vector3 target = player.transform.position;
-            int dmg = EnrageDamage;
-            switch (skill)
+            int dmg = Enraged ? EnrageDamage : health.ContactDamage;
+            int count = Mathf.Clamp(intensity, 1, 10);
+            switch (kind)
             {
-                case 0:
-                    SlamEnrage(player, dmg);
+                case BossKind.Rock:
+                    Rain(target, dmg, count + 2, BossCatalog.Tint(kind), 1.2f);
+                    AudioService.Instance?.Play("cast");
                     return true;
-                case 1:
-                    Volley(target + Vector3.up * 0.7f, dmg, 5);
+                case BossKind.Flame:
+                    FireBolts(target, dmg, count + 1);
                     return true;
-                case 2:
-                    ZapEnrage(player, dmg);
+                case BossKind.Frost:
+                    Rain(target, dmg, count + 1, BossCatalog.Tint(kind), 1.1f);
+                    player.Chill(0.55f, 1.8f);
                     return true;
-                case 3:
-                    Erupt(target);
+                case BossKind.Volt:
+                    for (int i = 0; i < count; i++)
+                        SkyfallHazard.Drop(Around(target, 2.4f), dmg, 0.7f + i * 0.12f, BossCatalog.Tint(kind), 1.0f);
+                    Zap(player);
                     return true;
-                case 4:
-                    FireBurst(here, 4.2f, dmg);
-                    HazardZone.Drop(here, new Color(0.4f, 0.9f, 0.2f), Mathf.Max(6, dmg / 4), 2.2f, 4.5f);
+                case BossKind.Toxic:
+                    Rain(target, dmg, count, BossCatalog.Tint(kind), 1.15f);
+                    HazardZone.Drop(target, new Color(0.4f, 0.9f, 0.2f), Mathf.Max(4, dmg / 5), 1.6f, 3.6f);
                     return true;
-                case 5:
-                    Blink(target);
-                    SlamEnrage(player, dmg);
+                case BossKind.Shadow:
+                    Blink(target + (here - target).normalized * 2.2f);
+                    Rain(target, dmg, count, BossCatalog.Tint(kind), 1.05f);
+                    hiddenUntil = Time.time + 1.0f;
                     return true;
-                case 6:
-                    FireBurst(here, 4.6f, dmg);
-                    HazardZone.Drop(here, new Color(1f, 0.3f, 0.05f), Mathf.Max(6, dmg / 3), 2.4f, 3.5f);
+                case BossKind.Magma:
+                    Rain(target, dmg + 2, count + 1, new Color(1f, 0.28f, 0.05f), 1.35f);
                     return true;
-                case 7:
-                    Push(player, 4.2f);
-                    Strike(target);
-                    player.TakeDamage(dmg);
+                case BossKind.Storm:
+                    Push(player, 3.2f);
+                    for (int i = 0; i < count; i++)
+                        SkyfallHazard.Drop(Around(target, 2.8f), dmg, 0.65f + i * 0.1f, BossCatalog.Tint(kind), 1.05f);
                     return true;
-                case 8:
+                case BossKind.Crystal:
                     SpikeRing(here);
-                    FireBurst(here, 4.8f, dmg);
+                    Rain(target, dmg, count, BossCatalog.Tint(kind), 1.0f);
+                    return true;
+                case BossKind.Royal:
+                    FireBolts(target, dmg, 2);
+                    Rain(target, dmg, count, BossCatalog.Tint(kind), 1.2f);
+                    if (Random.value < 0.5f)
+                        Zap(player);
                     return true;
                 default:
-                    ZapEnrage(player, dmg);
-                    Volley(target + Vector3.up * 0.8f, dmg, 6);
-                    if (minionPrefab != null && EnemyHealth.Active.Count < 8)
-                    {
-                        var minion = Instantiate(minionPrefab, here + transform.right * 2f, Quaternion.identity);
-                        minion.GetComponent<EnemyHealth>()?.Scale(Mathf.Max(1, (int)kind));
-                    }
-                    return true;
+                    return false;
+            }
+        }
+
+        void Rain(Vector3 around, int damage, int count, Color tint, float radius)
+        {
+            pattern = Pattern.Cast;
+            timer = 0.45f;
+            if (animator != null)
+                animator.SetTrigger("Telegraph");
+            for (int i = 0; i < count; i++)
+                SkyfallHazard.Drop(Around(around, 3.2f), damage, 0.85f + i * 0.12f, tint, radius);
+        }
+
+        void FireBolts(Vector3 target, int damage, int count)
+        {
+            pattern = Pattern.Cast;
+            timer = 0.4f;
+            Vector3 origin = transform.position + Vector3.up * 1.2f + transform.forward * 0.6f;
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 aim = target + new Vector3(Random.Range(-1.6f, 1.6f), 0.6f, Random.Range(-1.6f, 1.6f));
+                var shot = HostileProjectile.Launch(boltPrefab, origin, aim, damage, 8.5f + i * 0.4f);
+                if (shot != null)
+                    shot.hitVfx = "fire";
+            }
+            VfxPlayer.Instance?.Play("fire", origin);
+            AudioService.Instance?.Play("fire");
+        }
+
+        static Vector3 Around(Vector3 center, float spread)
+        {
+            Vector3 p = center + new Vector3(Random.Range(-spread, spread), 0f, Random.Range(-spread, spread));
+            p.y = 0f;
+            if (p.magnitude > RunRules.ArenaRadius - 1.4f)
+                p = p.normalized * (RunRules.ArenaRadius - 1.4f);
+            return p;
+        }
+
+        void TickAdds()
+        {
+            minionTimer -= Time.deltaTime;
+            if (minionTimer > 0f)
+                return;
+            minionTimer = 20f;
+            SpawnAdds(10);
+        }
+
+        public void SpawnAdds(int count)
+        {
+            if (minionPrefab == null || health == null || health.IsDead)
+                return;
+            int band = Mathf.Max(1, (int)kind);
+            int live = 0;
+            for (int i = 0; i < EnemyHealth.Active.Count; i++)
+            {
+                if (EnemyHealth.Active[i] != null && !EnemyHealth.Active[i].IsBoss)
+                    live++;
+            }
+            int want = Mathf.Min(count, Mathf.Max(0, 14 - live));
+            for (int i = 0; i < want; i++)
+            {
+                Vector3 pos = Around(transform.position, 6f);
+                if ((pos - transform.position).sqrMagnitude < 4f)
+                    pos = Around(Vector3.zero, 8f);
+                var instance = Instantiate(minionPrefab, pos, Quaternion.identity);
+                instance.GetComponent<EnemyHealth>()?.Scale(band);
+                var ai = instance.GetComponent<EnemyChaseAI>();
+                if (ai != null)
+                    ai.arenaRadius = arenaRadius;
             }
         }
 

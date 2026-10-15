@@ -213,16 +213,23 @@ namespace SlimeBreaker
 
         public void TakeDamage(int amount)
         {
-            TakeDamage(amount, true, true);
+            TakeDamage(amount, true, true, false);
         }
 
         public void TakeDamage(int amount, bool playHitSound, bool flash = true)
+        {
+            TakeDamage(amount, playHitSound, flash, false);
+        }
+
+        public void TakeDamage(int amount, bool playHitSound, bool flash, bool crit)
         {
             if (IsDead || amount <= 0)
                 return;
             if (definition != null && definition.incomingDamageScale > 0f && definition.incomingDamageScale < 0.999f)
                 amount = Mathf.Max(1, Mathf.RoundToInt(amount * definition.incomingDamageScale));
             Current = Mathf.Max(0, Current - amount);
+            DamagePopup.Show(transform.position + Vector3.up * (HitHeight + 0.35f), amount,
+                crit ? DamagePopup.Kind.Crit : DamagePopup.Kind.Enemy);
             if ((playHitSound || flash) && amount > 0)
             {
                 var stats = GameFlowController.Instance != null ? GameFlowController.Instance.Stats : null;

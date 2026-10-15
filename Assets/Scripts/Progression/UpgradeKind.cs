@@ -10,6 +10,8 @@ namespace SlimeBreaker
         Range,
         Xp,
         Armor,
-        Lifesteal
+        Lifesteal,
+        CritChance,
+        CritDamage
     }
 }

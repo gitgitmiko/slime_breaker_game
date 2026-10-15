@@ -54,6 +54,7 @@ namespace SlimeBreaker
 
             velocity.y = 0f;
             body.Move(velocity * Time.deltaTime);
+            transform.position = Obstacles.Resolve(transform.position, 0.34f);
             StickToArena();
 
             Vector3 face = dash != null && dash.IsDashing ? dash.Direction : wish;

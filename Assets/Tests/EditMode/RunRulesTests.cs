@@ -56,5 +56,46 @@ namespace SlimeBreaker.Tests
             Assert.AreEqual(BossKind.None, BossCatalog.KindAtFloor(9));
             Assert.AreEqual(BossKind.None, BossCatalog.KindAtFloor(11));
         }
+
+        [Test]
+        public void DefaultCritStatsAreSensible()
+        {
+            var stats = new RunStats();
+            Assert.AreEqual(0.08f, stats.critChance, 0.001f);
+            Assert.AreEqual(1.5f, stats.critMultiplier, 0.001f);
+        }
+
+        [Test]
+        public void CritUpgradesRaiseChanceAndMultiplier()
+        {
+            var host = new UnityEngine.GameObject("UpgradeHost");
+            try
+            {
+                var manager = host.AddComponent<UpgradeManager>();
+                var stats = new RunStats();
+                var rate = UnityEngine.ScriptableObject.CreateInstance<UpgradeDefinition>();
+                rate.kind = UpgradeKind.CritChance;
+                rate.amount = 0.08f;
+                manager.Apply(rate, stats);
+                Assert.AreEqual(0.16f, stats.critChance, 0.001f);
+                var crit = UnityEngine.ScriptableObject.CreateInstance<UpgradeDefinition>();
+                crit.kind = UpgradeKind.CritDamage;
+                crit.amount = 0.3f;
+                manager.Apply(crit, stats);
+                Assert.AreEqual(1.8f, stats.critMultiplier, 0.001f);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void CombatMathWithoutRunReturnsBaseDamage()
+        {
+            int rolled = CombatMath.ApplyCrit(12, out bool crit);
+            Assert.AreEqual(12, rolled);
+            Assert.IsFalse(crit);
+        }
     }
 }

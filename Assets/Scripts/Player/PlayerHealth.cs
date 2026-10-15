@@ -90,6 +90,7 @@ namespace SlimeBreaker
             if (stats != null && stats.damageReduction > 0f)
                 amount = Mathf.Max(1, Mathf.RoundToInt(amount * (1f - Mathf.Clamp01(stats.damageReduction))));
             Current = Mathf.Max(0, Current - amount);
+            DamagePopup.Show(transform.position + Vector3.up * 1.35f, amount, DamagePopup.Kind.Hero);
             Changed?.Invoke();
             if (animator != null)
                 animator.SetTrigger("Hit");

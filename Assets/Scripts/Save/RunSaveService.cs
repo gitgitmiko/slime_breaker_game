@@ -38,6 +38,10 @@ namespace SlimeBreaker
                     return null;
                 if (data.stats == null)
                     data.stats = new RunStats();
+                if (data.stats.critMultiplier < 1.1f)
+                    data.stats.critMultiplier = 1.5f;
+                if (data.stats.critChance <= 0f)
+                    data.stats.critChance = 0.08f;
                 data.level = Mathf.Max(1, data.level);
                 data.stage = Mathf.Max(1, data.stage);
                 data.floor = Mathf.Max(1, data.floor > 0 ? data.floor : data.stage);

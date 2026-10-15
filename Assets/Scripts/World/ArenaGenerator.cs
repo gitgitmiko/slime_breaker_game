@@ -291,9 +291,106 @@ namespace SlimeBreaker
             instance.transform.position = position;
             instance.transform.rotation = Quaternion.Euler(0f, yaw, 0f) * prefab.transform.rotation;
             instance.transform.localScale = prefab.transform.localScale * scale;
-            if (blocksSpace)
+            bool solid = IsSolidProp(prefab.name);
+            if (solid)
+                Solidify(instance, KindFromName(prefab.name));
+            if (blocksSpace || solid)
                 occupied.Add(position);
             return instance;
+        }
+
+        static bool IsSolidProp(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                return false;
+            string n = name.ToLowerInvariant();
+            return n.Contains("tree") || n.Contains("rock") || n.Contains("pillar") || n.Contains("boulder")
+                || n.Contains("boundary");
+        }
+
+        static Obstacle.Kind KindFromName(string name)
+        {
+            string n = (name ?? "").ToLowerInvariant();
+            if (n.Contains("tree"))
+                return Obstacle.Kind.Tree;
+            if (n.Contains("pillar") || n.Contains("ruin"))
+                return Obstacle.Kind.Ruin;
+            return Obstacle.Kind.Rock;
+        }
+
+        void Solidify(GameObject instance, Obstacle.Kind kind)
+        {
+            if (instance == null)
+                return;
+            SetLayer(instance.transform, Obstacles.Layer);
+            if (!HasSolidCollider(instance))
+                FitCollider(instance, kind);
+            var marker = instance.GetComponent<Obstacle>();
+            if (marker == null)
+                marker = instance.AddComponent<Obstacle>();
+            marker.kind = kind;
+            if (marker.footprint < 0.25f)
+                marker.footprint = FootprintOf(instance);
+            if (!obstacles.Contains(marker))
+                obstacles.Add(marker);
+        }
+
+        static bool HasSolidCollider(GameObject instance)
+        {
+            foreach (var collider in instance.GetComponentsInChildren<Collider>())
+            {
+                if (collider == null || collider.isTrigger)
+                    continue;
+                if (collider is CapsuleCollider || collider is BoxCollider || collider is SphereCollider)
+                    return true;
+            }
+            return false;
+        }
+
+        static float FootprintOf(GameObject instance)
+        {
+            var renderers = instance.GetComponentsInChildren<Renderer>();
+            if (renderers.Length == 0)
+                return 0.8f;
+            var bounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+                bounds.Encapsulate(renderers[i].bounds);
+            return Mathf.Clamp(Mathf.Max(bounds.extents.x, bounds.extents.z), 0.4f, 1.6f);
+        }
+
+        static void FitCollider(GameObject instance, Obstacle.Kind kind)
+        {
+            var renderers = instance.GetComponentsInChildren<Renderer>();
+            if (renderers.Length == 0)
+                return;
+            var bounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+            {
+                if (renderers[i] is ParticleSystemRenderer)
+                    continue;
+                bounds.Encapsulate(renderers[i].bounds);
+            }
+            float radius = Mathf.Clamp(Mathf.Max(bounds.extents.x, bounds.extents.z) * 0.7f, 0.38f, 1.15f);
+            float height = Mathf.Max(0.9f, bounds.size.y);
+            if (kind == Obstacle.Kind.Tree)
+            {
+                var capsule = instance.AddComponent<CapsuleCollider>();
+                capsule.center = new Vector3(0f, height * 0.48f, 0f);
+                capsule.radius = Mathf.Clamp(radius * 0.55f, 0.38f, 0.85f);
+                capsule.height = height;
+            }
+            else if (kind == Obstacle.Kind.Ruin)
+            {
+                var box = instance.AddComponent<BoxCollider>();
+                box.center = new Vector3(0f, height * 0.5f, 0f);
+                box.size = new Vector3(radius * 1.5f, height, radius * 1.5f);
+            }
+            else
+            {
+                var sphere = instance.AddComponent<SphereCollider>();
+                sphere.center = new Vector3(0f, Mathf.Min(0.75f, height * 0.45f), 0f);
+                sphere.radius = radius;
+            }
         }
 
         // ------------------------------------------------------------------ obstacles
@@ -334,7 +431,8 @@ namespace SlimeBreaker
                     obstacle = instance.AddComponent<Obstacle>();
                 obstacle.footprint = footprint * scale;
                 SetLayer(instance.transform, Obstacles.Layer);
-                obstacles.Add(obstacle);
+                if (!obstacles.Contains(obstacle))
+                    obstacles.Add(obstacle);
                 placed++;
             }
         }

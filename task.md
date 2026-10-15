@@ -42,6 +42,14 @@
 - HUD menampilkan Lantai, Lv, dan ATK.
 - Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 9/9. PlayMode 20/20. APK `SLIMEBREAKER_APK_OK` 0.5.0.
 
+### Putaran 6 — damage number, crit, pintu, wayfinder, skill elemental
+
+- Angka damage mengambang: musuh (krem), hero (merah), critical (**CRIT** emas).
+- Upgrade level-up baru **Crit Rate** dan **Critical**; judul pengalaman diganti **EXP**.
+- Naik lantai lewat **pintu** (masuk dulu); panah wayfinder menunjuk pintu dan power-up.
+- Boss memanggil 10 slime kecil tiap 20 detik; skill sesuai elemen (batu jatuh + bayangan, api menembak, dst.).
+- Prop pohon/batu/pilar/boulder yang sebelumnya tembus kini punya collider di layer Obstacle.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

@@ -49,7 +49,7 @@ xvfb-run -a -s "-screen 0 1280x1024x24" unity-editor -batchmode \
   -testResults "$PWD/Logs/playmode.xml" -logFile Logs/playmode.log
 ```
 
-Exit 0 berarti semua 10 test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: hero dan slime menapak tanah, properti tegak, semua material (termasuk prefab skill dan VFX) valid, tombol Main membuka arena, joystick sentuh menggerakkan hero, bot bertahan satu menit, AudioListener + 60 fps terpasang, power-up muncul tepat di level 5 dan 10 lalu memberi skill, Cincin Es melukai dan memperlambat musuh, bolt mengenai musuh. Baris `PLAYTEST` di log memuat angka ukurnya. Screenshot ada di `Logs/playtest/` (00_menu … 08_ice_orbit).
+Exit 0 berarti semua 14 test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: hero dan slime menapak tanah, properti tegak, semua material valid, tombol Main membuka arena, joystick sentuh menggerakkan hero, bot bertahan satu menit, AudioListener + 60 fps terpasang, power-up + portal di level 5 lalu arena berganti, Cincin Es melukai dan memperlambat, bolt mengenai musuh, Nova Api merusak musuh dekat, obstacle memblokir bolt, run-save level/stage utuh, preset grafis Low/High terpasang. Baris `PLAYTEST` di log memuat angka ukurnya. Screenshot ada di `Logs/playtest/` (00_menu … 10_obstacle).
 
 ## Hasil 14 Oktober 2026 (putaran 1)
 
@@ -63,6 +63,13 @@ Exit 0 berarti semua 10 test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: 
 - Paket: `com.gitgitmiko.slimebreaker` 0.2.0 (versionCode 2), min SDK 25, native `arm64-v8a`, landscape, Vulkan dengan fallback GLES3, optimized frame pacing.
 - Ditandatangani debug keystore Unity (bukan Play Store). Pasang di atas 0.1.0 berjalan karena keystore sama.
 - Tidak ada perangkat ADB terhubung, jadi pasang di HP masih manual.
+
+## Hasil 15 Oktober 2026 (putaran 3 — nova, grafis, obstacle, arena, lanjutkan)
+
+- Setup: `SLIMEBREAKER_SETUP_OK`; PlayMode 14/14 lolos; APK: `SLIMEBREAKER_APK_OK`.
+- APK: `Builds/SlimeBreaker.apk` (38 MB), disalin ke `~/Downloads/SlimeBreaker.apk`.
+- Paket: `com.gitgitmiko.slimebreaker` 0.3.0 (versionCode 3).
+- Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
 
 ## Pasang di HP
 

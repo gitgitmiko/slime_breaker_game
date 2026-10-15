@@ -190,23 +190,15 @@ namespace SlimeBreaker.Tests
         [Test]
         public void LevelUpAddsTenBasicAttack()
         {
-            var host = new UnityEngine.GameObject("Flow");
-            try
-            {
-                var flow = host.AddComponent<GameFlowController>();
-                Assert.IsNotNull(flow.Stats);
-                int before = flow.Stats.damage;
-                int level = flow.Stats.level;
-                flow.BeginLevelUp();
-                Assert.AreEqual(level + 1, flow.Stats.level);
-                Assert.AreEqual(before + RunRules.HeroDamagePerLevel, flow.Stats.damage);
-                Assert.AreEqual(10, RunRules.HeroDamagePerLevel);
-            }
-            finally
-            {
-                UnityEngine.Object.DestroyImmediate(host);
-                UnityEngine.Time.timeScale = 1f;
-            }
+            var stats = new RunStats { damage = 12, level = 1 };
+            Assert.IsTrue(stats.TryLevelUp());
+            Assert.AreEqual(2, stats.level);
+            Assert.AreEqual(22, stats.damage);
+            Assert.AreEqual(10, RunRules.HeroDamagePerLevel);
+            stats.level = RunRules.MaxHeroLevel;
+            Assert.IsFalse(stats.TryLevelUp());
+            Assert.AreEqual(RunRules.MaxHeroLevel, stats.level);
+            Assert.AreEqual(22, stats.damage);
         }
 
         [Test]

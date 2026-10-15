@@ -21,5 +21,14 @@ namespace SlimeBreaker
 
         public bool HasCrit => critChance > 0.0001f;
         public float AttacksPerSecond => attackCooldown <= 0.01f ? 0f : 1f / attackCooldown;
+
+        public bool TryLevelUp()
+        {
+            if (level >= RunRules.MaxHeroLevel)
+                return false;
+            level++;
+            damage += RunRules.HeroDamagePerLevel;
+            return true;
+        }
     }
 }

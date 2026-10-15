@@ -21,7 +21,7 @@ MonoBehaviour:
   dashDuration: 0.16
   dashSpeed: 16
   bossTime: 300
-  maxAliveEnemies: 22
+  maxAliveEnemies: 28
   victoryGold: 40
   defeatGold: 12
   goldPerLevel: 4
@@ -32,18 +32,22 @@ MonoBehaviour:
     normal: 1
     fast: 0
     tank: 0
+    ranged: 0
   - untilSeconds: 120
     interval: 1.7
     normal: 3
     fast: 2
     tank: 0
+    ranged: 1
   - untilSeconds: 210
     interval: 1.35
     normal: 3
     fast: 2
     tank: 1
+    ranged: 2
   - untilSeconds: 300
     interval: 1
     normal: 2
     fast: 3
     tank: 2
+    ranged: 2

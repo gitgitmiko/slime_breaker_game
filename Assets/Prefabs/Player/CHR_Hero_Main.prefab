@@ -89,7 +89,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.PlayerController
   joystick: {fileID: 0}
   followCamera: {fileID: 0}
-  arenaRadius: 11.2
+  arenaRadius: 22
 --- !u!114 &4184411883897798507
 MonoBehaviour:
   m_ObjectHideFlags: 0

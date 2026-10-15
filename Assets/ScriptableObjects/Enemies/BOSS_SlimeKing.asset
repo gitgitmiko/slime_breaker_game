@@ -12,11 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ca360d419cae0a79892751982acf383, type: 3}
   m_Name: BOSS_SlimeKing
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.EnemyDefinition
-  displayName: Slime King
-  maxHealth: 520
-  moveSpeed: 2.05
-  contactDamage: 16
+  displayName: Royal Slime
+  maxHealth: 800
+  moveSpeed: 2.1
+  contactDamage: 20
   contactRange: 1.7
   contactCooldown: 0.8
   xp: 0
   isBoss: 1
+  isRanged: 0
+  incomingDamageScale: 1
+  bossKind: 10
+  tint: {r: 1, g: 1, b: 1, a: 1}

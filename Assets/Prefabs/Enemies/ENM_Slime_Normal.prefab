@@ -60,7 +60,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bda6128f3583dfed1a037325b78e28eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.EnemyChaseAI
-  arenaRadius: 11.2
+  arenaRadius: 22
+  boltPrefab: {fileID: 0}
 --- !u!1001 &6207465684769730353
 PrefabInstance:
   m_ObjectHideFlags: 0

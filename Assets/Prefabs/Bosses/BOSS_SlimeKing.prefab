@@ -62,8 +62,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.BossController
   ring: {fileID: 4988313335157267412}
-  slamRadius: 3.4
-  arenaRadius: 11.2
+  boltPrefab: {fileID: 0}
+  lightningPrefab: {fileID: 0}
+  minionPrefab: {fileID: 0}
+  slamRadius: 3.6
+  arenaRadius: 22
+  kind: 1
 --- !u!1001 &4805540853069773887
 PrefabInstance:
   m_ObjectHideFlags: 0

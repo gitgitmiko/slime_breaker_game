@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ICON_Upgrade_AttackRate
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.UpgradeDefinition
   kind: 3
-  title: Ritme
-  description: Mantra lebih cepat
+  title: Attack Speed
+  description: Cooldown serangan lebih pendek
   amount: 0.15
   icon: {fileID: 21300000, guid: 9630c6068027aeb888f1e266a1f41cbb, type: 3}

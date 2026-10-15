@@ -14,6 +14,8 @@ namespace SlimeBreaker
         public float xpMultiplier = 1f;
         public float damageReduction;
         public float lifesteal;
+        public float critChance = 0.08f;
+        public float critMultiplier = 1.5f;
         public int level = 1;
     }
 }

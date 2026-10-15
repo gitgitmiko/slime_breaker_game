@@ -64,6 +64,12 @@ namespace SlimeBreaker
                 case UpgradeKind.Lifesteal:
                     stats.lifesteal = Mathf.Clamp(stats.lifesteal + upgrade.amount, 0f, 0.4f);
                     break;
+                case UpgradeKind.CritChance:
+                    stats.critChance = Mathf.Clamp(stats.critChance + upgrade.amount, 0f, 0.7f);
+                    break;
+                case UpgradeKind.CritDamage:
+                    stats.critMultiplier = Mathf.Clamp(stats.critMultiplier + upgrade.amount, 1.1f, 3.5f);
+                    break;
             }
         }
     }

@@ -196,7 +196,7 @@ namespace SlimeBreaker
             for (int i = 0; i < keys.Count; i++)
                 skill.contactTimers.Remove(keys[i]);
 
-            int damage = skill.definition.DamageAt(skill.level);
+            int damage = CombatMath.ApplyCrit(skill.definition.DamageAt(skill.level), out bool crit);
             for (int e = 0; e < EnemyHealth.Active.Count; e++)
             {
                 var enemy = EnemyHealth.Active[e];
@@ -213,7 +213,7 @@ namespace SlimeBreaker
                     delta.y *= 0.5f;
                     if (delta.sqrMagnitude > reach * reach)
                         continue;
-                    enemy.TakeDamage(damage, playHitSound: false);
+                    enemy.TakeDamage(damage, false, true, crit);
                     enemy.ApplySlow(skill.definition.slowFactor, skill.definition.effectDuration);
                     skill.contactTimers[enemy] = Time.time + 0.5f;
                     VfxPlayer.Instance?.Play("ice", shardPoint);
@@ -231,7 +231,7 @@ namespace SlimeBreaker
             var first = Nearest(transform.position, range, null);
             if (first == null)
                 return false;
-            int damage = skill.definition.DamageAt(skill.level);
+            int damage = CombatMath.ApplyCrit(skill.definition.DamageAt(skill.level), out bool crit);
             int jumps = skill.definition.CountAt(skill.level);
             var hitList = new List<EnemyHealth> { first };
             Vector3 from = CastOrigin;
@@ -240,7 +240,7 @@ namespace SlimeBreaker
             {
                 Vector3 point = current.transform.position + Vector3.up * current.HitHeight;
                 LightningBolt.Flash(lightningPrefab, from, point);
-                current.TakeDamage(Mathf.Max(1, Mathf.RoundToInt(damage * (i == 0 ? 1f : 0.75f))), playHitSound: false);
+                current.TakeDamage(Mathf.Max(1, Mathf.RoundToInt(damage * (i == 0 ? 1f : 0.75f))), false, true, crit);
                 VfxPlayer.Instance?.Play("zap", point);
                 from = point;
                 current = Nearest(current.transform.position, 3.8f, hitList);
@@ -258,7 +258,7 @@ namespace SlimeBreaker
             if (Nearest(transform.position, 6f, null) == null)
                 return false;
             float radius = skill.definition.RadiusAt(skill.level);
-            int damage = skill.definition.DamageAt(skill.level);
+            int damage = CombatMath.ApplyCrit(skill.definition.DamageAt(skill.level), out _);
             Vector3 center = transform.position;
             int burn = Mathf.Max(1, damage / 4);
             if (fireRingPrefab != null)
@@ -296,7 +296,7 @@ namespace SlimeBreaker
         bool CastMissiles(ActiveSkill skill)
         {
             int count = skill.definition.CountAt(skill.level);
-            int damage = skill.definition.DamageAt(skill.level);
+            int damage = CombatMath.ApplyCrit(skill.definition.DamageAt(skill.level), out bool crit);
             var candidates = new List<EnemyHealth>();
             Vector3 origin = transform.position;
             float range = 9.5f;
@@ -314,7 +314,7 @@ namespace SlimeBreaker
             {
                 var target = candidates[UnityEngine.Random.Range(0, candidates.Count)];
                 Vector3 spawn = CastOrigin + UnityEngine.Random.insideUnitSphere * 0.25f;
-                var missile = HomingProjectile.Launch(missilePrefab, spawn, target, damage, 11f + skill.level);
+                var missile = HomingProjectile.Launch(missilePrefab, spawn, target, damage, 11f + skill.level, crit);
                 if (missile != null)
                 {
                     missile.hitSfx = "arcanehit";

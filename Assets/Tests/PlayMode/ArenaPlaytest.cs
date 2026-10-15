@@ -584,6 +584,14 @@ namespace SlimeBreaker.Tests
             Assert.IsNotNull(controller);
             Assert.AreEqual(1, controller.EnrageSkillCount);
             Assert.IsFalse(controller.Enraged);
+            Assert.IsNotNull(controller.minionPrefab, "boss has no minion prefab");
+            int beforeAdds = NonBossCount();
+            controller.SpawnAdds(10);
+            yield return null;
+            Assert.GreaterOrEqual(NonBossCount() - beforeAdds, 10, "boss should summon 10 small slimes");
+            SkyfallHazard.Drop(PlayerHealth.Instance.transform.position + Vector3.forward * 2f, 1, 0.4f, Color.gray, 1f);
+            yield return null;
+            Assert.IsNotNull(Object.FindAnyObjectByType<SkyfallHazard>(), "rock skyfall hazard did not spawn");
             while (boss != null && !boss.IsDead && boss.Current > boss.Max * 0.3f)
                 boss.TakeDamage(800);
             Assert.IsNotNull(boss);
@@ -598,6 +606,7 @@ namespace SlimeBreaker.Tests
             var stage = Object.FindAnyObjectByType<StageManager>();
             var spawner = Object.FindAnyObjectByType<EnemySpawner>();
             Assert.IsNotNull(stage);
+            Assert.IsNotNull(stage.portalPrefab, "StageManager has no portal prefab");
             stage.ForceFloor(1);
             Assert.AreEqual(1, stage.Floor);
             int quota = RunRules.KillQuota(1);
@@ -609,8 +618,14 @@ namespace SlimeBreaker.Tests
                 health.TakeDamage(9999);
             }
             yield return null;
-            Assert.AreEqual(2, stage.Floor, "clearing the floor 1 quota should move to lantai 2");
+            Assert.AreEqual(1, stage.Floor, "clearing the quota should open a door, not skip the floor");
+            Assert.IsNotNull(ExitPortal.Active, "exit portal did not appear after the kill quota");
+            Capture("15_portal");
+            ExitPortal.Active.Enter();
+            yield return null;
+            Assert.AreEqual(2, stage.Floor, "entering the portal should move to lantai 2");
             Assert.AreEqual(0, stage.FloorKills);
+            Assert.IsNull(ExitPortal.Active);
         }
 
         [UnityTest]
@@ -625,7 +640,72 @@ namespace SlimeBreaker.Tests
             Assert.IsTrue(flow.ui.floorText.text.Contains("100"), flow.ui.floorText.text);
             Assert.IsTrue(flow.ui.damageText.text.Contains(flow.Stats.damage.ToString()), flow.ui.damageText.text);
             Assert.IsTrue(flow.ui.levelText.text.Contains(flow.Stats.level.ToString()), flow.ui.levelText.text);
+            Assert.AreEqual("EXP", flow.ui.xpSlider.gameObject.name);
+            Assert.IsNotNull(Object.FindAnyObjectByType<Wayfinder>(), "HUD has no wayfinder arrows");
+            var upgrades = Object.FindAnyObjectByType<UpgradeManager>();
+            Assert.IsNotNull(upgrades);
+            bool critRate = false;
+            bool critDamage = false;
+            foreach (var upgrade in upgrades.pool)
+            {
+                if (upgrade == null)
+                    continue;
+                if (upgrade.kind == UpgradeKind.CritChance)
+                    critRate = true;
+                if (upgrade.kind == UpgradeKind.CritDamage)
+                    critDamage = true;
+                if (upgrade.kind == UpgradeKind.Xp)
+                    Assert.AreEqual("EXP", upgrade.title);
+            }
+            Assert.IsTrue(critRate, "Crit Rate upgrade missing from the pool");
+            Assert.IsTrue(critDamage, "Critical upgrade missing from the pool");
             Capture("14_hud_floor_damage");
+        }
+
+        [UnityTest]
+        public IEnumerator ObstaclesHaveColliders()
+        {
+            yield return null;
+            var generator = Object.FindAnyObjectByType<ArenaGenerator>();
+            Assert.IsNotNull(generator);
+            Assert.Greater(generator.PlacedObstacles.Count, 0, "arena has no solid obstacles");
+            int layer = LayerMask.NameToLayer("Obstacle");
+            Assert.Greater(layer, 0);
+            foreach (var obstacle in generator.PlacedObstacles)
+            {
+                if (obstacle == null)
+                    continue;
+                var collider = obstacle.GetComponentInChildren<Collider>();
+                Assert.IsNotNull(collider, obstacle.name + " has no collider");
+                Assert.IsFalse(collider.isTrigger, obstacle.name + " collider is a trigger");
+                Assert.AreEqual(layer, obstacle.gameObject.layer, obstacle.name + " is not on the Obstacle layer");
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator DamageNumbersAppearForHeroAndEnemy()
+        {
+            var player = PlayerHealth.Instance;
+            var enemySpawner = Object.FindAnyObjectByType<EnemySpawner>();
+            var enemyObject = Object.Instantiate(enemySpawner.normalPrefab, player.transform.position + Vector3.forward * 3f, Quaternion.identity);
+            var enemy = enemyObject.GetComponent<EnemyHealth>();
+            enemy.TakeDamage(7, true, true, false);
+            yield return null;
+            Assert.Greater(Object.FindObjectsByType<DamagePopup>(FindObjectsSortMode.None).Length, 0, "enemy hit showed no damage number");
+            enemy.TakeDamage(11, true, true, true);
+            yield return null;
+            bool sawCrit = false;
+            foreach (var popup in Object.FindObjectsByType<DamagePopup>(FindObjectsSortMode.None))
+            {
+                var mesh = popup.GetComponent<TextMesh>();
+                if (mesh != null && mesh.text != null && mesh.text.Contains("CRIT"))
+                    sawCrit = true;
+            }
+            Assert.IsTrue(sawCrit, "critical hit did not use the CRIT damage number");
+            player.TakeDamage(4);
+            yield return null;
+            Assert.Greater(Object.FindObjectsByType<DamagePopup>(FindObjectsSortMode.None).Length, 0, "hero hit showed no damage number");
+            Capture("16_damage_numbers");
         }
 
         [UnityTest]
@@ -640,6 +720,17 @@ namespace SlimeBreaker.Tests
             graphics.Apply(GraphicsService.High, persist: false);
             Assert.AreEqual(GraphicsService.High, graphics.Level);
             Assert.IsNotNull(QualitySettings.renderPipeline);
+        }
+
+        static int NonBossCount()
+        {
+            int count = 0;
+            foreach (var enemy in EnemyHealth.Active)
+            {
+                if (enemy != null && !enemy.IsBoss)
+                    count++;
+            }
+            return count;
         }
 
         IEnumerator Hold(float seconds)

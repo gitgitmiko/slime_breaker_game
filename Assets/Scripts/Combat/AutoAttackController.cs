@@ -43,7 +43,9 @@ namespace SlimeBreaker
             if (target == null)
                 return;
             cooldown = stats.attackCooldown;
-            StartCoroutine(Cast(target, stats.damage, stats.attackRange));
+            bool crit;
+            int damage = CombatMath.ApplyCrit(stats.damage, out crit);
+            StartCoroutine(Cast(target, damage, stats.attackRange, crit));
         }
 
         EnemyHealth FindNearest(float range)
@@ -86,7 +88,7 @@ namespace SlimeBreaker
             }
         }
 
-        IEnumerator Cast(EnemyHealth target, int damage, float range)
+        IEnumerator Cast(EnemyHealth target, int damage, float range, bool crit)
         {
             casting = true;
             if (target != null)
@@ -121,11 +123,11 @@ namespace SlimeBreaker
                 VfxPlayer.Instance?.Play("cast", origin);
                 if (boltPrefab != null)
                 {
-                    HomingProjectile.Launch(boltPrefab, origin, target, damage, boltSpeed);
+                    HomingProjectile.Launch(boltPrefab, origin, target, damage, boltSpeed, crit);
                 }
                 else
                 {
-                    target.TakeDamage(damage);
+                    target.TakeDamage(damage, true, true, crit);
                     VfxPlayer.Instance?.Play("hit", target.transform.position + Vector3.up * target.HitHeight);
                 }
             }

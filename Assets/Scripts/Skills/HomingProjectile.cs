@@ -15,11 +15,12 @@ namespace SlimeBreaker
 
         EnemyHealth target;
         int damage;
+        bool crit;
         float age;
         Vector3 velocity;
         Transform spinner;
 
-        public static HomingProjectile Launch(GameObject prefab, Vector3 origin, EnemyHealth target, int damage, float speed = -1f)
+        public static HomingProjectile Launch(GameObject prefab, Vector3 origin, EnemyHealth target, int damage, float speed = -1f, bool crit = false)
         {
             if (prefab == null || target == null)
                 return null;
@@ -29,14 +30,15 @@ namespace SlimeBreaker
                 projectile = instance.AddComponent<HomingProjectile>();
             if (speed > 0f)
                 projectile.speed = speed;
-            projectile.Begin(target, damage);
+            projectile.Begin(target, damage, crit);
             return projectile;
         }
 
-        void Begin(EnemyHealth enemy, int amount)
+        void Begin(EnemyHealth enemy, int amount, bool isCrit)
         {
             target = enemy;
             damage = amount;
+            crit = isCrit;
             Vector3 to = AimPoint() - transform.position;
             velocity = (to.sqrMagnitude > 0.001f ? to.normalized : transform.forward) * speed;
             if (velocity.sqrMagnitude > 0.001f)
@@ -96,7 +98,7 @@ namespace SlimeBreaker
             float reach = hitRadius + target.HitRadius;
             if ((AimPoint() - transform.position).sqrMagnitude <= reach * reach)
             {
-                target.TakeDamage(damage);
+                target.TakeDamage(damage, true, true, crit);
                 VfxPlayer.Instance?.Play(hitVfx, transform.position);
                 AudioService.Instance?.Play(hitSfx);
                 Destroy(gameObject);

@@ -49,7 +49,7 @@ xvfb-run -a -s "-screen 0 1280x1024x24" unity-editor -batchmode \
   -testResults "$PWD/Logs/playmode.xml" -logFile Logs/playmode.log
 ```
 
-Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: hero dan slime menapak tanah, properti tegak, semua material valid, tombol Main membuka arena, joystick sentuh menggerakkan hero, bot bertahan satu menit, AudioListener + 60 fps terpasang, power-up tiap 5 level hero di map yang sama (bukan boss), Cincin Es melukai dan memperlambat, bolt mengenai musuh, Nova Api merusak musuh dekat, obstacle memblokir bolt, run-save level/lantai utuh, preset grafis Low/High terpasang, bar darah musuh, lifesteal, slime jarak menembak, Rock Slime + warning di lantai 10 (HP 10.000, enrage <30%), kuota lantai naik, dan HUD Lantai/ATK. Baris `PLAYTEST` di log memuat angka ukurnya. Screenshot ada di `Logs/playtest/` (00_menu … 14_hud_floor_damage).
+Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: hero dan slime menapak tanah, properti tegak, semua material valid, tombol Main membuka arena, joystick sentuh menggerakkan hero, bot bertahan satu menit, AudioListener + 60 fps terpasang, power-up tiap 5 level hero di map yang sama (bukan boss), Cincin Es melukai dan memperlambat, bolt mengenai musuh, Nova Api merusak musuh dekat, obstacle memblokir bolt, run-save level/lantai utuh, preset grafis Low/High terpasang, bar darah musuh, lifesteal, slime jarak menembak, Rock Slime + warning di lantai 10 (HP 10.000, enrage <30%, 10 minion, skyfall), kuota lantai membuka pintu lalu Enter naik lantai, HUD Lantai/ATK/EXP + wayfinder + upgrade crit, collider obstacle, dan angka damage/CRIT. Baris `PLAYTEST` di log memuat angka ukurnya. Screenshot ada di `Logs/playtest/` (00_menu … 16_damage_numbers).
 
 ## Hasil 14 Oktober 2026 (putaran 1)
 
@@ -83,6 +83,13 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 9/9; PlayMode 20/20 lolos; APK: `SLIMEBREAKER_APK_OK`.
 - APK: `Builds/SlimeBreaker.apk` (38 MB), disalin ke `~/Downloads/SlimeBreaker.apk`.
 - Paket: `com.gitgitmiko.slimebreaker` 0.5.0 (versionCode 5).
+- Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
+
+## Hasil 15 Oktober 2026 (putaran 6 — damage, crit, pintu, skill elemental)
+
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 12/12; PlayMode 22/22 lolos; APK: `SLIMEBREAKER_APK_OK`.
+- APK: `Builds/SlimeBreaker.apk` (39 MB), disalin ke `~/Downloads/SlimeBreaker.apk`.
+- Paket: `com.gitgitmiko.slimebreaker` 0.6.0 (versionCode 6).
 - Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
 
 ## Pasang di HP

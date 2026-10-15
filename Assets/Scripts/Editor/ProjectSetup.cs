@@ -200,9 +200,11 @@ namespace SlimeBreaker.EditorTools
                 Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_AttackRate.asset", UpgradeKind.AttackRate, "Attack Speed", "Cooldown serangan lebih pendek", 0.15f, "Assets/Art/UI/Icons/ICON_Upgrade_AttackRate.png"),
                 Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Dash.asset", UpgradeKind.Dash, "Dash", "Dash lebih sering", 0.15f, "Assets/Art/UI/Icons/ICON_Upgrade_Dash.png"),
                 Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Range.asset", UpgradeKind.Range, "Jangkauan", "+20% jangkauan mantra", 0.2f, "Assets/Art/UI/Icons/ICON_Upgrade_Range.png"),
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Xp.asset", UpgradeKind.Xp, "Pengalaman", "+25% XP", 0.25f, "Assets/Art/UI/Icons/ICON_Upgrade_Xp.png"),
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Xp.asset", UpgradeKind.Xp, "EXP", "+25% EXP", 0.25f, "Assets/Art/UI/Icons/ICON_Upgrade_Xp.png"),
                 Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Armor.asset", UpgradeKind.Armor, "Perisai", "Damage masuk -8%", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_Armor.png"),
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Lifesteal.asset", UpgradeKind.Lifesteal, "Lifesteal", "8% nyawa dari damage", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_Lifesteal.png")
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Lifesteal.asset", UpgradeKind.Lifesteal, "Lifesteal", "8% nyawa dari damage", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_Lifesteal.png"),
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_CritRate.asset", UpgradeKind.CritChance, "Crit Rate", "+8% peluang critical", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_AttackRate.png"),
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_CritDamage.asset", UpgradeKind.CritDamage, "Critical", "+30% damage critical", 0.3f, "Assets/Art/UI/Icons/ICON_Upgrade_Damage.png")
             };
 
             var skills = new[]
@@ -1113,21 +1115,21 @@ namespace SlimeBreaker.EditorTools
             if (kind == Obstacle.Kind.Tree)
             {
                 var capsule = root.AddComponent<CapsuleCollider>();
-                capsule.center = new Vector3(0f, 1.05f, 0f);
-                capsule.radius = 0.42f;
-                capsule.height = 2.2f;
+                capsule.center = new Vector3(0f, 1.15f, 0f);
+                capsule.radius = 0.62f;
+                capsule.height = 2.4f;
             }
             else if (kind == Obstacle.Kind.Ruin)
             {
                 var box = root.AddComponent<BoxCollider>();
-                box.center = new Vector3(0f, 0.85f, 0f);
-                box.size = new Vector3(0.75f, 1.7f, 0.75f);
+                box.center = new Vector3(0f, 0.9f, 0f);
+                box.size = new Vector3(0.95f, 1.85f, 0.95f);
             }
             else
             {
                 var sphere = root.AddComponent<SphereCollider>();
-                sphere.center = new Vector3(0f, 0.5f, 0f);
-                sphere.radius = path.Contains("Boulder") ? 0.85f : 0.72f;
+                sphere.center = new Vector3(0f, 0.55f, 0f);
+                sphere.radius = path.Contains("Boulder") ? 1.05f : 0.92f;
             }
 
             var marker = root.AddComponent<Obstacle>();
@@ -1597,7 +1599,6 @@ namespace SlimeBreaker.EditorTools
             GameObject fireflies,
             GameObject dust)
         {
-            _ = portalPrefab;
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var groundInstance = (GameObject)PrefabUtility.InstantiatePrefab(env["ground"]);
             groundInstance.transform.position = Vector3.zero;
@@ -1696,6 +1697,7 @@ namespace SlimeBreaker.EditorTools
             stage.hostileBolt = hostileBolt;
             stage.lightningPrefab = lightning;
             stage.minionPrefab = normal;
+            stage.portalPrefab = portalPrefab;
             stage.cameraRig = follow;
             audio.music = Clip("Assets/Audio/Music/MUS_Arena.ogg");
             audio.entries = new[]
@@ -1799,8 +1801,11 @@ namespace SlimeBreaker.EditorTools
             Place(hp.gameObject, safe, new Vector2(0.16f, 0.935f), new Vector2(470f, 40f));
             var hpText = Text(hp.transform, "Value", "100 / 100", 22, TextAnchor.MiddleCenter, font);
             Stretch(hpText.rectTransform);
-            var xp = Slider(safe, "XP", new Color(0.45f, 0.92f, 0.45f), barSprite);
+            var xp = Slider(safe, "EXP", new Color(0.45f, 0.92f, 0.45f), barSprite);
             Place(xp.gameObject, safe, new Vector2(0.16f, 0.883f), new Vector2(470f, 22f));
+            var xpLabel = Text(xp.transform, "Label", "EXP", 16, TextAnchor.MiddleLeft, font);
+            xpLabel.raycastTarget = false;
+            Place(xpLabel.gameObject, xp.transform, new Vector2(0.08f, 0.5f), new Vector2(70f, 18f));
             var level = Text(safe, "Level", "Lv 1", 30, TextAnchor.MiddleLeft, font);
             level.fontStyle = FontStyle.Bold;
             Place(level.gameObject, safe, new Vector2(0.33f, 0.948f), new Vector2(140f, 36f));
@@ -1953,6 +1958,14 @@ namespace SlimeBreaker.EditorTools
             Place(exit.gameObject, resultPanel.transform, new Vector2(0.64f, 0.24f), new Vector2(300f, 96f));
             resultPanel.SetActive(false);
 
+            var finder = uiObject.AddComponent<Wayfinder>();
+            var portalArrow = WayArrow(safe, font, "PortalArrow", new Color(0.45f, 0.95f, 1f));
+            var powerArrow = WayArrow(safe, font, "PowerArrow", new Color(1f, 0.82f, 0.3f));
+            finder.portalArrow = portalArrow;
+            finder.powerArrow = powerArrow;
+            finder.portalLabel = portalArrow.Find("Label") != null ? portalArrow.Find("Label").GetComponent<Text>() : null;
+            finder.powerLabel = powerArrow.Find("Label") != null ? powerArrow.Find("Label").GetComponent<Text>() : null;
+
             var player = dash.GetComponent<PlayerController>();
             player.joystick = joystick;
             ui.hpSlider = hp;
@@ -2006,6 +2019,28 @@ namespace SlimeBreaker.EditorTools
             return ui;
         }
 
+        static RectTransform WayArrow(RectTransform parent, Font font, string name, Color color)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            var rect = go.GetComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(88f, 88f);
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            var glyph = Text(go.transform, "Glyph", "▲", 56, TextAnchor.MiddleCenter, font);
+            glyph.fontStyle = FontStyle.Bold;
+            glyph.color = color;
+            glyph.raycastTarget = false;
+            Stretch(glyph.rectTransform);
+            var caption = Text(go.transform, "Label", "", 20, TextAnchor.MiddleCenter, font);
+            caption.fontStyle = FontStyle.Bold;
+            caption.color = color;
+            caption.raycastTarget = false;
+            Place(caption.gameObject, go.transform, new Vector2(0.5f, -0.18f), new Vector2(160f, 28f));
+            go.SetActive(false);
+            return rect;
+        }
+
         static void Ring(GameObject prefab, int count, float radius, bool faceCenter, System.Random rng, float jitter = 0f, float scale = 1f)
         {
             if (prefab == null)
@@ -2050,8 +2085,8 @@ namespace SlimeBreaker.EditorTools
         {
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
-            PlayerSettings.bundleVersion = "0.5.0";
-            PlayerSettings.Android.bundleVersionCode = 5;
+            PlayerSettings.bundleVersion = "0.6.0";
+            PlayerSettings.Android.bundleVersionCode = 6;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

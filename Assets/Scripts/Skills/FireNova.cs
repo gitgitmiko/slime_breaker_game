@@ -175,7 +175,9 @@ namespace SlimeBreaker
                     continue;
                 }
                 hit.Add(enemy);
-                enemy.TakeDamage(damage, playHitSound: false);
+                bool crit;
+                int rolled = CombatMath.ApplyCrit(damage, out crit);
+                enemy.TakeDamage(rolled, false, true, crit);
                 if (burnDamage > 0)
                     enemy.ApplyBurn(burnDamage, 3, 0.5f);
                 VfxPlayer.Instance?.Play("burn", enemy.transform.position + Vector3.up * enemy.HitHeight);

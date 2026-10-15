@@ -83,6 +83,8 @@
 - Panel status kiri atas menambah **RANGE** dan **EXP +%**.
 - Dash tidak bisa diantrikan: tekan saat cooldown diabaikan, tombol nonaktif sampai cooldown habis.
 - HP slime +10% dari dasar setiap naik lantai.
+- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 20/20. PlayMode 25/25. APK `SLIMEBREAKER_APK_OK` 0.10.0.
+- Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
 
 ## Berikutnya
 

@@ -115,6 +115,14 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - PlayMode menambah tes bolt tidak tembak saat jalan, kuota 10/20 tanpa pintu langsung, dan HUD progres `0 / 10`.
 - Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
 
+## Hasil 15 Oktober 2026 (putaran 10 — RANGE/EXP, dash, HP slime)
+
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 20/20; PlayMode 25/25 lolos; APK: `SLIMEBREAKER_APK_OK`.
+- APK: `Builds/SlimeBreaker.apk` (42 MB), disalin ke `~/Downloads/SlimeBreaker.apk`.
+- Paket: `com.gitgitmiko.slimebreaker` 0.10.0 (versionCode 10).
+- PlayMode menambah tes dash tidak mengantri saat cooldown, HUD RANGE + EXP bonus, dan HP slime naik tiap lantai.
+- Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

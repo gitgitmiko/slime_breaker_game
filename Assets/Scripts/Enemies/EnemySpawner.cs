@@ -75,7 +75,7 @@ namespace SlimeBreaker
             for (int attempt = 0; attempt < 14; attempt++)
             {
                 float angle = Random.Range(0f, Mathf.PI * 2f);
-                float radius = Random.Range(arenaRadius * 0.72f, arenaRadius * 0.98f);
+                float radius = Random.Range(arenaRadius * 0.58f, arenaRadius * 0.86f);
                 position = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
                 if (!Obstacles.Overlaps(position, 0.7f))
                     break;

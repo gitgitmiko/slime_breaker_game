@@ -109,9 +109,8 @@ namespace SlimeBreaker
         {
             if (State == GameState.Victory || State == GameState.Defeat || State == GameState.BossIntro)
                 return;
-            if (Stats.level >= RunRules.MaxHeroLevel)
+            if (Stats == null || !Stats.TryLevelUp())
                 return;
-            Stats.level++;
             if (State == GameState.LevelUp)
             {
                 queuedLevelUps++;

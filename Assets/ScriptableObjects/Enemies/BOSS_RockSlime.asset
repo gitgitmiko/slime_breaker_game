@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Rock Slime
   maxHealth: 10000
   moveSpeed: 1.8
-  contactDamage: 18
+  contactDamage: 50
   contactRange: 1.8
   contactCooldown: 0.85
   xp: 40

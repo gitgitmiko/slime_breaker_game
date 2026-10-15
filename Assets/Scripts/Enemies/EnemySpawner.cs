@@ -46,7 +46,7 @@ namespace SlimeBreaker
             int band = Mathf.Max(1, (floor - 1) / RunRules.BossEvery + 1);
             float interval = phase.interval * Mathf.Pow(0.93f, Mathf.Max(0, band - 1));
             timer = Mathf.Max(0.28f, interval);
-            Spawn(Pick(phase), band);
+            Spawn(Pick(phase));
         }
 
         GameObject Pick(SpawnPhase phase)
@@ -66,7 +66,7 @@ namespace SlimeBreaker
             return rangedPrefab != null ? rangedPrefab : fastPrefab;
         }
 
-        void Spawn(GameObject prefab, int band)
+        void Spawn(GameObject prefab)
         {
             if (prefab == null)
                 return;
@@ -81,7 +81,8 @@ namespace SlimeBreaker
             }
             var instance = Instantiate(prefab, position, Quaternion.identity);
             var health = instance.GetComponent<EnemyHealth>();
-            health?.Scale(Mathf.Max(1, band));
+            int floor = StageManager.Instance != null ? StageManager.Instance.Floor : Mathf.Max(1, Stage);
+            health?.Scale(floor);
             var ai = instance.GetComponent<EnemyChaseAI>();
             if (ai != null)
             {

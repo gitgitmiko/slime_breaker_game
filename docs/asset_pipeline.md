@@ -29,7 +29,14 @@ blender --background --python asset_work/scripts/build_assets.py -- \
 python3 asset_work/scripts/build_audio_ui.py
 ```
 
-`build_textures.py` membuat `TEX_Forest_Ground` (1024) dan `TEX_Bark`, `TEX_Rock` (512) beserta `*_Normal.png` dari value noise tileable (numpy + Pillow). Blender menanamkan tekstur warna di FBX; normal map disalin ke `Assets/Art/Textures` dan dipasang `ProjectSetup` berdasarkan nama material.
+`build_textures.py` membuat `TEX_Forest_Ground` (1024), `TEX_Bark` / `TEX_Rock` (512), plus tanah biome (`TEX_Snow_Ground`, `TEX_Sand_Ground`, `TEX_Thunder_Ground`, `TEX_Swamp_Ground`, `TEX_Shadow_Ground`, `TEX_Volcano_Ground`, `TEX_Storm_Ground`, `TEX_Crystal_Ground`, `TEX_Royal_Ground`) beserta `*_Normal.png` dari value noise tileable (numpy + Pillow). Blender menanamkan tekstur warna di FBX; normal map disalin ke `Assets/Art/Textures` dan dipasang `ProjectSetup` berdasarkan nama material.
+
+Hanya mesh biome baru (tanpa menimpa hero/slime):
+
+```bash
+blender --background --python asset_work/scripts/build_assets.py -- \
+  asset_work/output asset_work/previews asset_work/textures env
+```
 
 `build_assets.py` juga merender preview dan lembar frame animasi hero (`asset_work/previews/CHR_Hero_Main_<Clip>_<persen>.png`) untuk pemeriksaan visual tanpa editor.
 

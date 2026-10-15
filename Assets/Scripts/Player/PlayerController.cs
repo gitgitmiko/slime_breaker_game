@@ -69,6 +69,7 @@ namespace SlimeBreaker
         }
 
         public Vector3 WishDirection => wish;
+        public bool IsMoving => wish.sqrMagnitude > 0.04f || (dash != null && dash.IsDashing);
 
         void StickToArena()
         {

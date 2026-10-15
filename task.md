@@ -51,6 +51,33 @@
 - Prop pohon/batu/pilar/boulder yang sebelumnya tembus kini punya collider di layer Obstacle.
 - Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 12/12. PlayMode 22/22. APK `SLIMEBREAKER_APK_OK` 0.6.0.
 
+### Putaran 7 — biome per 10 lantai, cuaca tiap lantai, damage boss
+
+- Tiap naik lantai arena di-roll ulang: cuaca + siang/malam berganti, seed layout baru.
+- Tiap 10 lantai biome baru: hutan (1–10), gurun (11–20), salju (21–30), petir, rawa, bayangan, magma, badai, kristal, kerajaan.
+- Aset baru: 7 tekstur tanah + 11 mesh biome (kaktus, duri es, spire, akar rawa, obelisk, lava, gerbang, kolom).
+- Damage boss: basic 50, skill 100, skill enrage 200.
+- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 15/15. PlayMode 23/23. APK `SLIMEBREAKER_APK_OK` 0.7.0.
+
+### Putaran 8 — bayangan batu, serangan sambil jalan, HUD status, palet boss, crit terkunci
+
+- Bayangan skill jatuhan batu: umbra + penumbra lunak yang mengikuti ketinggian batu (kecil/pudar di udara, besar/gelap dekat tanah) plus cincin dampak, jatuhan berakselerasi.
+- Auto-attack tidak memutar hero atau memutus animasi lari; bolt tetap homing saat hero berjalan. Proyektil yang spawn di dalam obstacle tidak langsung hilang.
+- HUD status di kiri atas di bawah HP/EXP: DMG, CRIT, CRIT RATE, ATK SPD, MOVE, LS.
+- Pewarnaan boss per bahan: tubuh elemen, jubah merah, mahkota emas, permata elemen.
+- Critical hanya keluar setelah upgrade Crit Rate atau Critical (awal crit chance 0).
+- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 17/17. PlayMode 24/24. APK `SLIMEBREAKER_APK_OK` 0.8.0.
+- Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
+
+### Putaran 9 — serangan diam, kuota ×10, progres lantai, scaling damage
+
+- Basic attack hanya saat hero diam; jalan/dash menahan bolt.
+- Bug pintu beruntun (lantai 8→9 langsung 10) diperbaiki: slime sisa tidak dihitung ke lantai berikutnya.
+- Kuota bunuh: lantai N = N×10 slime. HUD atas menampilkan progres `3 / 10`.
+- Setiap naik level hero, ATK dasar +10. Setiap lantai, damage slime +1 dan damage boss +3.
+- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 19/19. PlayMode 24/24. APK `SLIMEBREAKER_APK_OK` 0.9.0.
+- Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

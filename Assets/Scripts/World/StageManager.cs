@@ -4,8 +4,9 @@ using UnityEngine;
 namespace SlimeBreaker
 {
     /// <summary>
-    /// One large map for the whole run. Floors 1–100. Power-ups drop every five hero levels.
-    /// Clearing a floor (or beating a boss) opens an exit portal; walking in advances the floor.
+    /// Floors 1–100. Each floor rebuilds the arena: weather and day/night rotate every floor,
+    /// biome changes every ten floors. Power-ups drop every five hero levels.
+    /// Clearing the floor kill quota (N×10 slimes on lantai N) or beating a boss opens an exit portal; walking in advances the floor.
     /// Every ten floors a unique boss is announced, the camera zooms in, and regular spawning
     /// pauses until that boss falls. Bosses summon minions so the hero can keep levelling.
     /// </summary>
@@ -27,6 +28,8 @@ namespace SlimeBreaker
 
         public int Floor { get; private set; } = 1;
         public int FloorKills { get; private set; }
+        public int KillQuota => RunRules.KillQuota(Floor);
+        public bool FloorCleared { get; private set; }
         public int Stage => Floor;
         public bool Intermission { get; private set; }
         public ArenaTheme Theme { get; private set; }
@@ -36,6 +39,7 @@ namespace SlimeBreaker
         public BossKind ActiveBoss { get; private set; }
 
         bool introducing;
+        bool transitioning;
 
         void Awake()
         {
@@ -67,6 +71,7 @@ namespace SlimeBreaker
             {
                 Floor = Mathf.Clamp(resume.floor > 0 ? resume.floor : Mathf.Max(1, resume.stage), 1, RunRules.MaxFloor);
                 FloorKills = Mathf.Max(0, resume.floorKills);
+                FloorCleared = FloorKills >= RunRules.KillQuota(Floor) && !RunRules.IsBossFloor(Floor);
                 RunSeed = resume.runSeed != 0 ? resume.runSeed : resume.themeSeed;
                 Theme = resume.ToTheme();
                 HandledPowerTiers = resume.level / RunRules.PowerUpEvery;
@@ -79,15 +84,17 @@ namespace SlimeBreaker
                     if (resume.intermission)
                         spawner.Paused = true;
                 }
-                generator?.Generate(Theme);
+                ApplyTheme(true);
                 if (resume.intermission)
                     StartCoroutine(RestoreBoss());
+                else if (FloorCleared)
+                    OfferPortal();
             }
             else
             {
                 RunSeed = Random.Range(1, int.MaxValue);
-                Theme = ArenaTheme.First(RunSeed);
-                generator?.Generate(Theme);
+                Theme = ArenaTheme.ForFloor(1, RunSeed);
+                ApplyTheme(true);
                 if (spawner != null)
                     spawner.Stage = 1;
             }
@@ -95,7 +102,7 @@ namespace SlimeBreaker
 
         void Update()
         {
-            if (introducing)
+            if (introducing || transitioning)
                 return;
             var flow = GameFlowController.Instance;
             if (flow == null || flow.Stats == null)
@@ -174,6 +181,7 @@ namespace SlimeBreaker
             health?.SetMaxHealth(BossCatalog.HealthForFloor(Floor));
             health?.SetContactDamage(BossCatalog.ContactDamageForFloor(Floor));
             health?.TintBody(BossCatalog.Tint(kind));
+            // Cape/crown colours are applied inside EnemyHealth from the boss kind.
             var boss = instance.GetComponent<BossController>();
             if (boss == null)
                 boss = instance.AddComponent<BossController>();
@@ -214,9 +222,9 @@ namespace SlimeBreaker
                 return;
             }
 
-            if (introducing || Intermission || RunRules.IsBossFloor(Floor))
+            if (transitioning || introducing || Intermission || RunRules.IsBossFloor(Floor))
                 return;
-            if (ExitPortal.Active != null)
+            if (FloorCleared || ExitPortal.Active != null)
                 return;
             FloorKills++;
             if (FloorKills >= RunRules.KillQuota(Floor))
@@ -225,7 +233,10 @@ namespace SlimeBreaker
 
         void OfferPortal(string message = null)
         {
-            if (Floor >= RunRules.MaxFloor || ExitPortal.Active != null)
+            if (transitioning || Floor >= RunRules.MaxFloor)
+                return;
+            FloorCleared = true;
+            if (ExitPortal.Active != null)
                 return;
             SpawnPortal();
             GameFlowController.Instance?.ui?.ShowToast(message ?? "Pintu terbuka — masuk untuk naik lantai", new Color(0.55f, 0.9f, 1f));
@@ -259,13 +270,17 @@ namespace SlimeBreaker
         {
             Floor = Mathf.Clamp(floor, 1, RunRules.MaxFloor);
             FloorKills = 0;
+            FloorCleared = false;
             HandledBossTiers = (Floor - 1) / RunRules.BossEvery;
             Intermission = false;
             introducing = false;
+            transitioning = false;
             ActiveBoss = BossKind.None;
             VanishMinions();
             if (ExitPortal.Active != null)
                 Destroy(ExitPortal.Active.gameObject);
+            Theme = ArenaTheme.ForFloor(Floor, RunSeed != 0 ? RunSeed : 2024, Theme);
+            ApplyTheme(true);
             if (spawner != null)
             {
                 spawner.Stage = Floor;
@@ -277,18 +292,64 @@ namespace SlimeBreaker
         {
             if (portal != null)
                 Destroy(portal.gameObject);
-            if (Floor >= RunRules.MaxFloor)
+            if (Floor >= RunRules.MaxFloor || transitioning)
                 return;
+            StartCoroutine(AdvanceFloor());
+        }
+
+        IEnumerator AdvanceFloor()
+        {
+            transitioning = true;
+            FloorCleared = true;
+            VanishMinions();
+            if (ExitPortal.Active != null)
+                Destroy(ExitPortal.Active.gameObject);
+            if (spawner != null)
+                spawner.Paused = true;
+            if (fader != null)
+                yield return fader.FadeOut(0.32f);
+
             Floor++;
             FloorKills = 0;
+            FloorCleared = false;
+            Theme = ArenaTheme.ForFloor(Floor, RunSeed != 0 ? RunSeed : 2024, Theme);
+            ApplyTheme(false);
+            PlaceHero(Vector3.zero);
             if (spawner != null)
             {
                 spawner.Stage = Floor;
-                spawner.Paused = false;
+                spawner.Paused = RunRules.IsBossFloor(Floor);
             }
+
+            if (fader != null)
+                yield return fader.FadeIn(0.32f);
+            transitioning = false;
             if (!RunRules.IsBossFloor(Floor))
-                GameFlowController.Instance?.ui?.ShowToast("Lantai " + Floor, new Color(0.55f, 0.9f, 1f));
+                GameFlowController.Instance?.ui?.ShowToast("Lantai " + Floor + " — " + Theme.Title, new Color(0.55f, 0.9f, 1f));
             GameFlowController.Instance?.PersistRun();
+        }
+
+        void ApplyTheme(bool immediate)
+        {
+            generator?.Generate(Theme);
+            if (immediate)
+                PlaceHero(PlayerHealth.Instance != null ? PlayerHealth.Instance.transform.position : Vector3.zero);
+        }
+
+        static void PlaceHero(Vector3 position)
+        {
+            var hero = PlayerHealth.Instance;
+            if (hero == null)
+                return;
+            position.y = 0f;
+            if (Obstacles.Overlaps(position, 0.6f))
+                position = Vector3.zero;
+            var body = hero.GetComponent<CharacterController>();
+            if (body != null)
+                body.enabled = false;
+            hero.transform.position = position;
+            if (body != null)
+                body.enabled = true;
         }
 
         static void VanishMinions()

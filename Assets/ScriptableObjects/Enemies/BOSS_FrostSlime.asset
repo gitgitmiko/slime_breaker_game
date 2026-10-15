@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Frost Slime
   maxHealth: 30000
   moveSpeed: 1.9
-  contactDamage: 30
+  contactDamage: 50
   contactRange: 1.7
   contactCooldown: 0.8
   xp: 50

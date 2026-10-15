@@ -25,6 +25,17 @@ namespace SlimeBreaker
             public GameObject flower;
             public GameObject boundaryStone;
             public GameObject runeRing;
+            public GameObject cactus;
+            public GameObject iceSpike;
+            public GameObject thunderSpire;
+            public GameObject swampRoot;
+            public GameObject swampReed;
+            public GameObject shadowObelisk;
+            public GameObject volcanoRock;
+            public GameObject volcanoPillar;
+            public GameObject stormArch;
+            public GameObject crystalSpire;
+            public GameObject royalColumn;
         }
 
         public PropSet props = new PropSet();
@@ -33,10 +44,20 @@ namespace SlimeBreaker
         public Material forestGround;
         public Material snowGround;
         public Material sandGround;
+        public Material thunderGround;
+        public Material swampGround;
+        public Material shadowGround;
+        public Material volcanoGround;
+        public Material stormGround;
+        public Material crystalGround;
+        public Material royalGround;
         public GameObject rainRig;
         public GameObject snowRig;
         public GameObject firefliesRig;
         public GameObject dustRig;
+        public GameObject ashRig;
+        public GameObject sporesRig;
+        public GameObject sparksRig;
         public Light sun;
         public Camera arenaCamera;
         public float arenaRadius = RunRules.ArenaRadius;
@@ -53,6 +74,9 @@ namespace SlimeBreaker
         static readonly Color SnowGrass = new Color(0.8f, 0.88f, 0.95f);
         static readonly Color DesertLeaf = new Color(0.6f, 0.56f, 0.28f);
         static readonly Color DesertGrass = new Color(0.72f, 0.6f, 0.34f);
+        static readonly Color SwampLeaf = new Color(0.28f, 0.45f, 0.18f);
+        static readonly Color ThunderLeaf = new Color(0.32f, 0.38f, 0.22f);
+        static readonly Color RoyalLeaf = new Color(0.45f, 0.62f, 0.28f);
 
         readonly List<Obstacle> obstacles = new List<Obstacle>();
         readonly List<Vector3> occupied = new List<Vector3>();
@@ -112,6 +136,13 @@ namespace SlimeBreaker
             {
                 Biome.Snow => snowGround,
                 Biome.Desert => sandGround,
+                Biome.Thunder => thunderGround,
+                Biome.Swamp => swampGround,
+                Biome.Shadow => shadowGround,
+                Biome.Volcano => volcanoGround,
+                Biome.Storm => stormGround,
+                Biome.Crystal => crystalGround,
+                Biome.Royal => royalGround,
                 _ => forestGround
             };
             if (material != null)
@@ -137,6 +168,41 @@ namespace SlimeBreaker
                     sky = new Color(0.8f, 0.72f, 0.58f); equator = new Color(0.62f, 0.5f, 0.36f); groundAmbient = new Color(0.3f, 0.22f, 0.14f);
                     fog = new Color(0.84f, 0.74f, 0.56f); fogStart = 24f; fogEnd = 58f; background = new Color(0.74f, 0.62f, 0.46f);
                     break;
+                case Biome.Thunder:
+                    sunColor = new Color(0.82f, 0.86f, 1f); intensity = 1.05f; euler = new Vector3(48f, 40f, 0f);
+                    sky = new Color(0.42f, 0.48f, 0.58f); equator = new Color(0.32f, 0.36f, 0.4f); groundAmbient = new Color(0.14f, 0.16f, 0.12f);
+                    fog = new Color(0.4f, 0.46f, 0.52f); fogStart = 16f; fogEnd = 48f; background = new Color(0.32f, 0.38f, 0.46f);
+                    break;
+                case Biome.Swamp:
+                    sunColor = new Color(0.78f, 0.86f, 0.62f); intensity = 0.95f; euler = new Vector3(44f, -10f, 0f);
+                    sky = new Color(0.42f, 0.52f, 0.36f); equator = new Color(0.3f, 0.38f, 0.24f); groundAmbient = new Color(0.12f, 0.16f, 0.1f);
+                    fog = new Color(0.36f, 0.46f, 0.32f); fogStart = 10f; fogEnd = 38f; background = new Color(0.28f, 0.38f, 0.24f);
+                    break;
+                case Biome.Shadow:
+                    sunColor = new Color(0.55f, 0.4f, 0.85f); intensity = 0.7f; euler = new Vector3(36f, 120f, 0f);
+                    sky = new Color(0.18f, 0.12f, 0.28f); equator = new Color(0.12f, 0.08f, 0.2f); groundAmbient = new Color(0.05f, 0.04f, 0.1f);
+                    fog = new Color(0.1f, 0.06f, 0.16f); fogStart = 10f; fogEnd = 36f; background = new Color(0.08f, 0.05f, 0.12f);
+                    break;
+                case Biome.Volcano:
+                    sunColor = new Color(1f, 0.62f, 0.32f); intensity = 1.2f; euler = new Vector3(58f, 25f, 0f);
+                    sky = new Color(0.55f, 0.28f, 0.18f); equator = new Color(0.42f, 0.2f, 0.12f); groundAmbient = new Color(0.18f, 0.08f, 0.06f);
+                    fog = new Color(0.42f, 0.18f, 0.1f); fogStart = 14f; fogEnd = 46f; background = new Color(0.32f, 0.12f, 0.08f);
+                    break;
+                case Biome.Storm:
+                    sunColor = new Color(0.75f, 0.82f, 0.95f); intensity = 0.9f; euler = new Vector3(42f, 80f, 0f);
+                    sky = new Color(0.48f, 0.54f, 0.62f); equator = new Color(0.36f, 0.4f, 0.46f); groundAmbient = new Color(0.16f, 0.18f, 0.22f);
+                    fog = new Color(0.46f, 0.52f, 0.58f); fogStart = 12f; fogEnd = 42f; background = new Color(0.38f, 0.44f, 0.52f);
+                    break;
+                case Biome.Crystal:
+                    sunColor = new Color(0.85f, 0.7f, 1f); intensity = 1.15f; euler = new Vector3(46f, -50f, 0f);
+                    sky = new Color(0.48f, 0.36f, 0.7f); equator = new Color(0.36f, 0.28f, 0.52f); groundAmbient = new Color(0.16f, 0.12f, 0.28f);
+                    fog = new Color(0.42f, 0.3f, 0.58f); fogStart = 16f; fogEnd = 50f; background = new Color(0.32f, 0.22f, 0.48f);
+                    break;
+                case Biome.Royal:
+                    sunColor = new Color(1f, 0.9f, 0.7f); intensity = 1.3f; euler = new Vector3(54f, -15f, 0f);
+                    sky = new Color(0.7f, 0.6f, 0.48f); equator = new Color(0.55f, 0.42f, 0.3f); groundAmbient = new Color(0.22f, 0.16f, 0.1f);
+                    fog = new Color(0.62f, 0.5f, 0.36f); fogStart = 22f; fogEnd = 56f; background = new Color(0.52f, 0.4f, 0.28f);
+                    break;
                 default:
                     sunColor = new Color(1f, 0.95f, 0.86f); intensity = 1.25f; euler = new Vector3(52f, -30f, 0f);
                     sky = new Color(0.58f, 0.7f, 0.78f); equator = new Color(0.4f, 0.5f, 0.38f); groundAmbient = new Color(0.16f, 0.18f, 0.12f);
@@ -158,6 +224,17 @@ namespace SlimeBreaker
                     sunColor = new Color(1f, 0.93f, 0.78f); intensity *= 1.2f; euler = new Vector3(72f, 20f, 0f);
                     sky = Color.Lerp(sky, Color.white, 0.2f); fogStart = 30f; fogEnd = 64f;
                     break;
+                case Weather.Ash:
+                    sunColor = Color.Lerp(sunColor, new Color(0.7f, 0.4f, 0.25f), 0.5f); intensity *= 0.7f;
+                    fogStart = 10f; fogEnd = 34f;
+                    break;
+                case Weather.Spores:
+                    intensity *= 0.75f; fogStart = 8f; fogEnd = 32f;
+                    fog = Color.Lerp(fog, new Color(0.4f, 0.55f, 0.28f), 0.5f);
+                    break;
+                case Weather.Sparks:
+                    intensity *= 1.05f; fogStart = 18f; fogEnd = 48f;
+                    break;
             }
 
             if (theme.IsNight)
@@ -165,6 +242,21 @@ namespace SlimeBreaker
                 sunColor = new Color(0.45f, 0.55f, 0.95f); intensity = 0.42f; euler = new Vector3(38f, 150f, 0f);
                 sky = new Color(0.12f, 0.16f, 0.3f); equator = new Color(0.08f, 0.1f, 0.2f); groundAmbient = new Color(0.03f, 0.03f, 0.06f);
                 fog = new Color(0.05f, 0.07f, 0.14f); fogStart = 12f; fogEnd = 38f; background = new Color(0.04f, 0.06f, 0.12f);
+                if (theme.biome == Biome.Volcano)
+                {
+                    sunColor = new Color(0.95f, 0.4f, 0.18f); intensity = 0.55f;
+                    sky = new Color(0.22f, 0.08f, 0.06f); fog = new Color(0.18f, 0.06f, 0.04f); background = new Color(0.12f, 0.04f, 0.03f);
+                }
+                else if (theme.biome == Biome.Crystal)
+                {
+                    sunColor = new Color(0.7f, 0.5f, 1f); intensity = 0.5f;
+                    sky = new Color(0.16f, 0.1f, 0.28f); fog = new Color(0.12f, 0.08f, 0.22f); background = new Color(0.08f, 0.05f, 0.16f);
+                }
+                else if (theme.biome == Biome.Shadow)
+                {
+                    intensity = 0.28f;
+                    sky = new Color(0.06f, 0.04f, 0.12f); background = new Color(0.03f, 0.02f, 0.07f);
+                }
                 if (theme.weather == Weather.Rain)
                 {
                     fogStart = 10f; fogEnd = 32f;
@@ -222,22 +314,70 @@ namespace SlimeBreaker
                     Ring(props.treeB, 9, r + 4.2f, false, rng, 0.5f);
                     Ring(props.treeA, 12, r + 8f, false, rng, 0.25f, 1.2f);
                     Ring(props.treeB, 10, r + 11f, false, rng, 0.1f, 1.35f);
-                    Ring(props.rockA, 12, r * 0.62f, false, rng, 0.2f, 1.1f);
-                    Ring(props.rockB, 8, r * 0.44f, false, rng, 0.4f);
-                    Ring(props.pillar, 6, r * 0.7f, true, rng);
-                    Ring(props.bush, 8, r * 0.64f, false, rng, 0.3f);
-                    Scatter(props.grass, 28, 2.4f, r * 0.85f, rng);
+                    Ring(props.iceSpike, 10, r * 0.58f, false, rng, 0.25f, 1.15f);
+                    Ring(props.rockA, 8, r * 0.44f, false, rng, 0.4f);
+                    Ring(props.pillar, 5, r * 0.7f, true, rng);
+                    Scatter(props.grass, 22, 2.4f, r * 0.85f, rng);
                     break;
                 case Biome.Desert:
-                    Ring(props.treeA, 6, r + 3.2f, false, rng, 0.6f, 1.1f);
-                    Ring(props.treeB, 7, r + 7f, false, rng, 0.4f, 1.3f);
+                    Ring(props.cactus, 12, r * 0.72f, false, rng, 0.3f, 1.1f);
+                    Ring(props.cactus, 8, r * 0.4f, false, rng, 0.45f, 0.85f);
                     Ring(props.rockA, 14, r * 0.62f, false, rng, 0.25f, 1.15f);
                     Ring(props.rockB, 10, r * 0.45f, false, rng, 0.45f);
                     Ring(props.rockA, 10, r * 0.82f, false, rng, 0.3f, 1.6f);
                     Ring(props.pillar, 8, r * 0.7f, true, rng, 0.1f);
                     Ring(props.pillar, 5, r * 0.42f, true, rng, 0.2f, 0.8f);
-                    Ring(props.bush, 6, r * 0.24f, false, rng, 0.4f, 0.8f);
-                    Scatter(props.grass, 14, 3f, r * 0.8f, rng);
+                    Scatter(props.grass, 10, 3f, r * 0.8f, rng);
+                    break;
+                case Biome.Thunder:
+                    Ring(props.treeA, 8, r + 3f, false, rng, 0.4f, 1.1f);
+                    Ring(props.treeB, 7, r + 7f, false, rng, 0.35f, 1.2f);
+                    Ring(props.thunderSpire, 8, r * 0.68f, true, rng, 0.15f);
+                    Ring(props.rockA, 10, r * 0.5f, false, rng, 0.3f);
+                    Ring(props.pillar, 5, r * 0.38f, true, rng);
+                    Scatter(props.grass, 36, 2.4f, r * 0.85f, rng);
+                    break;
+                case Biome.Swamp:
+                    Ring(props.swampRoot, 10, r * 0.7f, false, rng, 0.25f, 1.1f);
+                    Ring(props.swampRoot, 7, r * 0.42f, false, rng, 0.4f, 0.9f);
+                    Ring(props.mushroom, 12, r * 0.3f, false, rng, 0.3f);
+                    Ring(props.rockB, 8, r * 0.55f, false, rng, 0.35f);
+                    Scatter(props.swampReed, 48, 2.2f, r * 0.88f, rng);
+                    Scatter(props.grass, 20, 2.6f, r * 0.8f, rng);
+                    break;
+                case Biome.Shadow:
+                    Ring(props.shadowObelisk, 10, r * 0.72f, true, rng, 0.12f);
+                    Ring(props.shadowObelisk, 6, r * 0.4f, true, rng, 0.2f, 0.85f);
+                    Ring(props.rockA, 8, r * 0.55f, false, rng, 0.3f);
+                    Ring(props.pillar, 4, r * 0.28f, true, rng);
+                    break;
+                case Biome.Volcano:
+                    Ring(props.volcanoPillar, 8, r * 0.7f, true, rng, 0.15f);
+                    Ring(props.volcanoRock, 12, r * 0.52f, false, rng, 0.3f, 1.15f);
+                    Ring(props.volcanoRock, 8, r * 0.34f, false, rng, 0.4f, 0.9f);
+                    Ring(props.rockA, 8, r * 0.82f, false, rng, 0.25f, 1.4f);
+                    break;
+                case Biome.Storm:
+                    Ring(props.stormArch, 6, r * 0.68f, true, rng, 0.2f);
+                    Ring(props.pillar, 8, r * 0.5f, true, rng, 0.25f);
+                    Ring(props.rockA, 10, r * 0.4f, false, rng, 0.35f);
+                    Ring(props.rockB, 8, r * 0.78f, false, rng, 0.3f, 1.2f);
+                    Scatter(props.grass, 16, 3f, r * 0.8f, rng);
+                    break;
+                case Biome.Crystal:
+                    Ring(props.crystalSpire, 10, r * 0.7f, false, rng, 0.2f, 1.1f);
+                    Ring(props.crystalSpire, 7, r * 0.42f, false, rng, 0.35f, 0.8f);
+                    Ring(props.iceSpike, 8, r * 0.55f, false, rng, 0.3f);
+                    Ring(props.rockB, 6, r * 0.3f, false, rng, 0.4f);
+                    break;
+                case Biome.Royal:
+                    Ring(props.royalColumn, 10, r * 0.72f, true, rng, 0.08f);
+                    Ring(props.royalColumn, 6, r * 0.42f, true, rng, 0.15f, 0.9f);
+                    Ring(props.treeA, 8, r + 3f, false, rng, 0.3f);
+                    Ring(props.treeB, 6, r + 8f, false, rng, 0.25f, 1.15f);
+                    Ring(props.bush, 8, r * 0.28f, false, rng, 0.3f);
+                    Scatter(props.flower, 36, 2.4f, r * 0.85f, rng);
+                    Scatter(props.grass, 40, 2.2f, r * 0.88f, rng);
                     break;
                 default:
                     Ring(props.treeA, 10, r + 2.6f, false, rng);
@@ -305,15 +445,16 @@ namespace SlimeBreaker
                 return false;
             string n = name.ToLowerInvariant();
             return n.Contains("tree") || n.Contains("rock") || n.Contains("pillar") || n.Contains("boulder")
-                || n.Contains("boundary");
+                || n.Contains("boundary") || n.Contains("cactus") || n.Contains("icespike") || n.Contains("spire")
+                || n.Contains("obelisk") || n.Contains("arch") || n.Contains("column") || n.Contains("root");
         }
 
         static Obstacle.Kind KindFromName(string name)
         {
             string n = (name ?? "").ToLowerInvariant();
-            if (n.Contains("tree"))
+            if (n.Contains("tree") || n.Contains("cactus") || n.Contains("root"))
                 return Obstacle.Kind.Tree;
-            if (n.Contains("pillar") || n.Contains("ruin"))
+            if (n.Contains("pillar") || n.Contains("ruin") || n.Contains("arch") || n.Contains("column") || n.Contains("obelisk") || n.Contains("spire"))
                 return Obstacle.Kind.Ruin;
             return Obstacle.Kind.Rock;
         }
@@ -489,8 +630,23 @@ namespace SlimeBreaker
         {
             if (theme.biome == Biome.Forest || Root == null)
                 return;
-            Color leaf = theme.biome == Biome.Snow ? SnowLeaf : DesertLeaf;
-            Color grass = theme.biome == Biome.Snow ? SnowGrass : DesertGrass;
+            Color leaf;
+            Color grass;
+            switch (theme.biome)
+            {
+                case Biome.Snow:
+                    leaf = SnowLeaf; grass = SnowGrass; break;
+                case Biome.Desert:
+                    leaf = DesertLeaf; grass = DesertGrass; break;
+                case Biome.Swamp:
+                    leaf = SwampLeaf; grass = SwampLeaf; break;
+                case Biome.Thunder:
+                    leaf = ThunderLeaf; grass = ThunderLeaf; break;
+                case Biome.Royal:
+                    leaf = RoyalLeaf; grass = RoyalLeaf; break;
+                default:
+                    leaf = DesertLeaf; grass = DesertGrass; break;
+            }
             if (block == null)
                 block = new MaterialPropertyBlock();
             foreach (var renderer in Root.GetComponentsInChildren<Renderer>())
@@ -530,8 +686,11 @@ namespace SlimeBreaker
                 case Weather.Rain: rig = rainRig; break;
                 case Weather.Snowfall: rig = snowRig; break;
                 case Weather.Heat: rig = dustRig; break;
+                case Weather.Ash: rig = ashRig; break;
+                case Weather.Spores: rig = sporesRig; break;
+                case Weather.Sparks: rig = sparksRig; break;
                 default:
-                    if (theme.IsNight && theme.biome == Biome.Forest)
+                    if (theme.IsNight && (theme.biome == Biome.Forest || theme.biome == Biome.Royal || theme.biome == Biome.Swamp))
                         rig = firefliesRig;
                     break;
             }

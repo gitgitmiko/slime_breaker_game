@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Storm Slime
   maxHealth: 80000
   moveSpeed: 2.2
-  contactDamage: 60
+  contactDamage: 50
   contactRange: 1.7
   contactCooldown: 0.75
   xp: 75

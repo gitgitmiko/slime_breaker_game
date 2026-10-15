@@ -69,6 +69,9 @@ namespace SlimeBreaker
                     break;
                 case UpgradeKind.CritDamage:
                     stats.critMultiplier = Mathf.Clamp(stats.critMultiplier + upgrade.amount, 1.1f, 3.5f);
+                    // Taking Critical without Crit Rate still unlocks crits, with a modest base chance.
+                    if (stats.critChance <= 0f)
+                        stats.critChance = 0.08f;
                     break;
             }
         }

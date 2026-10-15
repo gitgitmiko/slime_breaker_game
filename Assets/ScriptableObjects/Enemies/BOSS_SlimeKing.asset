@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Royal Slime
   maxHealth: 100000
   moveSpeed: 2.1
-  contactDamage: 72
+  contactDamage: 50
   contactRange: 1.7
   contactCooldown: 0.8
   xp: 80

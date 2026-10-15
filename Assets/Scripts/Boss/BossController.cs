@@ -41,6 +41,7 @@ namespace SlimeBreaker
         int nextEnrage;
         bool announcedEnrage;
         float minionTimer = 8f;
+        int fightFloor = 10;
 
         public void Configure(BossKind bossKind, GameObject bolt, GameObject lightning, GameObject minion, int floor)
         {
@@ -48,6 +49,7 @@ namespace SlimeBreaker
             boltPrefab = bolt;
             lightningPrefab = lightning;
             minionPrefab = minion;
+            fightFloor = Mathf.Max(1, floor);
             tint = BossCatalog.Tint(kind);
             slamRadius = kind == BossKind.Rock ? 4.1f : 3.6f;
             patternTimer = kind == BossKind.Volt || kind == BossKind.Shadow ? 0.95f : 1.3f;
@@ -65,7 +67,12 @@ namespace SlimeBreaker
         void Start()
         {
             if (kind != BossKind.None)
-                health?.TintBody(BossCatalog.Tint(kind));
+                ApplyLook(tint);
+        }
+
+        void ApplyLook(Color body)
+        {
+            health?.TintBody(body);
         }
 
         void Update()
@@ -140,7 +147,8 @@ namespace SlimeBreaker
             return CastElement(player, 1);
         }
 
-        int EnrageDamage => 24 + (int)kind * 6;
+        int BasicDamage => BossCatalog.ContactDamageForFloor(fightFloor);
+        int SkillDamage => BossCatalog.SkillDamage(fightFloor, Enraged);
 
         void TickEnrage()
         {
@@ -149,7 +157,7 @@ namespace SlimeBreaker
             announcedEnrage = true;
             GameFlowController.Instance?.ui?.ShowToast("ENRAGE! " + BossCatalog.DisplayName(kind), new Color(1f, 0.25f, 0.2f));
             AudioService.Instance?.Play("bosswarn");
-            health?.TintBody(Color.Lerp(tint, new Color(1f, 0.15f, 0.1f), 0.55f));
+            ApplyLook(Color.Lerp(tint, new Color(1f, 0.15f, 0.1f), 0.55f));
         }
 
         bool TryEnrage(PlayerHealth player)
@@ -163,7 +171,7 @@ namespace SlimeBreaker
         {
             Vector3 here = transform.position;
             Vector3 target = player.transform.position;
-            int dmg = Enraged ? EnrageDamage : health.ContactDamage;
+            int dmg = SkillDamage;
             int count = Mathf.Clamp(intensity, 1, 10);
             switch (kind)
             {
@@ -263,7 +271,7 @@ namespace SlimeBreaker
         {
             if (minionPrefab == null || health == null || health.IsDead)
                 return;
-            int band = Mathf.Max(1, (int)kind);
+            int floor = StageManager.Instance != null ? StageManager.Instance.Floor : fightFloor;
             int live = 0;
             for (int i = 0; i < EnemyHealth.Active.Count; i++)
             {
@@ -277,7 +285,7 @@ namespace SlimeBreaker
                 if ((pos - transform.position).sqrMagnitude < 4f)
                     pos = Around(Vector3.zero, 8f);
                 var instance = Instantiate(minionPrefab, pos, Quaternion.identity);
-                instance.GetComponent<EnemyHealth>()?.Scale(band);
+                instance.GetComponent<EnemyHealth>()?.Scale(floor);
                 var ai = instance.GetComponent<EnemyChaseAI>();
                 if (ai != null)
                     ai.arenaRadius = arenaRadius;
@@ -350,7 +358,7 @@ namespace SlimeBreaker
             if (!chargeHit && (player.transform.position - transform.position).sqrMagnitude < 1.6f * 1.6f)
             {
                 chargeHit = true;
-                player.TakeDamage(health.ContactDamage);
+                player.TakeDamage(BasicDamage);
                 VfxPlayer.Instance?.Play("hit", player.transform.position + Vector3.up * 0.7f);
             }
             if (timer <= 0f)
@@ -415,7 +423,7 @@ namespace SlimeBreaker
             flat.y = 0f;
             if (flat.magnitude <= slamRadius)
             {
-                player.TakeDamage(health.ContactDamage + 6);
+                player.TakeDamage(BasicDamage);
                 if (kind == BossKind.Frost)
                     player.Chill(0.45f, 2f);
                 if (kind == BossKind.Flame)
@@ -473,7 +481,7 @@ namespace SlimeBreaker
             Vector3 to = player.transform.position + Vector3.up * 0.8f;
             LightningBolt.Flash(lightningPrefab, from, to);
             if (!Obstacles.Blocked(from, to))
-                player.TakeDamage(Mathf.Max(6, health.ContactDamage));
+                player.TakeDamage(SkillDamage);
             VfxPlayer.Instance?.Play("zap", to);
             AudioService.Instance?.Play("lightning");
         }
@@ -513,7 +521,7 @@ namespace SlimeBreaker
             HazardZone.Drop(target, new Color(1f, 0.25f, 0.05f), 6, 1.8f, 2.2f);
             var player = PlayerHealth.Instance;
             if (player != null && (player.transform.position - target).sqrMagnitude < 2.1f * 2.1f)
-                player.TakeDamage(health.ContactDamage + 4);
+                player.TakeDamage(SkillDamage);
             if (ring != null)
                 ring.gameObject.SetActive(false);
         }
@@ -542,7 +550,7 @@ namespace SlimeBreaker
             AudioService.Instance?.Play("lightning");
             var player = PlayerHealth.Instance;
             if (player != null && (player.transform.position - target).sqrMagnitude < 1.8f * 1.8f)
-                player.TakeDamage(health.ContactDamage);
+                player.TakeDamage(SkillDamage);
         }
 
         void SpikeRing(Vector3 center)
@@ -556,7 +564,7 @@ namespace SlimeBreaker
                 return;
             float d = Vector3.Distance(new Vector3(player.transform.position.x, 0f, player.transform.position.z), new Vector3(center.x, 0f, center.z));
             if (d > 1.6f && d < 4.2f)
-                player.TakeDamage(health.ContactDamage);
+                player.TakeDamage(SkillDamage);
         }
 
         void TickFrostAura(PlayerHealth player)
@@ -596,9 +604,9 @@ namespace SlimeBreaker
                 renderer.enabled = true;
             }
             if (hide)
-                health?.TintBody(Color.Lerp(tint, Color.black, 0.65f));
+                ApplyLook(Color.Lerp(tint, Color.black, 0.65f));
             else
-                health?.TintBody(tint);
+                ApplyLook(tint);
         }
 
         void ClampArena()

@@ -367,6 +367,46 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
+        public IEnumerator HeroBoltDoesNotFireWhileMoving()
+        {
+            var player = Object.FindAnyObjectByType<PlayerController>();
+            Assert.IsNotNull(player);
+            var enemySpawner = Object.FindAnyObjectByType<EnemySpawner>();
+            var hero = PlayerHealth.Instance.transform;
+            Press(Key.W);
+            yield return null;
+            yield return null;
+            var enemyObject = Object.Instantiate(enemySpawner.normalPrefab, hero.position + Vector3.right * 3f, Quaternion.identity);
+            var enemy = enemyObject.GetComponent<EnemyHealth>();
+            int start = enemy.Current;
+            float t = 0f;
+            while (t < 2.2f)
+            {
+                if (enemy != null && !enemy.IsDead)
+                    enemyObject.transform.position = hero.position + Vector3.right * 3f;
+                yield return null;
+                SkipLevelUp();
+                t += Time.deltaTime;
+            }
+            Assert.Greater(player.WishDirection.sqrMagnitude, 0.01f, "hero was not walking during the test");
+            Assert.IsNotNull(enemy);
+            Assert.IsFalse(enemy.IsDead);
+            Assert.AreEqual(start, enemy.Current, "basic attack fired while the hero was walking");
+            Release();
+            t = 0f;
+            while (t < 3f && enemy != null && !enemy.IsDead && enemy.Current == start)
+            {
+                if (enemy != null && !enemy.IsDead)
+                    enemyObject.transform.position = hero.position + Vector3.right * 3f;
+                yield return null;
+                SkipLevelUp();
+                t += Time.deltaTime;
+            }
+            Assert.IsTrue(enemy == null || enemy.IsDead || enemy.Current < start,
+                "basic attack did not fire after the hero stood still");
+        }
+
+        [UnityTest]
         public IEnumerator EveryRendererHasAWorkingMaterial()
         {
             yield return null;
@@ -570,6 +610,7 @@ namespace SlimeBreaker.Tests
             }
             Assert.IsNotNull(boss, "Rock Slime was not spawned");
             Assert.AreEqual(10000, boss.Max, "floor 10 boss HP should be 10000");
+            Assert.AreEqual(BossCatalog.ContactDamageForFloor(10), boss.ContactDamage, "boss basic attack should scale with the floor");
             Capture("13_boss_intro");
             wait = 0f;
             while (flow.State == GameState.BossIntro && wait < 3.2f)
@@ -591,7 +632,12 @@ namespace SlimeBreaker.Tests
             Assert.GreaterOrEqual(NonBossCount() - beforeAdds, 10, "boss should summon 10 small slimes");
             SkyfallHazard.Drop(PlayerHealth.Instance.transform.position + Vector3.forward * 2f, 1, 0.4f, Color.gray, 1f);
             yield return null;
-            Assert.IsNotNull(Object.FindAnyObjectByType<SkyfallHazard>(), "rock skyfall hazard did not spawn");
+            var skyfall = Object.FindAnyObjectByType<SkyfallHazard>();
+            Assert.IsNotNull(skyfall, "rock skyfall hazard did not spawn");
+            Assert.IsNotNull(skyfall.transform.Find("Penumbra"), "skyfall has no soft penumbra shadow");
+            Assert.IsNotNull(skyfall.transform.Find("Umbra"), "skyfall has no contact umbra shadow");
+            Assert.IsNotNull(skyfall.transform.Find("Mark"), "skyfall has no impact mark");
+            AssertCapeAndCrown(boss);
             while (boss != null && !boss.IsDead && boss.Current > boss.Max * 0.3f)
                 boss.TakeDamage(800);
             Assert.IsNotNull(boss);
@@ -610,22 +656,64 @@ namespace SlimeBreaker.Tests
             stage.ForceFloor(1);
             Assert.AreEqual(1, stage.Floor);
             int quota = RunRules.KillQuota(1);
-            Assert.Greater(quota, 0);
-            for (int i = 0; i < quota; i++)
-            {
-                var enemyObject = Object.Instantiate(spawner.normalPrefab, new Vector3(4f + i * 0.2f, 0f, 4f), Quaternion.identity);
-                var health = enemyObject.GetComponent<EnemyHealth>();
-                health.TakeDamage(9999);
-            }
+            Assert.AreEqual(10, quota);
+            KillSlimes(spawner, quota);
             yield return null;
             Assert.AreEqual(1, stage.Floor, "clearing the quota should open a door, not skip the floor");
             Assert.IsNotNull(ExitPortal.Active, "exit portal did not appear after the kill quota");
             Capture("15_portal");
+            var firstTheme = stage.Theme;
+            Assert.AreEqual(Biome.Forest, firstTheme.biome);
+            for (int i = 0; i < 6; i++)
+                Object.Instantiate(spawner.normalPrefab, new Vector3(-4f + i * 0.3f, 0f, 6f), Quaternion.identity);
             ExitPortal.Active.Enter();
-            yield return null;
+            float wait = 0f;
+            while (stage.Floor < 2 && wait < 3f)
+            {
+                yield return null;
+                wait += Time.unscaledDeltaTime;
+            }
             Assert.AreEqual(2, stage.Floor, "entering the portal should move to lantai 2");
-            Assert.AreEqual(0, stage.FloorKills);
-            Assert.IsNull(ExitPortal.Active);
+            yield return Hold(0.8f);
+            Assert.IsFalse(stage.FloorCleared);
+            Assert.IsNull(ExitPortal.Active, "leftover slimes must not open the next floor immediately");
+            spawner.Paused = true;
+            GameFlowController.Instance.Stats.attackRange = 0.1f;
+            EnemyHealth.VanishAll();
+            Assert.AreEqual(20, RunRules.KillQuota(2));
+            int remaining = Mathf.Max(1, RunRules.KillQuota(2) - stage.FloorKills);
+            if (remaining > 1)
+                KillSlimes(spawner, remaining - 1);
+            yield return null;
+            Assert.AreEqual(2, stage.Floor);
+            Assert.IsNull(ExitPortal.Active, "floor 2 needs 20 kills before the door opens");
+            KillSlimes(spawner, 1);
+            yield return null;
+            Assert.IsNotNull(ExitPortal.Active, "the door should open after 20 kills on floor 2");
+            Assert.AreEqual(Biome.Forest, stage.Theme.biome, "floors 1-10 stay on the grass biome");
+            Assert.AreEqual(TimeOfDay.Night, stage.Theme.time, "floor 2 should be night");
+            Assert.AreNotEqual(firstTheme.seed, stage.Theme.seed, "layout seed should change every floor");
+        }
+
+        [UnityTest]
+        public IEnumerator BiomeChangesEveryTenFloors()
+        {
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            var generator = Object.FindAnyObjectByType<ArenaGenerator>();
+            Assert.IsNotNull(stage);
+            Assert.IsNotNull(generator);
+            stage.ForceFloor(11);
+            yield return null;
+            Assert.AreEqual(Biome.Desert, stage.Theme.biome);
+            Assert.AreEqual(generator.sandGround, generator.groundRenderer.sharedMaterial);
+            stage.ForceFloor(21);
+            yield return null;
+            Assert.AreEqual(Biome.Snow, stage.Theme.biome);
+            Assert.AreEqual(generator.snowGround, generator.groundRenderer.sharedMaterial);
+            stage.ForceFloor(31);
+            yield return null;
+            Assert.AreEqual(Biome.Thunder, stage.Theme.biome);
+            Capture("17_biome_thunder");
         }
 
         [UnityTest]
@@ -638,8 +726,18 @@ namespace SlimeBreaker.Tests
             yield return null;
             Assert.IsTrue(flow.ui.floorText.text.Contains("1"), flow.ui.floorText.text);
             Assert.IsTrue(flow.ui.floorText.text.Contains("100"), flow.ui.floorText.text);
+            Assert.IsNotNull(flow.ui.floorProgressText, "HUD has no floor kill progress");
+            Assert.IsTrue(flow.ui.floorProgressText.text.Contains("0"), flow.ui.floorProgressText.text);
+            Assert.IsTrue(flow.ui.floorProgressText.text.Contains("10"), flow.ui.floorProgressText.text);
             Assert.IsTrue(flow.ui.damageText.text.Contains(flow.Stats.damage.ToString()), flow.ui.damageText.text);
             Assert.IsTrue(flow.ui.levelText.text.Contains(flow.Stats.level.ToString()), flow.ui.levelText.text);
+            Assert.IsNotNull(flow.ui.statusText, "HUD has no status panel");
+            Assert.IsTrue(flow.ui.statusText.text.Contains("DMG"), flow.ui.statusText.text);
+            Assert.IsTrue(flow.ui.statusText.text.Contains("CRIT"), flow.ui.statusText.text);
+            Assert.IsTrue(flow.ui.statusText.text.Contains("CRIT RATE"), flow.ui.statusText.text);
+            Assert.IsTrue(flow.ui.statusText.text.Contains("ATK SPD"), flow.ui.statusText.text);
+            Assert.IsTrue(flow.ui.statusText.text.Contains("MOVE"), flow.ui.statusText.text);
+            Assert.IsTrue(flow.ui.statusText.text.Contains("LS"), flow.ui.statusText.text);
             Assert.AreEqual("EXP", flow.ui.xpSlider.gameObject.name);
             Assert.IsNotNull(Object.FindAnyObjectByType<Wayfinder>(), "HUD has no wayfinder arrows");
             var upgrades = Object.FindAnyObjectByType<UpgradeManager>();
@@ -722,6 +820,50 @@ namespace SlimeBreaker.Tests
             Assert.IsNotNull(QualitySettings.renderPipeline);
         }
 
+        static void AssertCapeAndCrown(EnemyHealth boss)
+        {
+            Assert.IsNotNull(boss);
+            var renderer = boss.GetComponentInChildren<SkinnedMeshRenderer>();
+            Assert.IsNotNull(renderer, "boss has no skinned mesh");
+            var materials = renderer.sharedMaterials;
+            Assert.IsNotNull(materials);
+            bool sawCape = false;
+            bool sawCrown = false;
+            for (int i = 0; i < materials.Length; i++)
+            {
+                if (materials[i] == null)
+                    continue;
+                var block = new MaterialPropertyBlock();
+                renderer.GetPropertyBlock(block, i);
+                Color color = block.GetColor("_BaseColor");
+                string name = materials[i].name.ToLowerInvariant();
+                if (name.Contains("cape"))
+                {
+                    sawCape = true;
+                    Assert.Greater(color.r, color.g + 0.3f, "boss cape should be red, got " + color);
+                    Assert.Greater(color.r, color.b + 0.3f, "boss cape should be red, got " + color);
+                }
+                if (name.Contains("gold") || name.Contains("crown"))
+                {
+                    sawCrown = true;
+                    Assert.Greater(color.r, 0.85f, "boss crown should be gold, got " + color);
+                    Assert.Greater(color.g, 0.55f, "boss crown should be gold, got " + color);
+                }
+            }
+            Assert.IsTrue(sawCape, "boss mesh has no cape material");
+            Assert.IsTrue(sawCrown, "boss mesh has no gold/crown material");
+        }
+
+        static void KillSlimes(EnemySpawner spawner, int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                var enemyObject = Object.Instantiate(spawner.normalPrefab, new Vector3(4f + (i % 8) * 0.25f, 0f, 4f + (i / 8) * 0.25f), Quaternion.identity);
+                var health = enemyObject.GetComponent<EnemyHealth>();
+                health.TakeDamage(9999);
+            }
+        }
+
         static int NonBossCount()
         {
             int count = 0;
@@ -772,6 +914,10 @@ namespace SlimeBreaker.Tests
                     crowd += d / (m * m);
             }
             Vector3 flat = new Vector3(hero.x, 0f, hero.z);
+            float attackRange = 4.4f;
+            var stats = GameFlowController.Instance != null ? GameFlowController.Instance.Stats : null;
+            if (stats != null)
+                attackRange = stats.attackRange;
             Vector3 wish;
             if (nearest == null)
             {
@@ -784,15 +930,19 @@ namespace SlimeBreaker.Tests
                 Vector3 tangent = Vector3.Cross(Vector3.up, toEnemy.normalized);
                 if (nearestDistance < 1.6f)
                     wish = crowd.normalized * 1.5f + tangent * 0.5f;
-                else if (nearestDistance > 2f)
-                    wish = toEnemy.normalized + crowd * 0.5f;
+                else if (nearestDistance <= attackRange * 0.9f)
+                    wish = Vector3.zero;
                 else
-                    wish = tangent + crowd * 0.5f;
+                    wish = toEnemy.normalized + crowd * 0.5f;
             }
             if (flat.magnitude > 16f)
                 wish -= flat.normalized;
             if (wish.sqrMagnitude < 0.0001f)
-                wish = Vector3.forward;
+            {
+                InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+                InputSystem.Update();
+                return;
+            }
             if (nearest != null && nearestDistance < 1.3f)
                 dashTimer -= Time.unscaledDeltaTime;
             var keys = new List<Key>();

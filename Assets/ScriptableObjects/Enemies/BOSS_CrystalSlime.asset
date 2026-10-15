@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Crystal Slime
   maxHealth: 90000
   moveSpeed: 1.7
-  contactDamage: 66
+  contactDamage: 50
   contactRange: 1.7
   contactCooldown: 0.8
   xp: 80

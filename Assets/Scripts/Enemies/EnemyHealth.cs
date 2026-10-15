@@ -35,6 +35,7 @@ namespace SlimeBreaker
 
         Animator animator;
         Renderer[] renderers;
+        BossController cachedBoss;
         float slowTimer;
         float slowFactor = 1f;
         int burnTicks;
@@ -50,6 +51,7 @@ namespace SlimeBreaker
         {
             animator = GetComponentInChildren<Animator>();
             renderers = GetComponentsInChildren<Renderer>();
+            cachedBoss = GetComponent<BossController>();
             Bind(definition);
             MeasureBody();
             EnemyHealthBar.Attach(this);
@@ -161,16 +163,21 @@ namespace SlimeBreaker
                 burnTimer = burnInterval;
         }
 
-        /// <summary>Raises health and contact damage for later arenas. Stage 1 is the authored baseline.</summary>
-        public void Scale(int stage)
+        /// <summary>Raises health by biome band and contact damage every floor. Floor 1 is the authored baseline.</summary>
+        public void Scale(int floor)
         {
-            if (definition == null || stage <= 1)
+            if (definition == null)
                 return;
-            float hpMul = Mathf.Pow(1.18f, stage - 1);
-            Current = Mathf.Max(1, Mathf.RoundToInt(definition.maxHealth * hpMul));
-            Max = Current;
-            extraDamage = Mathf.RoundToInt(definition.contactDamage * (Mathf.Pow(1.10f, stage - 1) - 1f));
-            ContactDamage = definition.contactDamage + extraDamage;
+            floor = Mathf.Max(1, floor);
+            int band = (floor - 1) / RunRules.BossEvery + 1;
+            if (band > 1)
+            {
+                float hpMul = Mathf.Pow(1.18f, band - 1);
+                Current = Mathf.Max(1, Mathf.RoundToInt(definition.maxHealth * hpMul));
+                Max = Current;
+            }
+            extraDamage = Mathf.Max(0, floor - 1) * RunRules.SlimeDamagePerFloor;
+            ContactDamage = RunRules.SlimeContactDamage(definition.contactDamage, floor);
         }
 
         public void TintBody(Color color)
@@ -314,6 +321,9 @@ namespace SlimeBreaker
                 emission = BurnTint * 0.5f;
             else if (slowTimer > 0f)
                 emission = SlowTint * 0.35f;
+            var bossKind = definition != null ? definition.bossKind : BossKind.None;
+            if (bossKind == BossKind.None && cachedBoss != null)
+                bossKind = cachedBoss.kind;
             for (int i = 0; i < renderers.Length; i++)
             {
                 var renderer = renderers[i];
@@ -322,18 +332,39 @@ namespace SlimeBreaker
                 if (!wants)
                 {
                     renderer.SetPropertyBlock(null);
+                    int extra = renderer.sharedMaterials != null ? renderer.sharedMaterials.Length : 0;
+                    for (int m = 0; m < extra; m++)
+                        renderer.SetPropertyBlock(null, m);
                     continue;
                 }
-                renderer.GetPropertyBlock(block);
-                if (hasBodyTint)
+                var materials = renderer.sharedMaterials;
+                int count = materials != null && materials.Length > 0 ? materials.Length : 1;
+                for (int m = 0; m < count; m++)
                 {
-                    block.SetColor("_BaseColor", bodyTint);
-                    block.SetColor("_Color", bodyTint);
+                    renderer.GetPropertyBlock(block, m);
+                    if (hasBodyTint)
+                    {
+                        var mat = materials != null && m < materials.Length ? materials[m] : renderer.sharedMaterial;
+                        string matName = mat != null ? mat.name : "";
+                        Color part = bossKind != BossKind.None
+                            ? BossCatalog.ColorForMaterial(matName, bossKind, bodyTint)
+                            : FaceSafeBody(matName, bodyTint);
+                        if (part.a > 0.01f)
+                        {
+                            block.SetColor("_BaseColor", part);
+                            block.SetColor("_Color", part);
+                        }
+                    }
+                    block.SetColor("_EmissionColor", emission);
+                    renderer.SetPropertyBlock(block, m);
                 }
-                block.SetColor("_EmissionColor", emission);
-                renderer.SetPropertyBlock(block);
             }
             tinted = wants;
+        }
+
+        static Color FaceSafeBody(string materialName, Color body)
+        {
+            return BossCatalog.IsFaceMaterial(materialName) ? Color.clear : body;
         }
 
         static bool IsBarRenderer(Renderer renderer)

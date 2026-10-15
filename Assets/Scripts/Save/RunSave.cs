@@ -26,10 +26,9 @@ namespace SlimeBreaker
 
         public ArenaTheme ToTheme()
         {
-            var biomeValue = (Biome)UnityEngine.Mathf.Clamp(biome, 0, 2);
-            var weatherValue = (Weather)UnityEngine.Mathf.Clamp(weather, 0, 3);
-            var timeValue = (TimeOfDay)UnityEngine.Mathf.Clamp(time, 0, 1);
-            return new ArenaTheme(biomeValue, weatherValue, timeValue, themeSeed != 0 ? themeSeed : runSeed);
+            int floorValue = UnityEngine.Mathf.Max(1, floor > 0 ? floor : stage);
+            int seed = themeSeed != 0 ? themeSeed : (runSeed != 0 ? runSeed : 1);
+            return ArenaTheme.ForFloor(floorValue, seed);
         }
     }
 }

@@ -19,12 +19,26 @@ namespace SlimeBreaker
 
     public static class BossCatalog
     {
-        public static BossKind KindAtLevel(int level)
+        public static BossKind KindAtFloor(int floor)
         {
-            if (level < RunRules.BossEvery)
-                return BossKind.None;
-            int index = Mathf.Clamp(level / RunRules.BossEvery, 1, 10);
-            return (BossKind)index;
+            int tier = RunRules.BossTier(floor);
+            return tier <= 0 ? BossKind.None : (BossKind)Mathf.Clamp(tier, 1, 10);
+        }
+
+        public static int HealthForFloor(int floor)
+        {
+            int tier = Mathf.Max(1, RunRules.BossTier(floor));
+            return tier * RunRules.BossHealthPerTier;
+        }
+
+        public static int EnrageSkillCount(int floor)
+        {
+            return Mathf.Clamp(RunRules.BossTier(floor), 1, 10);
+        }
+
+        public static int ContactDamageForFloor(int floor)
+        {
+            return 12 + Mathf.Max(1, RunRules.BossTier(floor)) * 6;
         }
 
         public static string DisplayName(BossKind kind)

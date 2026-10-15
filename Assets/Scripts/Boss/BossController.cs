@@ -14,6 +14,8 @@ namespace SlimeBreaker
         public BossKind kind = BossKind.Rock;
 
         public bool Shielded { get; private set; }
+        public bool Enraged => health != null && health.Max > 0 && (float)health.Current / health.Max <= RunRules.BossEnrageHealth;
+        public int EnrageSkillCount { get; private set; }
 
         enum Pattern
         {
@@ -36,8 +38,10 @@ namespace SlimeBreaker
         float hiddenUntil;
         float shieldUntil;
         float auraTick;
+        int nextEnrage;
+        bool announcedEnrage;
 
-        public void Configure(BossKind bossKind, GameObject bolt, GameObject lightning, GameObject minion)
+        public void Configure(BossKind bossKind, GameObject bolt, GameObject lightning, GameObject minion, int floor)
         {
             kind = bossKind;
             boltPrefab = bolt;
@@ -46,6 +50,7 @@ namespace SlimeBreaker
             tint = BossCatalog.Tint(kind);
             slamRadius = kind == BossKind.Rock ? 4.1f : 3.6f;
             patternTimer = kind == BossKind.Volt || kind == BossKind.Shadow ? 0.95f : 1.3f;
+            EnrageSkillCount = BossCatalog.EnrageSkillCount(floor);
         }
 
         void Awake()
@@ -76,17 +81,18 @@ namespace SlimeBreaker
                 TickFrostAura(player);
             if (kind == BossKind.Shadow)
                 TickShadowCloak();
+            TickEnrage();
 
             timer -= Time.deltaTime;
             specialTimer -= Time.deltaTime;
             switch (pattern)
             {
                 case Pattern.Idle:
-                    Chase(player.transform.position, (health.definition != null ? health.definition.moveSpeed : 2.2f) * health.SpeedMultiplier);
+                    Chase(player.transform.position, (health.definition != null ? health.definition.moveSpeed : 2.2f) * health.SpeedMultiplier * (Enraged ? 1.25f : 1f));
                     if (specialTimer <= 0f)
                     {
-                        specialTimer = SpecialCooldown();
-                        if (TrySpecial(player))
+                        specialTimer = Enraged ? 1.15f : SpecialCooldown();
+                        if (Enraged ? TryEnrage(player) : TrySpecial(player))
                             break;
                     }
                     if (timer <= 0f)
@@ -181,6 +187,120 @@ namespace SlimeBreaker
                 default:
                     return false;
             }
+        }
+
+        int EnrageDamage => 24 + (int)kind * 6;
+
+        void TickEnrage()
+        {
+            if (!Enraged || announcedEnrage)
+                return;
+            announcedEnrage = true;
+            GameFlowController.Instance?.ui?.ShowToast("ENRAGE! " + BossCatalog.DisplayName(kind), new Color(1f, 0.25f, 0.2f));
+            AudioService.Instance?.Play("bosswarn");
+            health?.TintBody(Color.Lerp(tint, new Color(1f, 0.15f, 0.1f), 0.55f));
+        }
+
+        bool TryEnrage(PlayerHealth player)
+        {
+            if (EnrageSkillCount <= 0)
+                return TrySpecial(player);
+            int skill = nextEnrage % EnrageSkillCount;
+            nextEnrage++;
+            Vector3 here = transform.position;
+            Vector3 target = player.transform.position;
+            int dmg = EnrageDamage;
+            switch (skill)
+            {
+                case 0:
+                    SlamEnrage(player, dmg);
+                    return true;
+                case 1:
+                    Volley(target + Vector3.up * 0.7f, dmg, 5);
+                    return true;
+                case 2:
+                    ZapEnrage(player, dmg);
+                    return true;
+                case 3:
+                    Erupt(target);
+                    return true;
+                case 4:
+                    FireBurst(here, 4.2f, dmg);
+                    HazardZone.Drop(here, new Color(0.4f, 0.9f, 0.2f), Mathf.Max(6, dmg / 4), 2.2f, 4.5f);
+                    return true;
+                case 5:
+                    Blink(target);
+                    SlamEnrage(player, dmg);
+                    return true;
+                case 6:
+                    FireBurst(here, 4.6f, dmg);
+                    HazardZone.Drop(here, new Color(1f, 0.3f, 0.05f), Mathf.Max(6, dmg / 3), 2.4f, 3.5f);
+                    return true;
+                case 7:
+                    Push(player, 4.2f);
+                    Strike(target);
+                    player.TakeDamage(dmg);
+                    return true;
+                case 8:
+                    SpikeRing(here);
+                    FireBurst(here, 4.8f, dmg);
+                    return true;
+                default:
+                    ZapEnrage(player, dmg);
+                    Volley(target + Vector3.up * 0.8f, dmg, 6);
+                    if (minionPrefab != null && EnemyHealth.Active.Count < 8)
+                    {
+                        var minion = Instantiate(minionPrefab, here + transform.right * 2f, Quaternion.identity);
+                        minion.GetComponent<EnemyHealth>()?.Scale(Mathf.Max(1, (int)kind));
+                    }
+                    return true;
+            }
+        }
+
+        void SlamEnrage(PlayerHealth player, int damage)
+        {
+            pattern = Pattern.Slam;
+            timer = 0.4f;
+            float radius = slamRadius * 1.4f;
+            if (ring != null)
+            {
+                ring.gameObject.SetActive(true);
+                ring.localScale = new Vector3(radius, 1f, radius);
+            }
+            if (animator != null)
+                animator.SetTrigger("Slam");
+            AudioService.Instance?.Play("slam");
+            VfxPlayer.Instance?.Play("slam", transform.position);
+            Vector3 flat = player.transform.position - transform.position;
+            flat.y = 0f;
+            if (flat.magnitude <= radius)
+                player.TakeDamage(damage);
+        }
+
+        void Volley(Vector3 target, int damage, int count)
+        {
+            pattern = Pattern.Cast;
+            timer = 0.4f;
+            Vector3 origin = transform.position + Vector3.up * 1.2f + transform.forward * 0.6f;
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 aim = target + new Vector3(Random.Range(-1.5f, 1.5f), 0f, Random.Range(-1.5f, 1.5f));
+                HostileProjectile.Launch(boltPrefab, origin, aim, damage, 8.2f + i * 0.35f);
+            }
+            AudioService.Instance?.Play("cast");
+        }
+
+        void ZapEnrage(PlayerHealth player, int damage)
+        {
+            pattern = Pattern.Cast;
+            timer = 0.3f;
+            Vector3 from = transform.position + Vector3.up * 1.3f;
+            Vector3 to = player.transform.position + Vector3.up * 0.8f;
+            LightningBolt.Flash(lightningPrefab, from, to);
+            if (!Obstacles.Blocked(from, to))
+                player.TakeDamage(damage);
+            VfxPlayer.Instance?.Play("zap", to);
+            AudioService.Instance?.Play("lightning");
         }
 
         void TickCharge(PlayerHealth player)

@@ -109,7 +109,7 @@ namespace SlimeBreaker
         {
             if (State == GameState.Victory || State == GameState.Defeat || State == GameState.BossIntro)
                 return;
-            if (Stats.level >= RunRules.MaxLevel)
+            if (Stats.level >= RunRules.MaxHeroLevel)
                 return;
             Stats.level++;
             if (State == GameState.LevelUp)
@@ -175,10 +175,10 @@ namespace SlimeBreaker
             Time.timeScale = 0f;
             RunSaveService.Clear();
             var save = SaveService.Load();
-            int level = Stats != null ? Stats.level : 1;
+            int floor = StageManager.Instance != null ? StageManager.Instance.Floor : 1;
             int gold = balance == null
                 ? 10
-                : (victory ? balance.victoryGold : balance.defeatGold) + level * balance.goldPerLevel;
+                : (victory ? balance.victoryGold : balance.defeatGold) + floor * balance.goldPerLevel;
             save.gold += gold;
             float elapsed = run != null ? run.Elapsed : 0f;
             if (elapsed > save.bestRunTime)
@@ -227,7 +227,9 @@ namespace SlimeBreaker
             var stage = StageManager.Instance;
             if (stage != null)
             {
-                data.stage = stage.Stage;
+                data.stage = stage.Floor;
+                data.floor = stage.Floor;
+                data.floorKills = stage.FloorKills;
                 data.runSeed = stage.RunSeed;
                 data.intermission = stage.Intermission;
                 data.biome = (int)stage.Theme.biome;

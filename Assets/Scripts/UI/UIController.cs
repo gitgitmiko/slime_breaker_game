@@ -10,6 +10,8 @@ namespace SlimeBreaker
         public Slider xpSlider;
         public Text hpText;
         public Text levelText;
+        public Text floorText;
+        public Text damageText;
         public Text timerText;
         public Image dashFill;
         public GameObject levelUpPanel;
@@ -94,6 +96,13 @@ namespace SlimeBreaker
                 return;
             if (levelText != null)
                 levelText.text = "Lv " + flow.Stats.level;
+            if (damageText != null)
+                damageText.text = "ATK " + flow.Stats.damage;
+            if (floorText != null)
+            {
+                int floor = StageManager.Instance != null ? StageManager.Instance.Floor : 1;
+                floorText.text = "Lantai " + floor + "/" + RunRules.MaxFloor;
+            }
             if (timerText != null && flow.run != null)
             {
                 int seconds = Mathf.FloorToInt(flow.run.Elapsed);
@@ -134,10 +143,10 @@ namespace SlimeBreaker
         public bool BossWarningVisible => bossWarningGroup != null && bossWarningGroup.alpha > 0.15f;
         public string BossWarningName => bossWarningName != null ? bossWarningName.text : string.Empty;
 
-        public void ShowBossWarning(string name, Color color)
+        public void ShowBossWarning(string name, Color color, int floor = 0)
         {
             if (bossWarningTitle != null)
-                bossWarningTitle.text = "STAGE BOSS";
+                bossWarningTitle.text = floor > 0 ? "BOSS LANTAI " + floor : "STAGE BOSS";
             if (bossWarningName != null)
             {
                 bossWarningName.text = name;
@@ -209,18 +218,24 @@ namespace SlimeBreaker
         {
             if (resultPanel != null)
                 resultPanel.SetActive(true);
+            int level = GameFlowController.Instance != null && GameFlowController.Instance.Stats != null
+                ? GameFlowController.Instance.Stats.level
+                : 1;
+            int damage = GameFlowController.Instance != null && GameFlowController.Instance.Stats != null
+                ? GameFlowController.Instance.Stats.damage
+                : 0;
+            int floor = StageManager.Instance != null ? StageManager.Instance.Floor : 1;
             if (resultTitle != null)
             {
-                int level = GameFlowController.Instance != null && GameFlowController.Instance.Stats != null
-                    ? GameFlowController.Instance.Stats.level
-                    : 1;
                 resultTitle.text = victory
-                    ? (level >= RunRules.MaxLevel ? "Tamat!" : "Menang!")
+                    ? (floor >= RunRules.MaxFloor ? "Tamat!" : "Menang!")
                     : "Kalah";
             }
             int seconds = Mathf.FloorToInt(elapsed);
             if (resultBody != null)
-                resultBody.text = "Waktu " + (seconds / 60).ToString("00") + ":" + (seconds % 60).ToString("00")
+                resultBody.text = "Lantai " + floor + "/" + RunRules.MaxFloor
+                    + "\nLv " + level + "   ATK " + damage
+                    + "\nWaktu " + (seconds / 60).ToString("00") + ":" + (seconds % 60).ToString("00")
                     + "\nEmas +" + gold + "\nTotal " + totalGold;
         }
 

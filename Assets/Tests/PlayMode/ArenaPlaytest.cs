@@ -267,7 +267,9 @@ namespace SlimeBreaker.Tests
             yield return null;
             yield return null;
             Assert.AreEqual(5, flow.Stats.level);
+            Assert.AreEqual(1, stage.Floor, "power-ups follow hero level, not floor");
             Assert.IsFalse(stage.Intermission, "level 5 is a power-up beat, not a boss stage");
+            Assert.AreEqual(BossKind.None, stage.ActiveBoss);
             Assert.AreEqual(1, PowerUpPickup.Active.Count, "exactly one power-up should spawn at level 5");
             var pickup = PowerUpPickup.Active[0];
             Assert.IsNotNull(pickup.skill, "power-up carries no skill");
@@ -295,6 +297,8 @@ namespace SlimeBreaker.Tests
             yield return null;
             yield return null;
             Assert.AreEqual(1, PowerUpPickup.Active.Count, "no power-up at level 10");
+            Assert.AreEqual(BossKind.None, stage.ActiveBoss, "hero level 10 must not spawn a floor boss");
+            Assert.AreEqual(1, stage.Floor);
         }
 
         [UnityTest]
@@ -465,6 +469,7 @@ namespace SlimeBreaker.Tests
             Assert.IsNotNull(saved, "PersistRun did not write slimebreaker-run.json");
             Assert.AreEqual(flow.Stats.level, saved.level);
             Assert.GreaterOrEqual(saved.stage, 1);
+            Assert.AreEqual(1, saved.floor);
             Assert.AreEqual(flow.Stats.damage, saved.stats.damage);
             RunSaveService.Clear();
             Assert.IsFalse(RunSaveService.Exists());
@@ -539,38 +544,32 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
-        public IEnumerator BossAppearsAtLevelTenWithWarning()
+        public IEnumerator BossAppearsAtFloorTenWithWarning()
         {
             var flow = GameFlowController.Instance;
             var stage = Object.FindAnyObjectByType<StageManager>();
             Assert.IsNotNull(stage);
-            while (flow.Stats.level < 9)
-            {
-                flow.BeginLevelUp();
-                flow.ChooseUpgrade(0);
-            }
-            yield return null;
-            flow.BeginLevelUp();
-            flow.ChooseUpgrade(0);
-            Assert.AreEqual(10, flow.Stats.level);
+            stage.ForceFloor(10);
             float wait = 0f;
             while (stage.ActiveBoss == BossKind.None && wait < 2f)
             {
                 yield return null;
                 wait += Time.unscaledDeltaTime;
             }
+            Assert.AreEqual(10, stage.Floor);
             Assert.AreEqual(BossKind.Rock, stage.ActiveBoss);
             Assert.AreEqual("Rock Slime", BossCatalog.DisplayName(stage.ActiveBoss));
             Assert.AreEqual(GameState.BossIntro, flow.State);
             Assert.IsTrue(flow.ui.BossWarningVisible || flow.ui.BossWarningName == "Rock Slime" || flow.ui.bossWarningName.text == "Rock Slime",
                 "boss warning did not appear");
-            bool sawBoss = false;
+            EnemyHealth boss = null;
             foreach (var enemy in EnemyHealth.Active)
             {
                 if (enemy != null && enemy.IsBoss)
-                    sawBoss = true;
+                    boss = enemy;
             }
-            Assert.IsTrue(sawBoss, "Rock Slime was not spawned");
+            Assert.IsNotNull(boss, "Rock Slime was not spawned");
+            Assert.AreEqual(10000, boss.Max, "floor 10 boss HP should be 10000");
             Capture("13_boss_intro");
             wait = 0f;
             while (flow.State == GameState.BossIntro && wait < 3.2f)
@@ -580,6 +579,53 @@ namespace SlimeBreaker.Tests
             }
             Assert.AreEqual(GameState.Playing, flow.State, "boss intro never ended");
             Assert.IsTrue(stage.Intermission, "regular spawning should pause during the boss");
+
+            var controller = boss.GetComponent<BossController>();
+            Assert.IsNotNull(controller);
+            Assert.AreEqual(1, controller.EnrageSkillCount);
+            Assert.IsFalse(controller.Enraged);
+            while (boss != null && !boss.IsDead && boss.Current > boss.Max * 0.3f)
+                boss.TakeDamage(800);
+            Assert.IsNotNull(boss);
+            Assert.IsFalse(boss.IsDead);
+            Assert.IsTrue(controller.Enraged, "boss should enrage below 30% HP");
+            Assert.LessOrEqual((float)boss.Current / boss.Max, 0.3f);
+        }
+
+        [UnityTest]
+        public IEnumerator FloorAdvancesAfterKillQuota()
+        {
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            var spawner = Object.FindAnyObjectByType<EnemySpawner>();
+            Assert.IsNotNull(stage);
+            stage.ForceFloor(1);
+            Assert.AreEqual(1, stage.Floor);
+            int quota = RunRules.KillQuota(1);
+            Assert.Greater(quota, 0);
+            for (int i = 0; i < quota; i++)
+            {
+                var enemyObject = Object.Instantiate(spawner.normalPrefab, new Vector3(4f + i * 0.2f, 0f, 4f), Quaternion.identity);
+                var health = enemyObject.GetComponent<EnemyHealth>();
+                health.TakeDamage(9999);
+            }
+            yield return null;
+            Assert.AreEqual(2, stage.Floor, "clearing the floor 1 quota should move to lantai 2");
+            Assert.AreEqual(0, stage.FloorKills);
+        }
+
+        [UnityTest]
+        public IEnumerator HudShowsFloorAndHeroDamage()
+        {
+            var flow = GameFlowController.Instance;
+            Assert.IsNotNull(flow.ui);
+            Assert.IsNotNull(flow.ui.floorText, "HUD has no floor label");
+            Assert.IsNotNull(flow.ui.damageText, "HUD has no damage label");
+            yield return null;
+            Assert.IsTrue(flow.ui.floorText.text.Contains("1"), flow.ui.floorText.text);
+            Assert.IsTrue(flow.ui.floorText.text.Contains("100"), flow.ui.floorText.text);
+            Assert.IsTrue(flow.ui.damageText.text.Contains(flow.Stats.damage.ToString()), flow.ui.damageText.text);
+            Assert.IsTrue(flow.ui.levelText.text.Contains(flow.Stats.level.ToString()), flow.ui.levelText.text);
+            Capture("14_hud_floor_damage");
         }
 
         [UnityTest]

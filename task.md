@@ -34,6 +34,13 @@
 - Upgrade baru Lifesteal; Ritme diganti **Attack Speed**.
 - Slime jarak menembak `HostileProjectile`.
 
+### Putaran 5 — lantai 1–100, hero 999, boss enrage
+
+- Progres run jadi **lantai 1–100** (kuota slime per lantai). Level hero terpisah, cap **999**.
+- Power-up tetap tiap 5 **level hero**. Boss tiap 10 **lantai**.
+- Boss lantai 10 HP 10.000 + 1 skill enrage di bawah 30% HP; lantai 20 HP 20.000 + 2 skill; … lantai 100 HP 100.000 + 10 skill.
+- HUD menampilkan Lantai, Lv, dan ATK.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

@@ -49,7 +49,7 @@ xvfb-run -a -s "-screen 0 1280x1024x24" unity-editor -batchmode \
   -testResults "$PWD/Logs/playmode.xml" -logFile Logs/playmode.log
 ```
 
-Exit 0 berarti semua 18 test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: hero dan slime menapak tanah, properti tegak, semua material valid, tombol Main membuka arena, joystick sentuh menggerakkan hero, bot bertahan satu menit, AudioListener + 60 fps terpasang, power-up tiap 5 level di map yang sama, Cincin Es melukai dan memperlambat, bolt mengenai musuh, Nova Api merusak musuh dekat, obstacle memblokir bolt, run-save level/stage utuh, preset grafis Low/High terpasang, bar darah musuh, lifesteal, slime jarak menembak, dan Rock Slime + warning di level 10. Baris `PLAYTEST` di log memuat angka ukurnya. Screenshot ada di `Logs/playtest/` (00_menu … 13_boss_intro).
+Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: hero dan slime menapak tanah, properti tegak, semua material valid, tombol Main membuka arena, joystick sentuh menggerakkan hero, bot bertahan satu menit, AudioListener + 60 fps terpasang, power-up tiap 5 level hero di map yang sama (bukan boss), Cincin Es melukai dan memperlambat, bolt mengenai musuh, Nova Api merusak musuh dekat, obstacle memblokir bolt, run-save level/lantai utuh, preset grafis Low/High terpasang, bar darah musuh, lifesteal, slime jarak menembak, Rock Slime + warning di lantai 10 (HP 10.000, enrage <30%), kuota lantai naik, dan HUD Lantai/ATK. Baris `PLAYTEST` di log memuat angka ukurnya. Screenshot ada di `Logs/playtest/` (00_menu … 14_hud_floor_damage).
 
 ## Hasil 14 Oktober 2026 (putaran 1)
 

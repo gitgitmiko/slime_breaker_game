@@ -9,6 +9,8 @@ namespace SlimeBreaker
         public int schemaVersion = 1;
         public int level = 1;
         public int stage = 1;
+        public int floor = 1;
+        public int floorKills;
         public int runSeed;
         public float elapsed;
         public int xp;

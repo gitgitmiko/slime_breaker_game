@@ -177,18 +177,18 @@ namespace SlimeBreaker.EditorTools
             var fastDef = Enemy("Assets/ScriptableObjects/Enemies/ENM_Slime_Fast.asset", "Slime Cepat", 14, 3.9f, 6, 1.0f, 0.6f, 4, false);
             var tankDef = Enemy("Assets/ScriptableObjects/Enemies/ENM_Slime_Tank.asset", "Slime Tank", 64, 1.35f, 14, 1.4f, 0.9f, 8, false);
             var rangedDef = Enemy("Assets/ScriptableObjects/Enemies/ENM_Slime_Ranged.asset", "Slime Jarak", 18, 2.15f, 7, 6.4f, 1.35f, 4, false, ranged: true, tint: new Color(0.95f, 0.48f, 0.78f));
-            var bossDef = Enemy("Assets/ScriptableObjects/Enemies/BOSS_SlimeKing.asset", "Royal Slime", 800, 2.1f, 20, 1.7f, 0.8f, 0, true, kind: BossKind.Royal);
+            var bossDef = Enemy("Assets/ScriptableObjects/Enemies/BOSS_SlimeKing.asset", "Royal Slime", 100000, 2.1f, 72, 1.7f, 0.8f, 80, true, kind: BossKind.Royal);
             var bossDefs = new[]
             {
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_RockSlime.asset", "Rock Slime", 280, 1.8f, 18, 1.8f, 0.85f, 0, true, incoming: 0.65f, kind: BossKind.Rock, tint: BossCatalog.Tint(BossKind.Rock)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_FlameSlime.asset", "Flame Slime", 300, 2.15f, 16, 1.7f, 0.8f, 0, true, kind: BossKind.Flame, tint: BossCatalog.Tint(BossKind.Flame)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_FrostSlime.asset", "Frost Slime", 300, 1.9f, 15, 1.7f, 0.8f, 0, true, kind: BossKind.Frost, tint: BossCatalog.Tint(BossKind.Frost)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_VoltSlime.asset", "Volt Slime", 260, 2.55f, 14, 1.6f, 0.7f, 0, true, kind: BossKind.Volt, tint: BossCatalog.Tint(BossKind.Volt)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_ToxicSlime.asset", "Toxic Slime", 320, 2.0f, 15, 1.7f, 0.8f, 0, true, kind: BossKind.Toxic, tint: BossCatalog.Tint(BossKind.Toxic)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_ShadowSlime.asset", "Shadow Slime", 280, 2.4f, 15, 1.6f, 0.7f, 0, true, kind: BossKind.Shadow, tint: BossCatalog.Tint(BossKind.Shadow)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_MagmaSlime.asset", "Magma Slime", 380, 1.85f, 18, 1.8f, 0.85f, 0, true, kind: BossKind.Magma, tint: BossCatalog.Tint(BossKind.Magma)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_StormSlime.asset", "Storm Slime", 340, 2.2f, 16, 1.7f, 0.75f, 0, true, kind: BossKind.Storm, tint: BossCatalog.Tint(BossKind.Storm)),
-                Enemy("Assets/ScriptableObjects/Enemies/BOSS_CrystalSlime.asset", "Crystal Slime", 400, 1.7f, 17, 1.7f, 0.8f, 0, true, incoming: 0.8f, kind: BossKind.Crystal, tint: BossCatalog.Tint(BossKind.Crystal)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_RockSlime.asset", "Rock Slime", 10000, 1.8f, 18, 1.8f, 0.85f, 40, true, incoming: 0.65f, kind: BossKind.Rock, tint: BossCatalog.Tint(BossKind.Rock)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_FlameSlime.asset", "Flame Slime", 20000, 2.15f, 24, 1.7f, 0.8f, 45, true, kind: BossKind.Flame, tint: BossCatalog.Tint(BossKind.Flame)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_FrostSlime.asset", "Frost Slime", 30000, 1.9f, 30, 1.7f, 0.8f, 50, true, kind: BossKind.Frost, tint: BossCatalog.Tint(BossKind.Frost)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_VoltSlime.asset", "Volt Slime", 40000, 2.55f, 36, 1.6f, 0.7f, 55, true, kind: BossKind.Volt, tint: BossCatalog.Tint(BossKind.Volt)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_ToxicSlime.asset", "Toxic Slime", 50000, 2.0f, 42, 1.7f, 0.8f, 60, true, kind: BossKind.Toxic, tint: BossCatalog.Tint(BossKind.Toxic)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_ShadowSlime.asset", "Shadow Slime", 60000, 2.4f, 48, 1.6f, 0.7f, 65, true, kind: BossKind.Shadow, tint: BossCatalog.Tint(BossKind.Shadow)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_MagmaSlime.asset", "Magma Slime", 70000, 1.85f, 54, 1.8f, 0.85f, 70, true, kind: BossKind.Magma, tint: BossCatalog.Tint(BossKind.Magma)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_StormSlime.asset", "Storm Slime", 80000, 2.2f, 60, 1.7f, 0.75f, 75, true, kind: BossKind.Storm, tint: BossCatalog.Tint(BossKind.Storm)),
+                Enemy("Assets/ScriptableObjects/Enemies/BOSS_CrystalSlime.asset", "Crystal Slime", 90000, 1.7f, 66, 1.7f, 0.8f, 80, true, incoming: 0.8f, kind: BossKind.Crystal, tint: BossCatalog.Tint(BossKind.Crystal)),
                 bossDef
             };
 
@@ -1801,11 +1801,17 @@ namespace SlimeBreaker.EditorTools
             Stretch(hpText.rectTransform);
             var xp = Slider(safe, "XP", new Color(0.45f, 0.92f, 0.45f), barSprite);
             Place(xp.gameObject, safe, new Vector2(0.16f, 0.883f), new Vector2(470f, 22f));
-            var level = Text(safe, "Level", "Lv 1", 34, TextAnchor.MiddleLeft, font);
+            var level = Text(safe, "Level", "Lv 1", 30, TextAnchor.MiddleLeft, font);
             level.fontStyle = FontStyle.Bold;
-            Place(level.gameObject, safe, new Vector2(0.335f, 0.935f), new Vector2(160f, 44f));
-            var timer = Text(safe, "Timer", "00:00", 40, TextAnchor.MiddleCenter, font);
-            Place(timer.gameObject, safe, new Vector2(0.5f, 0.935f), new Vector2(240f, 54f));
+            Place(level.gameObject, safe, new Vector2(0.33f, 0.948f), new Vector2(140f, 36f));
+            var damage = Text(safe, "Damage", "ATK 12", 24, TextAnchor.MiddleLeft, font);
+            damage.fontStyle = FontStyle.Bold;
+            Place(damage.gameObject, safe, new Vector2(0.33f, 0.905f), new Vector2(160f, 28f));
+            var floor = Text(safe, "Floor", "Lantai 1/100", 28, TextAnchor.MiddleCenter, font);
+            floor.fontStyle = FontStyle.Bold;
+            Place(floor.gameObject, safe, new Vector2(0.52f, 0.935f), new Vector2(260f, 40f));
+            var timer = Text(safe, "Timer", "00:00", 34, TextAnchor.MiddleCenter, font);
+            Place(timer.gameObject, safe, new Vector2(0.72f, 0.935f), new Vector2(180f, 48f));
             var pause = Button(safe, "Pause", "II", font, Color.white, circleSprite);
             pause.GetComponentInChildren<Text>().fontSize = 34;
             Place(pause.gameObject, safe, new Vector2(0.955f, 0.925f), new Vector2(84f, 84f));
@@ -1953,6 +1959,8 @@ namespace SlimeBreaker.EditorTools
             ui.hpText = hpText;
             ui.xpSlider = xp;
             ui.levelText = level;
+            ui.floorText = floor;
+            ui.damageText = damage;
             ui.timerText = timer;
             ui.dashFill = dashFill;
             ui.levelUpPanel = levelPanel;
@@ -2042,8 +2050,8 @@ namespace SlimeBreaker.EditorTools
         {
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
-            PlayerSettings.bundleVersion = "0.4.0";
-            PlayerSettings.Android.bundleVersionCode = 4;
+            PlayerSettings.bundleVersion = "0.5.0";
+            PlayerSettings.Android.bundleVersionCode = 5;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

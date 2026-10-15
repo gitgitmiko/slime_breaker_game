@@ -40,6 +40,8 @@ namespace SlimeBreaker
                     data.stats = new RunStats();
                 data.level = Mathf.Max(1, data.level);
                 data.stage = Mathf.Max(1, data.stage);
+                data.floor = Mathf.Max(1, data.floor > 0 ? data.floor : data.stage);
+                data.floorKills = Mathf.Max(0, data.floorKills);
                 data.hp = Mathf.Max(0, data.hp);
                 data.xp = Mathf.Max(0, data.xp);
                 data.elapsed = Mathf.Max(0f, data.elapsed);

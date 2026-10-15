@@ -93,7 +93,7 @@ namespace SlimeBreaker
             if (continueButton != null)
                 continueButton.gameObject.SetActive(canContinue);
             if (continueLabel != null && canContinue)
-                continueLabel.text = "Lanjutkan (Level " + run.level + " · Arena " + Mathf.Max(1, run.stage) + ")";
+                continueLabel.text = "Lanjutkan (Lv " + run.level + " · Lantai " + Mathf.Max(1, run.floor > 0 ? run.floor : run.stage) + ")";
         }
 
         void SetButton(Text label, Button button, string title, int rank)

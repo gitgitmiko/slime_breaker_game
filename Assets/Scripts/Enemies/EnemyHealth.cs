@@ -66,6 +66,17 @@ namespace SlimeBreaker
                 TintBody(def.tint);
         }
 
+        public void SetMaxHealth(int max)
+        {
+            Max = Mathf.Max(1, max);
+            Current = Max;
+        }
+
+        public void SetContactDamage(int damage)
+        {
+            ContactDamage = Mathf.Max(1, damage);
+        }
+
         void MeasureBody()
         {
             bool any = false;

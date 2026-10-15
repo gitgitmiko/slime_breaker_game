@@ -1,6 +1,6 @@
 # Slime Breaker
 
-Game action roguelite 3D untuk Android, 60 fps. Seorang penyihir anime melawan gerombolan slime di satu arena besar sampai level 100. Tiap 5 level ada power-up; tiap 10 level muncul slime boss unik (Rock Slime … Royal Slime). Bar darah musuh, slime jarak, lifesteal, dan Attack Speed ikut di run. Batu dan pohon memblokir serangan. Progres run bisa dilanjutkan. Offline, tanpa akun.
+Game action roguelite 3D untuk Android, 60 fps. Seorang penyihir anime melawan gerombolan slime di satu arena besar selama 100 lantai. Level hero maksimum 999; damage output tampil di HUD. Tiap 5 level hero ada power-up; tiap 10 lantai muncul slime boss unik (Rock Slime … Royal Slime) dengan HP 10.000 × nomor bos dan skill enrage di bawah 30% HP. Bar darah musuh, slime jarak, lifesteal, dan Attack Speed ikut di run. Batu dan pohon memblokir serangan. Progres run bisa dilanjutkan. Offline, tanpa akun.
 
 ## Isi
 

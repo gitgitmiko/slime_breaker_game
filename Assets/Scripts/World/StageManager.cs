@@ -4,8 +4,9 @@ using UnityEngine;
 namespace SlimeBreaker
 {
     /// <summary>
-    /// One large map for the whole run. Power-ups drop every five levels. Every ten levels a unique boss
-    /// is announced, the camera zooms in, and regular spawning pauses until that boss falls.
+    /// One large map for the whole run. Floors 1–100. Power-ups drop every five hero levels.
+    /// Every ten floors a unique boss is announced, the camera zooms in, and regular spawning
+    /// pauses until that boss falls.
     /// </summary>
     public class StageManager : MonoBehaviour
     {
@@ -22,7 +23,9 @@ namespace SlimeBreaker
         public GameObject minionPrefab;
         public FollowCamera cameraRig;
 
-        public int Stage { get; private set; } = 1;
+        public int Floor { get; private set; } = 1;
+        public int FloorKills { get; private set; }
+        public int Stage => Floor;
         public bool Intermission { get; private set; }
         public ArenaTheme Theme { get; private set; }
         public int HandledPowerTiers { get; private set; }
@@ -60,16 +63,17 @@ namespace SlimeBreaker
             var resume = RunSaveService.PeekResume();
             if (resume != null && resume.level > 0)
             {
-                Stage = Mathf.Max(1, resume.stage);
+                Floor = Mathf.Clamp(resume.floor > 0 ? resume.floor : Mathf.Max(1, resume.stage), 1, RunRules.MaxFloor);
+                FloorKills = Mathf.Max(0, resume.floorKills);
                 RunSeed = resume.runSeed != 0 ? resume.runSeed : resume.themeSeed;
                 Theme = resume.ToTheme();
                 HandledPowerTiers = resume.level / RunRules.PowerUpEvery;
-                HandledBossTiers = resume.level / RunRules.BossEvery;
+                HandledBossTiers = Floor / RunRules.BossEvery;
                 if (resume.intermission)
                     HandledBossTiers = Mathf.Max(0, HandledBossTiers - 1);
                 if (spawner != null)
                 {
-                    spawner.Stage = Stage;
+                    spawner.Stage = Floor;
                     if (resume.intermission)
                         spawner.Paused = true;
                 }
@@ -107,16 +111,15 @@ namespace SlimeBreaker
 
             if (BossAlive() || Intermission)
                 return;
-            int bosses = level / RunRules.BossEvery;
-            if (bosses > HandledBossTiers)
+            int bosses = Floor / RunRules.BossEvery;
+            if (RunRules.IsBossFloor(Floor) && bosses > HandledBossTiers)
                 StartCoroutine(BeginBoss(bosses));
         }
 
         IEnumerator RestoreBoss()
         {
             yield return null;
-            var flow = GameFlowController.Instance;
-            int bosses = flow != null && flow.Stats != null ? flow.Stats.level / RunRules.BossEvery : 1;
+            int bosses = Floor / RunRules.BossEvery;
             if (bosses > 0)
                 StartCoroutine(BeginBoss(bosses));
         }
@@ -128,7 +131,6 @@ namespace SlimeBreaker
             introducing = true;
             Intermission = true;
             HandledBossTiers = tier;
-            Stage = Mathf.Max(1, tier);
             ActiveBoss = (BossKind)Mathf.Clamp(tier, 1, 10);
             VanishMinions();
             if (spawner != null)
@@ -136,8 +138,8 @@ namespace SlimeBreaker
 
             var flow = GameFlowController.Instance;
             flow?.BeginBossIntro();
-            flow?.ui?.ShowBossWarning(BossCatalog.DisplayName(ActiveBoss), BossCatalog.Tint(ActiveBoss));
-            flow?.ui?.ShowToast("STAGE BOSS — " + BossCatalog.DisplayName(ActiveBoss), BossCatalog.Tint(ActiveBoss));
+            flow?.ui?.ShowBossWarning(BossCatalog.DisplayName(ActiveBoss), BossCatalog.Tint(ActiveBoss), Floor);
+            flow?.ui?.ShowToast("BOSS LANTAI " + Floor + " — " + BossCatalog.DisplayName(ActiveBoss), BossCatalog.Tint(ActiveBoss));
             AudioService.Instance?.Play("bosswarn");
 
             var boss = SpawnBoss(ActiveBoss);
@@ -167,11 +169,13 @@ namespace SlimeBreaker
             var definition = DefinitionFor(kind);
             var health = instance.GetComponent<EnemyHealth>();
             health?.Bind(definition);
+            health?.SetMaxHealth(BossCatalog.HealthForFloor(Floor));
+            health?.SetContactDamage(BossCatalog.ContactDamageForFloor(Floor));
             health?.TintBody(BossCatalog.Tint(kind));
             var boss = instance.GetComponent<BossController>();
             if (boss == null)
                 boss = instance.AddComponent<BossController>();
-            boss.Configure(kind, hostileBolt, lightningPrefab, minionPrefab);
+            boss.Configure(kind, hostileBolt, lightningPrefab, minionPrefab, Floor);
             boss.arenaRadius = RunRules.ArenaRadius;
             return instance;
         }
@@ -186,23 +190,69 @@ namespace SlimeBreaker
 
         void OnEnemyDied(EnemyHealth enemy)
         {
-            if (enemy == null || !enemy.IsBoss)
+            if (enemy == null)
                 return;
-            var kind = ActiveBoss;
-            ActiveBoss = BossKind.None;
+            if (enemy.IsBoss)
+            {
+                var kind = ActiveBoss;
+                ActiveBoss = BossKind.None;
+                Intermission = false;
+                if (spawner != null)
+                {
+                    spawner.Paused = false;
+                    spawner.Stage = Floor;
+                }
+                if (BossCatalog.IsFinal(kind) || Floor >= RunRules.MaxFloor)
+                {
+                    GameFlowController.Instance?.EndRun(true);
+                    return;
+                }
+                GameFlowController.Instance?.ui?.ShowToast(BossCatalog.DisplayName(kind) + " kalah!", new Color(1f, 0.85f, 0.4f));
+                AdvanceFloor();
+                return;
+            }
+
+            if (introducing || Intermission || RunRules.IsBossFloor(Floor))
+                return;
+            FloorKills++;
+            if (FloorKills >= RunRules.KillQuota(Floor))
+                AdvanceFloor();
+        }
+
+        void AdvanceFloor()
+        {
+            if (Floor >= RunRules.MaxFloor)
+                return;
+            Floor++;
+            FloorKills = 0;
+            if (spawner != null)
+                spawner.Stage = Floor;
+            if (!RunRules.IsBossFloor(Floor))
+                GameFlowController.Instance?.ui?.ShowToast("Lantai " + Floor, new Color(0.55f, 0.9f, 1f));
+            GameFlowController.Instance?.PersistRun();
+        }
+
+        /// <summary>Playtest helper: jump to a floor without walking the kill quota.</summary>
+        public void ForceFloor(int floor)
+        {
+            Floor = Mathf.Clamp(floor, 1, RunRules.MaxFloor);
+            FloorKills = 0;
+            HandledBossTiers = (Floor - 1) / RunRules.BossEvery;
             Intermission = false;
+            introducing = false;
+            ActiveBoss = BossKind.None;
+            VanishMinions();
             if (spawner != null)
             {
+                spawner.Stage = Floor;
                 spawner.Paused = false;
-                spawner.Stage = Mathf.Max(1, HandledBossTiers);
             }
-            if (BossCatalog.IsFinal(kind) || (GameFlowController.Instance != null && GameFlowController.Instance.Stats.level >= RunRules.MaxLevel))
-            {
-                GameFlowController.Instance?.EndRun(true);
-                return;
-            }
-            GameFlowController.Instance?.ui?.ShowToast(BossCatalog.DisplayName(kind) + " kalah!", new Color(1f, 0.85f, 0.4f));
-            GameFlowController.Instance?.PersistRun();
+        }
+
+        public void EnterPortal(ExitPortal portal)
+        {
+            if (portal != null)
+                Destroy(portal.gameObject);
         }
 
         static void VanishMinions()
@@ -213,12 +263,6 @@ namespace SlimeBreaker
                 if (snapshot[i] != null && !snapshot[i].IsBoss)
                     snapshot[i].Vanish();
             }
-        }
-
-        public void EnterPortal(ExitPortal portal)
-        {
-            if (portal != null)
-                Destroy(portal.gameObject);
         }
 
         static bool BossAlive()

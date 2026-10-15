@@ -131,7 +131,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.SkillController
   iceShardPrefab: {fileID: 8578040595387116094, guid: f27f23dbbf22bcbdc8993357165b7282, type: 3}
   missilePrefab: {fileID: 6489299552518354295, guid: 618806ad8e28f268fb519d01e55faf96, type: 3}
-  fireRingPrefab: {fileID: 2768123349957700304, guid: 7c631436076a841f2848aee260096e01, type: 3}
+  fireRingPrefab: {fileID: 1137405152078787108, guid: 6a1200ed5bee1f8038945495f330a2cb, type: 3}
   lightningPrefab: {fileID: 3341359160270722811, guid: b8fa893cf28e969c1a3cda15f5e96195, type: 3}
   orbitHeight: 0.75
   orbitSpeed: 150

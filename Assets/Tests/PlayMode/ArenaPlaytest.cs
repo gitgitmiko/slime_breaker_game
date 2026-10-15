@@ -416,7 +416,6 @@ namespace SlimeBreaker.Tests
             yield return null;
             Assert.IsFalse(dash.CanDash, "dash did not start");
             dash.QueueDash();
-            Tap(Key.Space);
             dash.QueueDash();
             float wait = 0f;
             while (!dash.CanDash && wait < 2.5f)

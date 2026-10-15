@@ -367,6 +367,32 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
+        public IEnumerator HeroBoltHitsEnemiesWhileMoving()
+        {
+            var player = Object.FindAnyObjectByType<PlayerController>();
+            Assert.IsNotNull(player);
+            var enemySpawner = Object.FindAnyObjectByType<EnemySpawner>();
+            var hero = PlayerHealth.Instance.transform;
+            var enemyObject = Object.Instantiate(enemySpawner.normalPrefab, hero.position + Vector3.right * 3f, Quaternion.identity);
+            var enemy = enemyObject.GetComponent<EnemyHealth>();
+            int start = enemy.Current;
+            Press(Key.W);
+            float t = 0f;
+            while (t < 3.2f && enemy != null && !enemy.IsDead && enemy.Current == start)
+            {
+                if (enemy != null && !enemy.IsDead)
+                    enemyObject.transform.position = hero.position + Vector3.right * 3f;
+                yield return null;
+                SkipLevelUp();
+                t += Time.deltaTime;
+            }
+            Assert.Greater(player.WishDirection.sqrMagnitude, 0.01f, "hero was not walking during the test");
+            Release();
+            Assert.IsTrue(enemy == null || enemy.IsDead || enemy.Current < start,
+                "the bolt never damaged an enemy while the hero was walking");
+        }
+
+        [UnityTest]
         public IEnumerator EveryRendererHasAWorkingMaterial()
         {
             yield return null;
@@ -592,7 +618,12 @@ namespace SlimeBreaker.Tests
             Assert.GreaterOrEqual(NonBossCount() - beforeAdds, 10, "boss should summon 10 small slimes");
             SkyfallHazard.Drop(PlayerHealth.Instance.transform.position + Vector3.forward * 2f, 1, 0.4f, Color.gray, 1f);
             yield return null;
-            Assert.IsNotNull(Object.FindAnyObjectByType<SkyfallHazard>(), "rock skyfall hazard did not spawn");
+            var skyfall = Object.FindAnyObjectByType<SkyfallHazard>();
+            Assert.IsNotNull(skyfall, "rock skyfall hazard did not spawn");
+            Assert.IsNotNull(skyfall.transform.Find("Penumbra"), "skyfall has no soft penumbra shadow");
+            Assert.IsNotNull(skyfall.transform.Find("Umbra"), "skyfall has no contact umbra shadow");
+            Assert.IsNotNull(skyfall.transform.Find("Mark"), "skyfall has no impact mark");
+            AssertCapeAndCrown(boss);
             while (boss != null && !boss.IsDead && boss.Current > boss.Max * 0.3f)
                 boss.TakeDamage(800);
             Assert.IsNotNull(boss);
@@ -672,6 +703,13 @@ namespace SlimeBreaker.Tests
             Assert.IsTrue(flow.ui.floorText.text.Contains("100"), flow.ui.floorText.text);
             Assert.IsTrue(flow.ui.damageText.text.Contains(flow.Stats.damage.ToString()), flow.ui.damageText.text);
             Assert.IsTrue(flow.ui.levelText.text.Contains(flow.Stats.level.ToString()), flow.ui.levelText.text);
+            Assert.IsNotNull(flow.ui.statusText, "HUD has no status panel");
+            Assert.IsTrue(flow.ui.statusText.text.Contains("DMG"), flow.ui.statusText.text);
+            Assert.IsTrue(flow.ui.statusText.text.Contains("CRIT"), flow.ui.statusText.text);
+            Assert.IsTrue(flow.ui.statusText.text.Contains("CRIT RATE"), flow.ui.statusText.text);
+            Assert.IsTrue(flow.ui.statusText.text.Contains("ATK SPD"), flow.ui.statusText.text);
+            Assert.IsTrue(flow.ui.statusText.text.Contains("MOVE"), flow.ui.statusText.text);
+            Assert.IsTrue(flow.ui.statusText.text.Contains("LS"), flow.ui.statusText.text);
             Assert.AreEqual("EXP", flow.ui.xpSlider.gameObject.name);
             Assert.IsNotNull(Object.FindAnyObjectByType<Wayfinder>(), "HUD has no wayfinder arrows");
             var upgrades = Object.FindAnyObjectByType<UpgradeManager>();
@@ -752,6 +790,40 @@ namespace SlimeBreaker.Tests
             graphics.Apply(GraphicsService.High, persist: false);
             Assert.AreEqual(GraphicsService.High, graphics.Level);
             Assert.IsNotNull(QualitySettings.renderPipeline);
+        }
+
+        static void AssertCapeAndCrown(EnemyHealth boss)
+        {
+            Assert.IsNotNull(boss);
+            var renderer = boss.GetComponentInChildren<SkinnedMeshRenderer>();
+            Assert.IsNotNull(renderer, "boss has no skinned mesh");
+            var materials = renderer.sharedMaterials;
+            Assert.IsNotNull(materials);
+            bool sawCape = false;
+            bool sawCrown = false;
+            for (int i = 0; i < materials.Length; i++)
+            {
+                if (materials[i] == null)
+                    continue;
+                var block = new MaterialPropertyBlock();
+                renderer.GetPropertyBlock(block, i);
+                Color color = block.GetColor("_BaseColor");
+                string name = materials[i].name.ToLowerInvariant();
+                if (name.Contains("cape"))
+                {
+                    sawCape = true;
+                    Assert.Greater(color.r, color.g + 0.3f, "boss cape should be red, got " + color);
+                    Assert.Greater(color.r, color.b + 0.3f, "boss cape should be red, got " + color);
+                }
+                if (name.Contains("gold") || name.Contains("crown"))
+                {
+                    sawCrown = true;
+                    Assert.Greater(color.r, 0.85f, "boss crown should be gold, got " + color);
+                    Assert.Greater(color.g, 0.55f, "boss crown should be gold, got " + color);
+                }
+            }
+            Assert.IsTrue(sawCape, "boss mesh has no cape material");
+            Assert.IsTrue(sawCrown, "boss mesh has no gold/crown material");
         }
 
         static int NonBossCount()

@@ -59,6 +59,14 @@
 - Damage boss: basic 50, skill 100, skill enrage 200.
 - Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 15/15. PlayMode 23/23. APK `SLIMEBREAKER_APK_OK` 0.7.0.
 
+### Putaran 8 — bayangan batu, serangan sambil jalan, HUD status, palet boss, crit terkunci
+
+- Bayangan skill jatuhan batu: umbra + penumbra lunak yang mengikuti ketinggian batu (kecil/pudar di udara, besar/gelap dekat tanah) plus cincin dampak, jatuhan berakselerasi.
+- Auto-attack tidak memutar hero atau memutus animasi lari; bolt tetap homing saat hero berjalan. Proyektil yang spawn di dalam obstacle tidak langsung hilang.
+- HUD status di kiri atas di bawah HP/EXP: DMG, CRIT, CRIT RATE, ATK SPD, MOVE, LS.
+- Pewarnaan boss per bahan: tubuh elemen, jubah merah, mahkota emas, permata elemen.
+- Critical hanya keluar setelah upgrade Crit Rate atau Critical (awal crit chance 0).
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

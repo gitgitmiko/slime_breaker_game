@@ -8,7 +8,7 @@ Satu run berlangsung di arena radius 22 m selama **100 lantai**. Level hero terp
 
 Menu → arena lantai 1 (hutan siang cerah) → gerak dan dash → penyihir otomatis menembakkan bolt sihir pelacak ke musuh terdekat yang terlihat (jangkauan 4,4 m; batu/pohon memblokir tembakan) → orb EXP → level-up menjeda permainan dan menawarkan 3 upgrade (hero max Lv 999) → setiap kelipatan 5 **level hero** satu kristal power-up muncul di map yang sama → clear kuota slime membuka **pintu**; hero masuk dulu baru naik lantai → setiap kelipatan 10 **lantai** slime biasa lenyap, peringatan **BOSS LANTAI N**, kamera zoom ke bos, lalu pertarungan (boss memanggil 10 slime kecil tiap 20 detik) → Royal Slime di lantai 100 = tamat → emas disimpan → upgrade permanen di menu. Keluar di tengah run menyimpan progres ke `slimebreaker-run.json`; tombol **Lanjutkan** di menu memulihkan lantai, level, skill, HP, dan EXP.
 
-HUD menampilkan **Lantai**, **Lv**, **ATK** (damage output hero), timer, HP, dan **EXP**. Panah wayfinder menunjuk pintu dan power-up yang aktif. Angka damage mengambang di atas musuh (krem), critical (**CRIT** emas lebih besar), dan damage yang diterima hero (merah).
+HUD menampilkan **Lantai**, **Lv**, timer, HP, **EXP**, dan panel status di kiri atas di bawah bar HP: **DMG**, **CRIT**, **CRIT RATE**, **ATK SPD**, **MOVE**, **LS**. Panah wayfinder menunjuk pintu dan power-up yang aktif. Angka damage mengambang di atas musuh (krem), critical (**CRIT** emas lebih besar), dan damage yang diterima hero (merah). Bolt sihir tetap menembak saat hero berjalan.
 
 ## Kontrol
 
@@ -30,7 +30,7 @@ HUD menampilkan **Lantai**, **Lv**, **ATK** (damage output hero), timer, HP, dan
 
 Saat lantai mencapai kelipatan 10, arena masuk mode boss: minion lenyap, spawner berhenti, banner **BOSS LANTAI N** muncul, kamera zoom ke bos selama ~2,5 detik, lalu pertarungan dimulai. Boss memanggil **10 slime kecil setiap 20 detik** (maks ~14 hidup) supaya hero tetap bisa naik level dan mengambil power-up tiap 5 level. Setelah boss kalah, pintu muncul; masuk pintu baru ke lantai berikutnya.
 
-HP boss = lantai × 1000 (lantai 10 = 10.000, lantai 20 = 20.000, … lantai 100 = 100.000). Damage boss tetap: **basic 50**, **skill 100**, **skill enrage 200**. Ketika HP boss turun di bawah 30%, ia **enrage** dan memakai N skill elemental (N = lantai / 10). Skill memakai telegraf sesuai elemen: batu/es/racun/magma jatuh dari langit dengan **bayangan di tanah**, api menembak bolt api, petir menyambar.
+HP boss = lantai × 1000 (lantai 10 = 10.000, lantai 20 = 20.000, … lantai 100 = 100.000). Damage boss tetap: **basic 50**, **skill 100**, **skill enrage 200**. Ketika HP boss turun di bawah 30%, ia **enrage** dan memakai N skill elemental (N = lantai / 10). Skill memakai telegraf sesuai elemen: batu/es/racun/magma jatuh dari langit dengan **bayangan lunak** yang membesar dan menggelap saat batu mendekat tanah, api menembak bolt api, petir menyambar. Model boss memakai palet per-bagian: tubuh sesuai elemen, **jubah merah**, **mahkota emas**, permata mengikuti elemen.
 
 ## Map dan cuaca
 
@@ -64,7 +64,7 @@ Masuk pintu meregenerasi arena (fade). Cuaca dan siang/malam berganti setiap lan
 
 ## Upgrade run (level-up)
 
-Serangan, laju, nyawa, **Attack Speed**, dash, jangkauan, **EXP**, pengurangan damage, **Lifesteal**, **Crit Rate** (+8% peluang, cap 70%), dan **Critical** (+30% pengali crit, dasar 1,5×, cap 3,5×). Damage output hero tampil di HUD sebagai **ATK**. Serangan yang crit menampilkan angka **CRIT** emas.
+Serangan, laju, nyawa, **Attack Speed**, dash, jangkauan, **EXP**, pengurangan damage, **Lifesteal**, **Crit Rate** (+8% peluang, cap 70%), dan **Critical** (+30% pengali crit, cap 3,5×). Hero mulai hanya dengan damage dasar — **tidak ada critical** sampai mengambil Crit Rate atau Critical. Crit Rate membuka peluang 8% dengan pengali 1,5×; Critical sendiri membuka crit (peluang 8%) dan menaikkan pengali. Serangan yang crit menampilkan angka **CRIT** emas.
 
 ## Skill power-up (tiap 5 level hero)
 

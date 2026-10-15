@@ -61,8 +61,9 @@ namespace SlimeBreaker.Tests
         public void DefaultCritStatsAreSensible()
         {
             var stats = new RunStats();
-            Assert.AreEqual(0.08f, stats.critChance, 0.001f);
+            Assert.AreEqual(0f, stats.critChance, 0.001f);
             Assert.AreEqual(1.5f, stats.critMultiplier, 0.001f);
+            Assert.IsFalse(stats.HasCrit);
         }
 
         [Test]
@@ -73,11 +74,13 @@ namespace SlimeBreaker.Tests
             {
                 var manager = host.AddComponent<UpgradeManager>();
                 var stats = new RunStats();
+                Assert.IsFalse(stats.HasCrit);
                 var rate = UnityEngine.ScriptableObject.CreateInstance<UpgradeDefinition>();
                 rate.kind = UpgradeKind.CritChance;
                 rate.amount = 0.08f;
                 manager.Apply(rate, stats);
-                Assert.AreEqual(0.16f, stats.critChance, 0.001f);
+                Assert.AreEqual(0.08f, stats.critChance, 0.001f);
+                Assert.IsTrue(stats.HasCrit);
                 var crit = UnityEngine.ScriptableObject.CreateInstance<UpgradeDefinition>();
                 crit.kind = UpgradeKind.CritDamage;
                 crit.amount = 0.3f;
@@ -88,6 +91,43 @@ namespace SlimeBreaker.Tests
             {
                 UnityEngine.Object.DestroyImmediate(host);
             }
+        }
+
+        [Test]
+        public void CriticalUpgradeAloneUnlocksCrits()
+        {
+            var host = new UnityEngine.GameObject("UpgradeHost");
+            try
+            {
+                var manager = host.AddComponent<UpgradeManager>();
+                var stats = new RunStats();
+                var crit = UnityEngine.ScriptableObject.CreateInstance<UpgradeDefinition>();
+                crit.kind = UpgradeKind.CritDamage;
+                crit.amount = 0.3f;
+                manager.Apply(crit, stats);
+                Assert.IsTrue(stats.HasCrit);
+                Assert.AreEqual(0.08f, stats.critChance, 0.001f);
+                Assert.AreEqual(1.8f, stats.critMultiplier, 0.001f);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void RockBossCapeIsRedAndCrownIsGold()
+        {
+            var cape = BossCatalog.CapeColor(BossKind.Rock);
+            Assert.Greater(cape.r, 0.6f);
+            Assert.Less(cape.g, 0.2f);
+            Assert.Less(cape.b, 0.2f);
+            Assert.Greater(BossCatalog.CrownColor.r, 0.9f);
+            Assert.Greater(BossCatalog.CrownColor.g, 0.65f);
+            Assert.AreEqual(BossCatalog.CapeColor(BossKind.Rock),
+                BossCatalog.ColorForMaterial("MAT_king_cape", BossKind.Rock, UnityEngine.Color.gray));
+            Assert.AreEqual(BossCatalog.CrownColor,
+                BossCatalog.ColorForMaterial("MAT_gold.001", BossKind.Rock, UnityEngine.Color.gray));
         }
 
         [Test]

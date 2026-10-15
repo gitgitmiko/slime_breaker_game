@@ -19,6 +19,7 @@ namespace SlimeBreaker
         float age;
         Vector3 velocity;
         Transform spinner;
+        bool startedInside;
 
         public static HomingProjectile Launch(GameObject prefab, Vector3 origin, EnemyHealth target, int damage, float speed = -1f, bool crit = false)
         {
@@ -44,6 +45,7 @@ namespace SlimeBreaker
             if (velocity.sqrMagnitude > 0.001f)
                 transform.rotation = Quaternion.LookRotation(velocity);
             spinner = transform.childCount > 0 ? transform.GetChild(0) : null;
+            startedInside = Obstacles.Overlaps(transform.position, 0.16f);
         }
 
         Vector3 AimPoint()
@@ -67,7 +69,10 @@ namespace SlimeBreaker
                 velocity = Vector3.Lerp(velocity, desired, 1f - Mathf.Exp(-turnRate * Time.deltaTime));
             }
             Vector3 delta = velocity * Time.deltaTime;
-            if (Obstacles.Cast(transform.position, delta, 0.12f, out var blocked))
+            bool stillInsideSpawn = startedInside && Obstacles.Overlaps(transform.position, 0.16f);
+            if (startedInside && !stillInsideSpawn)
+                startedInside = false;
+            if (!stillInsideSpawn && Obstacles.Cast(transform.position, delta, 0.12f, out var blocked))
             {
                 VfxPlayer.Instance?.Play(hitVfx, blocked.point);
                 AudioService.Instance?.Play(hitSfx);

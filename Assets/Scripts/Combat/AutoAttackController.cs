@@ -16,13 +16,17 @@ namespace SlimeBreaker
         Animator animator;
         Transform staffTip;
         PlayerHealth health;
+        PlayerController motor;
+        EnemyHealth aim;
 
         public Transform StaffTip => staffTip;
+        public bool IsCasting => casting;
 
         void Awake()
         {
             animator = GetComponentInChildren<Animator>();
             health = GetComponent<PlayerHealth>();
+            motor = GetComponent<PlayerController>();
             staffTip = SkillController.FindDeep(transform, "StaffTip");
         }
 
@@ -48,6 +52,15 @@ namespace SlimeBreaker
             StartCoroutine(Cast(target, damage, stats.attackRange, crit));
         }
 
+        void LateUpdate()
+        {
+            if (!casting || aim == null || aim.IsDead)
+                return;
+            if (motor != null && motor.IsMoving)
+                return;
+            Face(aim.transform.position);
+        }
+
         EnemyHealth FindNearest(float range)
         {
             EnemyHealth best = null;
@@ -55,7 +68,7 @@ namespace SlimeBreaker
             float bestDistance = range * range;
             float fallbackDistance = range * range;
             Vector3 origin = transform.position;
-            Vector3 eye = CastOrigin;
+            Vector3 eye = AimEye;
             for (int i = 0; i < EnemyHealth.Active.Count; i++)
             {
                 var enemy = EnemyHealth.Active[i];
@@ -78,27 +91,46 @@ namespace SlimeBreaker
             return best != null ? best : fallback;
         }
 
-        Vector3 CastOrigin
+        Vector3 AimEye => transform.position + Vector3.up * 1.15f;
+
+        Vector3 LaunchOrigin(EnemyHealth target)
         {
-            get
-            {
-                if (staffTip != null)
-                    return staffTip.position;
-                return transform.position + Vector3.up * 1.15f + transform.forward * 0.45f;
-            }
+            Vector3 chest = AimEye;
+            Vector3 aimPoint = target != null
+                ? target.transform.position + Vector3.up * target.HitHeight
+                : chest + transform.forward;
+            Vector3 to = aimPoint - chest;
+            if (to.sqrMagnitude < 0.0001f)
+                to = transform.forward;
+            Vector3 dir = to.normalized;
+            Vector3 staff = staffTip != null ? staffTip.position : chest + dir * 0.55f;
+            staff.y = Mathf.Max(staff.y, 0.7f);
+            Vector3 fromStaff = staff - chest;
+            fromStaff.y = 0f;
+            Vector3 flatDir = dir;
+            flatDir.y = 0f;
+            // While running the staff swings behind the body; fire from the chest toward the target instead.
+            if (flatDir.sqrMagnitude > 0.001f && Vector3.Dot(fromStaff, flatDir) < 0.05f)
+                return chest + dir * 0.55f;
+            return staff;
+        }
+
+        void Face(Vector3 world)
+        {
+            Vector3 to = world - transform.position;
+            to.y = 0f;
+            if (to.sqrMagnitude > 0.001f)
+                transform.rotation = Quaternion.LookRotation(to.normalized, Vector3.up);
         }
 
         IEnumerator Cast(EnemyHealth target, int damage, float range, bool crit)
         {
             casting = true;
-            if (target != null)
-            {
-                Vector3 to = target.transform.position - transform.position;
-                to.y = 0f;
-                if (to.sqrMagnitude > 0.001f)
-                    transform.rotation = Quaternion.LookRotation(to.normalized, Vector3.up);
-            }
-            if (animator != null)
+            aim = target;
+            bool moving = motor != null && motor.IsMoving;
+            if (!moving && target != null)
+                Face(target.transform.position);
+            if (!moving && animator != null)
                 animator.SetTrigger("Attack");
             AudioService.Instance?.Play("cast");
 
@@ -116,10 +148,11 @@ namespace SlimeBreaker
 
             if (target == null || target.IsDead)
                 target = FindNearest(range + 1.5f);
+            aim = target;
 
             if (target != null && !target.IsDead)
             {
-                Vector3 origin = CastOrigin;
+                Vector3 origin = LaunchOrigin(target);
                 VfxPlayer.Instance?.Play("cast", origin);
                 if (boltPrefab != null)
                 {
@@ -131,6 +164,7 @@ namespace SlimeBreaker
                     VfxPlayer.Instance?.Play("hit", target.transform.position + Vector3.up * target.HitHeight);
                 }
             }
+            aim = null;
             casting = false;
         }
     }

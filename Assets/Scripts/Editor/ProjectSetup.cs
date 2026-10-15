@@ -1893,9 +1893,20 @@ namespace SlimeBreaker.EditorTools
             var level = Text(safe, "Level", "Lv 1", 30, TextAnchor.MiddleLeft, font);
             level.fontStyle = FontStyle.Bold;
             Place(level.gameObject, safe, new Vector2(0.33f, 0.948f), new Vector2(140f, 36f));
-            var damage = Text(safe, "Damage", "ATK 12", 24, TextAnchor.MiddleLeft, font);
+            var damage = Text(safe, "Damage", "ATK 12", 22, TextAnchor.MiddleLeft, font);
             damage.fontStyle = FontStyle.Bold;
-            Place(damage.gameObject, safe, new Vector2(0.33f, 0.905f), new Vector2(160f, 28f));
+            damage.gameObject.SetActive(false);
+            var statusPanel = new GameObject("Status", typeof(RectTransform), typeof(Image));
+            ApplyImage(statusPanel.GetComponent<Image>(), panelSprite, Image.Type.Sliced, new Color(0.08f, 0.07f, 0.12f, 0.72f));
+            statusPanel.GetComponent<Image>().raycastTarget = false;
+            Place(statusPanel, safe, new Vector2(0.16f, 0.795f), new Vector2(470f, 92f));
+            var status = Text(statusPanel.transform, "Stats", "DMG 12     CRIT —", 16, TextAnchor.UpperLeft, font);
+            status.raycastTarget = false;
+            var statusRect = status.rectTransform;
+            statusRect.anchorMin = new Vector2(0.04f, 0.08f);
+            statusRect.anchorMax = new Vector2(0.96f, 0.92f);
+            statusRect.offsetMin = Vector2.zero;
+            statusRect.offsetMax = Vector2.zero;
             var floor = Text(safe, "Floor", "Lantai 1/100", 28, TextAnchor.MiddleCenter, font);
             floor.fontStyle = FontStyle.Bold;
             Place(floor.gameObject, safe, new Vector2(0.52f, 0.935f), new Vector2(260f, 40f));
@@ -2058,6 +2069,7 @@ namespace SlimeBreaker.EditorTools
             ui.levelText = level;
             ui.floorText = floor;
             ui.damageText = damage;
+            ui.statusText = status;
             ui.timerText = timer;
             ui.dashFill = dashFill;
             ui.levelUpPanel = levelPanel;
@@ -2169,8 +2181,8 @@ namespace SlimeBreaker.EditorTools
         {
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
-            PlayerSettings.bundleVersion = "0.7.0";
-            PlayerSettings.Android.bundleVersionCode = 7;
+            PlayerSettings.bundleVersion = "0.8.0";
+            PlayerSettings.Android.bundleVersionCode = 8;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

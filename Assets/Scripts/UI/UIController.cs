@@ -12,6 +12,7 @@ namespace SlimeBreaker
         public Text levelText;
         public Text floorText;
         public Text damageText;
+        public Text statusText;
         public Text timerText;
         public Image dashFill;
         public GameObject levelUpPanel;
@@ -69,6 +70,8 @@ namespace SlimeBreaker
             }
             RefreshHealth();
             RefreshSkills();
+            if (GameFlowController.Instance != null)
+                RefreshStatus(GameFlowController.Instance.Stats);
             if (levelUpPanel != null)
                 levelUpPanel.SetActive(false);
             if (pausePanel != null)
@@ -96,8 +99,7 @@ namespace SlimeBreaker
                 return;
             if (levelText != null)
                 levelText.text = "Lv " + flow.Stats.level;
-            if (damageText != null)
-                damageText.text = "ATK " + flow.Stats.damage;
+            RefreshStatus(flow.Stats);
             if (floorText != null)
             {
                 int floor = StageManager.Instance != null ? StageManager.Instance.Floor : 1;
@@ -237,6 +239,23 @@ namespace SlimeBreaker
                     + "\nLv " + level + "   ATK " + damage
                     + "\nWaktu " + (seconds / 60).ToString("00") + ":" + (seconds % 60).ToString("00")
                     + "\nEmas +" + gold + "\nTotal " + totalGold;
+        }
+
+        void RefreshStatus(RunStats stats)
+        {
+            if (stats == null)
+                return;
+            if (damageText != null)
+                damageText.text = "ATK " + stats.damage;
+            if (statusText == null)
+                return;
+            string crit = stats.HasCrit ? stats.critMultiplier.ToString("0.0") + "x" : "—";
+            string rate = stats.HasCrit ? Mathf.RoundToInt(stats.critChance * 100f) + "%" : "0%";
+            string steal = Mathf.RoundToInt(stats.lifesteal * 100f) + "%";
+            statusText.text =
+                "DMG " + stats.damage + "     CRIT " + crit + "\n"
+                + "CRIT RATE " + rate + "     ATK SPD " + stats.AttacksPerSecond.ToString("0.00") + "\n"
+                + "MOVE " + stats.moveSpeed.ToString("0.0") + "     LS " + steal;
         }
 
         void RefreshHealth()

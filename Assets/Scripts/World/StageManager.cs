@@ -176,6 +176,7 @@ namespace SlimeBreaker
             health?.SetMaxHealth(BossCatalog.HealthForFloor(Floor));
             health?.SetContactDamage(BossCatalog.ContactDamageForFloor(Floor));
             health?.TintBody(BossCatalog.Tint(kind));
+            // Cape/crown colours are applied inside EnemyHealth from the boss kind.
             var boss = instance.GetComponent<BossController>();
             if (boss == null)
                 boss = instance.AddComponent<BossController>();

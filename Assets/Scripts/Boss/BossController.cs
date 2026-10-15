@@ -65,7 +65,12 @@ namespace SlimeBreaker
         void Start()
         {
             if (kind != BossKind.None)
-                health?.TintBody(BossCatalog.Tint(kind));
+                ApplyLook(tint);
+        }
+
+        void ApplyLook(Color body)
+        {
+            health?.TintBody(body);
         }
 
         void Update()
@@ -150,7 +155,7 @@ namespace SlimeBreaker
             announcedEnrage = true;
             GameFlowController.Instance?.ui?.ShowToast("ENRAGE! " + BossCatalog.DisplayName(kind), new Color(1f, 0.25f, 0.2f));
             AudioService.Instance?.Play("bosswarn");
-            health?.TintBody(Color.Lerp(tint, new Color(1f, 0.15f, 0.1f), 0.55f));
+            ApplyLook(Color.Lerp(tint, new Color(1f, 0.15f, 0.1f), 0.55f));
         }
 
         bool TryEnrage(PlayerHealth player)
@@ -597,9 +602,9 @@ namespace SlimeBreaker
                 renderer.enabled = true;
             }
             if (hide)
-                health?.TintBody(Color.Lerp(tint, Color.black, 0.65f));
+                ApplyLook(Color.Lerp(tint, Color.black, 0.65f));
             else
-                health?.TintBody(tint);
+                ApplyLook(tint);
         }
 
         void ClampArena()

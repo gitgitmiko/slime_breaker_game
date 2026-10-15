@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace SlimeBreaker
 {
-    /// <summary>Hero damage rolls: crit chance and multiplier from run upgrades.</summary>
+    /// <summary>Hero damage rolls: crits only after a Crit Rate or Critical upgrade.</summary>
     public static class CombatMath
     {
         public static int ApplyCrit(int baseDamage, out bool crit)
@@ -10,7 +10,7 @@ namespace SlimeBreaker
             crit = false;
             int amount = Mathf.Max(1, baseDamage);
             var stats = GameFlowController.Instance != null ? GameFlowController.Instance.Stats : null;
-            if (stats == null)
+            if (stats == null || !stats.HasCrit)
                 return amount;
             crit = Random.value < Mathf.Clamp01(stats.critChance);
             if (crit)

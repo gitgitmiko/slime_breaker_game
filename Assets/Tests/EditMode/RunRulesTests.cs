@@ -10,7 +10,7 @@ namespace SlimeBreaker.Tests
         {
             Assert.AreEqual(999, RunRules.MaxHeroLevel);
             Assert.AreEqual(100, RunRules.MaxFloor);
-            Assert.AreEqual(5, RunRules.PowerUpEvery);
+            Assert.AreEqual(20, RunRules.PowerUpEvery);
             Assert.AreEqual(10, RunRules.BossEvery);
         }
 
@@ -188,6 +188,15 @@ namespace SlimeBreaker.Tests
         }
 
         [Test]
+        public void SlimeHealthGrowsEveryFloor()
+        {
+            Assert.AreEqual(24, RunRules.SlimeMaxHealth(24, 1));
+            Assert.Greater(RunRules.SlimeMaxHealth(24, 2), RunRules.SlimeMaxHealth(24, 1));
+            Assert.AreEqual(UnityEngine.Mathf.RoundToInt(24 * 1.9f), RunRules.SlimeMaxHealth(24, 10));
+            Assert.Greater(RunRules.SlimeMaxHealth(24, 20), RunRules.SlimeMaxHealth(24, 10));
+        }
+
+        [Test]
         public void LevelUpAddsTenBasicAttack()
         {
             var stats = new RunStats { damage = 12, level = 1 };
@@ -207,6 +216,33 @@ namespace SlimeBreaker.Tests
             int rolled = CombatMath.ApplyCrit(12, out bool crit);
             Assert.AreEqual(12, rolled);
             Assert.IsFalse(crit);
+        }
+    
+        [Test]
+        public void SkillsScaleToLevelTenThenMax()
+        {
+            var skill = UnityEngine.ScriptableObject.CreateInstance<SkillDefinition>();
+            skill.kind = SkillKind.LightningChain;
+            skill.baseDamage = 10;
+            skill.cooldown = 2f;
+            skill.radius = 1.5f;
+            skill.count = 3;
+            Assert.AreEqual(10, skill.maxLevel);
+            Assert.AreEqual(10, SkillDefinition.MaxSkillLevel);
+            Assert.IsFalse(skill.IsMax(9));
+            Assert.IsTrue(skill.IsMax(10));
+            Assert.AreEqual(10, skill.DamageAt(1));
+            Assert.AreEqual(37, skill.DamageAt(10));
+            Assert.AreEqual(3, skill.CountAt(1));
+            Assert.AreEqual(8, skill.CountAt(10));
+            Assert.Less(skill.CooldownAt(10), skill.CooldownAt(5));
+            Assert.Less(skill.CooldownAt(5), skill.CooldownAt(1));
+            Assert.Greater(skill.RadiusAt(10), skill.RadiusAt(1) * 1.6f);
+            // Past the cap nothing grows further.
+            Assert.AreEqual(skill.DamageAt(10), skill.DamageAt(14));
+            for (int level = 2; level <= 10; level++)
+                Assert.GreaterOrEqual(skill.DamageAt(level), skill.DamageAt(level - 1));
+            UnityEngine.Object.DestroyImmediate(skill);
         }
     }
 }

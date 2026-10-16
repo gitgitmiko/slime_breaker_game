@@ -17,7 +17,7 @@ MonoBehaviour:
   description: Pecahan es mengitari penyihir. Musuh yang tersentuh terluka dan melambat.
   icon: {fileID: 21300000, guid: 7bfbf84ce9dbc6310b04f8ae5f1b7445, type: 3}
   color: {r: 0.55, g: 0.85, b: 1, a: 1}
-  maxLevel: 4
+  maxLevel: 10
   baseDamage: 7
   cooldown: 0
   radius: 1.5

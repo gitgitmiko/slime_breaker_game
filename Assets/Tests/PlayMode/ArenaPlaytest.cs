@@ -214,6 +214,9 @@ namespace SlimeBreaker.Tests
                     t += Time.deltaTime;
                 }
                 Debug.Log("PLAYTEST joystick direction " + player.joystick.Direction);
+                Assert.IsNotNull(player.joystick.background, "free joystick has no movable base");
+                Vector2 baseScreen = RectTransformUtility.WorldToScreenPoint(cam, player.joystick.background.position);
+                Assert.Less(Vector2.Distance(baseScreen, centre), 90f, "joystick base did not jump to the touch point");
                 Capture("06_hud_touch");
                 InputSystem.QueueStateEvent(touch, new TouchState { touchId = 1, phase = UnityEngine.InputSystem.TouchPhase.Ended, position = centre + new Vector2(60f, 0f) });
                 yield return null;
@@ -221,6 +224,27 @@ namespace SlimeBreaker.Tests
                 Debug.Log("PLAYTEST touch moved " + moved.ToString("F2"));
                 Assert.Greater(moved.x, 1.5f, "dragging the joystick right did not move the hero right");
                 Assert.AreEqual(Vector2.zero, player.joystick.Direction, "joystick did not reset on release");
+
+                // Free joystick: a touch anywhere else in the left zone also steers.
+                Vector2 elsewhere = RectTransformUtility.WorldToScreenPoint(cam, rect.TransformPoint(new Vector3(rect.rect.xMin + rect.rect.width * 0.8f, rect.rect.yMin + rect.rect.height * 0.75f, 0f)));
+                start = player.transform.position;
+                InputSystem.QueueStateEvent(touch, new TouchState { touchId = 2, phase = UnityEngine.InputSystem.TouchPhase.Began, position = elsewhere });
+                yield return null;
+                Vector2 jumped = RectTransformUtility.WorldToScreenPoint(cam, player.joystick.background.position);
+                Assert.Less(Vector2.Distance(jumped, elsewhere), 20f, "joystick base did not follow a touch elsewhere in the zone");
+                t = 0f;
+                while (t < 0.8f)
+                {
+                    InputSystem.QueueStateEvent(touch, new TouchState { touchId = 2, phase = UnityEngine.InputSystem.TouchPhase.Moved, position = elsewhere + new Vector2(0f, -60f) });
+                    yield return null;
+                    SkipLevelUp();
+                    t += Time.deltaTime;
+                }
+                InputSystem.QueueStateEvent(touch, new TouchState { touchId = 2, phase = UnityEngine.InputSystem.TouchPhase.Ended, position = elsewhere + new Vector2(0f, -60f) });
+                yield return null;
+                moved = player.transform.position - start;
+                Debug.Log("PLAYTEST free joystick moved " + moved.ToString("F2"));
+                Assert.Greater(moved.magnitude, 1f, "dragging from a free touch point did not move the hero");
             }
             finally
             {
@@ -242,7 +266,7 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
-        public IEnumerator PowerUpSpawnsEveryFiveLevelsAndGrantsASkill()
+        public IEnumerator PowerUpSpawnsEveryTwentyLevelsAndGrantsASkill()
         {
             var flow = GameFlowController.Instance;
             var spawner = Object.FindAnyObjectByType<PowerUpSpawner>();
@@ -251,26 +275,26 @@ namespace SlimeBreaker.Tests
             Assert.GreaterOrEqual(spawner.skills.Length, 4, "PowerUpSpawner knows fewer than four skills");
             var hero = PlayerHealth.Instance;
             Assert.IsNotNull(SkillController.Instance, "hero has no SkillController");
-            Assert.AreEqual(0, PowerUpPickup.Active.Count, "a power-up exists before level 5");
+            Assert.AreEqual(0, PowerUpPickup.Active.Count, "a power-up exists before level 20");
 
             var stage = Object.FindAnyObjectByType<StageManager>();
             Assert.IsNotNull(stage, "GameArena has no StageManager");
-            while (flow.Stats.level < 4)
+            while (flow.Stats.level < 19)
             {
                 flow.BeginLevelUp();
                 flow.ChooseUpgrade(0);
             }
             yield return null;
-            Assert.AreEqual(0, PowerUpPickup.Active.Count, "a power-up spawned before level 5");
+            Assert.AreEqual(0, PowerUpPickup.Active.Count, "a power-up spawned before level 20");
             flow.BeginLevelUp();
             flow.ChooseUpgrade(0);
             yield return null;
             yield return null;
-            Assert.AreEqual(5, flow.Stats.level);
+            Assert.AreEqual(20, flow.Stats.level);
             Assert.AreEqual(1, stage.Floor, "power-ups follow hero level, not floor");
-            Assert.IsFalse(stage.Intermission, "level 5 is a power-up beat, not a boss stage");
+            Assert.IsFalse(stage.Intermission, "level 20 is a power-up beat, not a boss stage");
             Assert.AreEqual(BossKind.None, stage.ActiveBoss);
-            Assert.AreEqual(1, PowerUpPickup.Active.Count, "exactly one power-up should spawn at level 5");
+            Assert.AreEqual(1, PowerUpPickup.Active.Count, "exactly one power-up should spawn at level 20");
             var pickup = PowerUpPickup.Active[0];
             Assert.IsNotNull(pickup.skill, "power-up carries no skill");
             Vector3 flat = pickup.transform.position - hero.transform.position;
@@ -285,7 +309,7 @@ namespace SlimeBreaker.Tests
             Assert.AreEqual(0, PowerUpPickup.Active.Count, "power-up was not consumed");
             Assert.AreEqual(1, SkillController.Instance.Count, "collecting the power-up did not grant a skill");
 
-            while (flow.Stats.level < 9)
+            while (flow.Stats.level < 39)
             {
                 flow.BeginLevelUp();
                 flow.ChooseUpgrade(0);
@@ -296,9 +320,50 @@ namespace SlimeBreaker.Tests
             flow.ChooseUpgrade(0);
             yield return null;
             yield return null;
-            Assert.AreEqual(1, PowerUpPickup.Active.Count, "no power-up at level 10");
-            Assert.AreEqual(BossKind.None, stage.ActiveBoss, "hero level 10 must not spawn a floor boss");
+            Assert.AreEqual(1, PowerUpPickup.Active.Count, "no power-up at level 40");
+            Assert.AreEqual(BossKind.None, stage.ActiveBoss, "hero level 40 must not spawn a floor boss");
             Assert.AreEqual(1, stage.Floor);
+        }
+
+        [UnityTest]
+        public IEnumerator SkillsReachLevelTenAndShowMax()
+        {
+            var controller = SkillController.Instance;
+            var spawner = Object.FindAnyObjectByType<PowerUpSpawner>();
+            var flow = GameFlowController.Instance;
+            Assert.IsNotNull(controller);
+            SkillDefinition lightning = null;
+            foreach (var skill in spawner.skills)
+            {
+                Assert.AreEqual(10, skill.maxLevel, skill.name + " should cap at level 10");
+                if (skill.kind == SkillKind.LightningChain)
+                    lightning = skill;
+            }
+            Assert.IsNotNull(lightning);
+            int level = 0;
+            for (int i = 0; i < 9; i++)
+                level = controller.Grant(lightning);
+            Assert.AreEqual(9, level);
+            yield return null;
+            var slot = flow.ui.skillLevels[0];
+            Assert.AreEqual("Lv 9", slot.text, "skill slot should show the level before max");
+            Assert.AreEqual(10, controller.Grant(lightning));
+            Assert.AreEqual(10, controller.Grant(lightning), "skill level must not pass 10");
+            yield return null;
+            Assert.AreEqual("MAX", slot.text, "maxed skill slot should read MAX");
+            Assert.IsTrue(flow.ui.skillSlots[0].activeSelf);
+
+            // Once every skill is maxed the spawner has nothing left to drop.
+            foreach (var skill in spawner.skills)
+            {
+                while (controller.LevelOf(skill.kind) < skill.maxLevel)
+                    controller.Grant(skill);
+            }
+            yield return null;
+            Assert.IsNull(spawner.Spawn(), "no power-up should spawn when every skill is MAX");
+            for (int i = 0; i < spawner.skills.Length; i++)
+                Assert.AreEqual("MAX", flow.ui.skillLevels[i].text);
+            Capture("17_skill_max");
         }
 
         [UnityTest]
@@ -404,6 +469,31 @@ namespace SlimeBreaker.Tests
             }
             Assert.IsTrue(enemy == null || enemy.IsDead || enemy.Current < start,
                 "basic attack did not fire after the hero stood still");
+        }
+
+        [UnityTest]
+        public IEnumerator DashDoesNotQueueDuringCooldown()
+        {
+            var dash = Object.FindAnyObjectByType<DashController>();
+            Assert.IsNotNull(dash);
+            Assert.IsTrue(dash.CanDash);
+            dash.QueueDash();
+            yield return null;
+            Assert.IsFalse(dash.CanDash, "dash did not start");
+            dash.QueueDash();
+            dash.QueueDash();
+            float wait = 0f;
+            while (!dash.CanDash && wait < 2.5f)
+            {
+                yield return null;
+                SkipLevelUp();
+                wait += Time.deltaTime;
+            }
+            Assert.IsTrue(dash.CanDash, "dash cooldown never ended");
+            yield return null;
+            yield return null;
+            Assert.IsFalse(dash.IsDashing, "a second dash fired after cooldown without a new press");
+            Assert.IsTrue(dash.CanDash);
         }
 
         [UnityTest]
@@ -554,7 +644,25 @@ namespace SlimeBreaker.Tests
             enemy.TakeDamage(20);
             Assert.Greater(player.Current, start, "lifesteal did not heal the hero");
             Assert.LessOrEqual(player.Current, player.Max);
-            yield return null;
+            float wait = 0f;
+            while (player.ShownLifesteal == 0 && wait < 1f)
+            {
+                yield return null;
+                wait += Time.unscaledDeltaTime;
+            }
+            Assert.Greater(player.ShownLifesteal, 0, "lifesteal heal was not shown over the hero");
+            DamagePopup heal = null;
+            foreach (var popup in DamagePopup.Live)
+            {
+                if (popup != null && popup.isActiveAndEnabled && popup.CurrentKind == DamagePopup.Kind.Heal)
+                    heal = popup;
+            }
+            Assert.IsNotNull(heal, "no green lifesteal number");
+            Assert.IsTrue(heal.Text.StartsWith("+"), heal.Text);
+            var color = heal.GetComponent<TextMesh>().color;
+            Assert.Greater(color.g, color.r + 0.3f, "lifesteal number should be green");
+            Assert.Greater(heal.transform.position.y, player.transform.position.y + 1.5f, "lifesteal number should float above the hero");
+            Capture("18_lifesteal");
         }
 
         [UnityTest]
@@ -644,6 +752,42 @@ namespace SlimeBreaker.Tests
             Assert.IsFalse(boss.IsDead);
             Assert.IsTrue(controller.Enraged, "boss should enrage below 30% HP");
             Assert.LessOrEqual((float)boss.Current / boss.Max, 0.3f);
+
+            PlayerHealth.Instance.GiveInvulnerability(30f);
+            yield return null;
+            yield return null;
+            Assert.IsTrue(controller.EnrageCutscenePlaying, "enrage should start a cutscene");
+            Assert.AreEqual(GameState.BossIntro, flow.State, "the fight should freeze during the enrage cutscene");
+            Assert.AreEqual("ENRAGE!", flow.ui.BossWarningTitle);
+            var rig = Camera.main.GetComponent<FollowCamera>();
+            Assert.IsTrue(rig.IsFocusing, "camera should zoom to the boss");
+            Assert.AreEqual(boss.transform, rig.FocusTarget);
+            yield return new WaitForSecondsRealtime(0.9f);
+            float toBoss = Vector3.Distance(rig.transform.position, boss.transform.position);
+            Debug.Log("PLAYTEST enrage camera distance " + toBoss.ToString("F2"));
+            Assert.Less(toBoss, 6f, "camera did not zoom in on the boss");
+            Capture("19_boss_enrage_cutscene");
+            wait = 0f;
+            while (controller.EnrageCutscenePlaying && wait < 3f)
+            {
+                yield return null;
+                wait += Time.unscaledDeltaTime;
+            }
+            Assert.IsFalse(controller.EnrageCutscenePlaying, "enrage cutscene never ended");
+            Assert.AreEqual(GameState.Playing, flow.State);
+            Assert.AreEqual(1f, Time.timeScale, "slow motion should end with the cutscene");
+            yield return null;
+            Assert.IsFalse(rig.IsFocusing, "camera should return to the hero");
+
+            wait = 0f;
+            while (controller.EnrageFlourishes == 0 && wait < 4f)
+            {
+                yield return null;
+                PlayerHealth.Instance.GiveInvulnerability(10f);
+                wait += Time.unscaledDeltaTime;
+            }
+            Assert.Greater(controller.EnrageFlourishes, 0, "enraged skills should fire the flashy flourish");
+            Capture("20_boss_enrage_skill");
         }
 
         [UnityTest]
@@ -738,6 +882,12 @@ namespace SlimeBreaker.Tests
             Assert.IsTrue(flow.ui.statusText.text.Contains("ATK SPD"), flow.ui.statusText.text);
             Assert.IsTrue(flow.ui.statusText.text.Contains("MOVE"), flow.ui.statusText.text);
             Assert.IsTrue(flow.ui.statusText.text.Contains("LS"), flow.ui.statusText.text);
+            Assert.IsTrue(flow.ui.statusText.text.Contains("RANGE"), flow.ui.statusText.text);
+            Assert.IsTrue(flow.ui.statusText.text.Contains("EXP +"), flow.ui.statusText.text);
+            Assert.IsTrue(flow.ui.statusText.text.Contains("DEF 0%"), flow.ui.statusText.text);
+            flow.Stats.damageReduction = 0.16f;
+            yield return null;
+            Assert.IsTrue(flow.ui.statusText.text.Contains("DEF 16%"), flow.ui.statusText.text);
             Assert.AreEqual("EXP", flow.ui.xpSlider.gameObject.name);
             Assert.IsNotNull(Object.FindAnyObjectByType<Wayfinder>(), "HUD has no wayfinder arrows");
             var upgrades = Object.FindAnyObjectByType<UpgradeManager>();
@@ -754,6 +904,10 @@ namespace SlimeBreaker.Tests
                     critDamage = true;
                 if (upgrade.kind == UpgradeKind.Xp)
                     Assert.AreEqual("EXP", upgrade.title);
+                if (upgrade.kind == UpgradeKind.Armor)
+                    Assert.AreEqual("Defender", upgrade.title);
+                foreach (var indonesian in new[] { "Perisai", "Serangan", "Laju", "Nyawa", "Jangkauan" })
+                    Assert.AreNotEqual(indonesian, upgrade.title, "upgrade names should be English");
             }
             Assert.IsTrue(critRate, "Crit Rate upgrade missing from the pool");
             Assert.IsTrue(critDamage, "Critical upgrade missing from the pool");

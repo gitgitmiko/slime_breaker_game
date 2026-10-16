@@ -181,7 +181,7 @@ namespace SlimeBreaker
         {
             if (skill.pivot == null)
                 RebuildOrbit(skill);
-            float speed = orbitSpeed + 25f * (skill.level - 1);
+            float speed = orbitSpeed + 18f * (skill.level - 1);
             skill.pivot.Rotate(0f, speed * dt, 0f, Space.World);
             for (int i = 0; i < skill.shards.Count; i++)
                 skill.shards[i].Rotate(0f, 0f, 240f * dt, Space.Self);
@@ -214,7 +214,9 @@ namespace SlimeBreaker
                     if (delta.sqrMagnitude > reach * reach)
                         continue;
                     enemy.TakeDamage(damage, false, true, crit);
-                    enemy.ApplySlow(skill.definition.slowFactor, skill.definition.effectDuration);
+                    // Max level: the shards nearly freeze what they touch.
+                    float slow = skill.definition.IsMax(skill.level) ? skill.definition.slowFactor * 0.6f : skill.definition.slowFactor;
+                    enemy.ApplySlow(slow, skill.definition.effectDuration);
                     skill.contactTimers[enemy] = Time.time + 0.5f;
                     VfxPlayer.Instance?.Play("ice", shardPoint);
                     AudioService.Instance?.Play("freeze");
@@ -233,6 +235,8 @@ namespace SlimeBreaker
                 return false;
             int damage = CombatMath.ApplyCrit(skill.definition.DamageAt(skill.level), out bool crit);
             int jumps = skill.definition.CountAt(skill.level);
+            // Max level: every jump hits at full strength.
+            float falloff = skill.definition.IsMax(skill.level) ? 1f : 0.75f;
             var hitList = new List<EnemyHealth> { first };
             Vector3 from = CastOrigin;
             var current = first;
@@ -240,7 +244,7 @@ namespace SlimeBreaker
             {
                 Vector3 point = current.transform.position + Vector3.up * current.HitHeight;
                 LightningBolt.Flash(lightningPrefab, from, point);
-                current.TakeDamage(Mathf.Max(1, Mathf.RoundToInt(damage * (i == 0 ? 1f : 0.75f))), false, true, crit);
+                current.TakeDamage(Mathf.Max(1, Mathf.RoundToInt(damage * (i == 0 ? 1f : falloff))), false, true, crit);
                 VfxPlayer.Instance?.Play("zap", point);
                 from = point;
                 current = Nearest(current.transform.position, 3.8f, hitList);
@@ -260,7 +264,8 @@ namespace SlimeBreaker
             float radius = skill.definition.RadiusAt(skill.level);
             int damage = CombatMath.ApplyCrit(skill.definition.DamageAt(skill.level), out _);
             Vector3 center = transform.position;
-            int burn = Mathf.Max(1, damage / 4);
+            // Max level: the burn lingers twice as hard.
+            int burn = Mathf.Max(1, damage / (skill.definition.IsMax(skill.level) ? 2 : 4));
             if (fireRingPrefab != null)
             {
                 var ring = Instantiate(fireRingPrefab, center + Vector3.up * 0.08f, Quaternion.identity);

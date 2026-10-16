@@ -1,7 +1,7 @@
 namespace SlimeBreaker
 {
     /// <summary>
-    /// Shared run limits: 100 floors, hero levels to 999, a power-up every five
+    /// Shared run limits: 100 floors, hero levels to 999, a power-up every twenty
     /// hero levels, a biome every ten floors, and a boss every ten floors.
     /// </summary>
     public static class RunRules
@@ -9,7 +9,7 @@ namespace SlimeBreaker
         public const int MaxHeroLevel = 999;
         public const int MaxFloor = 100;
         public const int BossEvery = 10;
-        public const int PowerUpEvery = 5;
+        public const int PowerUpEvery = 20;
         public const int BossHealthPerTier = 10000;
         public const float BossEnrageHealth = 0.3f;
         public const int BossBasicDamage = 50;
@@ -18,6 +18,7 @@ namespace SlimeBreaker
         public const int KillsPerFloorStep = 10;
         public const int HeroDamagePerLevel = 10;
         public const int SlimeDamagePerFloor = 1;
+        public const float SlimeHealthPerFloor = 0.1f;
         public const int BossDamagePerFloor = 3;
         public const float ArenaRadius = 22f;
 
@@ -44,6 +45,12 @@ namespace SlimeBreaker
         public static int SlimeContactDamage(int baseDamage, int floor)
         {
             return UnityEngine.Mathf.Max(1, baseDamage + UnityEngine.Mathf.Max(0, floor - 1) * SlimeDamagePerFloor);
+        }
+
+        public static int SlimeMaxHealth(int baseHealth, int floor)
+        {
+            int extra = UnityEngine.Mathf.Max(0, floor - 1);
+            return UnityEngine.Mathf.Max(1, UnityEngine.Mathf.RoundToInt(baseHealth * (1f + extra * SlimeHealthPerFloor)));
         }
 
         public static int BossContactDamage(int floor)

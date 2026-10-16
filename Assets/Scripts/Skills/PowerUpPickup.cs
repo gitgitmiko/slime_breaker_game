@@ -99,7 +99,9 @@ namespace SlimeBreaker
             var flow = GameFlowController.Instance;
             if (flow != null && flow.ui != null && skill != null)
             {
-                string label = level > 1 ? skill.title + " Lv " + level : "Skill baru: " + skill.title;
+                string label = skill.IsMax(level)
+                    ? skill.title + " MAX!"
+                    : level > 1 ? skill.title + " Lv " + level : "Skill baru: " + skill.title;
                 flow.ui.ShowToast(label, skill.color);
             }
             AudioService.Instance?.Play("powerup");

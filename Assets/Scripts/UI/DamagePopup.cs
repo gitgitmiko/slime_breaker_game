@@ -10,8 +10,14 @@ namespace SlimeBreaker
         {
             Enemy,
             Crit,
-            Hero
+            Hero,
+            /// <summary>Green "+N" over the hero for lifesteal healing.</summary>
+            Heal
         }
+
+        public static readonly List<DamagePopup> Live = new List<DamagePopup>();
+        public Kind CurrentKind { get; private set; }
+        public string Text => label != null ? label.text : string.Empty;
 
         static readonly Queue<DamagePopup> Pool = new Queue<DamagePopup>(24);
         static Font font;
@@ -66,12 +72,18 @@ namespace SlimeBreaker
             {
                 Kind.Hero => new Color(1f, 0.28f, 0.28f),
                 Kind.Crit => new Color(1f, 0.78f, 0.18f),
+                Kind.Heal => new Color(0.35f, 1f, 0.42f),
                 _ => new Color(1f, 0.95f, 0.78f)
             };
-            label.text = crit ? "CRIT\n" + amount : amount.ToString();
+            CurrentKind = kind;
+            if (!Live.Contains(this))
+                Live.Add(this);
+            label.text = crit ? "CRIT\n" + amount : kind == Kind.Heal ? "+" + amount : amount.ToString();
             label.color = color;
             label.characterSize = crit ? 0.11f : kind == Kind.Hero ? 0.09f : 0.075f;
             velocity = Vector3.up * (crit ? 2.4f : 1.8f) + Random.insideUnitSphere * 0.35f;
+            if (kind == Kind.Heal)
+                velocity = Vector3.up * 1.4f;
             velocity.y = Mathf.Abs(velocity.y);
         }
 
@@ -90,6 +102,7 @@ namespace SlimeBreaker
             if (age >= life)
             {
                 gameObject.SetActive(false);
+                Live.Remove(this);
                 Pool.Enqueue(this);
             }
         }

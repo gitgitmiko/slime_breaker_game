@@ -17,7 +17,7 @@ MonoBehaviour:
   description: Petir menyambar musuh terdekat lalu melompat ke musuh lain.
   icon: {fileID: 21300000, guid: dcecc8defae1a7b90b1466b00f197c26, type: 3}
   color: {r: 1, g: 0.95, b: 0.45, a: 1}
-  maxLevel: 4
+  maxLevel: 10
   baseDamage: 16
   cooldown: 2.6
   radius: 0

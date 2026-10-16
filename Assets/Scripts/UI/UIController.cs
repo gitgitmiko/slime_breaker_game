@@ -47,6 +47,8 @@ namespace SlimeBreaker
         public Text bossWarningName;
         public float bossWarningDuration = 2.6f;
 
+        static readonly Color MaxLevelColor = new Color(1f, 0.82f, 0.25f);
+
         PlayerHealth health;
         DashController dash;
         SkillController skills;
@@ -117,7 +119,12 @@ namespace SlimeBreaker
             if (xpSlider != null && xp != null)
                 xpSlider.value = xp.XpToNext <= 0 ? 0f : (float)xp.Xp / xp.XpToNext;
             if (dashFill != null && dash != null)
+            {
                 dashFill.fillAmount = dash.Cooldown01;
+                var dashButton = dashFill.GetComponentInParent<Button>();
+                if (dashButton != null)
+                    dashButton.interactable = dash.CanDash;
+            }
 
             if (toastGroup != null && toastTimer > 0f)
             {
@@ -164,6 +171,16 @@ namespace SlimeBreaker
                 bossWarningGroup.gameObject.SetActive(true);
             }
         }
+
+        /// <summary>Reuses the boss banner for the enrage cutscene.</summary>
+        public void ShowEnrageWarning(string name, Color color)
+        {
+            ShowBossWarning(name, color);
+            if (bossWarningTitle != null)
+                bossWarningTitle.text = "ENRAGE!";
+        }
+
+        public string BossWarningTitle => bossWarningTitle != null ? bossWarningTitle.text : string.Empty;
 
         public void ShowToast(string message, Color color)
         {
@@ -291,10 +308,14 @@ namespace SlimeBreaker
             string crit = stats.HasCrit ? stats.critMultiplier.ToString("0.0") + "x" : "—";
             string rate = stats.HasCrit ? Mathf.RoundToInt(stats.critChance * 100f) + "%" : "0%";
             string steal = Mathf.RoundToInt(stats.lifesteal * 100f) + "%";
+            int expBonus = Mathf.RoundToInt(Mathf.Max(0f, stats.xpMultiplier - 1f) * 100f);
+            int defense = Mathf.RoundToInt(stats.damageReduction * 100f);
             statusText.text =
                 "DMG " + stats.damage + "     CRIT " + crit + "\n"
                 + "CRIT RATE " + rate + "     ATK SPD " + stats.AttacksPerSecond.ToString("0.00") + "\n"
-                + "MOVE " + stats.moveSpeed.ToString("0.0") + "     LS " + steal;
+                + "RANGE " + stats.attackRange.ToString("0.0") + "     MOVE " + stats.moveSpeed.ToString("0.0") + "\n"
+                + "EXP +" + expBonus + "%     LS " + steal + "\n"
+                + "DEF " + defense + "%     TAKEN " + (100 - defense) + "%";
         }
 
         void RefreshHealth()
@@ -327,7 +348,12 @@ namespace SlimeBreaker
                     skillIcons[i].enabled = definition != null && definition.icon != null;
                 }
                 if (skillLevels != null && i < skillLevels.Length && skillLevels[i] != null)
-                    skillLevels[i].text = "Lv " + skill.level;
+                {
+                    bool max = definition != null && definition.IsMax(skill.level);
+                    skillLevels[i].text = max ? "MAX" : "Lv " + skill.level;
+                    skillLevels[i].color = max ? MaxLevelColor : Color.white;
+                    skillLevels[i].fontStyle = max ? FontStyle.Bold : FontStyle.Normal;
+                }
                 if (skillFrames != null && i < skillFrames.Length && skillFrames[i] != null && definition != null)
                     skillFrames[i].color = Color.Lerp(definition.color, Color.white, 0.25f);
             }

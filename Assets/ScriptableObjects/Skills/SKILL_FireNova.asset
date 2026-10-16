@@ -17,7 +17,7 @@ MonoBehaviour:
   description: Gelombang api meledak di sekitar penyihir dan membakar musuh.
   icon: {fileID: 21300000, guid: d68d533f69e90c3d6a5d1b77e4ae4299, type: 3}
   color: {r: 1, g: 0.5, b: 0.2, a: 1}
-  maxLevel: 4
+  maxLevel: 10
   baseDamage: 14
   cooldown: 4.2
   radius: 2.6

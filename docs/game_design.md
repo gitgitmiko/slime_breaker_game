@@ -8,13 +8,13 @@ Satu run berlangsung di arena radius 22 m selama **100 lantai**. Level hero terp
 
 Menu → arena lantai 1 (hutan siang cerah) → gerak dan dash → penyihir otomatis menembakkan bolt sihir pelacak **hanya saat diam** ke musuh terdekat yang terlihat (jangkauan 4,4 m; batu/pohon memblokir tembakan) → orb EXP → setiap naik **level hero**, serangan dasar **+10**, lalu permainan jeda dan menawarkan 3 upgrade (hero max Lv 999) → setiap kelipatan 5 **level hero** satu kristal power-up muncul di map yang sama → lantai N butuh **N×10** slime (lantai 1 = 10, lantai 2 = 20, …) sebelum **pintu** muncul; hero masuk dulu baru naik lantai → setiap kelipatan 10 **lantai** slime biasa lenyap, peringatan **BOSS LANTAI N**, kamera zoom ke bos, lalu pertarungan (boss memanggil 10 slime kecil tiap 20 detik) → Royal Slime di lantai 100 = tamat → emas disimpan → upgrade permanen di menu. Keluar di tengah run menyimpan progres ke `slimebreaker-run.json`; tombol **Lanjutkan** di menu memulihkan lantai, level, skill, HP, dan EXP.
 
-HUD menampilkan **Lantai**, progres bunuh slime lantai itu (misalnya `3 / 10`), **Lv**, timer, HP, **EXP**, dan panel status di kiri atas di bawah bar HP: **DMG**, **CRIT**, **CRIT RATE**, **ATK SPD**, **MOVE**, **LS**. Panah wayfinder menunjuk pintu dan power-up yang aktif. Angka damage mengambang di atas musuh (krem), critical (**CRIT** emas lebih besar), dan damage yang diterima hero (merah). Bolt sihir dasar hanya tembak saat hero diam; jalan atau dash menahan serangan dasar. Skill power-up tetap jalan sambil bergerak.
+HUD menampilkan **Lantai**, progres bunuh slime lantai itu (misalnya `3 / 10`), **Lv**, timer, HP, **EXP**, dan panel status di kiri atas di bawah bar HP: **DMG**, **CRIT**, **CRIT RATE**, **ATK SPD**, **RANGE**, **MOVE**, **EXP** (bonus), **LS**, dan **DEF** (pengurangan damage dari Defender) + **TAKEN** (persen damage yang masih masuk). Panah wayfinder menunjuk pintu dan power-up yang aktif. Angka damage mengambang di atas musuh (krem), critical (**CRIT** emas lebih besar), damage yang diterima hero (merah), dan heal lifesteal (**+N hijau** di atas kepala hero, digabung tiap 0,25 s). Bolt sihir dasar hanya tembak saat hero diam; jalan atau dash menahan serangan dasar. Skill power-up tetap jalan sambil bergerak.
 
 ## Kontrol
 
-- Kiri bawah: joystick. Di editor, WASD atau tombol panah juga berjalan.
+- Kiri bawah: **joystick bebas (floating)**. Sentuh di mana saja pada setengah kiri layar (di bawah panel status); dasar joystick pindah ke titik sentuh, ikut terseret jika jempol melewati tepi, dan kembali ke posisi asal saat dilepas. Di editor, WASD atau tombol panah juga berjalan.
 - Kanan bawah: dash. Di editor, spasi.
-- Dash punya cooldown dan jendela kebal singkat. Terkena damage juga memberi kebal 0,35 s.
+- Dash punya cooldown dan jendela kebal singkat. Tombol dash dan spasi diabaikan selama cooldown — tekan beruntun tidak mengantri dash berikutnya. Terkena damage juga memberi kebal 0,35 s.
 - Jeda: tombol II atau Escape. Dari jeda atau menu, ⚙ / Pengaturan memilih grafis Low / Medium / High (default High: bayangan 4096, soft, 2 cascade).
 
 ## Musuh
@@ -25,13 +25,13 @@ HUD menampilkan **Lantai**, progres bunuh slime lantai itu (misalnya `3 / 10`), 
 - Jarak: menjaga jarak dan menembakkan bolt (`HostileProjectile`) yang terhalang obstacle.
 - Semua slime menampilkan bar darah world-space di atas kepala.
 - Kuota slime di lantai N adalah **N×10** (lantai 1 = 10, lantai 2 = 20, dst.). HUD di atas menampilkan progres itu. Lantai naik setelah hero **masuk pintu**, bukan otomatis. Slime sisa dihapus saat masuk pintu supaya kuota lantai berikutnya mulai dari nol.
-- Setiap naik lantai, damage kontak slime **+1**. Boss menambah damage basic/skill/enrage **+3** per lantai.
+- Setiap naik lantai, damage kontak slime **+1** dan HP slime **+10%** dari nyawa dasar. Boss menambah damage basic/skill/enrage **+3** per lantai.
 
 ## Boss (setiap 10 lantai)
 
-Saat lantai mencapai kelipatan 10, arena masuk mode boss: minion lenyap, spawner berhenti, banner **BOSS LANTAI N** muncul, kamera zoom ke bos selama ~2,5 detik, lalu pertarungan dimulai. Boss memanggil **10 slime kecil setiap 20 detik** (maks ~14 hidup) supaya hero tetap bisa naik level dan mengambil power-up tiap 5 level. Setelah boss kalah, pintu muncul; masuk pintu baru ke lantai berikutnya.
+Saat lantai mencapai kelipatan 10, arena masuk mode boss: minion lenyap, spawner berhenti, banner **BOSS LANTAI N** muncul, kamera zoom ke bos selama ~2,5 detik, lalu pertarungan dimulai. Boss memanggil **10 slime kecil setiap 20 detik** (maks ~14 hidup) supaya hero tetap bisa naik level dan mengambil power-up tiap 20 level. Setelah boss kalah, pintu muncul; masuk pintu baru ke lantai berikutnya.
 
-HP boss = lantai × 1000 (lantai 10 = 10.000, lantai 20 = 20.000, … lantai 100 = 100.000). Damage boss naik tiap lantai: **basic 50 + 3×(lantai−1)**, **skill 100 + 3×(lantai−1)**, **skill enrage 200 + 3×(lantai−1)** (lantai 10 = 77 / 127 / 227). Ketika HP boss turun di bawah 30%, ia **enrage** dan memakai N skill elemental (N = lantai / 10). Skill memakai telegraf sesuai elemen: batu/es/racun/magma jatuh dari langit dengan **bayangan lunak** yang membesar dan menggelap saat batu mendekat tanah, api menembak bolt api, petir menyambar. Model boss memakai palet per-bagian: tubuh sesuai elemen, **jubah merah**, **mahkota emas**, permata mengikuti elemen.
+HP boss = lantai × 1000 (lantai 10 = 10.000, lantai 20 = 20.000, … lantai 100 = 100.000). Damage boss naik tiap lantai: **basic 50 + 3×(lantai−1)**, **skill 100 + 3×(lantai−1)**, **skill enrage 200 + 3×(lantai−1)** (lantai 10 = 77 / 127 / 227). Ketika HP boss turun di bawah 30%, ia **enrage** dan memakai N skill elemental (N = lantai / 10). Masuk enrage memutar **cutscene** 2,2 s: pertarungan beku, slow-motion, kamera zoom close-up ke boss, banner **ENRAGE!**, tubuh berdenyut merah-putih, gelombang kejut cincin api + guncangan kamera. Selama enrage tubuh boss terus berdenyut merah dan memercikkan bara; setiap skill enrage ditambah gelombang kejut cincin api, petir merah menyambar di sekitar boss, ledakan di target, dan guncangan kamera. Warna jatuhan/hujan skill condong ke merah. Skill memakai telegraf sesuai elemen: batu/es/racun/magma jatuh dari langit dengan **bayangan lunak** yang membesar dan menggelap saat batu mendekat tanah, api menembak bolt api, petir menyambar. Model boss memakai palet per-bagian: tubuh sesuai elemen, **jubah merah**, **mahkota emas**, permata mengikuti elemen.
 
 ## Map dan cuaca
 
@@ -65,18 +65,20 @@ Masuk pintu meregenerasi arena (fade). Cuaca dan siang/malam berganti setiap lan
 
 ## Upgrade run (level-up)
 
-Setiap naik level, serangan dasar otomatis **+10**, lalu pilihan 3 upgrade: Serangan, laju, nyawa, **Attack Speed**, dash, jangkauan, **EXP**, pengurangan damage, **Lifesteal**, **Crit Rate** (+8% peluang, cap 70%), dan **Critical** (+30% pengali crit, cap 3,5×). Hero mulai hanya dengan damage dasar — **tidak ada critical** sampai mengambil Crit Rate atau Critical. Crit Rate membuka peluang 8% dengan pengali 1,5×; Critical sendiri membuka crit (peluang 8%) dan menaikkan pengali. Serangan yang crit menampilkan angka **CRIT** emas.
+Setiap naik level, serangan dasar otomatis **+10**, lalu pilihan 3 upgrade (nama berbahasa Inggris): **Power** (+20% damage), **Swiftness** (+12% gerak), **Vitality** (+25 HP), **Attack Speed**, **Dash**, **Reach** (+20% jangkauan), **EXP**, **Defender** (-8% damage masuk, cap 60%), **Lifesteal**, **Crit Rate** (+8% peluang, cap 70%), dan **Critical** (+30% pengali crit, cap 3,5×). Hero mulai hanya dengan damage dasar — **tidak ada critical** sampai mengambil Crit Rate atau Critical. Crit Rate membuka peluang 8% dengan pengali 1,5×; Critical sendiri membuka crit (peluang 8%) dan menaikkan pengali. Serangan yang crit menampilkan angka **CRIT** emas.
 
-## Skill power-up (tiap 5 level hero)
+## Skill power-up (tiap 20 level hero)
 
-`StageManager` menjatuhkan kristal di arena yang sama (tanpa ganti peta). Menyentuh kristal memberi skill baru; jika semua sudah dimiliki, level skill naik (maks 4). Skill dijalankan `SkillController`. Nova Api adalah cincin api yang membesar dari hero (`FireNova`).
+`StageManager` menjatuhkan kristal di arena yang sama (tanpa ganti peta). Menyentuh kristal memberi skill baru; jika semua sudah dimiliki, level skill naik (maks **10**). Slot skill di HUD menampilkan `Lv N`, dan **MAX** emas saat level 10. Jika keempat skill sudah MAX, kristal tidak muncul lagi.
 
-| Skill | Efek | Naik level |
-|---|---|---|
-| Cincin Es | 3 pecahan es mengorbit hero (r 1,5 m). Musuh yang tersentuh terkena 7 damage per 0,5 s dan melambat 55% selama 1,6 s. | +1 pecahan, radius +12%, damage +35% |
-| Petir Berantai | Tiap 2,6 s menyambar musuh terdekat (≤ 8 m) lalu melompat ke ≤ 3 musuh lain dalam 3,8 m. | +1 lompatan, cooldown -15% |
-| Nova Api | Tiap 4,2 s cincin api meledak keluar dari hero (radius 2,6 m). Musuh terkena saat tepi cincin menjangkau mereka, lalu terbakar 3 tick. Obstacle memblokir LOS. | radius +12%, damage +35% |
-| Misil Arkana | Tiap 1,9 s menembakkan 2 misil pelacak ke musuh acak dalam 9,5 m. | +1 misil, cooldown -15% |
+Skala per level (1 → 10): damage +30%/level (×3,7 di level 10), +1 pecahan/lompatan/misil tiap 2 level, cooldown ×0,92/level (×0,47), radius +8%/level (×1,72). Level 10 membuka bonus MAX per skill (lihat kolom terakhir). Skill dijalankan `SkillController`. Nova Api adalah cincin api yang membesar dari hero (`FireNova`).
+
+| Skill | Efek | Naik level | Bonus MAX (Lv 10) |
+|---|---|---|---|
+| Cincin Es | 3 pecahan es mengorbit hero (r 1,5 m). Musuh yang tersentuh terkena 7 damage per 0,5 s dan melambat 55% selama 1,6 s. | pecahan, radius, damage, putaran lebih cepat | slow 40% lebih kuat (hampir membeku) |
+| Petir Berantai | Tiap 2,6 s menyambar musuh terdekat (≤ 8 m) lalu melompat ke ≤ 3 musuh lain dalam 3,8 m. | lompatan, damage, cooldown | lompatan tanpa penurunan damage (100%) |
+| Nova Api | Tiap 4,2 s cincin api meledak keluar dari hero (radius 2,6 m). Musuh terkena saat tepi cincin menjangkau mereka, lalu terbakar 3 tick. Obstacle memblokir LOS. | radius, damage, cooldown | bakar 2× lebih kuat |
+| Misil Arkana | Tiap 1,9 s menembakkan 2 misil pelacak ke musuh acak dalam 9,5 m. | misil, damage, cooldown | +2 misil tambahan |
 
 ## Progres permanen
 

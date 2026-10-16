@@ -6,6 +6,7 @@ namespace SlimeBreaker
     public class DashController : MonoBehaviour
     {
         public bool IsDashing => timeLeft > 0f;
+        public bool CanDash => cooldown <= 0f && timeLeft <= 0f;
         public Vector3 Direction { get; private set; } = Vector3.forward;
         public float Cooldown01
         {
@@ -39,15 +40,21 @@ namespace SlimeBreaker
 
             var keyboard = Keyboard.current;
             if (keyboard != null && keyboard.spaceKey.wasPressedThisFrame)
-                queued = true;
+                TryQueue();
 
             var flow = GameFlowController.Instance;
             if (!queued || flow == null || flow.State != GameState.Playing)
                 return;
             if (health != null && health.IsDead)
+            {
+                queued = false;
                 return;
-            if (cooldown > 0f)
+            }
+            if (!CanDash)
+            {
+                queued = false;
                 return;
+            }
 
             queued = false;
             var stats = flow.Stats;
@@ -66,7 +73,13 @@ namespace SlimeBreaker
 
         public void QueueDash()
         {
-            queued = true;
+            TryQueue();
+        }
+
+        void TryQueue()
+        {
+            if (CanDash)
+                queued = true;
         }
     }
 }

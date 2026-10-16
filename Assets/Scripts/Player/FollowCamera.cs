@@ -17,9 +17,17 @@ namespace SlimeBreaker
         float shake;
         Transform storedTarget;
         Vector3 storedOffset;
+        float storedLookHeight;
         float focusLeft;
         bool focusing;
+        Vector3 focusOffset;
+        float focusLookHeight;
         static readonly Vector3 CinematicOffset = new Vector3(0f, 4.8f, -5.1f);
+        /// <summary>Tight, low angle used for the boss enrage cutscene.</summary>
+        public static readonly Vector3 CloseUpOffset = new Vector3(0f, 2.6f, -3.6f);
+
+        public bool IsFocusing => focusing;
+        public Transform FocusTarget => focusing ? target : null;
 
         void Awake()
         {
@@ -31,13 +39,22 @@ namespace SlimeBreaker
 
         public void Focus(Transform subject, float seconds)
         {
+            Focus(subject, seconds, CinematicOffset, lookHeight);
+        }
+
+        /// <summary>Cinematic: frames <paramref name="subject"/> from <paramref name="cameraOffset"/> for a few unscaled seconds, then returns to the hero.</summary>
+        public void Focus(Transform subject, float seconds, Vector3 cameraOffset, float look)
+        {
             if (subject == null || seconds <= 0f)
                 return;
             if (!focusing)
             {
                 storedTarget = target;
                 storedOffset = offset;
+                storedLookHeight = lookHeight;
             }
+            focusOffset = cameraOffset;
+            focusLookHeight = look;
             target = subject;
             focusing = true;
             focusLeft = seconds;
@@ -50,12 +67,15 @@ namespace SlimeBreaker
             if (focusing)
             {
                 focusLeft -= Time.unscaledDeltaTime;
-                offset = Vector3.Lerp(offset, CinematicOffset, 1f - Mathf.Exp(-5f * Time.unscaledDeltaTime));
+                float blend = 1f - Mathf.Exp(-5f * Time.unscaledDeltaTime);
+                offset = Vector3.Lerp(offset, focusOffset, blend);
+                lookHeight = Mathf.Lerp(lookHeight, focusLookHeight, blend);
                 if (focusLeft <= 0f)
                 {
                     focusing = false;
                     target = storedTarget != null ? storedTarget : target;
                     offset = storedOffset;
+                    lookHeight = storedLookHeight;
                     if (target != null)
                         lastTargetPosition = target.position;
                     lead = Vector3.zero;

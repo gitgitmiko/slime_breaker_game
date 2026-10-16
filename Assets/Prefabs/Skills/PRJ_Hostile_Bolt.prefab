@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9083383777697146686}
   - component: {fileID: 3868998628559430490}
-  - component: {fileID: 8327758895696847756}
+  - component: {fileID: 5041057275765741638}
   m_Layer: 0
   m_Name: PRJ_Hostile_Bolt
   m_TagString: Untagged
@@ -153,7 +153,7 @@ TrailRenderer:
   m_Autodestruct: 0
   m_Emitting: 1
   m_ApplyActiveColorSpace: 1
---- !u!114 &8327758895696847756
+--- !u!114 &5041057275765741638
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

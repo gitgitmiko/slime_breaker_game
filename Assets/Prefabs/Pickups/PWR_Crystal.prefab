@@ -138,6 +138,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.PowerUpPickup
   skill: {fileID: 0}
+  bossBreaker: 0
   pickupRadius: 1.15
   crystal: {fileID: 1560421259455178007}
   beam: {fileID: 3431342401249208747}

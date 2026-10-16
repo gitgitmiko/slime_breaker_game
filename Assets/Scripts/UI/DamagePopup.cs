@@ -12,7 +12,9 @@ namespace SlimeBreaker
             Crit,
             Hero,
             /// <summary>Green "+N" over the hero for lifesteal healing.</summary>
-            Heal
+            Heal,
+            /// <summary>Grey "IMMUNE" when a power-up skill touches a boss without Boss Breaker.</summary>
+            Immune
         }
 
         public static readonly List<DamagePopup> Live = new List<DamagePopup>();
@@ -73,12 +75,13 @@ namespace SlimeBreaker
                 Kind.Hero => new Color(1f, 0.28f, 0.28f),
                 Kind.Crit => new Color(1f, 0.78f, 0.18f),
                 Kind.Heal => new Color(0.35f, 1f, 0.42f),
+                Kind.Immune => new Color(0.78f, 0.8f, 0.86f),
                 _ => new Color(1f, 0.95f, 0.78f)
             };
             CurrentKind = kind;
             if (!Live.Contains(this))
                 Live.Add(this);
-            label.text = crit ? "CRIT\n" + amount : kind == Kind.Heal ? "+" + amount : amount.ToString();
+            label.text = crit ? "CRIT\n" + amount : kind == Kind.Heal ? "+" + amount : kind == Kind.Immune ? "IMMUNE" : amount.ToString();
             label.color = color;
             label.characterSize = crit ? 0.11f : kind == Kind.Hero ? 0.09f : 0.075f;
             velocity = Vector3.up * (crit ? 2.4f : 1.8f) + Random.insideUnitSphere * 0.35f;

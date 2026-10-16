@@ -35,6 +35,13 @@ namespace SlimeBreaker
         public Text[] skillLevels;
         public Image[] skillFrames;
 
+        [Header("Skill info (long press)")]
+        public GameObject skillInfoPanel;
+        public Text skillInfoText;
+
+        [Header("Boss Breaker")]
+        public Text breakerText;
+
         [Header("Toast")]
         public CanvasGroup toastGroup;
         public Text toastText;
@@ -86,6 +93,9 @@ namespace SlimeBreaker
                 toastGroup.alpha = 0f;
             if (bossWarningGroup != null)
                 bossWarningGroup.alpha = 0f;
+            HideSkillInfo();
+            if (breakerText != null)
+                breakerText.gameObject.SetActive(false);
         }
 
         void OnDestroy()
@@ -126,6 +136,8 @@ namespace SlimeBreaker
                     dashButton.interactable = dash.CanDash;
             }
 
+            RefreshBreaker();
+
             if (toastGroup != null && toastTimer > 0f)
             {
                 toastTimer -= Time.unscaledDeltaTime;
@@ -150,6 +162,75 @@ namespace SlimeBreaker
             var keyboard = Keyboard.current;
             if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
                 flow.TogglePause();
+        }
+
+        void RefreshBreaker()
+        {
+            if (breakerText == null)
+                return;
+            float left = skills != null ? skills.BreakerLeft : 0f;
+            bool on = left > 0f;
+            if (breakerText.gameObject.activeSelf != on)
+                breakerText.gameObject.SetActive(on);
+            if (on)
+            {
+                breakerText.text = "BOSS BREAKER " + Mathf.CeilToInt(left) + "s";
+                float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 6f);
+                breakerText.color = Color.Lerp(SkillController.BreakerColor, Color.white, pulse * 0.4f);
+            }
+        }
+
+        public bool SkillInfoVisible => skillInfoPanel != null && skillInfoPanel.activeSelf;
+        public string SkillInfo => skillInfoText != null ? skillInfoText.text : string.Empty;
+
+        /// <summary>Shows the description of owned skill <paramref name="index"/> (long press on its HUD slot).</summary>
+        public bool ShowSkillInfo(int index)
+        {
+            if (skills == null || index < 0 || index >= skills.Count || skillInfoPanel == null)
+                return false;
+            var skill = skills.Skills[index];
+            var d = skill.definition;
+            if (d == null)
+                return false;
+            int level = skill.level;
+            string levelLabel = d.IsMax(level) ? "MAX" : "Lv " + level + " / " + d.maxLevel;
+            string stats = "Damage " + d.DamageAt(level);
+            switch (d.kind)
+            {
+                case SkillKind.IceOrbit:
+                    stats += "   Pecahan " + d.CountAt(level) + "   Radius " + d.RadiusAt(level).ToString("0.0") + " m";
+                    break;
+                case SkillKind.LightningChain:
+                    stats += "   Lompatan " + d.CountAt(level) + "   CD " + d.CooldownAt(level).ToString("0.0") + " s";
+                    break;
+                case SkillKind.FireNova:
+                    stats += "   Radius " + d.RadiusAt(level).ToString("0.0") + " m   CD " + d.CooldownAt(level).ToString("0.0") + " s";
+                    break;
+                case SkillKind.ArcaneMissile:
+                    stats += "   Misil " + d.CountAt(level) + "   CD " + d.CooldownAt(level).ToString("0.0") + " s";
+                    break;
+            }
+            string bonus = d.kind switch
+            {
+                SkillKind.IceOrbit => "Bonus MAX: slow hampir membeku.",
+                SkillKind.LightningChain => "Bonus MAX: lompatan tanpa penurunan damage.",
+                SkillKind.FireNova => "Bonus MAX: bakar 2× lebih kuat.",
+                _ => "Bonus MAX: +2 misil."
+            };
+            string boss = SkillController.BossBreakerActive
+                ? "<color=#FFB13A>Boss Breaker aktif: bisa melukai boss.</color>"
+                : "<color=#B8BCC8>Tidak melukai boss tanpa Boss Breaker.</color>";
+            string hex = ColorUtility.ToHtmlStringRGB(Color.Lerp(d.color, Color.white, 0.3f));
+            skillInfoText.text = "<b><color=#" + hex + ">" + d.title + "</color></b>   " + levelLabel + "\n"
+                + d.description + "\n" + stats + "\n" + bonus + "\n" + boss;
+            skillInfoPanel.SetActive(true);
+            return true;
+        }
+
+        public void HideSkillInfo()
+        {
+            if (skillInfoPanel != null)
+                skillInfoPanel.SetActive(false);
         }
 
         public bool BossWarningVisible => bossWarningGroup != null && bossWarningGroup.alpha > 0.15f;

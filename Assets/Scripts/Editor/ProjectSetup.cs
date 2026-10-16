@@ -254,7 +254,8 @@ namespace SlimeBreaker.EditorTools
             var powerUp = PowerUpPrefab("Assets/Prefabs/Pickups/PWR_Crystal.prefab");
 
             var hero = CharacterPrefab("Assets/Prefabs/Player/CHR_Hero_Main.prefab", "Assets/Art/Characters/Hero/CHR_Hero_Main.fbx", heroController, 1.35f, true, null, null);
-            ConfigureHero(hero, bolt, shard, missile, fireRing, lightning);
+            var breakerAura = BreakerAuraPrefab("Assets/Prefabs/VFX/VFX_BossBreaker_Aura.prefab");
+            ConfigureHero(hero, bolt, shard, missile, fireRing, lightning, breakerAura);
             var normal = CharacterPrefab("Assets/Prefabs/Enemies/ENM_Slime_Normal.prefab", "Assets/Art/Enemies/Slime/ENM_Slime_Normal.fbx", normalController, 0.9f, false, normalDef, xpPrefab);
             var fast = CharacterPrefab("Assets/Prefabs/Enemies/ENM_Slime_Fast.prefab", "Assets/Art/Enemies/Slime/ENM_Slime_Fast.fbx", fastController, 0.7f, false, fastDef, xpPrefab);
             var tank = CharacterPrefab("Assets/Prefabs/Enemies/ENM_Slime_Tank.prefab", "Assets/Art/Enemies/Slime/ENM_Slime_Tank.fbx", tankController, 1.15f, false, tankDef, xpPrefab);
@@ -1440,7 +1441,63 @@ namespace SlimeBreaker.EditorTools
             return SavePrefab(root, path);
         }
 
-        static void ConfigureHero(GameObject heroPrefab, GameObject bolt, GameObject shard, GameObject missile, GameObject fireRing, GameObject lightning)
+        /// <summary>Looping gold-red aura the hero wears while Boss Breaker is active: ground halo, rising flames, sparks.</summary>
+        static GameObject BreakerAuraPrefab(string path)
+        {
+            var root = new GameObject(Path.GetFileNameWithoutExtension(path));
+            AuraLayer(root.transform, "Halo", new Color(1f, 0.35f, 0.08f), 0.95f, true, 60f, 0.45f, 0f, 0.42f, 0.08f);
+            AuraLayer(root.transform, "Flames", new Color(1f, 0.68f, 0.18f), 0.55f, false, 34f, 0.85f, 1.8f, 0.26f, 0.15f);
+            AuraLayer(root.transform, "Sparks", new Color(1f, 0.92f, 0.55f), 0.7f, false, 14f, 1.2f, 2.8f, 0.09f, 0.4f);
+            return SavePrefab(root, path);
+        }
+
+        static void AuraLayer(Transform parent, string name, Color color, float radius, bool edge, float rate, float lifetime, float rise, float size, float height)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = new Vector3(0f, height, 0f);
+            var particles = go.AddComponent<ParticleSystem>();
+            var main = particles.main;
+            main.loop = true;
+            main.duration = 1f;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(lifetime * 0.7f, lifetime);
+            main.startSpeed = 0f;
+            main.startSize = new ParticleSystem.MinMaxCurve(size * 0.7f, size * 1.2f);
+            main.startColor = color;
+            main.maxParticles = Mathf.CeilToInt(rate * lifetime) + 8;
+            main.playOnAwake = true;
+            main.simulationSpace = ParticleSystemSimulationSpace.Local;
+            var emission = particles.emission;
+            emission.rateOverTime = rate;
+            var shape = particles.shape;
+            shape.shapeType = ParticleSystemShapeType.Circle;
+            shape.radius = radius;
+            shape.radiusThickness = edge ? 0f : 1f;
+            shape.rotation = new Vector3(90f, 0f, 0f);
+            if (rise > 0f)
+            {
+                var velocity = particles.velocityOverLifetime;
+                velocity.enabled = true;
+                velocity.space = ParticleSystemSimulationSpace.Local;
+                velocity.x = new ParticleSystem.MinMaxCurve(0f);
+                velocity.y = new ParticleSystem.MinMaxCurve(rise * 0.6f, rise);
+                velocity.z = new ParticleSystem.MinMaxCurve(0f);
+            }
+            var colorOverLife = particles.colorOverLifetime;
+            colorOverLife.enabled = true;
+            var gradient = new Gradient();
+            gradient.SetKeys(
+                new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(new Color(1f, 0.4f, 0.2f), 1f) },
+                new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.2f), new GradientAlphaKey(0f, 1f) });
+            colorOverLife.color = gradient;
+            var renderer = go.GetComponent<ParticleSystemRenderer>();
+            renderer.sharedMaterial = additiveParticleMaterial;
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+        }
+
+        static void ConfigureHero(GameObject heroPrefab, GameObject bolt, GameObject shard, GameObject missile, GameObject fireRing, GameObject lightning, GameObject breakerAura)
         {
             var path = AssetDatabase.GetAssetPath(heroPrefab);
             var root = PrefabUtility.LoadPrefabContents(path);
@@ -1451,6 +1508,7 @@ namespace SlimeBreaker.EditorTools
             skills.missilePrefab = missile;
             skills.fireRingPrefab = fireRing;
             skills.lightningPrefab = lightning;
+            skills.breakerAuraPrefab = breakerAura;
             var tip = SkillController.FindDeep(root.transform, "StaffTip");
             Debug.Log("Hero StaffTip " + (tip != null ? tip.position.ToString("F2") : "tidak ditemukan"));
             PrefabUtility.SaveAsPrefabAsset(root, path);
@@ -1844,19 +1902,24 @@ namespace SlimeBreaker.EditorTools
             var panel = host.AddComponent<SettingsPanel>();
             var dim = Panel(safe, "Settings", font, "Pengaturan Grafis");
             var low = Button(dim.transform, "Low", "Low", font, Color.white, buttonSprite);
-            Place(low.gameObject, dim.transform, new Vector2(0.28f, 0.46f), new Vector2(280f, 110f));
+            Place(low.gameObject, dim.transform, new Vector2(0.28f, 0.53f), new Vector2(280f, 110f));
             var medium = Button(dim.transform, "Medium", "Medium", font, Color.white, buttonSprite);
-            Place(medium.gameObject, dim.transform, new Vector2(0.5f, 0.46f), new Vector2(280f, 110f));
+            Place(medium.gameObject, dim.transform, new Vector2(0.5f, 0.53f), new Vector2(280f, 110f));
             var high = Button(dim.transform, "High", "High", font, Color.white, goldSprite);
-            Place(high.gameObject, dim.transform, new Vector2(0.72f, 0.46f), new Vector2(280f, 110f));
+            Place(high.gameObject, dim.transform, new Vector2(0.72f, 0.53f), new Vector2(280f, 110f));
+            // Joystick mode toggle: Fixed (default) / Free.
+            var joystickToggle = Button(dim.transform, "JoystickMode", "Joystick: Fixed", font, Color.white, buttonSprite);
+            Place(joystickToggle.gameObject, dim.transform, new Vector2(0.5f, 0.36f), new Vector2(520f, 96f));
             var close = Button(dim.transform, "Close", "Tutup", font, Color.white, dangerSprite);
-            Place(close.gameObject, dim.transform, new Vector2(0.5f, 0.22f), new Vector2(300f, 90f));
+            Place(close.gameObject, dim.transform, new Vector2(0.5f, 0.19f), new Vector2(300f, 90f));
             var title = dim.GetComponentInChildren<Text>();
             panel.panel = dim;
             panel.lowButton = low;
             panel.mediumButton = medium;
             panel.highButton = high;
             panel.closeButton = close;
+            panel.joystickButton = joystickToggle;
+            panel.joystickLabel = joystickToggle.GetComponentInChildren<Text>();
             panel.title = title;
             dim.SetActive(false);
             return panel;
@@ -1938,6 +2001,9 @@ namespace SlimeBreaker.EditorTools
                 iconObject.GetComponent<Image>().preserveAspect = true;
                 var levelText = Text(slot.transform, "Level", "Lv 1", 18, TextAnchor.MiddleCenter, font);
                 Place(levelText.gameObject, slot.transform, new Vector2(0.5f, 0.14f), new Vector2(90f, 24f));
+                var hold = slot.AddComponent<SkillSlotHold>();
+                hold.ui = ui;
+                hold.index = i;
                 slots[i] = slot;
                 slotIcons[i] = iconObject.GetComponent<Image>();
                 slotLevels[i] = levelText;
@@ -1945,8 +2011,30 @@ namespace SlimeBreaker.EditorTools
                 slot.SetActive(false);
             }
 
-            // Bottom-left: free (floating) joystick. The whole lower-left touch zone takes input;
-            // the base jumps to wherever the thumb lands and returns to its rest spot on release.
+            // Long-press description card under the skill slots.
+            var info = new GameObject("SkillInfo", typeof(RectTransform), typeof(Image));
+            ApplyImage(info.GetComponent<Image>(), panelSprite, Image.Type.Sliced, new Color(0.07f, 0.06f, 0.12f, 0.92f));
+            info.GetComponent<Image>().raycastTarget = false;
+            Place(info, safe, new Vector2(0.78f, 0.6f), new Vector2(720f, 210f));
+            var infoText = Text(info.transform, "Text", "", 22, TextAnchor.UpperLeft, font);
+            infoText.raycastTarget = false;
+            var infoRect = infoText.rectTransform;
+            infoRect.anchorMin = new Vector2(0.04f, 0.06f);
+            infoRect.anchorMax = new Vector2(0.96f, 0.94f);
+            infoRect.offsetMin = Vector2.zero;
+            infoRect.offsetMax = Vector2.zero;
+            info.SetActive(false);
+
+            // Boss Breaker countdown under the skill slots.
+            var breaker = Text(safe, "BossBreaker", "BOSS BREAKER 60s", 26, TextAnchor.MiddleRight, font);
+            breaker.fontStyle = FontStyle.Bold;
+            breaker.raycastTarget = false;
+            breaker.color = SkillController.BreakerColor;
+            Place(breaker.gameObject, safe, new Vector2(0.86f, 0.735f), new Vector2(420f, 36f));
+            breaker.gameObject.SetActive(false);
+
+            // Bottom-left: joystick. Fixed by default (only the base steers); Settings can switch it to
+            // free, where the whole lower-left zone takes input and the base jumps to the thumb.
             var stick = new GameObject("Joystick", typeof(RectTransform), typeof(Image), typeof(VirtualJoystick));
             stick.transform.SetParent(safe, false);
             var zoneRect = stick.GetComponent<RectTransform>();
@@ -2106,6 +2194,9 @@ namespace SlimeBreaker.EditorTools
             ui.skillIcons = slotIcons;
             ui.skillLevels = slotLevels;
             ui.skillFrames = slotFrames;
+            ui.skillInfoPanel = info;
+            ui.skillInfoText = infoText;
+            ui.breakerText = breaker;
             ui.toastGroup = toastGroup;
             ui.toastText = toastText;
             ui.toastBackground = toastImage;
@@ -2201,8 +2292,8 @@ namespace SlimeBreaker.EditorTools
         {
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
-            PlayerSettings.bundleVersion = "0.11.0";
-            PlayerSettings.Android.bundleVersionCode = 11;
+            PlayerSettings.bundleVersion = "0.12.0";
+            PlayerSettings.Android.bundleVersionCode = 12;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

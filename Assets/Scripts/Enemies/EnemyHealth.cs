@@ -32,6 +32,32 @@ namespace SlimeBreaker
         /// <summary>Contact damage after per-stage scaling.</summary>
         public int ContactDamage { get; private set; }
         int extraDamage;
+        float immuneShownAt = -10f;
+
+        /// <summary>Bosses shrug off power-up skills unless the hero holds Boss Breaker; basic attacks always land.</summary>
+        public bool ImmuneToSkills => IsBoss && !SkillController.BossBreakerActive;
+
+        /// <summary>Damage from a power-up skill. Returns false (and flashes IMMUNE) when the target ignores skills.</summary>
+        public bool TakeSkillDamage(int amount, bool crit)
+        {
+            if (IsDead)
+                return false;
+            if (ImmuneToSkills)
+            {
+                ShowImmune();
+                return false;
+            }
+            TakeDamage(amount, false, true, crit);
+            return true;
+        }
+
+        public void ShowImmune()
+        {
+            if (Time.time - immuneShownAt < 0.8f)
+                return;
+            immuneShownAt = Time.time;
+            DamagePopup.Show(transform.position + Vector3.up * (HitHeight + 0.6f), 1, DamagePopup.Kind.Immune);
+        }
 
         Animator animator;
         Renderer[] renderers;

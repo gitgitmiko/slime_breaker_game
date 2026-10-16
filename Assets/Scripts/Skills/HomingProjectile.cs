@@ -12,6 +12,8 @@ namespace SlimeBreaker
         public string hitSfx = "bolthit";
         public string hitVfx = "hit";
         public float spin = 540f;
+        /// <summary>True for power-up missiles: bosses ignore them unless Boss Breaker is active.</summary>
+        public bool fromSkill;
 
         EnemyHealth target;
         int damage;
@@ -103,7 +105,10 @@ namespace SlimeBreaker
             float reach = hitRadius + target.HitRadius;
             if ((AimPoint() - transform.position).sqrMagnitude <= reach * reach)
             {
-                target.TakeDamage(damage, true, true, crit);
+                if (fromSkill)
+                    target.TakeSkillDamage(damage, crit);
+                else
+                    target.TakeDamage(damage, true, true, crit);
                 VfxPlayer.Instance?.Play(hitVfx, transform.position);
                 AudioService.Instance?.Play(hitSfx);
                 Destroy(gameObject);

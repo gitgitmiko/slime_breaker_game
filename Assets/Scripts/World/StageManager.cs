@@ -186,6 +186,7 @@ namespace SlimeBreaker
             if (boss == null)
                 boss = instance.AddComponent<BossController>();
             boss.Configure(kind, hostileBolt, lightningPrefab, minionPrefab, Floor);
+            boss.breakerPickupPrefab = powerUps != null ? powerUps.pickupPrefab : null;
             boss.arenaRadius = RunRules.ArenaRadius;
             return instance;
         }

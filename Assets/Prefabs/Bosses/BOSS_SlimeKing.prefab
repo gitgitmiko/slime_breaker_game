@@ -65,6 +65,8 @@ MonoBehaviour:
   boltPrefab: {fileID: 0}
   lightningPrefab: {fileID: 0}
   minionPrefab: {fileID: 0}
+  breakerPickupPrefab: {fileID: 0}
+  breakerDropChance: 0.35
   slamRadius: 3.6
   arenaRadius: 22
   kind: 1

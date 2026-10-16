@@ -9,6 +9,8 @@ namespace SlimeBreaker
         public static readonly List<PowerUpPickup> Active = new List<PowerUpPickup>();
 
         public SkillDefinition skill;
+        /// <summary>Boss-fight drop: lets owned power-ups hurt the boss for a minute instead of granting a skill.</summary>
+        public bool bossBreaker;
         public float pickupRadius = 1.15f;
         public Transform crystal;
         public Transform beam;
@@ -42,9 +44,18 @@ namespace SlimeBreaker
             Tint();
         }
 
+        public void ConfigureBossBreaker()
+        {
+            bossBreaker = true;
+            skill = null;
+            Tint();
+        }
+
+        Color TintColor => bossBreaker ? SkillController.BreakerColor : skill != null ? skill.color : Color.white;
+
         void Tint()
         {
-            if (skill == null)
+            if (skill == null && !bossBreaker)
                 return;
             if (block == null)
                 block = new MaterialPropertyBlock();
@@ -53,20 +64,20 @@ namespace SlimeBreaker
                 if (renderer is ParticleSystemRenderer)
                     continue;
                 // Keep the material's own alpha so translucent parts (the light beam) stay translucent.
-                Color tint = skill.color;
+                Color tint = TintColor;
                 var material = renderer.sharedMaterial;
                 if (material != null && material.HasProperty("_BaseColor"))
                     tint.a = material.GetColor("_BaseColor").a;
                 renderer.GetPropertyBlock(block);
                 block.SetColor("_BaseColor", tint);
                 block.SetColor("_Color", tint);
-                block.SetColor("_EmissionColor", skill.color * 1.2f);
+                block.SetColor("_EmissionColor", TintColor * 1.2f);
                 renderer.SetPropertyBlock(block);
             }
             foreach (var particles in GetComponentsInChildren<ParticleSystem>())
             {
                 var main = particles.main;
-                main.startColor = skill.color;
+                main.startColor = TintColor;
             }
         }
 
@@ -94,6 +105,15 @@ namespace SlimeBreaker
 
         public void Collect()
         {
+            if (bossBreaker)
+            {
+                SkillController.Instance?.ActivateBossBreaker();
+                GameFlowController.Instance?.ui?.ShowToast("BOSS BREAKER! Power-up melukai boss 60 dtk", SkillController.BreakerColor);
+                AudioService.Instance?.Play("powerup");
+                VfxPlayer.Instance?.Play("powerup", transform.position + Vector3.up * 0.8f, SkillController.BreakerColor);
+                Destroy(gameObject);
+                return;
+            }
             var controller = SkillController.Instance;
             int level = controller != null ? controller.Grant(skill) : 0;
             var flow = GameFlowController.Instance;

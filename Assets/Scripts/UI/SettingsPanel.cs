@@ -11,6 +11,8 @@ namespace SlimeBreaker
         public Button mediumButton;
         public Button highButton;
         public Button closeButton;
+        public Button joystickButton;
+        public Text joystickLabel;
         public Text title;
         public Image[] highlights;
 
@@ -24,6 +26,8 @@ namespace SlimeBreaker
                 highButton.onClick.AddListener(() => Choose(GraphicsService.High));
             if (closeButton != null)
                 closeButton.onClick.AddListener(Hide);
+            if (joystickButton != null)
+                joystickButton.onClick.AddListener(ToggleJoystick);
             if (panel != null)
                 panel.SetActive(false);
             Refresh();
@@ -58,8 +62,19 @@ namespace SlimeBreaker
             Refresh();
         }
 
+        public void ToggleJoystick()
+        {
+            AudioService.Instance?.Play("ui");
+            ControlSettings.FreeJoystick = !ControlSettings.FreeJoystick;
+            Refresh();
+        }
+
         void Refresh()
         {
+            bool free = ControlSettings.FreeJoystick;
+            if (joystickLabel != null)
+                joystickLabel.text = "Joystick: " + (free ? "Free" : "Fixed");
+            Mark(joystickButton, free);
             int current = GraphicsService.Instance != null ? GraphicsService.Instance.Level : GraphicsService.High;
             if (title != null)
                 title.text = "Grafis: " + GraphicsService.Label(current);

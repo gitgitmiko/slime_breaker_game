@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ICON_Upgrade_Range
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.UpgradeDefinition
   kind: 5
-  title: Jangkauan
-  description: +20% jangkauan mantra
+  title: Reach
+  description: +20% spell range
   amount: 0.2
   icon: {fileID: 21300000, guid: 471771449889b87ddb9df7b203bae577, type: 3}

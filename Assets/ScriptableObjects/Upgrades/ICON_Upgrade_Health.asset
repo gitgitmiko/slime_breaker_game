@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ICON_Upgrade_Health
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.UpgradeDefinition
   kind: 2
-  title: Nyawa
-  description: +25 nyawa maksimum
+  title: Vitality
+  description: +25 max HP
   amount: 25
   icon: {fileID: 21300000, guid: 44d7f8121966b384693e61b48aa482e1, type: 3}

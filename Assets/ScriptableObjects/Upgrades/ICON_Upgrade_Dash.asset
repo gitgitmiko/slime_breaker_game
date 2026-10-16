@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.UpgradeDefinition
   kind: 4
   title: Dash
-  description: Dash lebih sering
+  description: Dash more often
   amount: 0.15
   icon: {fileID: 21300000, guid: 9fc724cc622fc4e02a2b9bec7d375fef, type: 3}

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ICON_Upgrade_Armor
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.UpgradeDefinition
   kind: 7
-  title: Perisai
-  description: Damage masuk -8%
+  title: Defender
+  description: -8% damage taken
   amount: 0.08
   icon: {fileID: 21300000, guid: 2d2df6eec70feec98a5128df9f6a500f, type: 3}

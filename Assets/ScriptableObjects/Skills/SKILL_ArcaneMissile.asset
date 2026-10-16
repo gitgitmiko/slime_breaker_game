@@ -17,7 +17,7 @@ MonoBehaviour:
   description: Menembakkan misil pelacak ke musuh acak di sekitar arena.
   icon: {fileID: 21300000, guid: 4887cb1801d0db8cc84e5fb049aef219, type: 3}
   color: {r: 0.75, g: 0.45, b: 1, a: 1}
-  maxLevel: 4
+  maxLevel: 10
   baseDamage: 11
   cooldown: 1.9
   radius: 0

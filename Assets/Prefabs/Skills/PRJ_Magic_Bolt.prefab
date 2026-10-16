@@ -172,6 +172,7 @@ MonoBehaviour:
   hitSfx: bolthit
   hitVfx: hit
   spin: 540
+  fromSkill: 0
 --- !u!1001 &3008004559798340229
 PrefabInstance:
   m_ObjectHideFlags: 0

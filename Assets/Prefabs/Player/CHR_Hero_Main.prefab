@@ -135,6 +135,7 @@ MonoBehaviour:
   lightningPrefab: {fileID: 3341359160270722811, guid: b8fa893cf28e969c1a3cda15f5e96195, type: 3}
   orbitHeight: 0.75
   orbitSpeed: 150
+  breakerAuraPrefab: {fileID: 8843672339256245259, guid: df7b52ae4b32d511c9c7595756ec0b2a, type: 3}
 --- !u!1001 &2482172737852977876
 PrefabInstance:
   m_ObjectHideFlags: 0

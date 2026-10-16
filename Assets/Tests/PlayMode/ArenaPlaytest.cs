@@ -1200,6 +1200,50 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
+        public IEnumerator EveryBiomeBuildsHdEnvironment()
+        {
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            var generator = Object.FindAnyObjectByType<ArenaGenerator>();
+            PlayerHealth.Instance.GiveInvulnerability(120f);
+            Assert.IsNotNull(PostFx.Instance, "arena has no post-processing volume");
+            Assert.IsTrue(PostFx.Instance.Active, "post-processing should be on at the default (High) preset");
+            var seen = new HashSet<Biome>();
+            foreach (int floor in new[] { 1, 11, 21, 31, 41, 51, 61, 71, 81, 91 })
+            {
+                stage.ForceFloor(floor);
+                yield return null;
+                yield return null;
+                foreach (var enemy in new List<EnemyHealth>(EnemyHealth.Active))
+                {
+                    if (enemy != null)
+                        enemy.Vanish();
+                }
+                PlayerHealth.Instance.GiveInvulnerability(120f);
+                yield return new WaitForSeconds(0.3f);
+                var biome = stage.Theme.biome;
+                seen.Add(biome);
+                Assert.AreEqual("SlimeBreaker/Ground", generator.groundRenderer.sharedMaterial.shader.name, biome + " ground is not on the HD shader");
+                int hd = 0;
+                foreach (var renderer in generator.Root.GetComponentsInChildren<Renderer>())
+                {
+                    foreach (var material in renderer.sharedMaterials)
+                    {
+                        if (material != null && material.shader.name == "SlimeBreaker/Lit")
+                            hd++;
+                    }
+                }
+                Assert.Greater(hd, 0, biome + " has no HD props");
+                var groundMat = generator.groundRenderer.sharedMaterial;
+                Debug.Log("PLAYTEST ground " + biome + " " + groundMat.name + " base " + (groundMat.GetTexture("_BaseMap") != null ? groundMat.GetTexture("_BaseMap").name : "null")
+                    + " low " + Shader.IsKeywordEnabled("SB_QUALITY_LOW") + " sun " + (RenderSettings.sun != null ? RenderSettings.sun.intensity.ToString("0.00") : "-"));
+                Debug.Log("PLAYTEST biome " + biome + " hd materials " + hd + " cover " + generator.CoverAmount.ToString("0.00")
+                    + " grade T" + PostFx.Instance.Current.temperature.ToString("0") + " sat " + PostFx.Instance.Current.saturation.ToString("0"));
+                Capture("hd_" + floor.ToString("00") + "_" + biome);
+            }
+            Assert.AreEqual(10, seen.Count, "not every biome was visited");
+        }
+
+        [UnityTest]
         public IEnumerator HudShowsFloorAndHeroDamage()
         {
             var flow = GameFlowController.Instance;

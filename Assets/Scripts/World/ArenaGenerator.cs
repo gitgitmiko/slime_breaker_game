@@ -58,6 +58,11 @@ namespace SlimeBreaker
         public GameObject ashRig;
         public GameObject sporesRig;
         public GameObject sparksRig;
+        [Header("Biome cover (moss / snow / sand / ash on upward prop faces)")]
+        public Texture2D coverMoss;
+        public Texture2D coverSnow;
+        public Texture2D coverSand;
+        public Texture2D coverAsh;
         public Light sun;
         public Camera arenaCamera;
         public float arenaRadius = RunRules.ArenaRadius;
@@ -77,6 +82,11 @@ namespace SlimeBreaker
         static readonly Color SwampLeaf = new Color(0.28f, 0.45f, 0.18f);
         static readonly Color ThunderLeaf = new Color(0.32f, 0.38f, 0.22f);
         static readonly Color RoyalLeaf = new Color(0.45f, 0.62f, 0.28f);
+
+        /// <summary>Sun and ambient multipliers for the HDR + ACES pipeline (tuned from screenshots).</summary>
+        public const float HdrSunBoost = 1.3f;
+        public const float HdrAmbientBoost = 1.3f;
+        public const float MinDaySun = 1.2f;
 
         readonly List<Obstacle> obstacles = new List<Obstacle>();
         readonly List<Vector3> occupied = new List<Vector3>();
@@ -100,6 +110,7 @@ namespace SlimeBreaker
 
             ApplyGround(theme);
             ApplyLighting(theme);
+            ApplyCover(theme);
             PlaceProps(theme, rng);
             PlaceObstacles(theme, rng);
             TintFoliage(theme);
@@ -263,6 +274,20 @@ namespace SlimeBreaker
                 }
             }
 
+            // Values above were authored for LDR; ACES tonemapping (PostFx) compresses highlights, so drive the sun harder.
+            intensity *= HdrSunBoost;
+            // Gloomy daytime weather (rain, spores, storm) still has to read clearly: floor the sun, lift the sky fill.
+            float ambientBoost = HdrAmbientBoost;
+            if (!theme.IsNight && intensity < MinDaySun)
+            {
+                ambientBoost *= 1.0f + (MinDaySun - intensity) * 0.6f;
+                intensity = MinDaySun;
+            }
+            sky *= ambientBoost;
+            equator *= ambientBoost;
+            groundAmbient *= ambientBoost;
+            PostFx.Instance?.ApplyTheme(theme);
+
             if (sun != null)
             {
                 sun.color = sunColor;
@@ -282,6 +307,59 @@ namespace SlimeBreaker
             var camera = arenaCamera != null ? arenaCamera : Camera.main;
             if (camera != null)
                 camera.backgroundColor = background;
+        }
+
+        static readonly int CoverMapId = Shader.PropertyToID("_SB_CoverMap");
+        static readonly int CoverColorId = Shader.PropertyToID("_SB_CoverColor");
+        static readonly int CoverAmountId = Shader.PropertyToID("_SB_CoverAmount");
+
+        /// <summary>Sets the global cover read by SlimeBreaker/Lit (RGB tint, A = smoothness).</summary>
+        public static void SetCover(Texture map, Color tint, float amount)
+        {
+            if (map != null)
+                Shader.SetGlobalTexture(CoverMapId, map);
+            Shader.SetGlobalColor(CoverColorId, tint);
+            Shader.SetGlobalFloat(CoverAmountId, map != null ? amount : 0f);
+        }
+
+        public float CoverAmount { get; private set; }
+
+        void ApplyCover(ArenaTheme theme)
+        {
+            Texture2D map = coverMoss;
+            Color tint = new Color(0.27f, 0.35f, 0.13f, 0.18f);
+            float amount = 0.36f;
+            switch (theme.biome)
+            {
+                case Biome.Snow:
+                    map = coverSnow; tint = new Color(0.96f, 0.98f, 1f, 0.55f); amount = 0.75f; break;
+                case Biome.Desert:
+                    map = coverSand; tint = new Color(0.86f, 0.72f, 0.5f, 0.12f); amount = 0.42f; break;
+                case Biome.Thunder:
+                    tint = new Color(0.22f, 0.26f, 0.14f, 0.25f); amount = 0.28f; break;
+                case Biome.Swamp:
+                    tint = new Color(0.22f, 0.3f, 0.1f, 0.35f); amount = 0.55f; break;
+                case Biome.Shadow:
+                    amount = 0f; break;
+                case Biome.Volcano:
+                    map = coverAsh; tint = new Color(0.46f, 0.44f, 0.42f, 0.1f); amount = 0.45f; break;
+                case Biome.Storm:
+                    tint = new Color(0.24f, 0.31f, 0.15f, 0.5f); amount = 0.28f; break;
+                case Biome.Crystal:
+                    map = coverSand; tint = new Color(0.62f, 0.52f, 0.86f, 0.3f); amount = 0.2f; break;
+                case Biome.Royal:
+                    amount = 0.2f; break;
+            }
+            if (theme.weather == Weather.Snowfall)
+            {
+                map = coverSnow; tint = new Color(0.96f, 0.98f, 1f, 0.55f); amount = Mathf.Max(amount, 0.85f);
+            }
+            else if (theme.weather == Weather.Ash)
+            {
+                map = coverAsh; tint = new Color(0.46f, 0.44f, 0.42f, 0.1f); amount = Mathf.Max(amount, 0.5f);
+            }
+            CoverAmount = map != null ? amount : 0f;
+            SetCover(map, tint, amount);
         }
 
         void EnsureHeroLight()
@@ -317,7 +395,7 @@ namespace SlimeBreaker
                     Ring(props.iceSpike, 10, r * 0.58f, false, rng, 0.25f, 1.15f);
                     Ring(props.rockA, 8, r * 0.44f, false, rng, 0.4f);
                     Ring(props.pillar, 5, r * 0.7f, true, rng);
-                    Scatter(props.grass, 22, 2.4f, r * 0.85f, rng);
+                    Scatter(props.grass, 90, 2.0f, r * 0.9f, rng);
                     break;
                 case Biome.Desert:
                     Ring(props.cactus, 12, r * 0.72f, false, rng, 0.3f, 1.1f);
@@ -327,7 +405,7 @@ namespace SlimeBreaker
                     Ring(props.rockA, 10, r * 0.82f, false, rng, 0.3f, 1.6f);
                     Ring(props.pillar, 8, r * 0.7f, true, rng, 0.1f);
                     Ring(props.pillar, 5, r * 0.42f, true, rng, 0.2f, 0.8f);
-                    Scatter(props.grass, 10, 3f, r * 0.8f, rng);
+                    Scatter(props.grass, 60, 2.4f, r * 0.9f, rng);
                     break;
                 case Biome.Thunder:
                     Ring(props.treeA, 8, r + 3f, false, rng, 0.4f, 1.1f);
@@ -335,15 +413,15 @@ namespace SlimeBreaker
                     Ring(props.thunderSpire, 8, r * 0.68f, true, rng, 0.15f);
                     Ring(props.rockA, 10, r * 0.5f, false, rng, 0.3f);
                     Ring(props.pillar, 5, r * 0.38f, true, rng);
-                    Scatter(props.grass, 36, 2.4f, r * 0.85f, rng);
+                    Scatter(props.grass, 220, 1.8f, r * 0.92f, rng);
                     break;
                 case Biome.Swamp:
                     Ring(props.swampRoot, 10, r * 0.7f, false, rng, 0.25f, 1.1f);
                     Ring(props.swampRoot, 7, r * 0.42f, false, rng, 0.4f, 0.9f);
                     Ring(props.mushroom, 12, r * 0.3f, false, rng, 0.3f);
                     Ring(props.rockB, 8, r * 0.55f, false, rng, 0.35f);
-                    Scatter(props.swampReed, 48, 2.2f, r * 0.88f, rng);
-                    Scatter(props.grass, 20, 2.6f, r * 0.8f, rng);
+                    Scatter(props.swampReed, 90, 2.0f, r * 0.92f, rng);
+                    Scatter(props.grass, 140, 2.0f, r * 0.9f, rng);
                     break;
                 case Biome.Shadow:
                     Ring(props.shadowObelisk, 10, r * 0.72f, true, rng, 0.12f);
@@ -362,7 +440,7 @@ namespace SlimeBreaker
                     Ring(props.pillar, 8, r * 0.5f, true, rng, 0.25f);
                     Ring(props.rockA, 10, r * 0.4f, false, rng, 0.35f);
                     Ring(props.rockB, 8, r * 0.78f, false, rng, 0.3f, 1.2f);
-                    Scatter(props.grass, 16, 3f, r * 0.8f, rng);
+                    Scatter(props.grass, 110, 2.0f, r * 0.9f, rng);
                     break;
                 case Biome.Crystal:
                     Ring(props.crystalSpire, 10, r * 0.7f, false, rng, 0.2f, 1.1f);
@@ -376,8 +454,8 @@ namespace SlimeBreaker
                     Ring(props.treeA, 8, r + 3f, false, rng, 0.3f);
                     Ring(props.treeB, 6, r + 8f, false, rng, 0.25f, 1.15f);
                     Ring(props.bush, 8, r * 0.28f, false, rng, 0.3f);
-                    Scatter(props.flower, 36, 2.4f, r * 0.85f, rng);
-                    Scatter(props.grass, 40, 2.2f, r * 0.88f, rng);
+                    Scatter(props.flower, 80, 2.2f, r * 0.9f, rng);
+                    Scatter(props.grass, 200, 1.8f, r * 0.92f, rng);
                     break;
                 default:
                     Ring(props.treeA, 10, r + 2.6f, false, rng);
@@ -390,8 +468,8 @@ namespace SlimeBreaker
                     Ring(props.mushroom, 9, r * 0.32f, false, rng, 0.3f);
                     Ring(props.bush, 10, r * 0.22f, false, rng, 0.35f);
                     Ring(props.bush, 12, r * 0.64f, false, rng, 0.3f);
-                    Scatter(props.grass, 80, 2.2f, r * 0.9f, rng);
-                    Scatter(props.flower, 28, 2.6f, r * 0.85f, rng);
+                    Scatter(props.grass, 380, 1.6f, r * 0.95f, rng);
+                    Scatter(props.flower, 70, 2.2f, r * 0.9f, rng);
                     break;
             }
         }

@@ -432,12 +432,29 @@ namespace SlimeBreaker.EditorTools
                     if (importer == null)
                         continue;
                     bool normal = path.EndsWith("_Normal.png", StringComparison.OrdinalIgnoreCase);
+                    // PBR sets (build_pbr_textures.py): albedo alpha = height, _Mask = AO/smoothness/metallic (linear).
+                    bool linear = path.EndsWith("_Mask.png", StringComparison.OrdinalIgnoreCase) || path.Contains("TEX_Noise");
                     importer.textureType = normal ? TextureImporterType.NormalMap : TextureImporterType.Default;
-                    importer.sRGBTexture = !normal;
+                    importer.sRGBTexture = !normal && !linear;
+                    importer.alphaSource = TextureImporterAlphaSource.FromInput;
+                    importer.alphaIsTransparency = false;
                     importer.mipmapEnabled = true;
                     importer.anisoLevel = 4;
+                    importer.filterMode = FilterMode.Trilinear;
                     importer.wrapMode = TextureWrapMode.Repeat;
-                    importer.maxTextureSize = 1024;
+                    importer.maxTextureSize = 2048;
+                    // Cut-out foliage atlases: keep alpha-test coverage in the mips so grass does not thin out with distance.
+                    bool atlas = path.Contains("_Atlas");
+                    importer.mipMapsPreserveCoverage = atlas && !normal && !linear;
+                    importer.alphaTestReferenceValue = 0.42f;
+                    importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings
+                    {
+                        name = "Android",
+                        overridden = true,
+                        maxTextureSize = 2048,
+                        format = normal ? TextureImporterFormat.ASTC_5x5 : TextureImporterFormat.ASTC_6x6,
+                        compressionQuality = 50
+                    });
                     importer.SaveAndReimport();
                 }
             }
@@ -457,6 +474,8 @@ namespace SlimeBreaker.EditorTools
             importer.animationCompression = ModelImporterAnimationCompression.Optimal;
             importer.materialImportMode = ModelImporterMaterialImportMode.ImportViaMaterialDescription;
             importer.materialLocation = ModelImporterMaterialLocation.External;
+            // Name extracted materials after the Blender material (MAT_hd_*), not after their preview texture.
+            importer.materialName = ModelImporterMaterialName.BasedOnMaterialName;
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
             importer = AssetImporter.GetAtPath(path) as ModelImporter;
             var clips = importer.defaultClipAnimations;
@@ -497,6 +516,15 @@ namespace SlimeBreaker.EditorTools
                 // Hand-made particle/trail/beam materials keep their unlit shaders.
                 if (mat.shader != null && (mat.shader.name.Contains("Particles") || mat.shader.name.Contains("Unlit")))
                     continue;
+                // Hand-built HD materials (ground sets) already use the Slime Breaker shaders; leave them alone.
+                if (mat.shader != null && mat.shader.name.StartsWith("SlimeBreaker/") && !mat.name.StartsWith("MAT_hd_", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                // HD props from build_props_hd.py use SlimeBreaker/Lit with a PBR texture set per surface.
+                if (mat.name.StartsWith("MAT_hd_", StringComparison.OrdinalIgnoreCase))
+                {
+                    ConfigureHdMaterial(mat, mat.name.Substring(7).ToLowerInvariant());
+                    continue;
+                }
                 Color color = Color.white;
                 if (mat.HasProperty("_BaseColor"))
                     color = mat.GetColor("_BaseColor");
@@ -616,6 +644,114 @@ namespace SlimeBreaker.EditorTools
             }
         }
 
+        /// <summary>Surface table for MAT_hd_* (see SURFACES in build_props_hd.py).</summary>
+        class HdLook
+        {
+            public string texture;
+            public Color color = Color.white;
+            public bool alpha;
+            public float cutoff = 0.45f;
+            public float wind;
+            public float flutter;
+            public float translucency;
+            public Color translucencyColor = new Color(0.55f, 0.8f, 0.25f);
+            public float cover;
+            public float vertexAO;
+            public float smoothness = 1f;
+            public float metallic = 1f;
+            public float bump = 1f;
+            public Color emission = Color.black;
+            public bool emissionFromTexture;
+            public float rim;
+            public Color rimColor = Color.white;
+        }
+
+        static readonly Dictionary<string, HdLook> HdLooks = new Dictionary<string, HdLook>
+        {
+            { "bark", new HdLook { texture = "TEX_Bark_HD", cover = 0.6f, vertexAO = 0.7f } },
+            { "leaf", new HdLook { texture = "TEX_Leaf_Atlas", alpha = true, cutoff = 0.42f, wind = 0.06f, flutter = 0.035f, translucency = 0.9f, cover = 0.2f, vertexAO = 0.8f, bump = 0.6f } },
+            { "grass", new HdLook { texture = "TEX_Grass_Atlas", alpha = true, cutoff = 0.4f, wind = 0.1f, translucency = 0.7f, translucencyColor = new Color(0.6f, 0.75f, 0.3f), vertexAO = 0.85f, bump = 0.5f } },
+            { "rock", new HdLook { texture = "TEX_Rock_HD", cover = 1f, vertexAO = 0.7f } },
+            { "stone", new HdLook { texture = "TEX_Stone_Ruin", cover = 0.8f, vertexAO = 0.6f } },
+            { "marble", new HdLook { texture = "TEX_Marble_HD", cover = 0.3f, vertexAO = 0.5f } },
+            { "gold", new HdLook { color = new Color(1f, 0.78f, 0.36f), smoothness = 0.82f, metallic = 1f } },
+            { "obsidian", new HdLook { texture = "TEX_Obsidian", cover = 0.15f, rim = 0.35f, rimColor = new Color(0.5f, 0.3f, 0.9f) } },
+            { "glyph", new HdLook { color = new Color(0.2f, 0.1f, 0.35f), emission = new Color(2.2f, 1.0f, 4.0f), smoothness = 0.6f, metallic = 0f } },
+            { "cactus", new HdLook { texture = "TEX_Cactus_Skin", cover = 0.15f, vertexAO = 0.5f } },
+            { "flower", new HdLook { color = new Color(0.95f, 0.72f, 0.82f), smoothness = 0.3f, metallic = 0f } },
+            { "mushcap", new HdLook { texture = "TEX_Mushroom_Cap", vertexAO = 0.4f } },
+            { "mushstem", new HdLook { color = new Color(0.9f, 0.87f, 0.78f), smoothness = 0.25f, metallic = 0f, vertexAO = 0.6f } },
+            { "gills", new HdLook { color = new Color(0.82f, 0.76f, 0.62f), smoothness = 0.15f, metallic = 0f } },
+            { "ice", new HdLook { texture = "TEX_Ice_HD", color = new Color(0.85f, 0.95f, 1f), emission = new Color(0.08f, 0.14f, 0.2f), rim = 0.9f, rimColor = new Color(0.7f, 0.9f, 1f), cover = 0.3f } },
+            { "crystal", new HdLook { texture = "TEX_Ice_HD", color = new Color(0.72f, 0.5f, 1f), emission = new Color(0.45f, 0.22f, 0.8f), rim = 1.2f, rimColor = new Color(0.85f, 0.6f, 1f) } },
+            { "glow_yellow", new HdLook { color = new Color(1f, 0.85f, 0.4f), emission = new Color(3.2f, 2.4f, 0.8f), smoothness = 0.9f, metallic = 0f } },
+            { "basalt", new HdLook { texture = "TEX_Volcano_Ground", emissionFromTexture = true, emission = new Color(1.6f, 0.62f, 0.18f), cover = 0.4f, vertexAO = 0.6f } },
+            { "slate", new HdLook { texture = "TEX_Storm_Ground", cover = 0.5f, vertexAO = 0.6f } },
+            { "rune", new HdLook { color = new Color(0.2f, 0.6f, 0.7f), emission = new Color(0.6f, 2.4f, 3.0f), smoothness = 0.7f, metallic = 0f } },
+        };
+
+        static void ConfigureHdMaterial(Material mat, string key)
+        {
+            var shader = Shader.Find("SlimeBreaker/Lit");
+            if (shader == null)
+                throw new InvalidOperationException("Shader SlimeBreaker/Lit tidak ditemukan (Assets/Shaders/SBLit.shader).");
+            if (!HdLooks.TryGetValue(key, out var look))
+            {
+                Debug.LogWarning("Material HD tanpa look: " + mat.name);
+                look = new HdLook();
+            }
+            mat.shader = shader;
+            mat.SetColor("_BaseColor", look.color);
+            Texture2D albedo = look.texture != null ? TextureNamed(look.texture) : null;
+            mat.SetTexture("_BaseMap", albedo);
+            mat.SetTexture("_BumpMap", look.texture != null ? TextureNamed(look.texture + "_Normal") : null);
+            mat.SetTexture("_MaskMap", look.texture != null ? TextureNamed(look.texture + "_Mask") : null);
+            if (look.texture != null && albedo == null)
+                Debug.LogWarning("Tekstur HD hilang: " + look.texture);
+            mat.SetFloat("_BumpScale", look.bump);
+            mat.SetFloat("_Smoothness", look.smoothness);
+            mat.SetFloat("_Metallic", look.texture == null && key != "gold" ? 0f : look.metallic);
+            if (look.texture == null)
+            {
+                // No mask texture: the white default means AO 1, smoothness 1, metallic 1, so the scales are the values.
+                mat.SetFloat("_Smoothness", look.smoothness);
+            }
+            mat.SetFloat("_OcclusionStrength", 1f);
+            mat.SetFloat("_VertexAO", look.vertexAO);
+            mat.SetFloat("_CoverWeight", look.cover);
+            SetKeyword(mat, "_COVER", look.cover > 0f);
+            mat.SetFloat("_Cutoff", look.cutoff);
+            SetKeyword(mat, "_ALPHATEST_ON", look.alpha);
+            mat.SetFloat("_Cull", look.alpha ? (float)CullMode.Off : (float)CullMode.Back);
+            mat.SetFloat("_FlipBackNormals", look.alpha ? 0f : 1f);
+            mat.SetFloat("_AlphaToMask", look.alpha ? 1f : 0f);
+            mat.renderQueue = look.alpha ? (int)RenderQueue.AlphaTest : (int)RenderQueue.Geometry;
+            mat.SetOverrideTag("RenderType", look.alpha ? "TransparentCutout" : "Opaque");
+            mat.SetFloat("_WindStrength", look.wind);
+            mat.SetFloat("_Flutter", look.flutter);
+            SetKeyword(mat, "_WIND", look.wind > 0f || look.flutter > 0f);
+            mat.SetFloat("_Translucency", look.translucency);
+            mat.SetColor("_TranslucencyColor", look.translucencyColor);
+            SetKeyword(mat, "_TRANSLUCENT", look.translucency > 0f);
+            mat.SetFloat("_RimStrength", look.rim);
+            mat.SetColor("_RimColor", look.rimColor);
+            bool emissive = look.emission.maxColorComponent > 0f;
+            mat.SetColor("_EmissionColor", look.emission);
+            mat.SetTexture("_EmissionMap", look.emissionFromTexture ? TextureNamed(look.texture + "_Emit") : null);
+            SetKeyword(mat, "_EMISSION", emissive);
+            mat.globalIlluminationFlags = emissive ? MaterialGlobalIlluminationFlags.RealtimeEmissive : MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            mat.enableInstancing = true;
+            EditorUtility.SetDirty(mat);
+        }
+
+        static void SetKeyword(Material mat, string keyword, bool on)
+        {
+            if (on)
+                mat.EnableKeyword(keyword);
+            else
+                mat.DisableKeyword(keyword);
+        }
+
         static void SharedMaterials()
         {
             Directory.CreateDirectory("Assets/Art/VFX/Materials");
@@ -623,21 +759,27 @@ namespace SlimeBreaker.EditorTools
             var shader = Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default");
             additiveParticleMaterial = AdditiveMaterial("Assets/Art/VFX/Materials/MAT_Particle_Additive.mat", shader, true);
             trailMaterial = AdditiveMaterial("Assets/Art/VFX/Materials/MAT_Trail_Additive.mat", shader, false);
-            forestGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Forest.mat", "TEX_Forest_Ground", "TEX_Forest_Ground_Normal");
-            snowGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Snow.mat", "TEX_Snow_Ground", "TEX_Snow_Ground_Normal");
-            sandGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Sand.mat", "TEX_Sand_Ground", "TEX_Sand_Ground_Normal");
-            thunderGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Thunder.mat", "TEX_Thunder_Ground", "TEX_Thunder_Ground_Normal");
-            swampGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Swamp.mat", "TEX_Swamp_Ground", "TEX_Swamp_Ground_Normal");
-            shadowGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Shadow.mat", "TEX_Shadow_Ground", "TEX_Shadow_Ground_Normal");
-            volcanoGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Volcano.mat", "TEX_Volcano_Ground", "TEX_Volcano_Ground_Normal");
-            stormGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Storm.mat", "TEX_Storm_Ground", "TEX_Storm_Ground_Normal");
-            crystalGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Crystal.mat", "TEX_Crystal_Ground", "TEX_Crystal_Ground_Normal");
-            royalGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Royal.mat", "TEX_Royal_Ground", "TEX_Royal_Ground_Normal");
+            var lavaGlow = new Color(1.6f, 0.62f, 0.18f);
+            forestGroundMaterial = GroundMaterial("MAT_Ground_Forest", "TEX_Forest_Ground", 6f, 1.0f, 0.95f);
+            snowGroundMaterial = GroundMaterial("MAT_Ground_Snow", "TEX_Snow_Ground", 6f, 0.8f, 1.0f);
+            sandGroundMaterial = GroundMaterial("MAT_Ground_Sand", "TEX_Sand_Ground", 6f, 1.0f, 1.0f);
+            thunderGroundMaterial = GroundMaterial("MAT_Ground_Thunder", "TEX_Thunder_Ground", 5f, 1.0f, 1.0f);
+            swampGroundMaterial = GroundMaterial("MAT_Ground_Swamp", "TEX_Swamp_Ground", 5f, 1.0f, 1.0f);
+            shadowGroundMaterial = GroundMaterial("MAT_Ground_Shadow", "TEX_Shadow_Ground", 5f, 1.0f, 1.0f, new Color(1.4f, 0.9f, 2.2f), 0.5f);
+            volcanoGroundMaterial = GroundMaterial("MAT_Ground_Volcano", "TEX_Volcano_Ground", 5f, 1.0f, 1.0f, lavaGlow, 0.35f);
+            stormGroundMaterial = GroundMaterial("MAT_Ground_Storm", "TEX_Storm_Ground", 5f, 1.0f, 1.0f);
+            crystalGroundMaterial = GroundMaterial("MAT_Ground_Crystal", "TEX_Crystal_Ground", 5f, 1.0f, 1.0f, new Color(1.1f, 0.8f, 1.8f), 0.4f);
+            royalGroundMaterial = GroundMaterial("MAT_Ground_Royal", "TEX_Royal_Ground", 5f, 1.0f, 1.0f);
         }
 
-        static Material GroundMaterial(string path, string albedoName, string normalName)
+        /// <summary>Arena floor on SlimeBreaker/Ground: albedo(+height), normal, mask, macro noise, optional pulsing emission.</summary>
+        static Material GroundMaterial(string name, string baseName, float tileMeters, float bumpScale, float smoothScale,
+            Color emission = default, float pulse = 0f)
         {
-            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            string path = "Assets/Art/Environment/Materials/" + name + ".mat";
+            var shader = Shader.Find("SlimeBreaker/Ground");
+            if (shader == null)
+                throw new InvalidOperationException("Shader SlimeBreaker/Ground tidak ditemukan (Assets/Shaders/SBGround.shader).");
             var material = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (material == null)
             {
@@ -645,18 +787,35 @@ namespace SlimeBreaker.EditorTools
                 AssetDatabase.CreateAsset(material, path);
             }
             material.shader = shader;
-            var albedo = TextureNamed(albedoName);
-            if (albedo != null)
-                material.SetTexture("_BaseMap", albedo);
+            material.SetTexture("_BaseMap", TextureNamed(baseName));
+            material.SetTexture("_BumpMap", TextureNamed(baseName + "_Normal"));
+            material.SetTexture("_MaskMap", TextureNamed(baseName + "_Mask"));
+            material.SetTexture("_MacroMap", TextureNamed("TEX_Noise_Macro"));
             material.SetColor("_BaseColor", Color.white);
-            material.SetFloat("_Smoothness", 0.12f);
-            material.SetFloat("_Metallic", 0f);
-            var normal = TextureNamed(normalName);
-            if (normal != null)
+            material.SetFloat("_TileMeters", tileMeters);
+            material.SetFloat("_BumpScale", bumpScale);
+            material.SetFloat("_SmoothnessScale", smoothScale);
+            material.SetFloat("_OcclusionStrength", 1f);
+            material.SetFloat("_MacroStrength", 0.2f);
+            material.SetFloat("_AntiTile", 1f);
+            var emit = TextureNamed(baseName + "_Emit");
+            if (emit != null && emission.maxColorComponent > 0f)
             {
-                material.EnableKeyword("_NORMALMAP");
-                material.SetTexture("_BumpMap", normal);
-                material.SetFloat("_BumpScale", 0.9f);
+                material.SetTexture("_EmissionMap", emit);
+                material.SetColor("_EmissionColor", emission);
+                material.SetFloat("_EmissionPulse", pulse);
+                material.EnableKeyword("_EMISSION");
+                material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            }
+            else
+            {
+                material.DisableKeyword("_EMISSION");
+                material.SetColor("_EmissionColor", Color.black);
+            }
+            foreach (var texture in new[] { baseName, baseName + "_Normal", baseName + "_Mask", "TEX_Noise_Macro" })
+            {
+                if (TextureNamed(texture) == null)
+                    Debug.LogWarning("Tekstur tanah hilang: " + texture);
             }
             EditorUtility.SetDirty(material);
             return material;
@@ -705,15 +864,15 @@ namespace SlimeBreaker.EditorTools
             var mobile = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/Mobile_RPAsset.asset");
             var pc = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/PC_RPAsset.asset");
             // Default project quality stays High so a missing GraphicsService still looks sharp.
-            WriteUrp(mobile, 1f, 4, false, 40f, 4096, 2, true, 3, 1);
+            WriteUrp(mobile, 1f, 4, true, 40f, 4096, 2, true, 3, 1);
             WriteUrp(pc, 1f, 4, true, 48f, 4096, 2, true, 3, 1);
 
             graphicsPresets = new RenderPipelineAsset[3];
             if (mobile == null)
                 return;
             graphicsPresets[0] = MakeUrpPreset("Assets/Settings/URP_Low.asset", mobile, 0.8f, 1, false, 16f, 1024, 1, false, 1, 0);
-            graphicsPresets[1] = MakeUrpPreset("Assets/Settings/URP_Medium.asset", mobile, 1f, 2, false, 28f, 2048, 1, true, 2, 1);
-            graphicsPresets[2] = MakeUrpPreset("Assets/Settings/URP_High.asset", mobile, 1f, 4, false, 40f, 4096, 2, true, 3, 1);
+            graphicsPresets[1] = MakeUrpPreset("Assets/Settings/URP_Medium.asset", mobile, 1f, 2, true, 28f, 2048, 1, true, 2, 1);
+            graphicsPresets[2] = MakeUrpPreset("Assets/Settings/URP_High.asset", mobile, 1f, 4, true, 40f, 4096, 2, true, 3, 1);
         }
 
         static UniversalRenderPipelineAsset MakeUrpPreset(string path, UniversalRenderPipelineAsset source, float scale, int msaa, bool hdr, float shadowDistance, int shadowMap, int cascades, bool soft, int softQuality, int additionalLights)
@@ -1227,6 +1386,9 @@ namespace SlimeBreaker.EditorTools
                 }
                 else if (path.Contains("Boulder"))
                     visual.transform.localScale = parts[i].transform.localScale * 1.35f;
+                else if (path.Contains("OBS_Tree"))
+                    // In-arena trees stay young (~3 m) so the canopy never hides the hero from the high camera.
+                    visual.transform.localScale = parts[i].transform.localScale * 0.72f;
             }
 
             if (kind == Obstacle.Kind.Tree)
@@ -1673,6 +1835,8 @@ namespace SlimeBreaker.EditorTools
 
             // Showcase: ground, rune ring and the idle sorceress to the right of the menu.
             var ground = (GameObject)PrefabUtility.InstantiatePrefab(env["ground"]);
+            foreach (var groundRenderer in ground.GetComponentsInChildren<Renderer>())
+                groundRenderer.sharedMaterial = forestGroundMaterial;
             ground.transform.position = Vector3.zero;
             var rune = (GameObject)PrefabUtility.InstantiatePrefab(env["RuneRing"]);
             rune.transform.position = new Vector3(1.55f, 0.012f, 0f);
@@ -1800,6 +1964,8 @@ namespace SlimeBreaker.EditorTools
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var groundInstance = (GameObject)PrefabUtility.InstantiatePrefab(env["ground"]);
             groundInstance.transform.position = Vector3.zero;
+            foreach (var groundRenderer in groundInstance.GetComponentsInChildren<Renderer>())
+                groundRenderer.sharedMaterial = forestGroundMaterial;
 
             var player = (GameObject)PrefabUtility.InstantiatePrefab(hero);
             player.transform.position = Vector3.zero;
@@ -1886,6 +2052,10 @@ namespace SlimeBreaker.EditorTools
             generator.obstaclePrefabs = obstaclePrefabs;
             generator.groundRenderer = groundInstance.GetComponentInChildren<Renderer>();
             generator.forestGround = forestGroundMaterial;
+            generator.coverMoss = TextureNamed("TEX_Cover_Moss");
+            generator.coverSnow = TextureNamed("TEX_Cover_Snow");
+            generator.coverSand = TextureNamed("TEX_Cover_Sand");
+            generator.coverAsh = TextureNamed("TEX_Cover_Ash");
             generator.snowGround = snowGroundMaterial;
             generator.sandGround = sandGroundMaterial;
             generator.thunderGround = thunderGroundMaterial;
@@ -1968,6 +2138,8 @@ namespace SlimeBreaker.EditorTools
             if (graphics == null)
                 graphics = host.AddComponent<GraphicsService>();
             graphics.presets = graphicsPresets;
+            var postFx = host.GetComponent<PostFx>() ?? host.AddComponent<PostFx>();
+            postFx.menuCover = TextureNamed("TEX_Cover_Moss");
             return graphics;
         }
 

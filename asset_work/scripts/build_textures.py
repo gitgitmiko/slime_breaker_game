@@ -190,41 +190,14 @@ def colored_ground(path, size, seed, dark, mid, light, accent, accent_thresh=0.7
 
 
 def main():
+    """Bark and rock for the Blender props. Arena floors are HD PBR sets from build_pbr_textures.py (do not regenerate them here)."""
     out = sys.argv[1] if len(sys.argv) > 1 else "asset_work/textures"
     os.makedirs(out, exist_ok=True)
-    ground(os.path.join(out, "TEX_Forest_Ground.png"))
     bark(os.path.join(out, "TEX_Bark.png"))
     rock(os.path.join(out, "TEX_Rock.png"))
-    snow(os.path.join(out, "TEX_Snow_Ground.png"))
-    sand(os.path.join(out, "TEX_Sand_Ground.png"))
-    colored_ground(
-        os.path.join(out, "TEX_Thunder_Ground.png"), 1024, 61,
-        (0.16, 0.20, 0.14), (0.28, 0.32, 0.20), (0.40, 0.42, 0.26), (0.18, 0.14, 0.10), 0.74, 2.1,
-    )
-    colored_ground(
-        os.path.join(out, "TEX_Swamp_Ground.png"), 1024, 71,
-        (0.14, 0.18, 0.10), (0.26, 0.36, 0.16), (0.34, 0.46, 0.20), (0.12, 0.26, 0.22), 0.70, 1.8,
-    )
-    colored_ground(
-        os.path.join(out, "TEX_Shadow_Ground.png"), 1024, 81,
-        (0.05, 0.04, 0.09), (0.13, 0.09, 0.18), (0.22, 0.14, 0.30), (0.32, 0.10, 0.42), 0.76, 1.7,
-    )
-    colored_ground(
-        os.path.join(out, "TEX_Volcano_Ground.png"), 1024, 91,
-        (0.10, 0.07, 0.07), (0.26, 0.14, 0.10), (0.40, 0.24, 0.14), (0.82, 0.22, 0.05), 0.72, 2.4,
-    )
-    colored_ground(
-        os.path.join(out, "TEX_Storm_Ground.png"), 1024, 101,
-        (0.24, 0.28, 0.32), (0.38, 0.42, 0.46), (0.54, 0.57, 0.60), (0.28, 0.40, 0.48), 0.73, 1.9,
-    )
-    colored_ground(
-        os.path.join(out, "TEX_Crystal_Ground.png"), 1024, 111,
-        (0.20, 0.14, 0.30), (0.40, 0.30, 0.54), (0.70, 0.60, 0.86), (0.50, 0.82, 1.0), 0.77, 2.0,
-    )
-    colored_ground(
-        os.path.join(out, "TEX_Royal_Ground.png"), 1024, 121,
-        (0.30, 0.24, 0.18), (0.54, 0.40, 0.28), (0.78, 0.66, 0.44), (0.86, 0.70, 0.28), 0.80, 1.8,
-    )
+    for name in ("TEX_Forest_Ground.png", "TEX_Snow_Ground.png", "TEX_Sand_Ground.png"):
+        if not os.path.isfile(os.path.join(out, name)):
+            print("missing", name, "- run build_pbr_textures.py", flush=True)
     print("TEXTURES_OK", out, flush=True)
 
 

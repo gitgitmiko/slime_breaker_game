@@ -41,6 +41,12 @@ namespace SlimeBreaker
             var pipeline = presets != null && Level < presets.Length ? presets[Level] : null;
             if (pipeline != null)
                 QualitySettings.renderPipeline = pipeline;
+            // Cheap ground path (one texture sample set) and no post-processing on Low.
+            if (Level == Low)
+                Shader.EnableKeyword("SB_QUALITY_LOW");
+            else
+                Shader.DisableKeyword("SB_QUALITY_LOW");
+            PostFx.Instance?.SetQuality(Level);
             if (!persist)
                 return;
             var save = SaveService.Load();

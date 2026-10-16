@@ -236,7 +236,7 @@ namespace SlimeBreaker
             {
                 var stats = GameFlowController.Instance != null ? GameFlowController.Instance.Stats : null;
                 if (stats != null && stats.lifesteal > 0f)
-                    PlayerHealth.Instance?.Heal(Mathf.Max(1, Mathf.RoundToInt(amount * stats.lifesteal)));
+                    PlayerHealth.Instance?.Lifesteal(Mathf.Max(1, Mathf.RoundToInt(amount * stats.lifesteal)));
             }
             if (flash)
             {

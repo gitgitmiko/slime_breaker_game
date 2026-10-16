@@ -202,17 +202,17 @@ namespace SlimeBreaker.EditorTools
 
             var upgrades = new[]
             {
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Damage.asset", UpgradeKind.Damage, "Serangan", "+20% damage sihir", 0.2f, "Assets/Art/UI/Icons/ICON_Upgrade_Damage.png"),
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Speed.asset", UpgradeKind.Speed, "Laju", "+12% kecepatan gerak", 0.12f, "Assets/Art/UI/Icons/ICON_Upgrade_Speed.png"),
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Health.asset", UpgradeKind.Health, "Nyawa", "+25 nyawa maksimum", 25f, "Assets/Art/UI/Icons/ICON_Upgrade_Health.png"),
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_AttackRate.asset", UpgradeKind.AttackRate, "Attack Speed", "Cooldown serangan lebih pendek", 0.15f, "Assets/Art/UI/Icons/ICON_Upgrade_AttackRate.png"),
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Dash.asset", UpgradeKind.Dash, "Dash", "Dash lebih sering", 0.15f, "Assets/Art/UI/Icons/ICON_Upgrade_Dash.png"),
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Range.asset", UpgradeKind.Range, "Jangkauan", "+20% jangkauan mantra", 0.2f, "Assets/Art/UI/Icons/ICON_Upgrade_Range.png"),
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Xp.asset", UpgradeKind.Xp, "EXP", "+25% EXP", 0.25f, "Assets/Art/UI/Icons/ICON_Upgrade_Xp.png"),
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Armor.asset", UpgradeKind.Armor, "Perisai", "Damage masuk -8%", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_Armor.png"),
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Lifesteal.asset", UpgradeKind.Lifesteal, "Lifesteal", "8% nyawa dari damage", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_Lifesteal.png"),
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_CritRate.asset", UpgradeKind.CritChance, "Crit Rate", "+8% peluang critical", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_AttackRate.png"),
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_CritDamage.asset", UpgradeKind.CritDamage, "Critical", "+30% damage critical", 0.3f, "Assets/Art/UI/Icons/ICON_Upgrade_Damage.png")
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Damage.asset", UpgradeKind.Damage, "Power", "+20% magic damage", 0.2f, "Assets/Art/UI/Icons/ICON_Upgrade_Damage.png"),
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Speed.asset", UpgradeKind.Speed, "Swiftness", "+12% move speed", 0.12f, "Assets/Art/UI/Icons/ICON_Upgrade_Speed.png"),
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Health.asset", UpgradeKind.Health, "Vitality", "+25 max HP", 25f, "Assets/Art/UI/Icons/ICON_Upgrade_Health.png"),
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_AttackRate.asset", UpgradeKind.AttackRate, "Attack Speed", "Shorter attack cooldown", 0.15f, "Assets/Art/UI/Icons/ICON_Upgrade_AttackRate.png"),
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Dash.asset", UpgradeKind.Dash, "Dash", "Dash more often", 0.15f, "Assets/Art/UI/Icons/ICON_Upgrade_Dash.png"),
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Range.asset", UpgradeKind.Range, "Reach", "+20% spell range", 0.2f, "Assets/Art/UI/Icons/ICON_Upgrade_Range.png"),
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Xp.asset", UpgradeKind.Xp, "EXP", "+25% EXP gain", 0.25f, "Assets/Art/UI/Icons/ICON_Upgrade_Xp.png"),
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Armor.asset", UpgradeKind.Armor, "Defender", "-8% damage taken", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_Armor.png"),
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Lifesteal.asset", UpgradeKind.Lifesteal, "Lifesteal", "Heal 8% of damage dealt", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_Lifesteal.png"),
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_CritRate.asset", UpgradeKind.CritChance, "Crit Rate", "+8% critical chance", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_AttackRate.png"),
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_CritDamage.asset", UpgradeKind.CritDamage, "Critical", "+30% critical damage", 0.3f, "Assets/Art/UI/Icons/ICON_Upgrade_Damage.png")
             };
 
             var skills = new[]
@@ -952,6 +952,7 @@ namespace SlimeBreaker.EditorTools
             asset.count = count;
             asset.slowFactor = slow;
             asset.effectDuration = duration;
+            asset.maxLevel = SkillDefinition.MaxSkillLevel;
             return Scriptable(path, asset);
         }
 
@@ -1722,7 +1723,7 @@ namespace SlimeBreaker.EditorTools
             upgradeManager.pool = upgrades;
             powerUps.skills = skills;
             powerUps.pickupPrefab = powerUpPrefab;
-            powerUps.everyLevels = 5;
+            powerUps.everyLevels = RunRules.PowerUpEvery;
             generator.props = new ArenaGenerator.PropSet
             {
                 treeA = env["Tree_A"],
@@ -1899,7 +1900,7 @@ namespace SlimeBreaker.EditorTools
             var statusPanel = new GameObject("Status", typeof(RectTransform), typeof(Image));
             ApplyImage(statusPanel.GetComponent<Image>(), panelSprite, Image.Type.Sliced, new Color(0.08f, 0.07f, 0.12f, 0.72f));
             statusPanel.GetComponent<Image>().raycastTarget = false;
-            Place(statusPanel, safe, new Vector2(0.16f, 0.775f), new Vector2(470f, 128f));
+            Place(statusPanel, safe, new Vector2(0.16f, 0.762f), new Vector2(470f, 156f));
             var status = Text(statusPanel.transform, "Stats", "DMG 12     CRIT —", 16, TextAnchor.UpperLeft, font);
             status.raycastTarget = false;
             var statusRect = status.rectTransform;
@@ -1944,19 +1945,31 @@ namespace SlimeBreaker.EditorTools
                 slot.SetActive(false);
             }
 
-            // Bottom-left: joystick.
+            // Bottom-left: free (floating) joystick. The whole lower-left touch zone takes input;
+            // the base jumps to wherever the thumb lands and returns to its rest spot on release.
             var stick = new GameObject("Joystick", typeof(RectTransform), typeof(Image), typeof(VirtualJoystick));
-            ApplyImage(stick.GetComponent<Image>(), joystickBaseSprite, Image.Type.Simple, new Color(1f, 1f, 1f, 0.8f));
+            stick.transform.SetParent(safe, false);
+            var zoneRect = stick.GetComponent<RectTransform>();
+            zoneRect.anchorMin = Vector2.zero;
+            zoneRect.anchorMax = new Vector2(0.5f, 0.7f);
+            zoneRect.offsetMin = Vector2.zero;
+            zoneRect.offsetMax = Vector2.zero;
+            zoneRect.localScale = Vector3.one;
+            ApplyImage(stick.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(1f, 1f, 1f, 0f));
             stick.GetComponent<Image>().raycastTarget = true;
-            Place(stick, safe, new Vector2(0.13f, 0.2f), new Vector2(250f, 250f));
+            var stickBase = new GameObject("Base", typeof(RectTransform), typeof(Image));
+            ApplyImage(stickBase.GetComponent<Image>(), joystickBaseSprite, Image.Type.Simple, new Color(1f, 1f, 1f, 0.8f));
+            stickBase.GetComponent<Image>().raycastTarget = false;
+            var baseRect = Place(stickBase, stick.transform, new Vector2(0.26f, 0.2f / 0.7f), new Vector2(250f, 250f));
             var handle = new GameObject("Handle", typeof(RectTransform), typeof(Image));
-            handle.transform.SetParent(stick.transform, false);
+            handle.transform.SetParent(stickBase.transform, false);
             ApplyImage(handle.GetComponent<Image>(), joystickKnobSprite, Image.Type.Simple, new Color(1f, 1f, 1f, 0.95f));
             handle.GetComponent<Image>().raycastTarget = false;
             var handleRect = handle.GetComponent<RectTransform>();
             handleRect.sizeDelta = new Vector2(104f, 104f);
             handleRect.anchoredPosition = Vector2.zero;
             var joystick = stick.GetComponent<VirtualJoystick>();
+            joystick.background = baseRect;
             joystick.handle = handleRect;
             joystick.radius = 78f;
 
@@ -2014,7 +2027,7 @@ namespace SlimeBreaker.EditorTools
             warningGroup.interactable = false;
 
             // Level-up choice panel.
-            var levelPanel = Panel(safe, "LevelUp", font, "Naik level! Pilih satu upgrade");
+            var levelPanel = Panel(safe, "LevelUp", font, "Level Up! Choose an upgrade");
             var choices = new Button[3];
             var labels = new Text[3];
             var icons = new Image[3];
@@ -2188,8 +2201,8 @@ namespace SlimeBreaker.EditorTools
         {
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
-            PlayerSettings.bundleVersion = "0.10.0";
-            PlayerSettings.Android.bundleVersionCode = 10;
+            PlayerSettings.bundleVersion = "0.11.0";
+            PlayerSettings.Android.bundleVersionCode = 11;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

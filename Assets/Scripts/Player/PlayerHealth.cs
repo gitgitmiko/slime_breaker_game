@@ -12,7 +12,12 @@ namespace SlimeBreaker
         public bool IsDead { get; private set; }
         public event Action Changed;
 
+        /// <summary>Lifesteal shown so far as green numbers over the hero.</summary>
+        public int ShownLifesteal { get; private set; }
+
         float invulnerableFor;
+        int pendingSteal;
+        float stealFlush;
         float chillUntil;
         float chillFactor = 1f;
         Animator animator;
@@ -36,6 +41,34 @@ namespace SlimeBreaker
         {
             if (invulnerableFor > 0f)
                 invulnerableFor -= Time.deltaTime;
+            if (pendingSteal > 0)
+            {
+                stealFlush -= Time.unscaledDeltaTime;
+                if (stealFlush <= 0f)
+                    FlushLifesteal();
+            }
+        }
+
+        /// <summary>Heals from lifesteal and batches the amount into one green number over the hero's head.</summary>
+        public void Lifesteal(int amount)
+        {
+            int before = Current;
+            Heal(amount);
+            int healed = Current - before;
+            if (healed <= 0)
+                return;
+            if (pendingSteal == 0)
+                stealFlush = 0.25f;
+            pendingSteal += healed;
+        }
+
+        void FlushLifesteal()
+        {
+            if (pendingSteal <= 0)
+                return;
+            DamagePopup.Show(transform.position + Vector3.up * 1.75f, pendingSteal, DamagePopup.Kind.Heal);
+            ShownLifesteal += pendingSteal;
+            pendingSteal = 0;
         }
 
         public bool IsInvulnerable => invulnerableFor > 0f || IsDead;

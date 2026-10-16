@@ -16,6 +16,13 @@ namespace SlimeBreaker
         public bool Shielded { get; private set; }
         public bool Enraged => health != null && health.Max > 0 && (float)health.Current / health.Max <= RunRules.BossEnrageHealth;
         public int EnrageSkillCount { get; private set; }
+        /// <summary>True while the enrage close-up cutscene is running.</summary>
+        public bool EnrageCutscenePlaying { get; private set; }
+        /// <summary>How many flashy enrage casts have gone off (for tests and tuning).</summary>
+        public int EnrageFlourishes { get; private set; }
+
+        public const float EnrageCutsceneSeconds = 2.2f;
+        static readonly Color EnrageRed = new Color(1f, 0.15f, 0.1f);
 
         enum Pattern
         {
@@ -42,6 +49,7 @@ namespace SlimeBreaker
         bool announcedEnrage;
         float minionTimer = 8f;
         int fightFloor = 10;
+        float auraTimer;
 
         public void Configure(BossKind bossKind, GameObject bolt, GameObject lightning, GameObject minion, int floor)
         {
@@ -150,21 +158,139 @@ namespace SlimeBreaker
         int BasicDamage => BossCatalog.ContactDamageForFloor(fightFloor);
         int SkillDamage => BossCatalog.SkillDamage(fightFloor, Enraged);
 
+        Color EnrageLook => Color.Lerp(tint, EnrageRed, 0.55f);
+        Color ElementTint => Enraged ? Color.Lerp(BossCatalog.Tint(kind), EnrageRed, 0.4f) : BossCatalog.Tint(kind);
+
         void TickEnrage()
         {
-            if (!Enraged || announcedEnrage)
+            if (!Enraged)
                 return;
+            if (announcedEnrage)
+            {
+                TickEnrageAura();
+                return;
+            }
             announcedEnrage = true;
-            GameFlowController.Instance?.ui?.ShowToast("ENRAGE! " + BossCatalog.DisplayName(kind), new Color(1f, 0.25f, 0.2f));
+            ApplyLook(EnrageLook);
+            StartCoroutine(EnrageCutscene());
+        }
+
+        /// <summary>Freezes the fight, slows time, and zooms the camera in on the boss while it roars.</summary>
+        System.Collections.IEnumerator EnrageCutscene()
+        {
+            EnrageCutscenePlaying = true;
+            var flow = GameFlowController.Instance;
+            flow?.BeginBossIntro();
+            Time.timeScale = 0.35f;
+            string name = BossCatalog.DisplayName(kind);
+            flow?.ui?.ShowEnrageWarning(name, EnrageRed);
+            flow?.ui?.ShowToast("ENRAGE! " + name, new Color(1f, 0.25f, 0.2f));
             AudioService.Instance?.Play("bosswarn");
-            ApplyLook(Color.Lerp(tint, new Color(1f, 0.15f, 0.1f), 0.55f));
+            var camera = Camera.main != null ? Camera.main.GetComponent<FollowCamera>() : null;
+            if (camera != null)
+                camera.Focus(transform, EnrageCutsceneSeconds, FollowCamera.CloseUpOffset, 1.3f);
+            if (animator != null)
+                animator.SetTrigger("Telegraph");
+
+            float elapsed = 0f;
+            float nextPulse = 0.35f;
+            bool roared = false;
+            while (elapsed < EnrageCutsceneSeconds)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                // Body throbs between the enrage red and a hot white flash.
+                float pulse = 0.5f + 0.5f * Mathf.Sin(elapsed * 18f);
+                ApplyLook(Color.Lerp(EnrageLook, new Color(1f, 0.85f, 0.7f), pulse * 0.45f));
+                if (!roared && elapsed >= 0.35f)
+                {
+                    roared = true;
+                    if (animator != null)
+                        animator.SetTrigger("Slam");
+                    AudioService.Instance?.Play("slam");
+                    Shockwave(transform.position, 3.2f, 10);
+                    camera?.Shake(0.9f);
+                }
+                if (elapsed >= nextPulse)
+                {
+                    nextPulse += 0.3f;
+                    VfxPlayer.Instance?.Play("slam", transform.position + Vector3.up * 0.2f, EnrageRed);
+                }
+                yield return null;
+            }
+
+            ApplyLook(EnrageLook);
+            EnrageCutscenePlaying = false;
+            flow?.EndBossIntro();
+        }
+
+        /// <summary>Ring of fire/impact bursts around a point; the "heboh" look of enraged casts.</summary>
+        void Shockwave(Vector3 center, float radius, int bursts)
+        {
+            var vfx = VfxPlayer.Instance;
+            if (vfx == null)
+                return;
+            center.y = 0f;
+            vfx.Play("slam", center + Vector3.up * 0.2f, EnrageRed);
+            for (int i = 0; i < bursts; i++)
+            {
+                float angle = i * Mathf.PI * 2f / bursts;
+                Vector3 point = center + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
+                var burst = vfx.Play(i % 2 == 0 ? "fire" : "slam", point + Vector3.up * 0.3f, i % 2 == 0 ? new Color(1f, 0.45f, 0.1f) : EnrageRed);
+                if (burst != null)
+                    burst.transform.localScale = Vector3.one * 1.5f;
+            }
+        }
+
+        /// <summary>Flashy extras on every enraged cast: shockwave at the boss, burst at the target, camera kick.</summary>
+        void EnrageFlourish(Vector3 target)
+        {
+            EnrageFlourishes++;
+            Shockwave(transform.position, 2.6f, 8);
+            var vfx = VfxPlayer.Instance;
+            if (vfx != null)
+            {
+                vfx.Play("zap", target + Vector3.up * 1.2f, ElementTint);
+                vfx.Play("cast", transform.position + Vector3.up * 1.6f, EnrageRed);
+                vfx.Play("powerup", transform.position + Vector3.up * 0.8f, EnrageRed);
+            }
+            if (lightningPrefab != null)
+            {
+                // Red forks crack down around the boss.
+                for (int i = 0; i < 3; i++)
+                {
+                    Vector3 ground = Around(transform.position, 3.5f);
+                    LightningBolt.Flash(lightningPrefab, ground + Vector3.up * 7f, ground);
+                }
+            }
+            AudioService.Instance?.Play("slam");
+            var camera = Camera.main != null ? Camera.main.GetComponent<FollowCamera>() : null;
+            camera?.Shake(0.45f);
+        }
+
+        /// <summary>While enraged the body keeps throbbing red and sheds embers.</summary>
+        void TickEnrageAura()
+        {
+            if (kind != BossKind.Shadow)
+            {
+                float pulse = 0.5f + 0.5f * Mathf.Sin(Time.time * 7f);
+                ApplyLook(Color.Lerp(EnrageLook, new Color(1f, 0.5f, 0.3f), pulse * 0.35f));
+            }
+            auraTimer -= Time.deltaTime;
+            if (auraTimer > 0f)
+                return;
+            auraTimer = 0.4f;
+            Vector3 spot = transform.position + new Vector3(Random.Range(-1.2f, 1.2f), 0.4f, Random.Range(-1.2f, 1.2f));
+            VfxPlayer.Instance?.Play("burn", spot, EnrageRed);
         }
 
         bool TryEnrage(PlayerHealth player)
         {
             nextEnrage++;
             int extra = Mathf.Max(1, EnrageSkillCount);
-            return CastElement(player, extra);
+            bool cast = CastElement(player, extra);
+            if (cast)
+                EnrageFlourish(player.transform.position);
+            return cast;
         }
 
         bool CastElement(PlayerHealth player, int intensity)
@@ -176,28 +302,28 @@ namespace SlimeBreaker
             switch (kind)
             {
                 case BossKind.Rock:
-                    Rain(target, dmg, count + 2, BossCatalog.Tint(kind), 1.2f);
+                    Rain(target, dmg, count + 2, ElementTint, 1.2f);
                     AudioService.Instance?.Play("cast");
                     return true;
                 case BossKind.Flame:
                     FireBolts(target, dmg, count + 1);
                     return true;
                 case BossKind.Frost:
-                    Rain(target, dmg, count + 1, BossCatalog.Tint(kind), 1.1f);
+                    Rain(target, dmg, count + 1, ElementTint, 1.1f);
                     player.Chill(0.55f, 1.8f);
                     return true;
                 case BossKind.Volt:
                     for (int i = 0; i < count; i++)
-                        SkyfallHazard.Drop(Around(target, 2.4f), dmg, 0.7f + i * 0.12f, BossCatalog.Tint(kind), 1.0f);
+                        SkyfallHazard.Drop(Around(target, 2.4f), dmg, 0.7f + i * 0.12f, ElementTint, 1.0f);
                     Zap(player);
                     return true;
                 case BossKind.Toxic:
-                    Rain(target, dmg, count, BossCatalog.Tint(kind), 1.15f);
+                    Rain(target, dmg, count, ElementTint, 1.15f);
                     HazardZone.Drop(target, new Color(0.4f, 0.9f, 0.2f), Mathf.Max(4, dmg / 5), 1.6f, 3.6f);
                     return true;
                 case BossKind.Shadow:
                     Blink(target + (here - target).normalized * 2.2f);
-                    Rain(target, dmg, count, BossCatalog.Tint(kind), 1.05f);
+                    Rain(target, dmg, count, ElementTint, 1.05f);
                     hiddenUntil = Time.time + 1.0f;
                     return true;
                 case BossKind.Magma:
@@ -206,15 +332,15 @@ namespace SlimeBreaker
                 case BossKind.Storm:
                     Push(player, 3.2f);
                     for (int i = 0; i < count; i++)
-                        SkyfallHazard.Drop(Around(target, 2.8f), dmg, 0.65f + i * 0.1f, BossCatalog.Tint(kind), 1.05f);
+                        SkyfallHazard.Drop(Around(target, 2.8f), dmg, 0.65f + i * 0.1f, ElementTint, 1.05f);
                     return true;
                 case BossKind.Crystal:
                     SpikeRing(here);
-                    Rain(target, dmg, count, BossCatalog.Tint(kind), 1.0f);
+                    Rain(target, dmg, count, ElementTint, 1.0f);
                     return true;
                 case BossKind.Royal:
                     FireBolts(target, dmg, 2);
-                    Rain(target, dmg, count, BossCatalog.Tint(kind), 1.2f);
+                    Rain(target, dmg, count, ElementTint, 1.2f);
                     if (Random.value < 0.5f)
                         Zap(player);
                     return true;

@@ -8,7 +8,7 @@ namespace SlimeBreaker
     {
         public SkillDefinition[] skills;
         public GameObject pickupPrefab;
-        public int everyLevels = 5;
+        public int everyLevels = RunRules.PowerUpEvery;
         public float minRadius = 3f;
         public float maxRadius = 16f;
         public float minDistanceFromHero = 3.5f;
@@ -70,7 +70,8 @@ namespace SlimeBreaker
                 return fresh[Random.Range(0, fresh.Count)];
             if (upgradable.Count > 0)
                 return upgradable[Random.Range(0, upgradable.Count)];
-            return skills[Random.Range(0, skills.Length)];
+            // Every skill is at MAX: nothing left to grant.
+            return null;
         }
     }
 }

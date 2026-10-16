@@ -4,15 +4,67 @@ Audit pada mesin ini, 14 Oktober 2026. Tidak ada CLI generasi mesh AI (Meshy, Tr
 
 ## Versi tool
 
+Semua tool ada di `~/game-toolchain` (tanpa sudo; PATH diatur `~/game-toolchain/env.sh`). Cek semuanya sekaligus dengan `bash asset_work/scripts/check_toolchain.sh` (exit 0 = lengkap). Pasang ulang: `install-portable.sh` (inti) lalu `install-extra.sh` (tambahan, 16 Oktober 2026). Mesin ini **tanpa GPU dan tanpa compiler**, jadi hanya paket biner/wheel yang bisa dipasang.
+
+### 3D dan mesh
+
+| Tool | Versi | Fungsi |
+|---|---|---|
+| Blender | 5.2.2 LTS | Model, rig, animasi, ekspor FBX/glTF, render EEVEE headless |
+| assimp | 5.3 | Inspeksi/konversi FBX, glTF, OBJ (`assimp info <file>`) |
+| gltf-transform | 4.5.1 | Optimasi glTF (simplify, weld, prune, kompres) |
+| gltf-pipeline | 4.3.1 | Konversi + kompresi Draco |
+| gltfpack | 1.3 | Simplify/quantize mesh (meshoptimizer) |
+| obj2gltf | npm | OBJ → glTF |
+| fbx2gltf | 0.9.7 | FBX → glTF/GLB |
+| gltf-validator | 2.0 | Validasi glTF (`gltf-validator model.glb`, exit 1 jika ada error) |
+| MeshLab | 2025.07 | GUI mesh; untuk skrip pakai `pymeshlab` |
+| pymeshlab, trimesh, xatlas, pygltflib, shapely | Python | Remesh/decimate, UV unwrap (`xatlas`), baca-tulis mesh, poligon 2D |
+
+### Tekstur, gambar, UI
+
+| Tool | Versi | Fungsi |
+|---|---|---|
+| ImageMagick (`magick`) | 7.1.2-33 | Konversi, atlas, filter |
+| Inkscape | 1.4.2 | Vektor SVG → PNG |
+| Krita | 6.0.4.1 | Lukis tekstur/sprite; ekspor CLI `xvfb-run -a krita --export --export-filename out.png in.kra` |
+| KTX-Software (`toktx`, `ktx`) | 4.4.2 | Tekstur KTX2 / Basis (ETC1S, UASTC) |
+| oxipng, pngquant, optipng, zopflipng | 10.2.1 / 2.18 / 0.7.8 / zopfli | Perkecil PNG (lossless dan 8-bit) |
+| cwebp, dwebp, gif2webp, img2webp, gifsicle | libwebp 1.5.0 / 1.94 | WebP dan GIF |
+| potrace | 1.16 | Bitmap → SVG |
+| Pillow, numpy, scipy, scikit-image, opencv, opensimplex, cairosvg, imageio | Python | Gambar prosedural, noise, filter, SVG → PNG |
+
+### Audio dan musik
+
+| Tool | Versi | Fungsi |
+|---|---|---|
+| FluidSynth + soundfont FluidR3_GM, default-GM | 2.3.4 | Render MIDI → audio |
+| LMMS | 1.2.2 | DAW; render CLI `xvfb-run -a lmms render proyek.mmpz -f wav -o out.wav` |
+| SoX | 14.4.2 | Efek, mixing, trim |
+| ffmpeg / ffprobe | 7.0.2 | Konversi audio/video, rekam klip |
+| oggenc, opusenc, lame, flac | 1.4.2 / 0.2 / 3.100 / 1.4.3 | Encode OGG, Opus, MP3, FLAC |
+| rubberband | 3.3.0 | Ubah tempo/pitch tanpa mengubah satunya |
+| espeak-ng | 1.51 | Suara sintetis (placeholder voice) |
+| abc2midi | 4.88 | Notasi ABC → MIDI |
+| MIDIUtil, mido, pretty_midi, music21 | Python | Tulis/analisis MIDI dan teori musik |
+| librosa, soundfile, pedalboard, pyloudnorm, pydub, pyfluidsynth | Python | Analisis audio, efek (reverb/compressor), normalisasi loudness, FluidSynth dari Python |
+
+### Build dan umum
+
 | Tool | Versi | Perintah cek |
 |---|---|---|
-| Blender | 5.2.2 LTS | `blender --version` |
-| ImageMagick | 7.1.2-33 | `magick -version` |
-| FluidSynth | 2.3.4 | `fluidsynth --version` |
-| oggenc | vorbis-tools 1.4.2 | `oggenc --version` |
-| assimp | terpasang di PATH | `assimp info <file.fbx>` |
 | Unity Editor | 6000.3.26f1 | `~/Unity/Hub/Editor/6000.3.26f1/Editor/Unity` |
 | Unity CLI | 1.0.0-beta.13 | `unity --version` |
+| Node.js / npm | 24.21.0 / 11.19.0 | `node --version` |
+| cmake, ninja | 4.4 / 1.13 (pip) | `cmake --version` |
+| 7-Zip, xvfb-run, jq | 23.01 / sistem / 1.7 | `7z i` |
+
+Tidak tersedia: generator AI (Meshy, Tripo, ComfyUI, Stable Diffusion, Ollama), GPU, GIMP, Aseprite, Godot, Docker, Instant Meshes, `basisu` (pakai `toktx` untuk Basis), compiler C/C++ (`noise` dan paket lain yang butuh build tidak bisa dipasang; pakai `opensimplex`).
+
+Catatan pemakaian:
+- AppImage (Krita, LMMS) diekstrak ke `~/game-toolchain/tools` karena tidak ada FUSE; keduanya butuh display, jadi jalankan lewat `xvfb-run -a`.
+- Arsip `.bz2` diekstrak dengan `7z` (tidak ada `bzip2`).
+- Paket apt dipasang tanpa root: `apt-get download <paket>` lalu `dpkg-deb -x <deb> ~/game-toolchain/syslibs`.
 
 Ekspor FBX diverifikasi lewat `bpy.ops.export_scene.fbx` (ada) dan `bpy.ops.export_scene.gltf` (ada, tidak dipakai). Unity mengimpor FBX bawaan, jadi FBX yang dipilih.
 

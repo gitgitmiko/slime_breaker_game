@@ -116,6 +116,16 @@
 - Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 22/22. PlayMode 28/28. APK `SLIMEBREAKER_APK_OK` 0.13.0.
 - Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
 
+### Putaran 14 — HUD dan menu bergaya kaca (mengikuti bar HP boss)
+
+- HP/EXP: pil HP/EXP + track gelap + isi berkilap + angka berbayang; Lv jadi pil ungu.
+- Lantai: pil LANTAI + `1 / 100`, bar kuota bergaya sama; timer di pil kaca.
+- Tombol jeda dan pengaturan: cakram kaca + ikon; dash: cakram kaca dengan cincin cooldown cyan; joystick kaca + knob putih.
+- Menu pengaturan: bagian GRAFIS/KONTROL, pilihan aktif ungu solid; jeda/hasil/level-up memakai panel kaca.
+- Menu utama: kartu kaca berisi judul, pil Emas/Rekor, tombol Main emas, Lanjutkan & peningkatan kaca, versi.
+- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 22/22. PlayMode 29/29. APK `SLIMEBREAKER_APK_OK` 0.14.0.
+- Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

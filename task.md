@@ -98,6 +98,15 @@
 - Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 21/21. PlayMode 26/26. APK `SLIMEBREAKER_APK_OK` 0.11.0.
 - Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
 
+### Putaran 12 — joystick Fixed/Free, deskripsi skill tekan-tahan, Boss Breaker
+
+- Pengaturan punya toggle **Joystick: Fixed / Free**; default **Fixed**.
+- Tekan tahan slot power-up di HUD menampilkan deskripsi skill (level, efek, statistik, bonus MAX, status terhadap boss).
+- Di stage boss hanya **basic attack** yang melukai boss; skill power-up tidak (muncul **IMMUNE**).
+- Gelombang minion boss punya peluang 35% berisi **slime emas**; membunuhnya menjatuhkan **Boss Breaker**: power-up bisa melukai boss selama **60 detik**, hero beraura emas-merah, HUD menampilkan hitung mundur.
+- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 21/21. PlayMode 28/28. APK `SLIMEBREAKER_APK_OK` 0.12.0.
+- Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

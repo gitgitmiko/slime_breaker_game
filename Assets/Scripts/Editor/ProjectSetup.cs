@@ -24,6 +24,8 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
+        const string AppVersion = "0.14.0";
+
         static Sprite panelSprite;
         static Sprite buttonSprite;
         static Sprite dangerSprite;
@@ -38,6 +40,16 @@ namespace SlimeBreaker.EditorTools
         static Sprite pillSprite;
         static Sprite trackSprite;
         static Sprite fillSprite;
+        static Sprite ghostSprite;
+        static Sprite circleGlassSprite;
+        static Sprite ringSprite;
+        static Sprite gearSprite;
+        static Sprite pauseIconSprite;
+        static readonly Color AccentViolet = new Color(0.56f, 0.46f, 1f);
+        static readonly Color AccentRed = new Color(0.86f, 0.22f, 0.3f);
+        static readonly Color AccentGreen = new Color(0.36f, 0.86f, 0.46f);
+        static readonly Color AccentBlue = new Color(0.36f, 0.72f, 1f);
+        static readonly Color TextDim = new Color(0.66f, 0.68f, 0.78f);
         static Material additiveParticleMaterial;
         static Material trailMaterial;
         static Material forestGroundMaterial;
@@ -1661,33 +1673,54 @@ namespace SlimeBreaker.EditorTools
             var menu = new GameObject("Menu").AddComponent<MainMenuController>();
             menu.showcase = showcase.transform;
             var font = Font();
-            var title = Text(safe, "Title", "Slime Breaker", 84, TextAnchor.MiddleLeft, font);
-            title.color = new Color(1f, 0.92f, 0.7f);
+            // Left column on a glass card: title, tagline, gold/record pills, Play, Continue, upgrades.
+            var menuCard = Graphic(safe, "MenuCard", cardSprite, Color.white);
+            Place(menuCard.gameObject, safe, new Vector2(0.27f, 0.5f), new Vector2(900f, 900f));
+            var accent = Graphic(menuCard.transform, "Accent", pillSprite, AccentViolet);
+            AnchorBox(accent.rectTransform, new Vector2(0f, 1f), new Vector2(54f, -70f), new Vector2(8f, 96f));
+            var title = Text(menuCard.transform, "Title", "Slime Breaker", 84, TextAnchor.MiddleLeft, font);
+            title.color = new Color(1f, 0.93f, 0.74f);
             title.fontStyle = FontStyle.Bold;
-            Place(title.gameObject, safe, new Vector2(0.3f, 0.8f), new Vector2(760f, 120f));
-            var subtitle = Text(safe, "Subtitle", "Satu arena. 100 level. 10 slime boss.", 30, TextAnchor.MiddleLeft, font);
-            subtitle.color = new Color(0.8f, 0.85f, 1f);
-            Place(subtitle.gameObject, safe, new Vector2(0.3f, 0.715f), new Vector2(760f, 50f));
-            var gold = Text(safe, "Gold", "Emas 0", 36, TextAnchor.MiddleLeft, font);
-            Place(gold.gameObject, safe, new Vector2(0.3f, 0.62f), new Vector2(500f, 60f));
-            var best = Text(safe, "Best", "Rekor 00:00", 28, TextAnchor.MiddleLeft, font);
-            Place(best.gameObject, safe, new Vector2(0.3f, 0.565f), new Vector2(500f, 50f));
-            var play = Button(safe, "Play", "Main", font, Color.white, goldSprite);
-            play.GetComponentInChildren<Text>().fontSize = 40;
-            Place(play.gameObject, safe, new Vector2(0.3f, 0.46f), new Vector2(440f, 108f));
-            var cont = Button(safe, "Continue", "Lanjutkan", font, Color.white, buttonSprite);
-            Place(cont.gameObject, safe, new Vector2(0.3f, 0.355f), new Vector2(440f, 92f));
-            var upgradesLabel = Text(safe, "UpgradesLabel", "Peningkatan permanen", 26, TextAnchor.MiddleLeft, font);
-            Place(upgradesLabel.gameObject, safe, new Vector2(0.3f, 0.26f), new Vector2(760f, 40f));
-            var damage = Button(safe, "Damage", "Damage", font, Color.white, buttonSprite);
-            Place(damage.gameObject, safe, new Vector2(0.155f, 0.155f), new Vector2(300f, 110f));
-            var health = Button(safe, "Health", "Nyawa", font, Color.white, buttonSprite);
-            Place(health.gameObject, safe, new Vector2(0.325f, 0.155f), new Vector2(300f, 110f));
-            var speed = Button(safe, "Speed", "Laju", font, Color.white, buttonSprite);
-            Place(speed.gameObject, safe, new Vector2(0.495f, 0.155f), new Vector2(300f, 110f));
-            var settingsButton = Button(safe, "Settings", "⚙", font, Color.white, circleSprite);
-            settingsButton.GetComponentInChildren<Text>().fontSize = 40;
+            Shade(title);
+            AnchorBox(title.rectTransform, new Vector2(0f, 1f), new Vector2(84f, -58f), new Vector2(780f, 110f));
+            var subtitle = Text(menuCard.transform, "Subtitle", "Satu arena. 100 lantai. 10 slime boss.", 28, TextAnchor.MiddleLeft, font);
+            subtitle.color = TextDim;
+            AnchorBox(subtitle.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -164f), new Vector2(760f, 40f));
+            var goldPill = Graphic(menuCard.transform, "GoldPill", pillSprite, new Color(1f, 0.78f, 0.3f, 0.18f));
+            AnchorBox(goldPill.rectTransform, new Vector2(0f, 1f), new Vector2(84f, -232f), new Vector2(360f, 56f));
+            var gold = Text(goldPill.transform, "Gold", "Emas 0", 28, TextAnchor.MiddleCenter, font);
+            gold.fontStyle = FontStyle.Bold;
+            gold.color = new Color(1f, 0.85f, 0.45f);
+            Stretch(gold.rectTransform);
+            var bestPill = Graphic(menuCard.transform, "BestPill", pillSprite, new Color(1f, 1f, 1f, 0.08f));
+            AnchorBox(bestPill.rectTransform, new Vector2(0f, 1f), new Vector2(460f, -232f), new Vector2(360f, 56f));
+            var best = Text(bestPill.transform, "Best", "Rekor 00:00", 26, TextAnchor.MiddleCenter, font);
+            best.fontStyle = FontStyle.Bold;
+            Stretch(best.rectTransform);
+            var play = Button(menuCard.transform, "Play", "Main", font, Color.white, goldSprite);
+            play.GetComponentInChildren<Text>().fontSize = 42;
+            AnchorBox((RectTransform)play.transform, new Vector2(0f, 1f), new Vector2(84f, -322f), new Vector2(736f, 112f));
+            var cont = Button(menuCard.transform, "Continue", "Lanjutkan", font, Color.white, ghostSprite);
+            AnchorBox((RectTransform)cont.transform, new Vector2(0f, 1f), new Vector2(84f, -452f), new Vector2(736f, 92f));
+            var upgradesLabel = Text(menuCard.transform, "UpgradesLabel", "PENINGKATAN PERMANEN", 20, TextAnchor.MiddleLeft, font);
+            upgradesLabel.fontStyle = FontStyle.Bold;
+            upgradesLabel.color = TextDim;
+            AnchorBox(upgradesLabel.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -580f), new Vector2(736f, 30f));
+            var damage = Button(menuCard.transform, "Damage", "Damage", font, Color.white, ghostSprite);
+            AnchorBox((RectTransform)damage.transform, new Vector2(0f, 1f), new Vector2(84f, -624f), new Vector2(236f, 120f));
+            var health = Button(menuCard.transform, "Health", "Nyawa", font, Color.white, ghostSprite);
+            AnchorBox((RectTransform)health.transform, new Vector2(0f, 1f), new Vector2(334f, -624f), new Vector2(236f, 120f));
+            var speed = Button(menuCard.transform, "Speed", "Laju", font, Color.white, ghostSprite);
+            AnchorBox((RectTransform)speed.transform, new Vector2(0f, 1f), new Vector2(584f, -624f), new Vector2(236f, 120f));
+            foreach (var upgradeButton in new[] { damage, health, speed })
+                upgradeButton.GetComponentInChildren<Text>().fontSize = 26;
+            var version = Text(menuCard.transform, "Version", "v" + AppVersion, 18, TextAnchor.MiddleLeft, font);
+            version.color = new Color(1f, 1f, 1f, 0.35f);
+            AnchorBox(version.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -800f), new Vector2(300f, 28f));
+            var settingsButton = Button(safe, "Settings", "", font, Color.white, circleGlassSprite);
             Place(settingsButton.gameObject, safe, new Vector2(0.955f, 0.925f), new Vector2(84f, 84f));
+            var gearIcon = Graphic(settingsButton.transform, "Icon", gearSprite, Color.white);
+            Place(gearIcon.gameObject, settingsButton.transform, new Vector2(0.5f, 0.5f), new Vector2(48f, 48f));
             var settings = BuildSettingsOverlay(safe, font);
             menu.goldText = gold;
             menu.bestText = best;
@@ -1912,19 +1945,32 @@ namespace SlimeBreaker.EditorTools
             var host = new GameObject("SettingsHost", typeof(RectTransform));
             host.transform.SetParent(safe, false);
             var panel = host.AddComponent<SettingsPanel>();
-            var dim = Panel(safe, "Settings", font, "Pengaturan Grafis");
-            var low = Button(dim.transform, "Low", "Low", font, Color.white, buttonSprite);
-            Place(low.gameObject, dim.transform, new Vector2(0.28f, 0.53f), new Vector2(280f, 110f));
-            var medium = Button(dim.transform, "Medium", "Medium", font, Color.white, buttonSprite);
-            Place(medium.gameObject, dim.transform, new Vector2(0.5f, 0.53f), new Vector2(280f, 110f));
-            var high = Button(dim.transform, "High", "High", font, Color.white, goldSprite);
-            Place(high.gameObject, dim.transform, new Vector2(0.72f, 0.53f), new Vector2(280f, 110f));
+            var dim = Panel(safe, "Settings", font, "Pengaturan");
+            var graphicsLabel = Text(dim.transform, "GraphicsLabel", "GRAFIS", 20, TextAnchor.MiddleLeft, font);
+            graphicsLabel.fontStyle = FontStyle.Bold;
+            graphicsLabel.color = TextDim;
+            Place(graphicsLabel.gameObject, dim.transform, new Vector2(0.5f, 0.655f), new Vector2(860f, 30f));
+            var graphicsState = Text(dim.transform, "GraphicsState", "Grafis: High", 20, TextAnchor.MiddleRight, font);
+            graphicsState.color = TextDim;
+            Place(graphicsState.gameObject, dim.transform, new Vector2(0.5f, 0.655f), new Vector2(860f, 30f));
+            var low = Button(dim.transform, "Low", "Low", font, Color.white, ghostSprite);
+            Place(low.gameObject, dim.transform, new Vector2(0.3f, 0.565f), new Vector2(276f, 100f));
+            var medium = Button(dim.transform, "Medium", "Medium", font, Color.white, ghostSprite);
+            Place(medium.gameObject, dim.transform, new Vector2(0.5f, 0.565f), new Vector2(276f, 100f));
+            var high = Button(dim.transform, "High", "High", font, Color.white, ghostSprite);
+            Place(high.gameObject, dim.transform, new Vector2(0.7f, 0.565f), new Vector2(276f, 100f));
+            var controlLabel = Text(dim.transform, "ControlLabel", "KONTROL", 20, TextAnchor.MiddleLeft, font);
+            controlLabel.fontStyle = FontStyle.Bold;
+            controlLabel.color = TextDim;
+            Place(controlLabel.gameObject, dim.transform, new Vector2(0.5f, 0.45f), new Vector2(860f, 30f));
             // Joystick mode toggle: Fixed (default) / Free.
-            var joystickToggle = Button(dim.transform, "JoystickMode", "Joystick: Fixed", font, Color.white, buttonSprite);
-            Place(joystickToggle.gameObject, dim.transform, new Vector2(0.5f, 0.36f), new Vector2(520f, 96f));
+            var joystickToggle = Button(dim.transform, "JoystickMode", "Joystick: Fixed", font, Color.white, ghostSprite);
+            Place(joystickToggle.gameObject, dim.transform, new Vector2(0.5f, 0.36f), new Vector2(860f, 96f));
             var close = Button(dim.transform, "Close", "Tutup", font, Color.white, dangerSprite);
             Place(close.gameObject, dim.transform, new Vector2(0.5f, 0.19f), new Vector2(300f, 90f));
-            var title = dim.GetComponentInChildren<Text>();
+            var title = graphicsState;
+            panel.selectedSprite = buttonSprite;
+            panel.normalSprite = ghostSprite;
             panel.panel = dim;
             panel.lowButton = low;
             panel.mediumButton = medium;
@@ -1956,19 +2002,25 @@ namespace SlimeBreaker.EditorTools
             var uiObject = new GameObject("UI");
             var ui = uiObject.AddComponent<UIController>();
 
-            // Top-left: health + experience.
-            var hp = Slider(safe, "HP", new Color(0.9f, 0.3f, 0.36f), barSprite);
-            Place(hp.gameObject, safe, new Vector2(0.16f, 0.935f), new Vector2(470f, 40f));
-            var hpText = Text(hp.transform, "Value", "100 / 100", 22, TextAnchor.MiddleCenter, font);
+            // Top-left: HP and EXP in the boss-bar style (tag pill + dark track + glossy fill + value).
+            var hpTag = Tag(safe, "HPTag", "HP", AccentRed, font, 20);
+            Place(hpTag.gameObject, safe, new Vector2(0.0552f, 0.935f), new Vector2(68f, 40f));
+            var hp = GlassBar(safe, "HP", new Color(0.92f, 0.24f, 0.32f));
+            Place(hp.gameObject, safe, new Vector2(0.1797f, 0.935f), new Vector2(394f, 40f));
+            var hpText = Text(hp.transform, "Value", "100 / 100", 21, TextAnchor.MiddleCenter, font);
+            hpText.fontStyle = FontStyle.Bold;
+            hpText.raycastTarget = false;
+            Shade(hpText);
             Stretch(hpText.rectTransform);
-            var xp = Slider(safe, "EXP", new Color(0.45f, 0.92f, 0.45f), barSprite);
-            Place(xp.gameObject, safe, new Vector2(0.16f, 0.883f), new Vector2(470f, 22f));
-            var xpLabel = Text(xp.transform, "Label", "EXP", 16, TextAnchor.MiddleLeft, font);
-            xpLabel.raycastTarget = false;
-            Place(xpLabel.gameObject, xp.transform, new Vector2(0.08f, 0.5f), new Vector2(70f, 18f));
-            var level = Text(safe, "Level", "Lv 1", 30, TextAnchor.MiddleLeft, font);
-            level.fontStyle = FontStyle.Bold;
-            Place(level.gameObject, safe, new Vector2(0.33f, 0.948f), new Vector2(140f, 36f));
+            var xpTag = Tag(safe, "EXPTag", "EXP", AccentGreen, font, 14);
+            Place(xpTag.gameObject, safe, new Vector2(0.0552f, 0.887f), new Vector2(68f, 24f));
+            var xp = GlassBar(safe, "EXP", new Color(0.4f, 0.9f, 0.5f), 4f);
+            Place(xp.gameObject, safe, new Vector2(0.1797f, 0.887f), new Vector2(394f, 20f));
+            var heroLevelPill = Tag(safe, "LevelPill", "", AccentViolet, font, 20);
+            Place(heroLevelPill.gameObject, safe, new Vector2(0.3135f, 0.935f), new Vector2(112f, 40f));
+            var level = heroLevelPill.GetComponentInChildren<Text>();
+            level.text = "Lv 1";
+            level.fontSize = 22;
             var damage = Text(safe, "Damage", "ATK 12", 22, TextAnchor.MiddleLeft, font);
             damage.fontStyle = FontStyle.Bold;
             damage.gameObject.SetActive(false);
@@ -2003,19 +2055,32 @@ namespace SlimeBreaker.EditorTools
                 value.rectTransform.offsetMax = new Vector2(-12f, 0f);
                 statusValues[i] = value;
             }
-            var floor = Text(safe, "Floor", "Lantai 1/100", 28, TextAnchor.MiddleCenter, font);
+            // Top centre: LANTAI tag + floor number, then the kill-quota bar.
+            var floorTag = Tag(safe, "FloorTag", "LANTAI", AccentBlue, font, 18);
+            Place(floorTag.gameObject, safe, new Vector2(0.4875f, 0.957f), new Vector2(124f, 34f));
+            var floor = Text(safe, "Floor", "1 / 100", 28, TextAnchor.MiddleLeft, font);
             floor.fontStyle = FontStyle.Bold;
-            Place(floor.gameObject, safe, new Vector2(0.52f, 0.955f), new Vector2(280f, 36f));
-            var floorBar = Slider(safe, "FloorProgress", new Color(0.45f, 0.85f, 1f), barSprite);
-            Place(floorBar.gameObject, safe, new Vector2(0.52f, 0.908f), new Vector2(320f, 22f));
-            var floorProgressLabel = Text(floorBar.transform, "Value", "0 / 10", 16, TextAnchor.MiddleCenter, font);
+            floor.raycastTarget = false;
+            Shade(floor);
+            Place(floor.gameObject, safe, new Vector2(0.5885f, 0.957f), new Vector2(180f, 36f));
+            var floorBar = GlassBar(safe, "FloorProgress", new Color(0.36f, 0.78f, 1f), 4f);
+            Place(floorBar.gameObject, safe, new Vector2(0.52f, 0.912f), new Vector2(420f, 28f));
+            var floorProgressLabel = Text(floorBar.transform, "Value", "0 / 10", 17, TextAnchor.MiddleCenter, font);
+            floorProgressLabel.fontStyle = FontStyle.Bold;
             floorProgressLabel.raycastTarget = false;
+            Shade(floorProgressLabel);
             Stretch(floorProgressLabel.rectTransform);
-            var timer = Text(safe, "Timer", "00:00", 34, TextAnchor.MiddleCenter, font);
-            Place(timer.gameObject, safe, new Vector2(0.72f, 0.935f), new Vector2(180f, 48f));
-            var pause = Button(safe, "Pause", "II", font, Color.white, circleSprite);
-            pause.GetComponentInChildren<Text>().fontSize = 34;
+            var timerBack = Graphic(safe, "TimerBack", cardSprite, Color.white);
+            Place(timerBack.gameObject, safe, new Vector2(0.72f, 0.935f), new Vector2(150f, 52f));
+            var timer = Text(safe, "Timer", "00:00", 30, TextAnchor.MiddleCenter, font);
+            timer.fontStyle = FontStyle.Bold;
+            timer.raycastTarget = false;
+            Shade(timer);
+            Place(timer.gameObject, safe, new Vector2(0.72f, 0.935f), new Vector2(150f, 48f));
+            var pause = Button(safe, "Pause", "", font, Color.white, circleGlassSprite);
             Place(pause.gameObject, safe, new Vector2(0.955f, 0.925f), new Vector2(84f, 84f));
+            var pauseIcon = Graphic(pause.transform, "Icon", pauseIconSprite, Color.white);
+            Place(pauseIcon.gameObject, pause.transform, new Vector2(0.5f, 0.5f), new Vector2(46f, 46f));
 
             // Top-right under pause: owned skills.
             var slots = new GameObject[4];
@@ -2168,30 +2233,35 @@ namespace SlimeBreaker.EditorTools
             joystick.handle = handleRect;
             joystick.radius = 78f;
 
-            // Bottom-right: dash button with a radial cooldown sweep.
-            var dashButton = Button(safe, "Dash", "", font, Color.white, circleSprite);
+            // Bottom-right: glass dash button; a cyan ring sweeps round as the cooldown refills.
+            var dashButton = Button(safe, "Dash", "", font, Color.white, circleGlassSprite);
             Place(dashButton.gameObject, safe, new Vector2(0.875f, 0.2f), new Vector2(190f, 190f));
+            var dashTrack = Graphic(dashButton.transform, "DashTrack", ringSprite, new Color(1f, 1f, 1f, 0.14f));
+            Stretch(dashTrack.rectTransform);
+            dashTrack.rectTransform.offsetMin = new Vector2(8f, 8f);
+            dashTrack.rectTransform.offsetMax = new Vector2(-8f, -8f);
             var dashFillObject = new GameObject("DashFill", typeof(RectTransform), typeof(Image));
             dashFillObject.transform.SetParent(dashButton.transform, false);
             var dashFill = dashFillObject.GetComponent<Image>();
-            ApplyImage(dashFill, circleSprite, Image.Type.Filled, new Color(0.55f, 0.9f, 1f, 0.55f));
+            ApplyImage(dashFill, ringSprite, Image.Type.Filled, new Color(0.4f, 0.88f, 1f, 0.95f));
             dashFill.fillMethod = Image.FillMethod.Radial360;
             dashFill.fillOrigin = (int)Image.Origin360.Top;
             dashFill.fillClockwise = true;
             dashFill.fillAmount = 1f;
             dashFill.raycastTarget = false;
             Stretch(dashFill.rectTransform);
-            dashFill.rectTransform.offsetMin = new Vector2(10f, 10f);
-            dashFill.rectTransform.offsetMax = new Vector2(-10f, -10f);
-            var dashLabel = Text(dashButton.transform, "Label2", "DASH", 30, TextAnchor.MiddleCenter, font);
+            dashFill.rectTransform.offsetMin = new Vector2(8f, 8f);
+            dashFill.rectTransform.offsetMax = new Vector2(-8f, -8f);
+            var dashLabel = Text(dashButton.transform, "Label2", "DASH", 32, TextAnchor.MiddleCenter, font);
             dashLabel.fontStyle = FontStyle.Bold;
             dashLabel.raycastTarget = false;
+            Shade(dashLabel);
             Stretch(dashLabel.rectTransform);
 
             // Toast for power-ups and skill grants.
             var toast = new GameObject("Toast", typeof(RectTransform), typeof(Image), typeof(CanvasGroup));
             var toastImage = toast.GetComponent<Image>();
-            ApplyImage(toastImage, panelSprite, Image.Type.Sliced, new Color(0.1f, 0.1f, 0.2f, 0.8f));
+            ApplyImage(toastImage, cardSprite, Image.Type.Sliced, Color.white);
             toastImage.raycastTarget = false;
             Place(toast, safe, new Vector2(0.5f, 0.73f), new Vector2(760f, 76f));
             var toastText = Text(toast.transform, "Text", "", 32, TextAnchor.MiddleCenter, font);
@@ -2204,7 +2274,7 @@ namespace SlimeBreaker.EditorTools
 
             var warning = new GameObject("BossWarning", typeof(RectTransform), typeof(Image), typeof(CanvasGroup));
             var warningImage = warning.GetComponent<Image>();
-            ApplyImage(warningImage, panelSprite, Image.Type.Sliced, new Color(0.18f, 0.05f, 0.04f, 0.88f));
+            ApplyImage(warningImage, cardSprite, Image.Type.Sliced, new Color(1f, 0.6f, 0.6f, 1f));
             warningImage.raycastTarget = false;
             Place(warning, safe, new Vector2(0.5f, 0.62f), new Vector2(860f, 160f));
             var warningTitle = Text(warning.transform, "Title", "STAGE BOSS", 42, TextAnchor.MiddleCenter, font);
@@ -2228,7 +2298,7 @@ namespace SlimeBreaker.EditorTools
             var icons = new Image[3];
             for (int i = 0; i < 3; i++)
             {
-                choices[i] = Button(levelPanel.transform, "Choice" + i, "Upgrade", font, Color.white, buttonSprite);
+                choices[i] = Button(levelPanel.transform, "Choice" + i, "Upgrade", font, Color.white, ghostSprite);
                 Place(choices[i].gameObject, levelPanel.transform, new Vector2(0.25f + i * 0.25f, 0.46f), new Vector2(330f, 320f));
                 labels[i] = choices[i].GetComponentInChildren<Text>();
                 labels[i].alignment = TextAnchor.UpperCenter;
@@ -2249,7 +2319,7 @@ namespace SlimeBreaker.EditorTools
             var pausePanel = Panel(safe, "Pause", font, "Jeda");
             var resume = Button(pausePanel.transform, "Resume", "Lanjut", font, Color.white, goldSprite);
             Place(resume.gameObject, pausePanel.transform, new Vector2(0.5f, 0.54f), new Vector2(380f, 96f));
-            var settingsButton = Button(pausePanel.transform, "Settings", "Pengaturan", font, Color.white, buttonSprite);
+            var settingsButton = Button(pausePanel.transform, "Settings", "Pengaturan", font, Color.white, ghostSprite);
             Place(settingsButton.gameObject, pausePanel.transform, new Vector2(0.5f, 0.38f), new Vector2(380f, 96f));
             var menu = Button(pausePanel.transform, "Menu", "Menu", font, Color.white, dangerSprite);
             Place(menu.gameObject, pausePanel.transform, new Vector2(0.5f, 0.22f), new Vector2(380f, 96f));
@@ -2415,8 +2485,8 @@ namespace SlimeBreaker.EditorTools
         {
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
-            PlayerSettings.bundleVersion = "0.13.0";
-            PlayerSettings.Android.bundleVersionCode = 13;
+            PlayerSettings.bundleVersion = AppVersion;
+            PlayerSettings.Android.bundleVersionCode = 14;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;
@@ -2494,7 +2564,7 @@ namespace SlimeBreaker.EditorTools
         {
             var dim = new GameObject(name, typeof(RectTransform), typeof(Image));
             dim.transform.SetParent(parent, false);
-            ApplyImage(dim.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(0.02f, 0.03f, 0.08f, 0.72f));
+            ApplyImage(dim.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(0.01f, 0.01f, 0.04f, 0.66f));
             Stretch(dim.GetComponent<RectTransform>());
             var panel = new GameObject("Frame", typeof(RectTransform), typeof(Image));
             panel.transform.SetParent(dim.transform, false);
@@ -2504,9 +2574,12 @@ namespace SlimeBreaker.EditorTools
             rect.anchorMax = new Vector2(0.86f, 0.9f);
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
-            var label = Text(dim.transform, "Title", title, 50, TextAnchor.MiddleCenter, font);
+            var label = Text(dim.transform, "Title", title, 48, TextAnchor.MiddleCenter, font);
             label.fontStyle = FontStyle.Bold;
+            Shade(label);
             Place(label.gameObject, dim.transform, new Vector2(0.5f, 0.79f), new Vector2(1000f, 90f));
+            var underline = Graphic(dim.transform, "TitleAccent", pillSprite, AccentViolet);
+            Place(underline.gameObject, dim.transform, new Vector2(0.5f, 0.738f), new Vector2(96f, 8f));
             return dim;
         }
 
@@ -2533,7 +2606,8 @@ namespace SlimeBreaker.EditorTools
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
             go.transform.SetParent(parent, false);
-            ApplyImage(go.GetComponent<Image>(), sprite != null ? sprite : buttonSprite, sprite == circleSprite ? Image.Type.Simple : Image.Type.Sliced, color);
+            var face = sprite != null ? sprite : buttonSprite;
+            ApplyImage(go.GetComponent<Image>(), face, face.border == Vector4.zero ? Image.Type.Simple : Image.Type.Sliced, color);
             var button = go.GetComponent<Button>();
             var colors = button.colors;
             colors.highlightedColor = new Color(1f, 1f, 1f, 1f);
@@ -2541,7 +2615,9 @@ namespace SlimeBreaker.EditorTools
             colors.disabledColor = new Color(0.55f, 0.55f, 0.6f, 0.7f);
             button.colors = colors;
             var text = Text(go.transform, "Label", label, 30, TextAnchor.MiddleCenter, font);
+            text.fontStyle = FontStyle.Bold;
             text.raycastTarget = false;
+            Shade(text);
             Stretch(text.rectTransform);
             return button;
         }
@@ -2609,6 +2685,11 @@ namespace SlimeBreaker.EditorTools
             pillSprite = UiSprite("UI_Pill", whiteSprite);
             trackSprite = UiSprite("UI_Bar_Track", barSprite);
             fillSprite = UiSprite("UI_Bar_Fill", whiteSprite);
+            ghostSprite = UiSprite("UI_Button_Ghost", buttonSprite);
+            circleGlassSprite = UiSprite("UI_Circle_Glass", circleSprite);
+            ringSprite = UiSprite("UI_Ring", circleSprite);
+            gearSprite = UiSprite("UI_Icon_Gear", whiteSprite);
+            pauseIconSprite = UiSprite("UI_Icon_Pause", whiteSprite);
             if (panelSprite == null || buttonSprite == null || whiteSprite == null)
                 throw new InvalidOperationException("Sprite UI tidak ter-load.");
         }
@@ -2661,6 +2742,40 @@ namespace SlimeBreaker.EditorTools
             rect.anchoredPosition = Vector2.zero;
             rect.localScale = Vector3.one;
             return rect;
+        }
+
+        static void Shade(Text text)
+        {
+            var shadow = text.gameObject.GetComponent<Shadow>() ?? text.gameObject.AddComponent<Shadow>();
+            shadow.effectColor = new Color(0f, 0f, 0f, 0.75f);
+            shadow.effectDistance = new Vector2(1.5f, -1.5f);
+        }
+
+        /// <summary>Boss-bar style slider: dark track, glossy tinted fill, bold value text with shadow.</summary>
+        static Slider GlassBar(Transform parent, string name, Color color, float inset = 5f)
+        {
+            var slider = Slider(parent, name, color, trackSprite);
+            var area = slider.fillRect.parent as RectTransform;
+            area.offsetMin = new Vector2(inset, inset);
+            area.offsetMax = new Vector2(-inset, -inset);
+            var fill = slider.fillRect.GetComponent<Image>();
+            fill.sprite = fillSprite;
+            fill.type = Image.Type.Sliced;
+            fill.raycastTarget = false;
+            slider.transform.Find("Background").GetComponent<Image>().raycastTarget = false;
+            return slider;
+        }
+
+        /// <summary>Coloured capsule with bold centred text (HP / EXP / LANTAI / BOSS tags).</summary>
+        static Image Tag(Transform parent, string name, string label, Color color, Font font, int size)
+        {
+            var tag = Graphic(parent, name, pillSprite, color);
+            var text = Text(tag.transform, "Text", label, size, TextAnchor.MiddleCenter, font);
+            text.fontStyle = FontStyle.Bold;
+            text.raycastTarget = false;
+            Shade(text);
+            Stretch(text.rectTransform);
+            return tag;
         }
 
         /// <summary>Raycast-free sliced image (or simple, for the white sprite) used for HUD decoration.</summary>

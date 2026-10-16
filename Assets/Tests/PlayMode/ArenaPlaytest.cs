@@ -181,6 +181,21 @@ namespace SlimeBreaker.Tests
                     play = button;
             }
             Assert.IsNotNull(play, "MainMenu has no Play button");
+            Assert.AreEqual("UI_Button_Gold", play.GetComponent<Image>().sprite.name, "Play should be the primary button");
+            foreach (var button in Object.FindObjectsByType<Button>(FindObjectsSortMode.None))
+            {
+                if (button.name == "Settings")
+                {
+                    Assert.AreEqual("UI_Circle_Glass", button.GetComponent<Image>().sprite.name, "menu settings button is not glass");
+                    Assert.IsNotNull(button.transform.Find("Icon"), "menu settings button has no gear icon");
+                }
+                if (button.name == "Continue" || button.name == "Damage")
+                    Assert.AreEqual("UI_Button_Ghost", button.GetComponent<Image>().sprite.name, button.name + " should be a ghost button");
+            }
+            menu.OpenSettings();
+            yield return null;
+            Capture("25_menu_settings");
+            menu.settings.Hide();
             play.onClick.Invoke();
             yield return null;
             yield return null;
@@ -442,6 +457,47 @@ namespace SlimeBreaker.Tests
             Assert.IsTrue(SkillController.Instance.BreakerAura == null, "aura stayed after Boss Breaker ended");
             Assert.IsFalse(flow.ui.breakerText.gameObject.activeSelf);
             Assert.IsTrue(boss.ImmuneToSkills);
+        }
+
+        [UnityTest]
+        public IEnumerator HudUsesGlassStyle()
+        {
+            ControlSettings.FreeJoystick = false;
+            var flow = GameFlowController.Instance;
+            var ui = flow.ui;
+            yield return null;
+            foreach (var bar in new[] { ui.hpSlider, ui.xpSlider, ui.floorProgress })
+            {
+                Assert.AreEqual("UI_Bar_Track", bar.transform.Find("Background").GetComponent<Image>().sprite.name, bar.name + " track is not the boss-bar style");
+                Assert.AreEqual("UI_Bar_Fill", bar.fillRect.GetComponent<Image>().sprite.name, bar.name + " fill is not the boss-bar style");
+            }
+            Assert.AreEqual("UI_Ring", ui.dashFill.sprite.name, "dash cooldown should be a ring");
+            Assert.AreEqual("UI_Circle_Glass", ui.dashFill.GetComponentInParent<Button>().GetComponent<Image>().sprite.name);
+            Assert.AreEqual("UI_Circle_Glass", ui.pauseButton.GetComponent<Image>().sprite.name);
+            Assert.IsNotNull(ui.pauseButton.transform.Find("Icon"), "pause button has no icon");
+            StringAssert.Contains("Lv", ui.levelText.text);
+            Assert.AreEqual("1 / 100", ui.floorText.text);
+            var joystick = Object.FindAnyObjectByType<PlayerController>().joystick;
+            Assert.AreEqual("UI_Joystick_Base", joystick.background.GetComponent<Image>().sprite.name);
+
+            // Settings: the active option uses the solid accent face, others the glass face.
+            ui.OpenSettings();
+            yield return null;
+            var settings = ui.settings;
+            Assert.IsTrue(settings.panel.activeSelf);
+            int level = GraphicsService.Instance != null ? GraphicsService.Instance.Level : GraphicsService.High;
+            var buttons = new[] { settings.lowButton, settings.mediumButton, settings.highButton };
+            for (int i = 0; i < buttons.Length; i++)
+                Assert.AreEqual(i == level ? settings.selectedSprite : settings.normalSprite, buttons[i].GetComponent<Image>().sprite, buttons[i].name + " highlight is wrong");
+            Assert.AreEqual(settings.normalSprite, settings.joystickButton.GetComponent<Image>().sprite, "Fixed joystick should show the normal face");
+            Capture("24_settings");
+            settings.Hide();
+            flow.TogglePause();
+            yield return null;
+            Capture("26_pause");
+            flow.TogglePause();
+            yield return null;
+            Capture("27_hud_glass");
         }
 
         static void PinNear(EnemyHealth boss, PlayerHealth hero, float distance)

@@ -15,6 +15,9 @@ namespace SlimeBreaker
         public Text joystickLabel;
         public Text title;
         public Image[] highlights;
+        /// <summary>Face for the active option (solid accent); others use <see cref="normalSprite"/> (glass).</summary>
+        public Sprite selectedSprite;
+        public Sprite normalSprite;
 
         void Start()
         {
@@ -83,13 +86,22 @@ namespace SlimeBreaker
             Mark(highButton, current == GraphicsService.High);
         }
 
-        static void Mark(Button button, bool selected)
+        void Mark(Button button, bool selected)
         {
             if (button == null)
                 return;
             var image = button.GetComponent<Image>();
-            if (image != null)
+            if (image == null)
+                return;
+            if (selectedSprite != null && normalSprite != null)
+            {
+                image.sprite = selected ? selectedSprite : normalSprite;
+                image.color = Color.white;
+            }
+            else
+            {
                 image.color = selected ? new Color(1f, 0.92f, 0.55f) : Color.white;
+            }
         }
     }
 }

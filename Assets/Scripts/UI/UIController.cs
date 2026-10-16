@@ -137,7 +137,7 @@ namespace SlimeBreaker
             if (floorText != null)
             {
                 int floor = StageManager.Instance != null ? StageManager.Instance.Floor : 1;
-                floorText.text = "Lantai " + floor + "/" + RunRules.MaxFloor;
+                floorText.text = floor + " / " + RunRules.MaxFloor;
             }
             RefreshFloorProgress();
             if (timerText != null && flow.run != null)

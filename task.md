@@ -107,6 +107,15 @@
 - Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 21/21. PlayMode 28/28. APK `SLIMEBREAKER_APK_OK` 0.12.0.
 - Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
 
+### Putaran 13 — kartu status & deskripsi modern, bar HP boss
+
+- Kartu status kiri atas: panel kaca, header STATUS, grid 2×5 (label redup, nilai tebal, warna per jenis).
+- Kartu deskripsi power-up: aksen warna, ikon, pil level/MAX, chip statistik, bonus MAX, status boss.
+- Stage boss: bar HP boss di atas layar di bawah bar lantai — pil BOSS/ENRAGE, nama, `10.000 / 10.000` turun mengikuti damage, jejak damage.
+- Perbaikan joystick Fixed di resolusi non-1920×1080.
+- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 22/22. PlayMode 28/28. APK `SLIMEBREAKER_APK_OK` 0.13.0.
+- Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

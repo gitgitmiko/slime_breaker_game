@@ -6,6 +6,7 @@ MIT-licensed FluidR3 GM soundfont.
 
 Run from the repository root:
   python3 asset_work/scripts/build_audio_ui.py
+  python3 asset_work/scripts/build_audio_ui.py ui   # UI sprites and icons only
 """
 
 import math
@@ -446,50 +447,151 @@ def rounded_panel(size, radius, top, bottom, border, border_width, inset=0):
     return img
 
 
+def glass(size, radius, top=(24, 22, 40, 226), bottom=(10, 10, 20, 226), rim=(255, 255, 255, 52), rim_width=2, sheen=14):
+    """Dark translucent card with a hairline rim and a faint top sheen (the boss-bar look)."""
+    w, h = size
+    img = canvas(w, h)
+    body = gradient(w * SS, h * SS, top, bottom)
+    img.paste(body, (0, 0), rounded_mask(w * SS, h * SS, radius * SS))
+    draw = ImageDraw.Draw(img)
+    if rim_width:
+        draw.rounded_rectangle((0, 0, w * SS - 1, h * SS - 1), radius=radius * SS, outline=rim, width=rim_width * SS)
+    if sheen:
+        layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        ImageDraw.Draw(layer).rounded_rectangle((3 * SS, 3 * SS, w * SS - 3 * SS, int(h * SS * 0.42)), radius=radius * SS, fill=(255, 255, 255, sheen))
+        img = Image.alpha_composite(img, layer)
+    return img
+
+
+def flat_button(size, radius, top, bottom):
+    """Flat filled button: two-tone vertical gradient, hairline light rim, glossy upper half."""
+    return glass(size, radius, top, bottom, rim=(255, 255, 255, 70), rim_width=2, sheen=34)
+
+
 def panels():
     out = os.path.join(UI, "Panels")
-    finish(rounded_panel((512, 320), 36, (28, 22, 66, 240), (12, 10, 34, 240), (242, 193, 78, 255), 5), os.path.join(out, "UI_Panel.png"))
-    finish(rounded_panel((420, 120), 30, (104, 86, 230, 255), (58, 44, 150, 255), (236, 226, 255, 255), 3), os.path.join(out, "UI_Button.png"))
-    finish(rounded_panel((420, 120), 30, (236, 86, 140, 255), (150, 36, 86, 255), (255, 220, 232, 255), 3), os.path.join(out, "UI_Button_Danger.png"))
-    finish(rounded_panel((420, 120), 30, (242, 193, 78, 255), (182, 120, 30, 255), (255, 240, 200, 255), 3), os.path.join(out, "UI_Button_Gold.png"))
-    finish(rounded_panel((160, 160), 28, (40, 32, 90, 230), (18, 14, 48, 230), (242, 193, 78, 255), 4), os.path.join(out, "UI_Slot.png"))
-    finish(rounded_panel((512, 64), 24, (20, 16, 50, 220), (20, 16, 50, 220), (120, 100, 220, 255), 2), os.path.join(out, "UI_Bar_Back.png"))
+    # No sheen on the big panel: it is 9-sliced, so a sheen would stretch into a band.
+    finish(glass((512, 320), 34, (24, 22, 42, 238), (14, 13, 26, 238), sheen=0), os.path.join(out, "UI_Panel.png"))
+    finish(flat_button((420, 120), 26, (132, 110, 255, 255), (88, 68, 214, 255)), os.path.join(out, "UI_Button.png"))
+    finish(flat_button((420, 120), 26, (246, 92, 120, 255), (190, 44, 78, 255)), os.path.join(out, "UI_Button_Danger.png"))
+    finish(flat_button((420, 120), 26, (255, 204, 92, 255), (232, 142, 36, 255)), os.path.join(out, "UI_Button_Gold.png"))
+    finish(glass((420, 120), 26, (255, 255, 255, 20), (255, 255, 255, 8), rim=(255, 255, 255, 80), sheen=10), os.path.join(out, "UI_Button_Ghost.png"))
+    finish(glass((160, 160), 26), os.path.join(out, "UI_Slot.png"))
+    finish(glass((256, 36), 12, (0, 0, 0, 160), (0, 0, 0, 160), rim=(255, 255, 255, 40), sheen=0), os.path.join(out, "UI_Bar_Back.png"))
 
-    # circular joystick base and knob
+    # Joystick base: dark glass disc, light rim, faint inner ring and four chevrons.
     size = 256
     img = canvas(size, size)
     draw = ImageDraw.Draw(img)
     s = size * SS
-    draw.ellipse((0, 0, s - 1, s - 1), fill=(20, 16, 50, 150), outline=(242, 193, 78, 230), width=5 * SS)
-    draw.ellipse((s * 0.3, s * 0.3, s * 0.7, s * 0.7), outline=(255, 255, 255, 60), width=2 * SS)
+    draw.ellipse((0, 0, s - 1, s - 1), fill=(10, 10, 22, 120), outline=(255, 255, 255, 84), width=3 * SS)
+    draw.ellipse((s * 0.27, s * 0.27, s * 0.73, s * 0.73), outline=(255, 255, 255, 34), width=2 * SS)
     for angle in range(0, 360, 90):
         a = math.radians(angle)
         cx, cy = s / 2 + math.cos(a) * s * 0.4, s / 2 + math.sin(a) * s * 0.4
         draw.polygon(
             [
-                (cx + math.cos(a) * 14 * SS, cy + math.sin(a) * 14 * SS),
-                (cx + math.cos(a + 2.4) * 12 * SS, cy + math.sin(a + 2.4) * 12 * SS),
-                (cx + math.cos(a - 2.4) * 12 * SS, cy + math.sin(a - 2.4) * 12 * SS),
+                (cx + math.cos(a) * 11 * SS, cy + math.sin(a) * 11 * SS),
+                (cx + math.cos(a + 2.4) * 10 * SS, cy + math.sin(a + 2.4) * 10 * SS),
+                (cx + math.cos(a - 2.4) * 10 * SS, cy + math.sin(a - 2.4) * 10 * SS),
             ],
-            fill=(255, 255, 255, 110),
+            fill=(255, 255, 255, 120),
         )
     finish(img, os.path.join(out, "UI_Joystick_Base.png"))
 
+    # Knob: glossy white disc with a soft dark halo and a violet rim.
     img = canvas(128, 128)
-    draw = ImageDraw.Draw(img)
     s = 128 * SS
-    body = gradient(s, s, (255, 255, 255, 235), (190, 180, 240, 235))
+    halo = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(halo).ellipse((s * 0.06, s * 0.1, s * 0.94, s * 0.98), fill=(0, 0, 0, 90))
+    halo = halo.filter(ImageFilter.GaussianBlur(6 * SS))
+    img = Image.alpha_composite(img, halo)
+    body = gradient(s, s, (255, 255, 255, 245), (206, 206, 222, 245))
     mask = Image.new("L", (s, s), 0)
-    ImageDraw.Draw(mask).ellipse((0, 0, s - 1, s - 1), fill=255)
+    ImageDraw.Draw(mask).ellipse((s * 0.08, s * 0.08, s * 0.92, s * 0.92), fill=255)
     img.paste(body, (0, 0), mask)
-    draw.ellipse((0, 0, s - 1, s - 1), outline=(104, 86, 230, 255), width=4 * SS)
-    draw.ellipse((s * 0.2, s * 0.14, s * 0.6, s * 0.4), fill=(255, 255, 255, 120))
-    finish(img, os.path.join(out, "UI_Joystick_Knob.png"))
+    draw = ImageDraw.Draw(img)
+    draw.ellipse((s * 0.08, s * 0.08, s * 0.92, s * 0.92), outline=(132, 110, 255, 255), width=3 * SS)
+    shine = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(shine).ellipse((s * 0.24, s * 0.16, s * 0.64, s * 0.4), fill=(255, 255, 255, 110))
+    finish(Image.alpha_composite(img, shine), os.path.join(out, "UI_Joystick_Knob.png"))
 
-    # soft circle for glow / dash fill
+    # Plain white disc (tinted fills, dots).
     img = canvas(128, 128)
     ImageDraw.Draw(img).ellipse((0, 0, 128 * SS - 1, 128 * SS - 1), fill=(255, 255, 255, 255))
     finish(img, os.path.join(out, "UI_Circle.png"))
+
+    # Glass disc for round buttons (pause, settings, dash).
+    img = canvas(192, 192)
+    s = 192 * SS
+    body = gradient(s, s, (30, 28, 50, 220), (10, 10, 22, 220))
+    mask = Image.new("L", (s, s), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, s - 1, s - 1), fill=255)
+    img.paste(body, (0, 0), mask)
+    draw = ImageDraw.Draw(img)
+    draw.ellipse((0, 0, s - 1, s - 1), outline=(255, 255, 255, 70), width=3 * SS)
+    shine = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(shine).chord((s * 0.12, s * 0.06, s * 0.88, s * 0.6), 180, 360, fill=(255, 255, 255, 16))
+    finish(Image.alpha_composite(img, shine), os.path.join(out, "UI_Circle_Glass.png"))
+
+    # Thin ring for radial cooldown sweeps.
+    img = canvas(192, 192)
+    s = 192 * SS
+    ImageDraw.Draw(img).ellipse((4 * SS, 4 * SS, s - 4 * SS, s - 4 * SS), outline=(255, 255, 255, 255), width=9 * SS)
+    finish(img, os.path.join(out, "UI_Ring.png"))
+
+    # Line icons: gear (settings) and pause bars.
+    img = canvas(96, 96)
+    s = 96 * SS
+    draw = ImageDraw.Draw(img)
+    c = s / 2
+    for k in range(8):
+        a = math.radians(k * 45)
+        tooth = [(c + math.cos(a + d) * r, c + math.sin(a + d) * r) for d, r in ((-0.2, s * 0.3), (-0.13, s * 0.44), (0.13, s * 0.44), (0.2, s * 0.3))]
+        draw.polygon(tooth, fill=(255, 255, 255, 255))
+    draw.ellipse((c - s * 0.32, c - s * 0.32, c + s * 0.32, c + s * 0.32), fill=(255, 255, 255, 255))
+    draw.ellipse((c - s * 0.13, c - s * 0.13, c + s * 0.13, c + s * 0.13), fill=(0, 0, 0, 0))
+    finish(img, os.path.join(out, "UI_Icon_Gear.png"))
+    img = canvas(96, 96)
+    draw = ImageDraw.Draw(img)
+    draw.rounded_rectangle((s * 0.26, s * 0.2, s * 0.42, s * 0.8), radius=s * 0.05, fill=(255, 255, 255, 255))
+    draw.rounded_rectangle((s * 0.58, s * 0.2, s * 0.74, s * 0.8), radius=s * 0.05, fill=(255, 255, 255, 255))
+    finish(img, os.path.join(out, "UI_Icon_Pause.png"))
+
+
+def modern_ui():
+    """Flat "glass" HUD pieces: dark translucent card, white pill and bar pieces tinted in Unity."""
+    out = os.path.join(UI, "Panels")
+    # Card: near-black indigo glass, hairline light border, faint top sheen.
+    w, h, r = 256, 160, 22
+    img = canvas(w, h)
+    body = gradient(w * SS, h * SS, (22, 22, 38, 222), (10, 10, 20, 222))
+    img.paste(body, (0, 0), rounded_mask(w * SS, h * SS, r * SS))
+    draw = ImageDraw.Draw(img)
+    draw.rounded_rectangle((0, 0, w * SS - 1, h * SS - 1), radius=r * SS, outline=(255, 255, 255, 46), width=2 * SS)
+    sheen = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(sheen).rounded_rectangle((2 * SS, 2 * SS, w * SS - 3 * SS, 22 * SS), radius=r * SS, fill=(255, 255, 255, 14))
+    finish(Image.alpha_composite(img, sheen), os.path.join(out, "UI_Card_Glass.png"))
+
+    # Pill: plain white capsule, tinted per use (level badge, BOSS tag, stat chips).
+    img = canvas(96, 44)
+    ImageDraw.Draw(img).rounded_rectangle((0, 0, 96 * SS - 1, 44 * SS - 1), radius=22 * SS, fill=(255, 255, 255, 255))
+    finish(img, os.path.join(out, "UI_Pill.png"))
+
+    # Bar track: dark inset groove with a hairline rim.
+    img = canvas(256, 36)
+    draw = ImageDraw.Draw(img)
+    draw.rounded_rectangle((0, 0, 256 * SS - 1, 36 * SS - 1), radius=12 * SS, fill=(0, 0, 0, 160), outline=(255, 255, 255, 40), width=2 * SS)
+    finish(img, os.path.join(out, "UI_Bar_Track.png"))
+
+    # Bar fill: white with a soft top highlight so tinted fills read as glossy.
+    w, h = 256, 28
+    img = canvas(w, h)
+    body = gradient(w * SS, h * SS, (255, 255, 255, 255), (196, 196, 204, 255))
+    img.paste(body, (0, 0), rounded_mask(w * SS, h * SS, 10 * SS))
+    shine = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(shine).rounded_rectangle((3 * SS, 2 * SS, w * SS - 3 * SS, 10 * SS), radius=5 * SS, fill=(255, 255, 255, 90))
+    finish(Image.alpha_composite(img, shine), os.path.join(out, "UI_Bar_Fill.png"))
 
 
 def icon(name, painter, top=(104, 86, 230, 255), bottom=(46, 34, 120, 255)):
@@ -648,11 +750,20 @@ def icons():
 
 
 def main():
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "ui":
+        # UI sprites only; leaves audio untouched.
+        panels()
+        modern_ui()
+        icons()
+        print("AUDIO_UI_OK", flush=True)
+        return
     os.makedirs(TMP, exist_ok=True)
     build_sfx()
     arena_music()
     menu_music()
     panels()
+    modern_ui()
     icons()
     print("AUDIO_UI_OK", flush=True)
 

@@ -29,6 +29,8 @@ blender --background --python asset_work/scripts/build_assets.py -- \
 python3 asset_work/scripts/build_audio_ui.py
 ```
 
+Hanya sprite UI dan ikon (audio tidak disentuh): `python3 asset_work/scripts/build_audio_ui.py ui`. Sprite HUD modern: `UI_Card_Glass`, `UI_Pill`, `UI_Bar_Track`, `UI_Bar_Fill` (putih, diwarnai di Unity), `UI_Button_Ghost`, `UI_Circle_Glass`, `UI_Ring`, ikon `UI_Icon_Gear` dan `UI_Icon_Pause`. `UI_Panel`, `UI_Button*`, `UI_Slot`, dan joystick memakai gaya kaca yang sama.
+
 `build_textures.py` membuat `TEX_Forest_Ground` (1024), `TEX_Bark` / `TEX_Rock` (512), plus tanah biome (`TEX_Snow_Ground`, `TEX_Sand_Ground`, `TEX_Thunder_Ground`, `TEX_Swamp_Ground`, `TEX_Shadow_Ground`, `TEX_Volcano_Ground`, `TEX_Storm_Ground`, `TEX_Crystal_Ground`, `TEX_Royal_Ground`) beserta `*_Normal.png` dari value noise tileable (numpy + Pillow). Blender menanamkan tekstur warna di FBX; normal map disalin ke `Assets/Art/Textures` dan dipasang `ProjectSetup` berdasarkan nama material.
 
 Hanya mesh biome baru (tanpa menimpa hero/slime):

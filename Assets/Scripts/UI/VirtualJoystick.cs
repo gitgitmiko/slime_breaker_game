@@ -19,7 +19,8 @@ namespace SlimeBreaker
         /// <summary>Extra grab margin around the base in fixed mode, in canvas units.</summary>
         public float fixedGrabMargin = 40f;
 
-        Vector3 restPosition;
+        // Anchored (not local) so the rest spot survives canvas scaling and safe-area layout.
+        Vector2 restPosition;
         bool hasRest;
         bool tracking;
 
@@ -34,7 +35,7 @@ namespace SlimeBreaker
         {
             if (hasRest || background == null)
                 return;
-            restPosition = background.localPosition;
+            restPosition = background.anchoredPosition;
             hasRest = true;
         }
 
@@ -47,12 +48,11 @@ namespace SlimeBreaker
             {
                 if (Free)
                 {
-                    if (RectTransformUtility.ScreenPointToLocalPointInRectangle(Zone, eventData.position, eventData.pressEventCamera, out var local))
-                        background.localPosition = new Vector3(local.x, local.y, restPosition.z);
+                    if (RectTransformUtility.ScreenPointToWorldPointInRectangle(Zone, eventData.position, eventData.pressEventCamera, out var world))
+                        background.position = world;
                 }
                 else
                 {
-                    background.localPosition = restPosition;
                     if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(background, eventData.position, eventData.pressEventCamera, out var onBase))
                         return;
                     float grab = Mathf.Max(background.rect.width, background.rect.height) * 0.5f + fixedGrabMargin;
@@ -96,7 +96,7 @@ namespace SlimeBreaker
             if (handle != null)
                 handle.anchoredPosition = Vector2.zero;
             if (background != null && background != Zone && hasRest)
-                background.localPosition = restPosition;
+                background.anchoredPosition = restPosition;
         }
     }
 }

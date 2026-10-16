@@ -181,6 +181,21 @@ namespace SlimeBreaker.Tests
                     play = button;
             }
             Assert.IsNotNull(play, "MainMenu has no Play button");
+            Assert.AreEqual("UI_Button_Gold", play.GetComponent<Image>().sprite.name, "Play should be the primary button");
+            foreach (var button in Object.FindObjectsByType<Button>(FindObjectsSortMode.None))
+            {
+                if (button.name == "Settings")
+                {
+                    Assert.AreEqual("UI_Circle_Glass", button.GetComponent<Image>().sprite.name, "menu settings button is not glass");
+                    Assert.IsNotNull(button.transform.Find("Icon"), "menu settings button has no gear icon");
+                }
+                if (button.name == "Continue" || button.name == "Damage")
+                    Assert.AreEqual("UI_Button_Ghost", button.GetComponent<Image>().sprite.name, button.name + " should be a ghost button");
+            }
+            menu.OpenSettings();
+            yield return null;
+            Capture("25_menu_settings");
+            menu.settings.Hide();
             play.onClick.Invoke();
             yield return null;
             yield return null;
@@ -210,7 +225,11 @@ namespace SlimeBreaker.Tests
 
                 // Fixed (default): dragging from the base steers.
                 var start = player.transform.position;
-                yield return Drag(touch, 1, centre, new Vector2(60f, 0f), 1f);
+                InputSystem.QueueStateEvent(touch, new TouchState { touchId = 1, phase = UnityEngine.InputSystem.TouchPhase.Began, position = centre });
+                yield return null;
+                Assert.IsTrue(player.joystick.Held, "fixed joystick did not grab a touch on its base");
+                Assert.Less(Vector3.Distance(baseRect.position, restBase), 0.01f, "fixed joystick base moved on press");
+                yield return Drag(touch, 1, centre, new Vector2(60f, 0f), 1f, began: false);
                 var moved = player.transform.position - start;
                 Debug.Log("PLAYTEST touch moved " + moved.ToString("F2"));
                 Assert.Greater(moved.x, 1.5f, "dragging the joystick right did not move the hero right");
@@ -438,6 +457,47 @@ namespace SlimeBreaker.Tests
             Assert.IsTrue(SkillController.Instance.BreakerAura == null, "aura stayed after Boss Breaker ended");
             Assert.IsFalse(flow.ui.breakerText.gameObject.activeSelf);
             Assert.IsTrue(boss.ImmuneToSkills);
+        }
+
+        [UnityTest]
+        public IEnumerator HudUsesGlassStyle()
+        {
+            ControlSettings.FreeJoystick = false;
+            var flow = GameFlowController.Instance;
+            var ui = flow.ui;
+            yield return null;
+            foreach (var bar in new[] { ui.hpSlider, ui.xpSlider, ui.floorProgress })
+            {
+                Assert.AreEqual("UI_Bar_Track", bar.transform.Find("Background").GetComponent<Image>().sprite.name, bar.name + " track is not the boss-bar style");
+                Assert.AreEqual("UI_Bar_Fill", bar.fillRect.GetComponent<Image>().sprite.name, bar.name + " fill is not the boss-bar style");
+            }
+            Assert.AreEqual("UI_Ring", ui.dashFill.sprite.name, "dash cooldown should be a ring");
+            Assert.AreEqual("UI_Circle_Glass", ui.dashFill.GetComponentInParent<Button>().GetComponent<Image>().sprite.name);
+            Assert.AreEqual("UI_Circle_Glass", ui.pauseButton.GetComponent<Image>().sprite.name);
+            Assert.IsNotNull(ui.pauseButton.transform.Find("Icon"), "pause button has no icon");
+            StringAssert.Contains("Lv", ui.levelText.text);
+            Assert.AreEqual("1 / 100", ui.floorText.text);
+            var joystick = Object.FindAnyObjectByType<PlayerController>().joystick;
+            Assert.AreEqual("UI_Joystick_Base", joystick.background.GetComponent<Image>().sprite.name);
+
+            // Settings: the active option uses the solid accent face, others the glass face.
+            ui.OpenSettings();
+            yield return null;
+            var settings = ui.settings;
+            Assert.IsTrue(settings.panel.activeSelf);
+            int level = GraphicsService.Instance != null ? GraphicsService.Instance.Level : GraphicsService.High;
+            var buttons = new[] { settings.lowButton, settings.mediumButton, settings.highButton };
+            for (int i = 0; i < buttons.Length; i++)
+                Assert.AreEqual(i == level ? settings.selectedSprite : settings.normalSprite, buttons[i].GetComponent<Image>().sprite, buttons[i].name + " highlight is wrong");
+            Assert.AreEqual(settings.normalSprite, settings.joystickButton.GetComponent<Image>().sprite, "Fixed joystick should show the normal face");
+            Capture("24_settings");
+            settings.Hide();
+            flow.TogglePause();
+            yield return null;
+            Capture("26_pause");
+            flow.TogglePause();
+            yield return null;
+            Capture("27_hud_glass");
         }
 
         static void PinNear(EnemyHealth boss, PlayerHealth hero, float distance)
@@ -914,6 +974,11 @@ namespace SlimeBreaker.Tests
             Assert.IsNotNull(boss, "Rock Slime was not spawned");
             Assert.AreEqual(10000, boss.Max, "floor 10 boss HP should be 10000");
             Assert.AreEqual(BossCatalog.ContactDamageForFloor(10), boss.ContactDamage, "boss basic attack should scale with the floor");
+            yield return null;
+            Assert.IsTrue(flow.ui.BossBarVisible, "boss HP bar did not appear");
+            Assert.AreEqual("ROCK SLIME", flow.ui.BossBarName);
+            Assert.AreEqual("10.000 / 10.000", flow.ui.BossBarText);
+            Assert.AreEqual(1f, flow.ui.BossBarFill01, 0.001f);
             Capture("13_boss_intro");
             wait = 0f;
             while (flow.State == GameState.BossIntro && wait < 3.2f)
@@ -947,6 +1012,11 @@ namespace SlimeBreaker.Tests
             Assert.IsFalse(boss.IsDead);
             Assert.IsTrue(controller.Enraged, "boss should enrage below 30% HP");
             Assert.LessOrEqual((float)boss.Current / boss.Max, 0.3f);
+            yield return null;
+            Assert.AreEqual((float)boss.Current / boss.Max, flow.ui.BossBarFill01, 0.001f, "boss HP bar did not follow the damage");
+            Assert.AreEqual(UIController.Thousands(boss.Current) + " / 10.000", flow.ui.BossBarText);
+            Assert.AreEqual("ENRAGE", flow.ui.bossBarTagText.text);
+            Capture("23_boss_hp_bar");
 
             PlayerHealth.Instance.GiveInvulnerability(30f);
             yield return null;
@@ -1070,19 +1140,20 @@ namespace SlimeBreaker.Tests
             Assert.IsTrue(flow.ui.floorProgressText.text.Contains("10"), flow.ui.floorProgressText.text);
             Assert.IsTrue(flow.ui.damageText.text.Contains(flow.Stats.damage.ToString()), flow.ui.damageText.text);
             Assert.IsTrue(flow.ui.levelText.text.Contains(flow.Stats.level.ToString()), flow.ui.levelText.text);
-            Assert.IsNotNull(flow.ui.statusText, "HUD has no status panel");
-            Assert.IsTrue(flow.ui.statusText.text.Contains("DMG"), flow.ui.statusText.text);
-            Assert.IsTrue(flow.ui.statusText.text.Contains("CRIT"), flow.ui.statusText.text);
-            Assert.IsTrue(flow.ui.statusText.text.Contains("CRIT RATE"), flow.ui.statusText.text);
-            Assert.IsTrue(flow.ui.statusText.text.Contains("ATK SPD"), flow.ui.statusText.text);
-            Assert.IsTrue(flow.ui.statusText.text.Contains("MOVE"), flow.ui.statusText.text);
-            Assert.IsTrue(flow.ui.statusText.text.Contains("LS"), flow.ui.statusText.text);
-            Assert.IsTrue(flow.ui.statusText.text.Contains("RANGE"), flow.ui.statusText.text);
-            Assert.IsTrue(flow.ui.statusText.text.Contains("EXP +"), flow.ui.statusText.text);
-            Assert.IsTrue(flow.ui.statusText.text.Contains("DEF 0%"), flow.ui.statusText.text);
+            Assert.IsNotNull(flow.ui.statValues, "HUD has no status card");
+            Assert.AreEqual(UIController.StatKeys.Length, flow.ui.statValues.Length);
+            foreach (var cell in flow.ui.statValues)
+                Assert.IsNotNull(cell, "status card has an empty cell");
+            string summary = flow.ui.StatusSummary;
+            foreach (var key in new[] { "DMG", "CRIT", "CRIT RATE", "ATK SPD", "MOVE", "LS", "RANGE", "EXP +", "DEF 0%", "TAKEN 100%" })
+                StringAssert.Contains(key, summary);
+            Assert.AreEqual(flow.Stats.damage.ToString(), flow.ui.StatValue("DMG"));
+            Assert.AreEqual(flow.ui.StatValue("DMG"), flow.ui.statValues[0].text, "status card cell not filled");
             flow.Stats.damageReduction = 0.16f;
             yield return null;
-            Assert.IsTrue(flow.ui.statusText.text.Contains("DEF 16%"), flow.ui.statusText.text);
+            Assert.AreEqual("16%", flow.ui.StatValue("DEF"));
+            Assert.AreEqual("84%", flow.ui.StatValue("TAKEN"));
+            Assert.AreEqual("16%", flow.ui.statValues[System.Array.IndexOf(UIController.StatKeys, "DEF")].text);
             Assert.AreEqual("EXP", flow.ui.xpSlider.gameObject.name);
             Assert.IsNotNull(Object.FindAnyObjectByType<Wayfinder>(), "HUD has no wayfinder arrows");
             var upgrades = Object.FindAnyObjectByType<UpgradeManager>();

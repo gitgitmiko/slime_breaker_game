@@ -49,7 +49,7 @@ xvfb-run -a -s "-screen 0 1280x1024x24" unity-editor -batchmode \
   -testResults "$PWD/Logs/playmode.xml" -logFile Logs/playmode.log
 ```
 
-Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: hero dan slime menapak tanah, properti tegak, semua material valid, tombol Main membuka arena, joystick sentuh menggerakkan hero, bot bertahan satu menit, AudioListener + 60 fps terpasang, power-up tiap 5 level hero di map yang sama (bukan boss), Cincin Es melukai dan memperlambat, bolt mengenai musuh saat diam (tidak saat jalan), Nova Api merusak musuh dekat, obstacle memblokir bolt, run-save level/lantai utuh, preset grafis Low/High terpasang, bar darah musuh, lifesteal, slime jarak menembak, Rock Slime + warning di lantai 10 (HP 10.000, damage basic naik tiap lantai, enrage <30%, 10 minion, skyfall), kuota lantai N×10 membuka pintu lalu Enter naik lantai (malam + layout baru di lantai 2, tanpa pintu langsung), HUD Lantai/progres bunuh/ATK/EXP + wayfinder + upgrade crit, collider obstacle, angka damage/CRIT, dan biome gurun/salju/petir di lantai 11/21/31. Baris `PLAYTEST` di log memuat angka ukurnya. Screenshot ada di `Logs/playtest/` (00_menu … 16_damage_numbers).
+Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: hero dan slime menapak tanah, properti tegak, semua material valid, tombol Main membuka arena, joystick sentuh bebas (dasar pindah ke titik sentuh) menggerakkan hero, bot bertahan satu menit, AudioListener + 60 fps terpasang, power-up tiap 20 level hero di map yang sama (bukan boss), skill naik sampai Lv 10 dengan tanda MAX, Cincin Es melukai dan memperlambat, bolt mengenai musuh saat diam (tidak saat jalan), Nova Api merusak musuh dekat, obstacle memblokir bolt, run-save level/lantai utuh, preset grafis Low/High terpasang, bar darah musuh, lifesteal + angka hijau di atas hero, slime jarak menembak, Rock Slime + warning di lantai 10 (HP 10.000, damage basic naik tiap lantai, enrage <30% + cutscene zoom ke boss + skill enrage heboh, 10 minion, skyfall), kuota lantai N×10 membuka pintu lalu Enter naik lantai (malam + layout baru di lantai 2, tanpa pintu langsung), HUD Lantai/progres bunuh/ATK/EXP/DEF + wayfinder + upgrade crit + nama upgrade Inggris (Defender), collider obstacle, angka damage/CRIT, dan biome gurun/salju/petir di lantai 11/21/31. Baris `PLAYTEST` di log memuat angka ukurnya. Screenshot ada di `Logs/playtest/` (00_menu … 20_boss_enrage_skill).
 
 ## Hasil 14 Oktober 2026 (putaran 1)
 
@@ -121,6 +121,14 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - APK: `Builds/SlimeBreaker.apk` (42 MB), disalin ke `~/Downloads/SlimeBreaker.apk`.
 - Paket: `com.gitgitmiko.slimebreaker` 0.10.0 (versionCode 10).
 - PlayMode menambah tes dash tidak mengantri saat cooldown, HUD RANGE + EXP bonus, dan HP slime naik tiap lantai.
+- Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
+
+## Hasil 16 Oktober 2026 (putaran 11 — skill Lv 10, power-up tiap 20 level, enrage cutscene)
+
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 21/21; PlayMode 26/26 lolos; APK: `SLIMEBREAKER_APK_OK`.
+- APK: `Builds/SlimeBreaker.apk` (42 MB), disalin ke `~/Downloads/SlimeBreaker.apk`.
+- Paket: `com.gitgitmiko.slimebreaker` 0.11.0 (versionCode 11).
+- PlayMode menambah tes skill Lv 10 + MAX, angka lifesteal hijau, joystick bebas, DEF di HUD, nama Defender, cutscene enrage (kamera 4,7 m dari boss) dan flourish skill enrage.
 - Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
 
 ## Pasang di HP

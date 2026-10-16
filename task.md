@@ -86,6 +86,18 @@
 - Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 20/20. PlayMode 25/25. APK `SLIMEBREAKER_APK_OK` 0.10.0.
 - Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
 
+### Putaran 11 — skill Lv 10, power-up tiap 20 level, lifesteal hijau, DEF, joystick bebas, enrage cutscene
+
+- Skill power-up naik sampai **Lv 10** (damage +30%/level, +1 hitungan tiap 2 level, cooldown ×0,92/level, radius +8%/level) dengan bonus MAX per skill; slot HUD menampilkan **MAX** emas.
+- Power-up muncul tiap **20 level hero** (bukan 5); berhenti muncul jika semua skill MAX.
+- Lifesteal tampil sebagai angka **+N hijau** di atas hero.
+- Panel status kiri atas menambah **DEF** dan **TAKEN**.
+- Nama upgrade level-up berbahasa Inggris: Power, Swiftness, Vitality, Reach, **Defender**, dst.
+- Joystick **bebas (floating)** di setengah kiri layar.
+- Boss enrage: cutscene zoom close-up + slow-motion + banner ENRAGE!; skill enrage dengan gelombang kejut api, petir merah, dan guncangan kamera.
+- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 21/21. PlayMode 26/26. APK `SLIMEBREAKER_APK_OK` 0.11.0.
+- Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

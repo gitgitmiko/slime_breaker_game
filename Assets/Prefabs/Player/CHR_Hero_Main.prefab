@@ -116,7 +116,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.AutoAttackController
   boltPrefab: {fileID: 3089888023118166871, guid: 512b892c2638f873798efb7ebc9ad02b, type: 3}
   boltSpeed: 17
-  releaseDelay: 0.14
+  releaseDelay: 0.17
 --- !u!114 &6090233788687449919
 MonoBehaviour:
   m_ObjectHideFlags: 0

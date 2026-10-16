@@ -4,9 +4,9 @@ using UnityEngine.EventSystems;
 namespace SlimeBreaker
 {
     /// <summary>
-    /// Free (floating) joystick: this object is the touch zone, and the visible base
-    /// jumps to wherever the thumb lands. The base follows the thumb if it is dragged
-    /// past the rim, and returns to its rest spot on release.
+    /// Touch joystick. Fixed mode (default): only a touch on the base steers, and the base
+    /// stays put. Free mode (Settings): this object is the touch zone, the base jumps to
+    /// wherever the thumb lands, follows the thumb past the rim, and returns on release.
     /// </summary>
     public class VirtualJoystick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
     {
@@ -16,8 +16,14 @@ namespace SlimeBreaker
         public Vector2 Direction { get; private set; }
         public bool Held { get; private set; }
 
+        /// <summary>Extra grab margin around the base in fixed mode, in canvas units.</summary>
+        public float fixedGrabMargin = 40f;
+
         Vector3 restPosition;
         bool hasRest;
+        bool tracking;
+
+        bool Free => ControlSettings.FreeJoystick;
 
         void Awake()
         {
@@ -37,24 +43,39 @@ namespace SlimeBreaker
         public void OnPointerDown(PointerEventData eventData)
         {
             StoreRest();
-            Held = true;
-            if (background != null && background != Zone
-                && RectTransformUtility.ScreenPointToLocalPointInRectangle(Zone, eventData.position, eventData.pressEventCamera, out var local))
+            if (background != null && background != Zone)
             {
-                background.localPosition = new Vector3(local.x, local.y, restPosition.z);
+                if (Free)
+                {
+                    if (RectTransformUtility.ScreenPointToLocalPointInRectangle(Zone, eventData.position, eventData.pressEventCamera, out var local))
+                        background.localPosition = new Vector3(local.x, local.y, restPosition.z);
+                }
+                else
+                {
+                    background.localPosition = restPosition;
+                    if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(background, eventData.position, eventData.pressEventCamera, out var onBase))
+                        return;
+                    float grab = Mathf.Max(background.rect.width, background.rect.height) * 0.5f + fixedGrabMargin;
+                    if ((onBase - background.rect.center).magnitude > grab)
+                        return;
+                }
             }
+            tracking = true;
+            Held = true;
             OnDrag(eventData);
         }
 
         public void OnDrag(PointerEventData eventData)
         {
+            if (!tracking)
+                return;
             var frame = background != null ? background : Zone;
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(frame, eventData.position, eventData.pressEventCamera, out var local))
                 return;
             // Local point is relative to the base's pivot, so the base centre is the stick's origin.
             Vector2 centre = frame.rect.center;
             Vector2 offset = local - centre;
-            if (background != null && background != Zone && offset.magnitude > radius)
+            if (Free && background != null && background != Zone && offset.magnitude > radius)
             {
                 // Drag the base along so the stick never "sticks" at the rim.
                 Vector2 excess = offset - offset.normalized * radius;
@@ -69,6 +90,7 @@ namespace SlimeBreaker
 
         public void OnPointerUp(PointerEventData eventData)
         {
+            tracking = false;
             Held = false;
             Direction = Vector2.zero;
             if (handle != null)

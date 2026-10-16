@@ -191,65 +191,260 @@ namespace SlimeBreaker.Tests
         [UnityTest]
         public IEnumerator TouchJoystickMovesHero()
         {
+            Assert.IsFalse(new SaveData().freeJoystick, "joystick must default to fixed");
+            ControlSettings.FreeJoystick = false;
             var touch = InputSystem.AddDevice<Touchscreen>();
             try
             {
                 yield return null;
                 var player = Object.FindAnyObjectByType<PlayerController>();
                 Assert.IsNotNull(player.joystick, "hero has no joystick");
+                Assert.IsNotNull(player.joystick.background, "joystick has no base");
                 var rect = (RectTransform)player.joystick.transform;
                 var canvas = rect.GetComponentInParent<Canvas>().rootCanvas;
                 var cam = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
-                Vector2 centre = RectTransformUtility.WorldToScreenPoint(cam, rect.TransformPoint(rect.rect.center));
+                var baseRect = player.joystick.background;
+                Vector2 centre = RectTransformUtility.WorldToScreenPoint(cam, baseRect.position);
+                Vector3 restBase = baseRect.position;
                 Debug.Log("PLAYTEST joystick centre " + centre + " screen " + Screen.width + "x" + Screen.height);
+
+                // Fixed (default): dragging from the base steers.
                 var start = player.transform.position;
-                InputSystem.QueueStateEvent(touch, new TouchState { touchId = 1, phase = UnityEngine.InputSystem.TouchPhase.Began, position = centre });
-                yield return null;
-                float t = 0f;
-                while (t < 1f)
-                {
-                    InputSystem.QueueStateEvent(touch, new TouchState { touchId = 1, phase = UnityEngine.InputSystem.TouchPhase.Moved, position = centre + new Vector2(60f, 0f) });
-                    yield return null;
-                    SkipLevelUp();
-                    t += Time.deltaTime;
-                }
-                Debug.Log("PLAYTEST joystick direction " + player.joystick.Direction);
-                Assert.IsNotNull(player.joystick.background, "free joystick has no movable base");
-                Vector2 baseScreen = RectTransformUtility.WorldToScreenPoint(cam, player.joystick.background.position);
-                Assert.Less(Vector2.Distance(baseScreen, centre), 90f, "joystick base did not jump to the touch point");
-                Capture("06_hud_touch");
-                InputSystem.QueueStateEvent(touch, new TouchState { touchId = 1, phase = UnityEngine.InputSystem.TouchPhase.Ended, position = centre + new Vector2(60f, 0f) });
-                yield return null;
+                yield return Drag(touch, 1, centre, new Vector2(60f, 0f), 1f);
                 var moved = player.transform.position - start;
                 Debug.Log("PLAYTEST touch moved " + moved.ToString("F2"));
                 Assert.Greater(moved.x, 1.5f, "dragging the joystick right did not move the hero right");
                 Assert.AreEqual(Vector2.zero, player.joystick.Direction, "joystick did not reset on release");
+                Assert.Less(Vector3.Distance(baseRect.position, restBase), 0.01f, "fixed joystick base moved");
 
-                // Free joystick: a touch anywhere else in the left zone also steers.
+                // Fixed: a touch elsewhere in the left half is ignored.
                 Vector2 elsewhere = RectTransformUtility.WorldToScreenPoint(cam, rect.TransformPoint(new Vector3(rect.rect.xMin + rect.rect.width * 0.8f, rect.rect.yMin + rect.rect.height * 0.75f, 0f)));
                 start = player.transform.position;
                 InputSystem.QueueStateEvent(touch, new TouchState { touchId = 2, phase = UnityEngine.InputSystem.TouchPhase.Began, position = elsewhere });
                 yield return null;
-                Vector2 jumped = RectTransformUtility.WorldToScreenPoint(cam, player.joystick.background.position);
-                Assert.Less(Vector2.Distance(jumped, elsewhere), 20f, "joystick base did not follow a touch elsewhere in the zone");
-                t = 0f;
-                while (t < 0.8f)
-                {
-                    InputSystem.QueueStateEvent(touch, new TouchState { touchId = 2, phase = UnityEngine.InputSystem.TouchPhase.Moved, position = elsewhere + new Vector2(0f, -60f) });
-                    yield return null;
-                    SkipLevelUp();
-                    t += Time.deltaTime;
-                }
-                InputSystem.QueueStateEvent(touch, new TouchState { touchId = 2, phase = UnityEngine.InputSystem.TouchPhase.Ended, position = elsewhere + new Vector2(0f, -60f) });
+                Assert.Less(Vector3.Distance(baseRect.position, restBase), 0.01f, "fixed joystick base jumped to a far touch");
+                Assert.IsFalse(player.joystick.Held, "fixed joystick grabbed a touch away from its base");
+                InputSystem.QueueStateEvent(touch, new TouchState { touchId = 2, phase = UnityEngine.InputSystem.TouchPhase.Ended, position = elsewhere });
                 yield return null;
+
+                // Settings toggle switches to free mode.
+                var flow = GameFlowController.Instance;
+                Assert.IsNotNull(flow.ui.settings, "HUD has no settings panel");
+                Assert.IsNotNull(flow.ui.settings.joystickButton, "settings has no joystick toggle");
+                flow.ui.settings.ToggleJoystick();
+                Assert.IsTrue(ControlSettings.FreeJoystick, "toggle did not switch to free");
+                Assert.AreEqual("Joystick: Free", flow.ui.settings.joystickLabel.text);
+
+                start = player.transform.position;
+                InputSystem.QueueStateEvent(touch, new TouchState { touchId = 3, phase = UnityEngine.InputSystem.TouchPhase.Began, position = elsewhere });
+                yield return null;
+                Vector2 jumped = RectTransformUtility.WorldToScreenPoint(cam, baseRect.position);
+                Assert.Less(Vector2.Distance(jumped, elsewhere), 20f, "free joystick base did not follow the touch");
+                Capture("06_hud_touch");
+                yield return Drag(touch, 3, elsewhere, new Vector2(0f, -60f), 0.8f, began: false);
                 moved = player.transform.position - start;
                 Debug.Log("PLAYTEST free joystick moved " + moved.ToString("F2"));
                 Assert.Greater(moved.magnitude, 1f, "dragging from a free touch point did not move the hero");
+                Assert.Less(Vector3.Distance(baseRect.position, restBase), 0.01f, "free joystick base did not return to rest");
+
+                flow.ui.settings.ToggleJoystick();
+                Assert.IsFalse(ControlSettings.FreeJoystick);
+                Assert.AreEqual("Joystick: Fixed", flow.ui.settings.joystickLabel.text);
+            }
+            finally
+            {
+                ControlSettings.FreeJoystick = false;
+                InputSystem.RemoveDevice(touch);
+            }
+        }
+
+        IEnumerator Drag(Touchscreen touch, int id, Vector2 from, Vector2 delta, float seconds, bool began = true)
+        {
+            if (began)
+            {
+                InputSystem.QueueStateEvent(touch, new TouchState { touchId = id, phase = UnityEngine.InputSystem.TouchPhase.Began, position = from });
+                yield return null;
+            }
+            float t = 0f;
+            while (t < seconds)
+            {
+                InputSystem.QueueStateEvent(touch, new TouchState { touchId = id, phase = UnityEngine.InputSystem.TouchPhase.Moved, position = from + delta });
+                yield return null;
+                SkipLevelUp();
+                t += Time.deltaTime;
+            }
+            InputSystem.QueueStateEvent(touch, new TouchState { touchId = id, phase = UnityEngine.InputSystem.TouchPhase.Ended, position = from + delta });
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator LongPressSkillShowsDescription()
+        {
+            var flow = GameFlowController.Instance;
+            var spawner = Object.FindAnyObjectByType<PowerUpSpawner>();
+            SkillDefinition lightning = null;
+            foreach (var skill in spawner.skills)
+            {
+                if (skill.kind == SkillKind.LightningChain)
+                    lightning = skill;
+            }
+            SkillController.Instance.Grant(lightning);
+            SkillController.Instance.Grant(lightning);
+            var touch = InputSystem.AddDevice<Touchscreen>();
+            try
+            {
+                yield return null;
+                var slot = (RectTransform)flow.ui.skillSlots[0].transform;
+                Assert.IsNotNull(slot.GetComponent<SkillSlotHold>(), "skill slot has no long-press handler");
+                var canvas = slot.GetComponentInParent<Canvas>().rootCanvas;
+                var cam = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+                Vector2 point = RectTransformUtility.WorldToScreenPoint(cam, slot.position);
+                InputSystem.QueueStateEvent(touch, new TouchState { touchId = 5, phase = UnityEngine.InputSystem.TouchPhase.Began, position = point });
+                yield return null;
+                yield return null;
+                Assert.IsFalse(flow.ui.SkillInfoVisible, "a tap should not open the description yet");
+                float t = 0f;
+                while (t < 0.7f)
+                {
+                    InputSystem.QueueStateEvent(touch, new TouchState { touchId = 5, phase = UnityEngine.InputSystem.TouchPhase.Stationary, position = point });
+                    yield return null;
+                    SkipLevelUp();
+                    t += Time.unscaledDeltaTime;
+                }
+                Assert.IsTrue(flow.ui.SkillInfoVisible, "holding the skill slot did not show its description");
+                StringAssert.Contains(lightning.title, flow.ui.SkillInfo);
+                StringAssert.Contains(lightning.description, flow.ui.SkillInfo);
+                StringAssert.Contains("Lv 2", flow.ui.SkillInfo);
+                StringAssert.Contains("boss", flow.ui.SkillInfo);
+                Capture("21_skill_info");
+                InputSystem.QueueStateEvent(touch, new TouchState { touchId = 5, phase = UnityEngine.InputSystem.TouchPhase.Ended, position = point });
+                yield return null;
+                yield return null;
+                Assert.IsFalse(flow.ui.SkillInfoVisible, "description did not close on release");
             }
             finally
             {
                 InputSystem.RemoveDevice(touch);
             }
+        }
+
+        [UnityTest]
+        public IEnumerator BossIgnoresPowerUpsUntilBossBreaker()
+        {
+            var flow = GameFlowController.Instance;
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            var hero = PlayerHealth.Instance;
+            stage.ForceFloor(10);
+            float wait = 0f;
+            while ((stage.ActiveBoss == BossKind.None || flow.State == GameState.BossIntro) && wait < 5f)
+            {
+                yield return null;
+                wait += Time.unscaledDeltaTime;
+            }
+            Assert.AreEqual(GameState.Playing, flow.State);
+            EnemyHealth boss = null;
+            foreach (var enemy in EnemyHealth.Active)
+            {
+                if (enemy != null && enemy.IsBoss)
+                    boss = enemy;
+            }
+            Assert.IsNotNull(boss);
+            var controller = boss.GetComponent<BossController>();
+            Assert.IsNotNull(controller.breakerPickupPrefab, "boss has no Boss Breaker drop prefab");
+            hero.GiveInvulnerability(60f);
+            var attack = hero.GetComponent<AutoAttackController>();
+            attack.enabled = false;
+
+            var spawner = Object.FindAnyObjectByType<PowerUpSpawner>();
+            foreach (var skill in spawner.skills)
+                SkillController.Instance.Grant(skill);
+
+            // Power-ups alone: boss HP must not move.
+            Assert.IsTrue(boss.ImmuneToSkills);
+            int before = boss.Current;
+            Assert.IsFalse(boss.TakeSkillDamage(500, false), "skill damage landed on the boss without Boss Breaker");
+            float t = 0f;
+            while (t < 2.5f)
+            {
+                PinNear(boss, hero, 1.6f);
+                hero.GiveInvulnerability(60f);
+                yield return null;
+                t += Time.deltaTime;
+            }
+            Assert.AreEqual(before, boss.Current, "power-up skills damaged the boss");
+
+            // Basic attack still lands.
+            attack.enabled = true;
+            t = 0f;
+            while (boss.Current == before && t < 3f)
+            {
+                PinNear(boss, hero, 2.4f);
+                hero.GiveInvulnerability(60f);
+                yield return null;
+                t += Time.deltaTime;
+            }
+            Assert.Less(boss.Current, before, "basic attack should still damage the boss");
+            attack.enabled = false;
+
+            // A summon wave can carry a golden slime that drops Boss Breaker.
+            foreach (var enemy in new List<EnemyHealth>(EnemyHealth.Active))
+            {
+                if (enemy != null && !enemy.IsBoss)
+                    enemy.Vanish();
+            }
+            yield return null;
+            controller.breakerDropChance = 1f;
+            controller.SpawnAdds(10);
+            yield return null;
+            var carrier = controller.BreakerCarrier;
+            Assert.IsNotNull(carrier, "summon wave had no Boss Breaker carrier");
+            carrier.transform.position = hero.transform.position + new Vector3(8f, 0f, 0f);
+            carrier.TakeDamage(999999);
+            yield return null;
+            PowerUpPickup breaker = null;
+            foreach (var pickup in PowerUpPickup.Active)
+            {
+                if (pickup != null && pickup.bossBreaker)
+                    breaker = pickup;
+            }
+            Assert.IsNotNull(breaker, "carrier did not drop Boss Breaker");
+            breaker.Collect();
+            yield return null;
+            Assert.IsTrue(SkillController.BossBreakerActive, "Boss Breaker did not activate");
+            Assert.Greater(SkillController.Instance.BreakerLeft, 59f);
+            var aura = SkillController.Instance.BreakerAura;
+            Assert.IsNotNull(aura, "hero shows no Boss Breaker aura");
+            Assert.AreEqual(hero.transform, aura.transform.parent, "aura should ride on the hero");
+            Assert.Greater(aura.GetComponentsInChildren<ParticleSystem>().Length, 0, "aura has no particles");
+            Assert.IsTrue(flow.ui.breakerText.gameObject.activeSelf, "HUD shows no Boss Breaker timer");
+            StringAssert.Contains("BOSS BREAKER", flow.ui.breakerText.text);
+
+            Assert.IsFalse(boss.ImmuneToSkills);
+            before = boss.Current;
+            t = 0f;
+            while (boss.Current == before && t < 4f)
+            {
+                PinNear(boss, hero, 1.6f);
+                hero.GiveInvulnerability(60f);
+                yield return null;
+                t += Time.deltaTime;
+            }
+            Assert.Less(boss.Current, before, "power-ups should hurt the boss while Boss Breaker is active");
+            Capture("22_boss_breaker");
+
+            SkillController.Instance.ShortenBossBreaker(0.2f);
+            yield return new WaitForSeconds(0.5f);
+            Assert.IsFalse(SkillController.BossBreakerActive, "Boss Breaker did not expire");
+            Assert.IsTrue(SkillController.Instance.BreakerAura == null, "aura stayed after Boss Breaker ended");
+            Assert.IsFalse(flow.ui.breakerText.gameObject.activeSelf);
+            Assert.IsTrue(boss.ImmuneToSkills);
+        }
+
+        static void PinNear(EnemyHealth boss, PlayerHealth hero, float distance)
+        {
+            if (boss == null || boss.IsDead)
+                return;
+            boss.transform.position = hero.transform.position + Vector3.forward * distance;
         }
 
         [UnityTest]

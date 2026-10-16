@@ -9,6 +9,11 @@ namespace SlimeBreaker
         public GameObject boltPrefab;
         public GameObject lightningPrefab;
         public GameObject minionPrefab;
+        /// <summary>Crystal prefab reused for the Boss Breaker drop.</summary>
+        public GameObject breakerPickupPrefab;
+        /// <summary>Chance that a summon wave includes a golden carrier slime that drops Boss Breaker.</summary>
+        [Range(0f, 1f)] public float breakerDropChance = 0.35f;
+        public EnemyHealth BreakerCarrier { get; private set; }
         public float slamRadius = 3.6f;
         public float arenaRadius = RunRules.ArenaRadius;
         public BossKind kind = BossKind.Rock;
@@ -50,6 +55,7 @@ namespace SlimeBreaker
         float minionTimer = 8f;
         int fightFloor = 10;
         float auraTimer;
+        float carrierSparkle;
 
         public void Configure(BossKind bossKind, GameObject bolt, GameObject lightning, GameObject minion, int floor)
         {
@@ -62,6 +68,55 @@ namespace SlimeBreaker
             slamRadius = kind == BossKind.Rock ? 4.1f : 3.6f;
             patternTimer = kind == BossKind.Volt || kind == BossKind.Shadow ? 0.95f : 1.3f;
             EnrageSkillCount = BossCatalog.EnrageSkillCount(floor);
+        }
+
+        void OnEnable()
+        {
+            EnemyHealth.AnyDied += OnAnyDied;
+        }
+
+        void OnDisable()
+        {
+            EnemyHealth.AnyDied -= OnAnyDied;
+        }
+
+        void OnAnyDied(EnemyHealth dead)
+        {
+            if (dead == null || dead != BreakerCarrier)
+                return;
+            BreakerCarrier = null;
+            DropBreaker(dead.transform.position);
+        }
+
+        /// <summary>Spawns the Boss Breaker crystal where the carrier fell.</summary>
+        public PowerUpPickup DropBreaker(Vector3 position)
+        {
+            if (breakerPickupPrefab == null)
+                return null;
+            position.y = 0f;
+            if (Obstacles.Overlaps(position, 0.9f))
+                position = Obstacles.Resolve(position, 0.9f);
+            var instance = Instantiate(breakerPickupPrefab, position, Quaternion.identity);
+            var pickup = instance.GetComponent<PowerUpPickup>();
+            if (pickup == null)
+                pickup = instance.AddComponent<PowerUpPickup>();
+            pickup.ConfigureBossBreaker();
+            VfxPlayer.Instance?.Play("powerup", position + Vector3.up * 0.6f, SkillController.BreakerColor);
+            AudioService.Instance?.Play("powerupspawn");
+            GameFlowController.Instance?.ui?.ShowToast("Boss Breaker jatuh! Ambil kristal emas", SkillController.BreakerColor);
+            return pickup;
+        }
+
+        static bool BreakerPending()
+        {
+            if (SkillController.BossBreakerActive)
+                return true;
+            for (int i = 0; i < PowerUpPickup.Active.Count; i++)
+            {
+                if (PowerUpPickup.Active[i] != null && PowerUpPickup.Active[i].bossBreaker)
+                    return true;
+            }
+            return false;
         }
 
         void Awake()
@@ -386,6 +441,15 @@ namespace SlimeBreaker
 
         void TickAdds()
         {
+            if (BreakerCarrier != null && !BreakerCarrier.IsDead)
+            {
+                carrierSparkle -= Time.deltaTime;
+                if (carrierSparkle <= 0f)
+                {
+                    carrierSparkle = 0.35f;
+                    VfxPlayer.Instance?.Play("pickup", BreakerCarrier.transform.position + Vector3.up * (BreakerCarrier.HitHeight + 0.3f), SkillController.BreakerColor);
+                }
+            }
             minionTimer -= Time.deltaTime;
             if (minionTimer > 0f)
                 return;
@@ -405,13 +469,25 @@ namespace SlimeBreaker
                     live++;
             }
             int want = Mathf.Min(count, Mathf.Max(0, 14 - live));
+            bool carrierAlive = BreakerCarrier != null && !BreakerCarrier.IsDead;
+            bool wantCarrier = want > 0 && !carrierAlive && breakerPickupPrefab != null
+                && SkillController.Instance != null && SkillController.Instance.Count > 0
+                && !BreakerPending() && Random.value < breakerDropChance;
             for (int i = 0; i < want; i++)
             {
                 Vector3 pos = Around(transform.position, 6f);
                 if ((pos - transform.position).sqrMagnitude < 4f)
                     pos = Around(Vector3.zero, 8f);
                 var instance = Instantiate(minionPrefab, pos, Quaternion.identity);
-                instance.GetComponent<EnemyHealth>()?.Scale(floor);
+                var minion = instance.GetComponent<EnemyHealth>();
+                minion?.Scale(floor);
+                if (wantCarrier && i == 0 && minion != null)
+                {
+                    // Golden carrier: kill it to drop Boss Breaker.
+                    BreakerCarrier = minion;
+                    minion.TintBody(SkillController.BreakerColor);
+                    VfxPlayer.Instance?.Play("powerup", pos + Vector3.up * 0.6f, SkillController.BreakerColor);
+                }
                 var ai = instance.GetComponent<EnemyChaseAI>();
                 if (ai != null)
                     ai.arenaRadius = arenaRadius;

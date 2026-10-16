@@ -27,6 +27,19 @@ namespace SlimeBreaker
         public float orbitHeight = 0.75f;
         public float orbitSpeed = 150f;
 
+        [Header("Boss Breaker")]
+        /// <summary>Looping aura shown on the hero while Boss Breaker is active.</summary>
+        public GameObject breakerAuraPrefab;
+        public static readonly Color BreakerColor = new Color(1f, 0.62f, 0.12f);
+        public const float BreakerSeconds = 60f;
+
+        /// <summary>While above zero, power-up skills can damage bosses.</summary>
+        public float BreakerLeft { get; private set; }
+        public static bool BossBreakerActive => Instance != null && Instance.BreakerLeft > 0f;
+        public GameObject BreakerAura => breakerAura;
+        GameObject breakerAura;
+        float breakerPulse;
+
         public event Action Changed;
         public IReadOnlyList<ActiveSkill> Skills => skills;
         public int Count => skills.Count;
@@ -101,6 +114,57 @@ namespace SlimeBreaker
             return skill.level;
         }
 
+        /// <summary>Boss Breaker: for <paramref name="seconds"/> the hero's power-up skills also hurt bosses.</summary>
+        public void ActivateBossBreaker(float seconds = BreakerSeconds)
+        {
+            BreakerLeft = Mathf.Max(BreakerLeft, seconds);
+            if (breakerAura == null)
+            {
+                breakerAura = breakerAuraPrefab != null
+                    ? Instantiate(breakerAuraPrefab, transform)
+                    : new GameObject("BossBreakerAura");
+                breakerAura.name = "BossBreakerAura";
+                breakerAura.transform.SetParent(transform, false);
+                breakerAura.transform.localPosition = Vector3.zero;
+            }
+            breakerAura.SetActive(true);
+            VfxPlayer.Instance?.Play("levelup", transform.position + Vector3.up * 0.8f, BreakerColor);
+            Changed?.Invoke();
+        }
+
+        /// <summary>Caps the remaining Boss Breaker time (used when a fight ends early and by tests).</summary>
+        public void ShortenBossBreaker(float seconds)
+        {
+            if (BreakerLeft > 0f)
+                BreakerLeft = Mathf.Clamp(seconds, 0.01f, BreakerLeft);
+        }
+
+        void TickBreaker(float dt)
+        {
+            if (BreakerLeft <= 0f)
+                return;
+            BreakerLeft = Mathf.Max(0f, BreakerLeft - dt);
+            breakerPulse -= dt;
+            if (breakerPulse <= 0f)
+            {
+                // Embers rising off the hero so the buff is readable mid-fight.
+                breakerPulse = 0.45f;
+                VfxPlayer.Instance?.Play("cast", transform.position + Vector3.up * 1.1f, BreakerColor);
+            }
+            if (BreakerLeft <= 0f)
+            {
+                if (breakerAura != null)
+                    Destroy(breakerAura);
+                breakerAura = null;
+                var flow = GameFlowController.Instance;
+                if (flow != null && flow.ui != null)
+                    flow.ui.ShowToast("Boss Breaker habis", BreakerColor);
+                Changed?.Invoke();
+            }
+        }
+
+        static bool CanHit(EnemyHealth enemy) => enemy != null && !enemy.IsDead && !enemy.ImmuneToSkills;
+
         void Update()
         {
             if (!GameFlowController.IsPlaying)
@@ -109,6 +173,7 @@ namespace SlimeBreaker
             if (health != null && health.IsDead)
                 return;
             float dt = Time.deltaTime;
+            TickBreaker(dt);
             for (int i = 0; i < skills.Count; i++)
             {
                 var skill = skills[i];
@@ -213,7 +278,11 @@ namespace SlimeBreaker
                     delta.y *= 0.5f;
                     if (delta.sqrMagnitude > reach * reach)
                         continue;
-                    enemy.TakeDamage(damage, false, true, crit);
+                    if (!enemy.TakeSkillDamage(damage, crit))
+                    {
+                        skill.contactTimers[enemy] = Time.time + 0.5f;
+                        break;
+                    }
                     // Max level: the shards nearly freeze what they touch.
                     float slow = skill.definition.IsMax(skill.level) ? skill.definition.slowFactor * 0.6f : skill.definition.slowFactor;
                     enemy.ApplySlow(slow, skill.definition.effectDuration);
@@ -244,7 +313,7 @@ namespace SlimeBreaker
             {
                 Vector3 point = current.transform.position + Vector3.up * current.HitHeight;
                 LightningBolt.Flash(lightningPrefab, from, point);
-                current.TakeDamage(Mathf.Max(1, Mathf.RoundToInt(damage * (i == 0 ? 1f : falloff))), false, true, crit);
+                current.TakeSkillDamage(Mathf.Max(1, Mathf.RoundToInt(damage * (i == 0 ? 1f : falloff))), crit);
                 VfxPlayer.Instance?.Play("zap", point);
                 from = point;
                 current = Nearest(current.transform.position, 3.8f, hitList);
@@ -284,11 +353,8 @@ namespace SlimeBreaker
                         continue;
                     Vector3 flat = enemy.transform.position - center;
                     flat.y = 0f;
-                    if (flat.magnitude <= radius + enemy.HitRadius)
-                    {
-                        enemy.TakeDamage(damage, playHitSound: false);
+                    if (flat.magnitude <= radius + enemy.HitRadius && enemy.TakeSkillDamage(damage, false))
                         enemy.ApplyBurn(burn, 3, 0.5f);
-                    }
                 }
             }
             VfxPlayer.Instance?.Play("fire", center + Vector3.up * 0.3f);
@@ -308,7 +374,7 @@ namespace SlimeBreaker
             for (int i = 0; i < EnemyHealth.Active.Count; i++)
             {
                 var enemy = EnemyHealth.Active[i];
-                if (enemy == null || enemy.IsDead)
+                if (!CanHit(enemy))
                     continue;
                 if ((enemy.transform.position - origin).sqrMagnitude <= range * range)
                     candidates.Add(enemy);
@@ -325,6 +391,7 @@ namespace SlimeBreaker
                     missile.hitSfx = "arcanehit";
                     missile.hitVfx = "arcane";
                     missile.turnRate = 6f;
+                    missile.fromSkill = true;
                 }
             }
             AudioService.Instance?.Play("arcane");
@@ -339,7 +406,7 @@ namespace SlimeBreaker
             for (int i = 0; i < EnemyHealth.Active.Count; i++)
             {
                 var enemy = EnemyHealth.Active[i];
-                if (enemy == null || enemy.IsDead)
+                if (!CanHit(enemy))
                     continue;
                 if (exclude != null && exclude.Contains(enemy))
                     continue;

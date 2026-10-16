@@ -4,7 +4,7 @@ Audit pada mesin ini, 14 Oktober 2026. Tidak ada CLI generasi mesh AI (Meshy, Tr
 
 ## Versi tool
 
-Semua tool ada di `~/game-toolchain` (tanpa sudo; PATH diatur `~/game-toolchain/env.sh`). Cek semuanya sekaligus dengan `bash asset_work/scripts/check_toolchain.sh` (exit 0 = lengkap). Pasang ulang: `install-portable.sh` (inti) lalu `install-extra.sh` (tambahan, 16 Oktober 2026). Mesin ini **tanpa GPU dan tanpa compiler**, jadi hanya paket biner/wheel yang bisa dipasang.
+Semua tool ada di `~/game-toolchain` (tanpa sudo; PATH diatur `~/game-toolchain/env.sh`). Cek semuanya sekaligus dengan `bash asset_work/scripts/check_toolchain.sh` (exit 0 = lengkap). Pasang ulang: `install-portable.sh` (inti) lalu `install-extra.sh` (tambahan, 16 Oktober 2026). Mesin ini **tanpa GPU**. Compiler (`build-essential`, `cmake`, `bzip2`, `patchelf`, `pkg-config`, `libfuse2t64`, `python3-dev`) dipasang dengan sudo pada 16 Oktober 2026, jadi paket yang butuh build (mis. `noise`, `basisu`) sekarang bisa dipasang.
 
 ### 3D dan mesh
 
@@ -29,10 +29,11 @@ Semua tool ada di `~/game-toolchain` (tanpa sudo; PATH diatur `~/game-toolchain/
 | Inkscape | 1.4.2 | Vektor SVG → PNG |
 | Krita | 6.0.4.1 | Lukis tekstur/sprite; ekspor CLI `xvfb-run -a krita --export --export-filename out.png in.kra` |
 | KTX-Software (`toktx`, `ktx`) | 4.4.2 | Tekstur KTX2 / Basis (ETC1S, UASTC) |
+| basisu | v2.50 (dibangun dari sumber) | Encoder Basis Universal: `basisu -ktx2 -uastc in.png` |
 | oxipng, pngquant, optipng, zopflipng | 10.2.1 / 2.18 / 0.7.8 / zopfli | Perkecil PNG (lossless dan 8-bit) |
 | cwebp, dwebp, gif2webp, img2webp, gifsicle | libwebp 1.5.0 / 1.94 | WebP dan GIF |
 | potrace | 1.16 | Bitmap → SVG |
-| Pillow, numpy, scipy, scikit-image, opencv, opensimplex, cairosvg, imageio | Python | Gambar prosedural, noise, filter, SVG → PNG |
+| Pillow, numpy, scipy, scikit-image, opencv, opensimplex, noise, cairosvg, imageio | Python | Gambar prosedural, noise, filter, SVG → PNG |
 
 ### Audio dan musik
 
@@ -56,14 +57,14 @@ Semua tool ada di `~/game-toolchain` (tanpa sudo; PATH diatur `~/game-toolchain/
 | Unity Editor | 6000.3.26f1 | `~/Unity/Hub/Editor/6000.3.26f1/Editor/Unity` |
 | Unity CLI | 1.0.0-beta.13 | `unity --version` |
 | Node.js / npm | 24.21.0 / 11.19.0 | `node --version` |
-| cmake, ninja | 4.4 / 1.13 (pip) | `cmake --version` |
+| gcc / g++ / make / cmake / ninja | 13.3 / 13.3 / 4.3 / 4.4 / 1.13 | `gcc --version` (dipasang dengan sudo) |
 | 7-Zip, xvfb-run, jq | 23.01 / sistem / 1.7 | `7z i` |
 
-Tidak tersedia: generator AI (Meshy, Tripo, ComfyUI, Stable Diffusion, Ollama), GPU, GIMP, Aseprite, Godot, Docker, Instant Meshes, `basisu` (pakai `toktx` untuk Basis), compiler C/C++ (`noise` dan paket lain yang butuh build tidak bisa dipasang; pakai `opensimplex`).
+Tidak dipasang: generator AI (Meshy, Tripo, ComfyUI, Stable Diffusion, Ollama; mesin tanpa GPU), GIMP (Krita sudah ada), Aseprite (butuh build Skia besar; game ini 3D), Godot, Docker, Instant Meshes (retopologi sudah ada di `pymeshlab` dan Blender QuadriFlow).
 
 Catatan pemakaian:
-- AppImage (Krita, LMMS) diekstrak ke `~/game-toolchain/tools` karena tidak ada FUSE; keduanya butuh display, jadi jalankan lewat `xvfb-run -a`.
-- Arsip `.bz2` diekstrak dengan `7z` (tidak ada `bzip2`).
+- AppImage (Krita, LMMS) diekstrak ke `~/game-toolchain/tools` supaya tidak bergantung pada FUSE; keduanya butuh display, jadi jalankan lewat `xvfb-run -a`.
+- `bzip2` sekarang terpasang; skrip lama tetap memakai `7z` untuk arsip `.bz2` supaya jalan di mesin tanpa sudo.
 - Paket apt dipasang tanpa root: `apt-get download <paket>` lalu `dpkg-deb -x <deb> ~/game-toolchain/syslibs`.
 
 Ekspor FBX diverifikasi lewat `bpy.ops.export_scene.fbx` (ada) dan `bpy.ops.export_scene.gltf` (ada, tidak dipakai). Unity mengimpor FBX bawaan, jadi FBX yang dipilih.

@@ -40,86 +40,6 @@
     "notes": "no rig"
   },
   {
-    "id": "ENV_Forest_Tree_A",
-    "file": "Environment/ForestArena/ENV_Forest_Tree_A.fbx",
-    "kind": "static",
-    "triangles": 948,
-    "vertices": 492,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Forest_Tree_B",
-    "file": "Environment/ForestArena/ENV_Forest_Tree_B.fbx",
-    "kind": "static",
-    "triangles": 948,
-    "vertices": 492,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Forest_Rock_A",
-    "file": "Environment/ForestArena/ENV_Forest_Rock_A.fbx",
-    "kind": "static",
-    "triangles": 80,
-    "vertices": 42,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Forest_Rock_B",
-    "file": "Environment/ForestArena/ENV_Forest_Rock_B.fbx",
-    "kind": "static",
-    "triangles": 80,
-    "vertices": 42,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Forest_Mushroom",
-    "file": "Environment/ForestArena/ENV_Forest_Mushroom.fbx",
-    "kind": "static",
-    "triangles": 916,
-    "vertices": 485,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Forest_Bush",
-    "file": "Environment/ForestArena/ENV_Forest_Bush.fbx",
-    "kind": "static",
-    "triangles": 720,
-    "vertices": 376,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Forest_RuinPillar",
-    "file": "Environment/ForestArena/ENV_Forest_RuinPillar.fbx",
-    "kind": "static",
-    "triangles": 420,
-    "vertices": 218,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Forest_Grass",
-    "file": "Environment/ForestArena/ENV_Forest_Grass.fbx",
-    "kind": "static",
-    "triangles": 70,
-    "vertices": 49,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Forest_Flower",
-    "file": "Environment/ForestArena/ENV_Forest_Flower.fbx",
-    "kind": "static",
-    "triangles": 740,
-    "vertices": 384,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Forest_BoundaryStone",
-    "file": "Environment/ForestArena/ENV_Forest_BoundaryStone.fbx",
-    "kind": "static",
-    "triangles": 100,
-    "vertices": 54,
-    "notes": "no rig"
-  },
-  {
     "id": "ENV_Arena_RuneRing",
     "file": "Environment/ForestArena/ENV_Arena_RuneRing.fbx",
     "kind": "static",
@@ -184,99 +104,179 @@
     "notes": "no rig"
   },
   {
-    "id": "ENV_Desert_Cactus",
-    "file": "Environment/Biomes/ENV_Desert_Cactus.fbx",
-    "kind": "static",
-    "triangles": 404,
-    "vertices": 212,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Snow_IceSpike",
-    "file": "Environment/Biomes/ENV_Snow_IceSpike.fbx",
-    "kind": "static",
-    "triangles": 56,
-    "vertices": 36,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Thunder_Spire",
-    "file": "Environment/Biomes/ENV_Thunder_Spire.fbx",
-    "kind": "static",
-    "triangles": 406,
-    "vertices": 209,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Swamp_Root",
-    "file": "Environment/Biomes/ENV_Swamp_Root.fbx",
-    "kind": "static",
-    "triangles": 456,
-    "vertices": 240,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Swamp_Reed",
-    "file": "Environment/Biomes/ENV_Swamp_Reed.fbx",
-    "kind": "static",
-    "triangles": 48,
-    "vertices": 36,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Shadow_Obelisk",
-    "file": "Environment/Biomes/ENV_Shadow_Obelisk.fbx",
-    "kind": "static",
-    "triangles": 32,
-    "vertices": 20,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Volcano_Rock",
-    "file": "Environment/Biomes/ENV_Volcano_Rock.fbx",
-    "kind": "static",
-    "triangles": 100,
-    "vertices": 54,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Volcano_Pillar",
-    "file": "Environment/Biomes/ENV_Volcano_Pillar.fbx",
-    "kind": "static",
-    "triangles": 304,
-    "vertices": 158,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Storm_Arch",
-    "file": "Environment/Biomes/ENV_Storm_Arch.fbx",
-    "kind": "static",
-    "triangles": 36,
-    "vertices": 24,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Crystal_Spire",
-    "file": "Environment/Biomes/ENV_Crystal_Spire.fbx",
-    "kind": "static",
-    "triangles": 80,
-    "vertices": 48,
-    "notes": "no rig"
-  },
-  {
-    "id": "ENV_Royal_Column",
-    "file": "Environment/Biomes/ENV_Royal_Column.fbx",
-    "kind": "static",
-    "triangles": 600,
-    "vertices": 308,
-    "notes": "no rig"
-  },
-  {
     "id": "CHR_Hero_Main",
     "file": "Characters/Hero/CHR_Hero_Main.fbx",
     "kind": "character",
     "triangles": 26964,
     "vertices": 13805,
     "notes": "generic rig, in-place clips"
+  },
+  {
+    "id": "ENV_Forest_Tree_A",
+    "file": "Environment/ForestArena/ENV_Forest_Tree_A.fbx",
+    "kind": "static",
+    "triangles": 1780,
+    "vertices": 1684,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Forest_Tree_B",
+    "file": "Environment/ForestArena/ENV_Forest_Tree_B.fbx",
+    "kind": "static",
+    "triangles": 526,
+    "vertices": 776,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Forest_Bush",
+    "file": "Environment/ForestArena/ENV_Forest_Bush.fbx",
+    "kind": "static",
+    "triangles": 252,
+    "vertices": 274,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Forest_Grass",
+    "file": "Environment/ForestArena/ENV_Forest_Grass.fbx",
+    "kind": "static",
+    "triangles": 6,
+    "vertices": 12,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Forest_Flower",
+    "file": "Environment/ForestArena/ENV_Forest_Flower.fbx",
+    "kind": "static",
+    "triangles": 6,
+    "vertices": 12,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Forest_Rock_A",
+    "file": "Environment/ForestArena/ENV_Forest_Rock_A.fbx",
+    "kind": "static",
+    "triangles": 1126,
+    "vertices": 565,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Forest_Rock_B",
+    "file": "Environment/ForestArena/ENV_Forest_Rock_B.fbx",
+    "kind": "static",
+    "triangles": 1126,
+    "vertices": 565,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Forest_Mushroom",
+    "file": "Environment/ForestArena/ENV_Forest_Mushroom.fbx",
+    "kind": "static",
+    "triangles": 1440,
+    "vertices": 780,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Forest_RuinPillar",
+    "file": "Environment/ForestArena/ENV_Forest_RuinPillar.fbx",
+    "kind": "static",
+    "triangles": 1426,
+    "vertices": 742,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Forest_BoundaryStone",
+    "file": "Environment/ForestArena/ENV_Forest_BoundaryStone.fbx",
+    "kind": "static",
+    "triangles": 624,
+    "vertices": 314,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Desert_Cactus",
+    "file": "Environment/Biomes/ENV_Desert_Cactus.fbx",
+    "kind": "static",
+    "triangles": 1356,
+    "vertices": 686,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Snow_IceSpike",
+    "file": "Environment/Biomes/ENV_Snow_IceSpike.fbx",
+    "kind": "static",
+    "triangles": 262,
+    "vertices": 145,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Thunder_Spire",
+    "file": "Environment/Biomes/ENV_Thunder_Spire.fbx",
+    "kind": "static",
+    "triangles": 844,
+    "vertices": 434,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Swamp_Root",
+    "file": "Environment/Biomes/ENV_Swamp_Root.fbx",
+    "kind": "static",
+    "triangles": 382,
+    "vertices": 208,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Swamp_Reed",
+    "file": "Environment/Biomes/ENV_Swamp_Reed.fbx",
+    "kind": "static",
+    "triangles": 8,
+    "vertices": 16,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Shadow_Obelisk",
+    "file": "Environment/Biomes/ENV_Shadow_Obelisk.fbx",
+    "kind": "static",
+    "triangles": 228,
+    "vertices": 148,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Volcano_Rock",
+    "file": "Environment/Biomes/ENV_Volcano_Rock.fbx",
+    "kind": "static",
+    "triangles": 1126,
+    "vertices": 565,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Volcano_Pillar",
+    "file": "Environment/Biomes/ENV_Volcano_Pillar.fbx",
+    "kind": "static",
+    "triangles": 120,
+    "vertices": 72,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Storm_Arch",
+    "file": "Environment/Biomes/ENV_Storm_Arch.fbx",
+    "kind": "static",
+    "triangles": 1688,
+    "vertices": 850,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Crystal_Spire",
+    "file": "Environment/Biomes/ENV_Crystal_Spire.fbx",
+    "kind": "static",
+    "triangles": 294,
+    "vertices": 163,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Royal_Column",
+    "file": "Environment/Biomes/ENV_Royal_Column.fbx",
+    "kind": "static",
+    "triangles": 2144,
+    "vertices": 1080,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
   }
 ]

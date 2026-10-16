@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6896645436674639232}
   - component: {fileID: 8883485452303216863}
-  - component: {fileID: 1558637857625198907}
+  - component: {fileID: 4365345823424702490}
   m_Layer: 8
   m_Name: OBS_Tree
   m_TagString: Untagged
@@ -57,7 +57,7 @@ CapsuleCollider:
   m_Height: 2.4
   m_Direction: 1
   m_Center: {x: 0, y: 1.15, z: 0}
---- !u!114 &1558637857625198907
+--- !u!114 &4365345823424702490
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -87,6 +87,18 @@ PrefabInstance:
     - target: {fileID: 5114641046561585967, guid: a5e601ce2d2e1a29483fbe04c50b3963, type: 3}
       propertyPath: m_Layer
       value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 5598267092385079701, guid: a5e601ce2d2e1a29483fbe04c50b3963, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.72
+      objectReference: {fileID: 0}
+    - target: {fileID: 5598267092385079701, guid: a5e601ce2d2e1a29483fbe04c50b3963, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.72
+      objectReference: {fileID: 0}
+    - target: {fileID: 5598267092385079701, guid: a5e601ce2d2e1a29483fbe04c50b3963, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.72
       objectReference: {fileID: 0}
     - target: {fileID: 5598267092385079701, guid: a5e601ce2d2e1a29483fbe04c50b3963, type: 3}
       propertyPath: m_LocalPosition.x

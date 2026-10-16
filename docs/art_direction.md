@@ -1,6 +1,6 @@
 # Art Direction — Slime Breaker
 
-Gaya: anime 3D fantasy. Hero adalah penyihir perempuan bergaya anime (topi runcing, jubah, cape, twin tail, mata besar dengan highlight), dibaca jelas dari kamera third-person agak tinggi.
+Gaya: anime 3D fantasy. Hero adalah **penyihir ungu chibi** orisinal: kepala besar (≈45% tinggi badan), rambut ungu tebal dan lembut (metaball) dengan poni runcing dan helai samping, mata anime besar yang dilukis prosedural (iris gradasi ungu, dua highlight, bulu mata tebal), mulut kucing "ω" dengan taring kecil, pipi merona, topi penyihir berujung bengkok dengan pita, gaun ungu berenda putih, stoking ungu, sepatu bot bulat, dan tongkat berujung bulan sabit + kristal. Proporsi dan rasa "chibi lembut" terinspirasi gaya model *Cat-boy Ashuo* (l4oyu, itch.io); model tersebut berbayar dan lisensinya melarang redistribusi, jadi tidak ada mesh, tekstur, atau rig yang disalin — semuanya dibangun ulang dari nol di `build_assets.py`.
 
 Semua aset dibuat sendiri di mesin ini (Blender, Python/numpy/Pillow, FluidSynth). Tidak ada karakter, logo, atau desain berhak cipta yang disalin.
 
@@ -9,8 +9,9 @@ Semua aset dibuat sendiri di mesin ini (Blender, Python/numpy/Pillow, FluidSynth
 | Peran | Warna | Hex perkiraan |
 |---|---|---|
 | Kulit hero | peach hangat | `#FFDBC7` |
-| Rambut hero | lavender pucat / ungu | `#D6C7FF` / `#9E8ADB` |
-| Jubah hero | ungu tua | `#3B2E8F` |
+| Rambut hero | ungu / kilau lavender | `#5C3BA3` / `#BDA3FF` |
+| Gaun hero | ungu / lengan lilac | `#7547D1` / `#A37AF5` |
+| Topi hero | ungu gelap + pita lilac | `#38216B` / `#CC99FF` |
 | Topi dan cape luar | indigo | `#29216B` |
 | Cape dalam | magenta lembut | `#DB529E` |
 | Emas (sabuk, cincin tongkat) | kuning hangat | `#F5C74D` |
@@ -24,7 +25,7 @@ Semua aset dibuat sendiri di mesin ini (Blender, Python/numpy/Pillow, FluidSynth
 
 ## Proporsi dan kamera
 
-- Hero tinggi 1,87 m sampai ujung topi (badan sekitar 1,3 m), kepala besar, tongkat di tangan kanan dengan tulang `StaffTip` sebagai titik lahir proyektil.
+- Hero tinggi 1,80 m sampai ujung topi (puncak rambut 1,33 m), tongkat di tangan kanan dengan tulang `StaffTip` (bulan sabit + kristal) sebagai titik lahir proyektil. Topi punya tulang `Hat` sendiri (bisa terlepas di Death) dan `HatTip` yang bergoyang.
 - Slime biasa sekitar 0,85 m. Varian cepat lebih kecil dan pipih. Varian tank lebih besar dengan lempeng batu. Slime King sekitar 2,1 m dengan mahkota.
 - Arah hadap sumber di Blender adalah -Y, diekspor FBX (forward -Z, up Y) supaya di Unity menghadap +Z.
 - Pivot di telapak kaki. Gerak animasi in-place; perpindahan dunia diatur script.
@@ -41,7 +42,7 @@ Semua aset dibuat sendiri di mesin ini (Blender, Python/numpy/Pillow, FluidSynth
 ## Rig dan animasi
 
 - Rig generic buatan sendiri, bukan Humanoid Mecanim.
-- Hero: Idle (napas, rambut dan cape bergoyang), Run (langkah dan ayun tongkat), Attack (dorongan tongkat ke depan, cast), Dash, Hit, Death.
+- Hero: Idle (napas, kepala miring, ujung topi bergoyang), Run (lari kecil chibi yang memantul, tangan bebas mengayun), Attack (pukulan tongkat: angkat ke belakang kepala lalu hantam ke depan, bolt lepas saat hantaman ≈0,17 s), Dash (condong jauh, rambut dan cape tertarik), Hit, Death (topi terlempar), Cast (tongkat diangkat lurus dan diputar — saat mengambil power-up/Boss Breaker), Victory (lompat, tongkat ke atas, tangan memegang topi — saat boss kalah), Menu (loop 4 s di menu utama: ayun badan, melambai, memutar tongkat, lompat kecil).
 - Slime dan boss: Idle, Move, Hit, Death. Boss menambah Telegraph dan Slam.
 - Semua state satu kali (Hit, Dash, Attack, Telegraph, Slam) kembali ke Idle lewat exit time sehingga animator tidak pernah membeku.
 - Deformasi slime memakai skala tulang, bukan blendshape.

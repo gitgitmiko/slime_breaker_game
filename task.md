@@ -126,6 +126,15 @@
 - Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 22/22. PlayMode 29/29. APK `SLIMEBREAKER_APK_OK` 0.14.0.
 - Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
 
+### Putaran 15 — aset hero penyihir ungu chibi
+
+- Referensi gaya: *Cat-boy Ashuo* (l4oyu, itch.io) — model 3D chibi berbayar; tidak disalin, hero dibangun ulang orisinal.
+- Hero baru: rambut ungu metaball + poni runcing, mata anime dilukis (decal bertekstur), mulut ω + taring, topi penyihir bengkok + pita, gaun berenda, stoking, bot, tongkat bulan sabit.
+- Animasi: Idle, Run (lari chibi), Attack (pukulan tongkat, bolt lepas saat hantaman), Dash, Hit, Death (topi lepas), Cast (ambil power-up), Victory (boss kalah), Menu (loop menu utama).
+- Menu utama memakai `CHR_Hero_Menu.controller`; hero berayun ±22° menghadap kamera.
+- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 22/22. PlayMode 30/30. APK `SLIMEBREAKER_APK_OK` 0.15.0.
+- Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

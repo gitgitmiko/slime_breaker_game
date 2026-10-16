@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.14.0";
+        const string AppVersion = "0.15.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -173,6 +173,7 @@ namespace SlimeBreaker.EditorTools
             var bossClips = LoadClips("Assets/Art/Enemies/SlimeKing/BOSS_SlimeKing.fbx");
 
             var heroController = BuildController("Assets/Animations/CHR_Hero_Main.controller", heroClips, "Run", true, false);
+            var heroMenuController = BuildLoopController("Assets/Animations/CHR_Hero_Menu.controller", heroClips, "Menu");
             var normalController = BuildController("Assets/Animations/ENM_Slime_Normal.controller", normalClips, "Move", false, false);
             var fastController = BuildController("Assets/Animations/ENM_Slime_Fast.controller", fastClips, "Move", false, false);
             var tankController = BuildController("Assets/Animations/ENM_Slime_Tank.controller", tankClips, "Move", false, false);
@@ -327,7 +328,7 @@ namespace SlimeBreaker.EditorTools
             var portal = PortalPrefab("Assets/Prefabs/Environment/ENV_Exit_Portal.prefab", env["RuneRing"]);
 
             BuildBoot();
-            BuildMenu(hero, heroController, env);
+            BuildMenu(hero, heroMenuController, env);
             BuildArena(balance, upgrades, skills, hero, normal, fast, tank, ranged, boss, bossDefs, hostileBolt, lightning, env, vfx, powerUp, portal, obstacles, rain, snowWx, fireflies, dust, ash, spores, sparks);
             ConfigurePlayerSettings();
             AssetDatabase.SaveAssets();
@@ -466,7 +467,7 @@ namespace SlimeBreaker.EditorTools
                     int bar = clip.name.LastIndexOf('|');
                     if (bar >= 0)
                         clip.name = clip.name.Substring(bar + 1);
-                    clip.loopTime = clip.name == "Idle" || clip.name == "Run" || clip.name == "Move";
+                    clip.loopTime = clip.name == "Idle" || clip.name == "Run" || clip.name == "Move" || clip.name == "Menu";
                     clip.lockRootRotation = true;
                     clip.lockRootHeightY = true;
                     clip.lockRootPositionXZ = true;
@@ -539,7 +540,17 @@ namespace SlimeBreaker.EditorTools
                     }
                 }
 
-                if (name.Contains("ground"))
+                // Unity names the eye material after its texture (TEX_Hero_Eye); older imports used MAT_eye_decal.
+                if (name.Contains("eye_decal") || name.Contains("hero_eye"))
+                {
+                    // Painted anime eye (TEX_Hero_Eye from build_assets.py) on the face decal.
+                    var eye = TextureNamed("TEX_Hero_Eye");
+                    if (eye != null)
+                        mat.SetTexture("_BaseMap", eye);
+                    mat.SetColor("_BaseColor", Color.white);
+                    mat.SetFloat("_Smoothness", 0.55f);
+                }
+                else if (name.Contains("ground"))
                 {
                     mat.SetFloat("_Smoothness", 0.12f);
                     Normal("TEX_Forest_Ground_Normal", 0.9f);
@@ -807,6 +818,8 @@ namespace SlimeBreaker.EditorTools
             {
                 controller.AddParameter("Attack", AnimatorControllerParameterType.Trigger);
                 controller.AddParameter("Dash", AnimatorControllerParameterType.Trigger);
+                controller.AddParameter("Cast", AnimatorControllerParameterType.Trigger);
+                controller.AddParameter("Victory", AnimatorControllerParameterType.Trigger);
             }
             if (boss)
             {
@@ -852,12 +865,30 @@ namespace SlimeBreaker.EditorTools
             {
                 OneShot("Attack", "Attack", 0.82f);
                 OneShot("Dash", "Dash", 0.9f);
+                OneShot("Cast", "Cast", 0.9f);
+                OneShot("Victory", "Victory", 0.94f);
             }
             if (boss)
             {
                 OneShot("Telegraph", "Telegraph", 0.95f);
                 OneShot("Slam", "Slam", 0.92f);
             }
+            return controller;
+        }
+
+        /// <summary>Single looping state (the main-menu showcase).</summary>
+        static AnimatorController BuildLoopController(string path, Dictionary<string, AnimationClip> clips, string clipName)
+        {
+            if (File.Exists(path))
+                AssetDatabase.DeleteAsset(path);
+            var controller = AnimatorController.CreateAnimatorControllerAtPath(path);
+            var machine = controller.layers[0].stateMachine;
+            var state = machine.AddState(clipName);
+            if (clips.TryGetValue(clipName, out var clip))
+                state.motion = clip;
+            else if (clips.TryGetValue("Idle", out var idle))
+                state.motion = idle;
+            machine.defaultState = state;
             return controller;
         }
 
@@ -2486,7 +2517,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 14;
+            PlayerSettings.Android.bundleVersionCode = 15;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

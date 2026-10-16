@@ -1,13 +1,5 @@
 [
   {
-    "id": "CHR_Hero_Main",
-    "file": "Characters/Hero/CHR_Hero_Main.fbx",
-    "kind": "character",
-    "triangles": 20914,
-    "vertices": 10643,
-    "notes": "generic rig, in-place clips"
-  },
-  {
     "id": "ENM_Slime_Normal",
     "file": "Enemies/Slime/ENM_Slime_Normal.fbx",
     "kind": "character",
@@ -278,5 +270,13 @@
     "triangles": 600,
     "vertices": 308,
     "notes": "no rig"
+  },
+  {
+    "id": "CHR_Hero_Main",
+    "file": "Characters/Hero/CHR_Hero_Main.fbx",
+    "kind": "character",
+    "triangles": 26964,
+    "vertices": 13805,
+    "notes": "generic rig, in-place clips"
   }
 ]

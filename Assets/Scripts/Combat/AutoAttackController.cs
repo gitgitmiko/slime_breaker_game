@@ -9,7 +9,8 @@ namespace SlimeBreaker
         public GameObject boltPrefab;
         public float boltSpeed = 17f;
         /// <summary>Delay between the cast animation starting and the bolt leaving the staff.</summary>
-        public float releaseDelay = 0.14f;
+        /// <summary>Bolt leaves the staff when the bonk lands (Attack clip impact ≈ frame 6 of 16 at 30 fps).</summary>
+        public float releaseDelay = 0.17f;
 
         float cooldown;
         bool casting;

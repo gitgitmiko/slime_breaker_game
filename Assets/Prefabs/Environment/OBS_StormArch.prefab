@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7618875390129689287}
   - component: {fileID: 1717419179514509104}
-  - component: {fileID: 3913401038265148869}
+  - component: {fileID: 4769293487359511512}
   m_Layer: 8
   m_Name: OBS_StormArch
   m_TagString: Untagged
@@ -55,7 +55,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.95, y: 1.85, z: 0.95}
   m_Center: {x: 0, y: 0.9, z: 0}
---- !u!114 &3913401038265148869
+--- !u!114 &4769293487359511512
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

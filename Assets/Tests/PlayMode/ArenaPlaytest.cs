@@ -192,6 +192,16 @@ namespace SlimeBreaker.Tests
                 if (button.name == "Continue" || button.name == "Damage")
                     Assert.AreEqual("UI_Button_Ghost", button.GetComponent<Image>().sprite.name, button.name + " should be a ghost button");
             }
+            var showcaseAnimator = menu.showcase.GetComponentInChildren<Animator>();
+            Assert.IsNotNull(showcaseAnimator, "menu hero has no Animator");
+            yield return null;
+            var menuState = showcaseAnimator.GetCurrentAnimatorStateInfo(0);
+            Assert.IsTrue(menuState.IsName("Menu"), "menu hero is not playing the Menu loop");
+            var menuClips = showcaseAnimator.GetCurrentAnimatorClipInfo(0);
+            Assert.Greater(menuClips.Length, 0);
+            Assert.AreEqual("Menu", menuClips[0].clip.name);
+            Assert.IsTrue(menuClips[0].clip.isLooping, "Menu clip should loop");
+            Assert.AreEqual(4f, menuClips[0].clip.length, 0.1f, "Menu loop should be about 4 s");
             menu.OpenSettings();
             yield return null;
             Capture("25_menu_settings");
@@ -498,6 +508,70 @@ namespace SlimeBreaker.Tests
             flow.TogglePause();
             yield return null;
             Capture("27_hud_glass");
+        }
+
+        [UnityTest]
+        public IEnumerator HeroHasWitchAnimationsAndEyes()
+        {
+            var hero = PlayerHealth.Instance;
+            var animator = hero.GetComponentInChildren<Animator>();
+            Assert.IsNotNull(animator);
+            var names = new HashSet<string>();
+            foreach (var clip in animator.runtimeAnimatorController.animationClips)
+                names.Add(clip.name);
+            foreach (var wanted in new[] { "Idle", "Run", "Attack", "Dash", "Hit", "Death", "Cast", "Victory" })
+                Assert.IsTrue(names.Contains(wanted), "hero controller has no " + wanted + " clip");
+            foreach (var clip in animator.runtimeAnimatorController.animationClips)
+            {
+                if (clip.name == "Attack")
+                    Assert.Greater(clip.length, Object.FindAnyObjectByType<AutoAttackController>().releaseDelay, "bolt should leave during the swing");
+            }
+
+            // Painted anime eyes on the face decal.
+            bool eyes = false;
+            foreach (var renderer in hero.GetComponentsInChildren<Renderer>())
+            {
+                foreach (var material in renderer.sharedMaterials)
+                {
+                    string materialName = material != null ? material.name.ToLowerInvariant() : string.Empty;
+                    if (!materialName.Contains("eye_decal") && !materialName.Contains("hero_eye"))
+                        continue;
+                    var texture = material.GetTexture("_BaseMap");
+                    Assert.IsNotNull(texture, "eye decal has no texture");
+                    Assert.AreEqual("TEX_Hero_Eye", texture.name);
+                    eyes = true;
+                }
+            }
+            Assert.IsTrue(eyes, "hero has no eye decal material");
+            Assert.IsNotNull(SkillController.FindDeep(hero.transform, "StaffTip"), "staff tip bone missing");
+            Assert.IsNotNull(SkillController.FindDeep(hero.transform, "Hat"), "hat bone missing");
+
+            yield return null;
+            Assert.IsTrue(hero.Emote("Cast"), "Cast emote missing");
+            float wait = 0f;
+            bool casting = false;
+            while (wait < 0.5f && !casting)
+            {
+                yield return null;
+                wait += Time.deltaTime;
+                casting = animator.GetCurrentAnimatorStateInfo(0).IsName("Cast") || animator.GetNextAnimatorStateInfo(0).IsName("Cast");
+            }
+            Assert.IsTrue(casting, "Cast emote did not play");
+            Capture("28_hero_cast");
+            yield return new WaitForSeconds(1f);
+            Assert.IsTrue(hero.Emote("Victory"), "Victory emote missing");
+            wait = 0f;
+            bool cheering = false;
+            while (wait < 0.5f && !cheering)
+            {
+                yield return null;
+                wait += Time.deltaTime;
+                cheering = animator.GetCurrentAnimatorStateInfo(0).IsName("Victory") || animator.GetNextAnimatorStateInfo(0).IsName("Victory");
+            }
+            Assert.IsTrue(cheering, "Victory emote did not play");
+            yield return new WaitForSeconds(0.4f);
+            Capture("29_hero_victory");
+            Assert.IsFalse(hero.Emote("Nope"), "unknown emote should be ignored");
         }
 
         static void PinNear(EnemyHealth boss, PlayerHealth hero, float distance)

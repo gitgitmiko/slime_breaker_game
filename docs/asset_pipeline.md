@@ -33,6 +33,15 @@ Hanya sprite UI dan ikon (audio tidak disentuh): `python3 asset_work/scripts/bui
 
 `build_textures.py` membuat `TEX_Forest_Ground` (1024), `TEX_Bark` / `TEX_Rock` (512), plus tanah biome (`TEX_Snow_Ground`, `TEX_Sand_Ground`, `TEX_Thunder_Ground`, `TEX_Swamp_Ground`, `TEX_Shadow_Ground`, `TEX_Volcano_Ground`, `TEX_Storm_Ground`, `TEX_Crystal_Ground`, `TEX_Royal_Ground`) beserta `*_Normal.png` dari value noise tileable (numpy + Pillow). Blender menanamkan tekstur warna di FBX; normal map disalin ke `Assets/Art/Textures` dan dipasang `ProjectSetup` berdasarkan nama material.
 
+Hanya hero (tanpa menyentuh slime, lingkungan, atau tekstur lain):
+
+```bash
+blender --background --python asset_work/scripts/build_assets.py -- \
+  asset_work/output asset_work/previews asset_work/textures hero
+```
+
+Mode ini juga menulis `asset_work/textures/TEX_Hero_Eye.png` (mata anime dilukis dengan numpy di Blender) dan merender pratinjau hero dengan EEVEE (lampu key/fill/rim): `CHR_Hero_Main.png`, `_Face.png`, `_Back.png`, dan frame tiap klip. Set `HERO_DEBUG_VIEWS=1` untuk tambahan tampak depan/samping per frame di `asset_work/previews/debug/` (tidak di-commit). Rambut dibuat dari metaball (radius = radius permukaan; dikali `METABALL_REACH`) lalu di-decimate; mata adalah decal berbentuk mata yang diproyeksikan ke wajah dengan UV mengikuti outline. Pose lengan/tongkat yang miring memakai `aim()` (arah dunia) agar tidak menyilang badan.
+
 Hanya mesh biome baru (tanpa menimpa hero/slime):
 
 ```bash
@@ -60,7 +69,7 @@ Efek suara disintesis numpy 44,1 kHz (osilator, noise berfilter, envelope) ke WA
 - FBX: `axis_forward='-Z'`, `axis_up='Y'`, `apply_scale_options='FBX_SCALE_UNITS'`.
 - Di Unity ini menjadi sumbu Y ke atas dan hadap +Z.
 - Rig generic, animasi in-place. Bukan Humanoid.
-- Klip hero: Idle, Run, Attack, Dash, Hit, Death.
+- Klip hero: Idle, Run, Attack, Dash, Hit, Death, Cast, Victory, Menu (Menu loop, dipakai `CHR_Hero_Menu.controller` di menu utama).
 - Klip slime: Idle, Move, Hit, Death.
 - Klip boss menambah Telegraph dan Slam.
 - Nama clip di FBX berbentuk `NamaArmature|Idle`. Skrip editor memendekkannya saat impor.

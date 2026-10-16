@@ -17,16 +17,27 @@ namespace SlimeBreaker
         public int baseCost = 30;
         public Transform showcase;
         public float showcaseSpin = 16f;
+        /// <summary>The showcase sways ±this many degrees around its start facing instead of spinning, so the wave stays toward the camera.</summary>
+        public float showcaseSway = 22f;
         public Button continueButton;
         public Text continueLabel;
         public SettingsPanel settings;
 
         SaveData save;
+        Quaternion showcaseRest;
+        bool hasRest;
 
         void Update()
         {
-            if (showcase != null)
-                showcase.Rotate(0f, showcaseSpin * Time.deltaTime, 0f, Space.World);
+            if (showcase == null)
+                return;
+            if (!hasRest)
+            {
+                showcaseRest = showcase.rotation;
+                hasRest = true;
+            }
+            float yaw = Mathf.Sin(Time.time * showcaseSpin * Mathf.Deg2Rad * 4f) * showcaseSway;
+            showcase.rotation = Quaternion.AngleAxis(yaw, Vector3.up) * showcaseRest;
         }
 
         void Start()

@@ -6,6 +6,7 @@ MIT-licensed FluidR3 GM soundfont.
 
 Run from the repository root:
   python3 asset_work/scripts/build_audio_ui.py
+  python3 asset_work/scripts/build_audio_ui.py ui   # UI sprites and icons only
 """
 
 import math
@@ -492,6 +493,41 @@ def panels():
     finish(img, os.path.join(out, "UI_Circle.png"))
 
 
+def modern_ui():
+    """Flat "glass" HUD pieces: dark translucent card, white pill and bar pieces tinted in Unity."""
+    out = os.path.join(UI, "Panels")
+    # Card: near-black indigo glass, hairline light border, faint top sheen.
+    w, h, r = 256, 160, 22
+    img = canvas(w, h)
+    body = gradient(w * SS, h * SS, (22, 22, 38, 222), (10, 10, 20, 222))
+    img.paste(body, (0, 0), rounded_mask(w * SS, h * SS, r * SS))
+    draw = ImageDraw.Draw(img)
+    draw.rounded_rectangle((0, 0, w * SS - 1, h * SS - 1), radius=r * SS, outline=(255, 255, 255, 46), width=2 * SS)
+    sheen = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(sheen).rounded_rectangle((2 * SS, 2 * SS, w * SS - 3 * SS, 22 * SS), radius=r * SS, fill=(255, 255, 255, 14))
+    finish(Image.alpha_composite(img, sheen), os.path.join(out, "UI_Card_Glass.png"))
+
+    # Pill: plain white capsule, tinted per use (level badge, BOSS tag, stat chips).
+    img = canvas(96, 44)
+    ImageDraw.Draw(img).rounded_rectangle((0, 0, 96 * SS - 1, 44 * SS - 1), radius=22 * SS, fill=(255, 255, 255, 255))
+    finish(img, os.path.join(out, "UI_Pill.png"))
+
+    # Bar track: dark inset groove with a hairline rim.
+    img = canvas(256, 36)
+    draw = ImageDraw.Draw(img)
+    draw.rounded_rectangle((0, 0, 256 * SS - 1, 36 * SS - 1), radius=12 * SS, fill=(0, 0, 0, 160), outline=(255, 255, 255, 40), width=2 * SS)
+    finish(img, os.path.join(out, "UI_Bar_Track.png"))
+
+    # Bar fill: white with a soft top highlight so tinted fills read as glossy.
+    w, h = 256, 28
+    img = canvas(w, h)
+    body = gradient(w * SS, h * SS, (255, 255, 255, 255), (196, 196, 204, 255))
+    img.paste(body, (0, 0), rounded_mask(w * SS, h * SS, 10 * SS))
+    shine = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(shine).rounded_rectangle((3 * SS, 2 * SS, w * SS - 3 * SS, 10 * SS), radius=5 * SS, fill=(255, 255, 255, 90))
+    finish(Image.alpha_composite(img, shine), os.path.join(out, "UI_Bar_Fill.png"))
+
+
 def icon(name, painter, top=(104, 86, 230, 255), bottom=(46, 34, 120, 255)):
     size = 256
     img = rounded_panel((size, size), 52, top, bottom, (242, 193, 78, 255), 7)
@@ -648,11 +684,20 @@ def icons():
 
 
 def main():
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "ui":
+        # UI sprites only; leaves audio untouched.
+        panels()
+        modern_ui()
+        icons()
+        print("AUDIO_UI_OK", flush=True)
+        return
     os.makedirs(TMP, exist_ok=True)
     build_sfx()
     arena_music()
     menu_music()
     panels()
+    modern_ui()
     icons()
     print("AUDIO_UI_OK", flush=True)
 

@@ -244,5 +244,16 @@ namespace SlimeBreaker.Tests
                 Assert.GreaterOrEqual(skill.DamageAt(level), skill.DamageAt(level - 1));
             UnityEngine.Object.DestroyImmediate(skill);
         }
+    
+        [Test]
+        public void BossHpUsesIndonesianThousands()
+        {
+            Assert.AreEqual("10.000", UIController.Thousands(10000));
+            Assert.AreEqual("7.250", UIController.Thousands(7250));
+            Assert.AreEqual("999", UIController.Thousands(999));
+            Assert.AreEqual("0", UIController.Thousands(0));
+            Assert.AreEqual("100.000", UIController.Thousands(100000));
+            Assert.AreEqual("1.234.567", UIController.Thousands(1234567));
+        }
     }
 }

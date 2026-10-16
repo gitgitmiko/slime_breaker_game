@@ -34,6 +34,10 @@ namespace SlimeBreaker.EditorTools
         static Sprite joystickKnobSprite;
         static Sprite circleSprite;
         static Sprite whiteSprite;
+        static Sprite cardSprite;
+        static Sprite pillSprite;
+        static Sprite trackSprite;
+        static Sprite fillSprite;
         static Material additiveParticleMaterial;
         static Material trailMaterial;
         static Material forestGroundMaterial;
@@ -395,6 +399,14 @@ namespace SlimeBreaker.EditorTools
                         importer.spriteBorder = new Vector4(28f, 28f, 28f, 28f);
                     else if (path.Contains("UI_Bar_Back"))
                         importer.spriteBorder = new Vector4(20f, 14f, 20f, 14f);
+                    else if (path.Contains("UI_Card_Glass"))
+                        importer.spriteBorder = new Vector4(26f, 26f, 26f, 26f);
+                    else if (path.Contains("UI_Pill"))
+                        importer.spriteBorder = new Vector4(22f, 21f, 22f, 21f);
+                    else if (path.Contains("UI_Bar_Track"))
+                        importer.spriteBorder = new Vector4(14f, 14f, 14f, 14f);
+                    else if (path.Contains("UI_Bar_Fill"))
+                        importer.spriteBorder = new Vector4(11f, 11f, 11f, 11f);
                     importer.SaveAndReimport();
                 }
             }
@@ -1960,17 +1972,37 @@ namespace SlimeBreaker.EditorTools
             var damage = Text(safe, "Damage", "ATK 12", 22, TextAnchor.MiddleLeft, font);
             damage.fontStyle = FontStyle.Bold;
             damage.gameObject.SetActive(false);
+            // Status card: glass panel, header, 2×5 grid of label/value cells.
             var statusPanel = new GameObject("Status", typeof(RectTransform), typeof(Image));
-            ApplyImage(statusPanel.GetComponent<Image>(), panelSprite, Image.Type.Sliced, new Color(0.08f, 0.07f, 0.12f, 0.72f));
+            ApplyImage(statusPanel.GetComponent<Image>(), cardSprite, Image.Type.Sliced, Color.white);
             statusPanel.GetComponent<Image>().raycastTarget = false;
-            Place(statusPanel, safe, new Vector2(0.16f, 0.762f), new Vector2(470f, 156f));
-            var status = Text(statusPanel.transform, "Stats", "DMG 12     CRIT —", 16, TextAnchor.UpperLeft, font);
-            status.raycastTarget = false;
-            var statusRect = status.rectTransform;
-            statusRect.anchorMin = new Vector2(0.04f, 0.08f);
-            statusRect.anchorMax = new Vector2(0.96f, 0.92f);
-            statusRect.offsetMin = Vector2.zero;
-            statusRect.offsetMax = Vector2.zero;
+            Place(statusPanel, safe, new Vector2(0.16f, 0.772f), new Vector2(470f, 196f));
+            var statusAccent = Graphic(statusPanel.transform, "Accent", pillSprite, new Color(0.62f, 0.52f, 1f, 0.95f));
+            AnchorBox(statusAccent.rectTransform, new Vector2(0f, 1f), new Vector2(18f, -14f), new Vector2(6f, 20f));
+            var statusHeader = Text(statusPanel.transform, "Header", "STATUS", 15, TextAnchor.MiddleLeft, font);
+            statusHeader.fontStyle = FontStyle.Bold;
+            statusHeader.color = new Color(0.78f, 0.8f, 0.9f);
+            statusHeader.raycastTarget = false;
+            AnchorBox(statusHeader.rectTransform, new Vector2(0f, 1f), new Vector2(32f, -14f), new Vector2(200f, 22f));
+            var statusValues = new Text[UIController.StatKeys.Length];
+            for (int i = 0; i < UIController.StatKeys.Length; i++)
+            {
+                int column = i % 2;
+                int row = i / 2;
+                var cell = Graphic(statusPanel.transform, "Stat_" + UIController.StatKeys[i].Replace(' ', '_'), pillSprite, new Color(1f, 1f, 1f, 0.06f));
+                AnchorBox(cell.rectTransform, new Vector2(0f, 1f), new Vector2(14f + column * 224f, -42f - row * 30f), new Vector2(216f, 26f));
+                var label = Text(cell.transform, "Label", UIController.StatKeys[i], 14, TextAnchor.MiddleLeft, font);
+                label.color = new Color(0.62f, 0.64f, 0.74f);
+                label.raycastTarget = false;
+                Stretch(label.rectTransform);
+                label.rectTransform.offsetMin = new Vector2(12f, 0f);
+                var value = Text(cell.transform, "Value", "0", 17, TextAnchor.MiddleRight, font);
+                value.fontStyle = FontStyle.Bold;
+                value.raycastTarget = false;
+                Stretch(value.rectTransform);
+                value.rectTransform.offsetMax = new Vector2(-12f, 0f);
+                statusValues[i] = value;
+            }
             var floor = Text(safe, "Floor", "Lantai 1/100", 28, TextAnchor.MiddleCenter, font);
             floor.fontStyle = FontStyle.Bold;
             Place(floor.gameObject, safe, new Vector2(0.52f, 0.955f), new Vector2(280f, 36f));
@@ -2011,19 +2043,94 @@ namespace SlimeBreaker.EditorTools
                 slot.SetActive(false);
             }
 
-            // Long-press description card under the skill slots.
+            // Long-press description card under the skill slots: glass card, colour accent, icon,
+            // title + level pill, description, stat chips, MAX bonus and boss status.
             var info = new GameObject("SkillInfo", typeof(RectTransform), typeof(Image));
-            ApplyImage(info.GetComponent<Image>(), panelSprite, Image.Type.Sliced, new Color(0.07f, 0.06f, 0.12f, 0.92f));
+            ApplyImage(info.GetComponent<Image>(), cardSprite, Image.Type.Sliced, Color.white);
             info.GetComponent<Image>().raycastTarget = false;
-            Place(info, safe, new Vector2(0.78f, 0.6f), new Vector2(720f, 210f));
-            var infoText = Text(info.transform, "Text", "", 22, TextAnchor.UpperLeft, font);
-            infoText.raycastTarget = false;
-            var infoRect = infoText.rectTransform;
-            infoRect.anchorMin = new Vector2(0.04f, 0.06f);
-            infoRect.anchorMax = new Vector2(0.96f, 0.94f);
-            infoRect.offsetMin = Vector2.zero;
-            infoRect.offsetMax = Vector2.zero;
+            Place(info, safe, new Vector2(0.775f, 0.585f), new Vector2(740f, 268f));
+            var infoAccent = Graphic(info.transform, "Accent", pillSprite, Color.white);
+            AnchorBox(infoAccent.rectTransform, new Vector2(0f, 1f), new Vector2(14f, -22f), new Vector2(6f, 224f));
+            var infoIconBack = Graphic(info.transform, "IconBack", slotSprite, Color.white);
+            AnchorBox(infoIconBack.rectTransform, new Vector2(0f, 1f), new Vector2(34f, -22f), new Vector2(84f, 84f));
+            var infoIcon = Graphic(infoIconBack.transform, "Icon", whiteSprite, Color.white);
+            infoIcon.preserveAspect = true;
+            Stretch(infoIcon.rectTransform);
+            infoIcon.rectTransform.offsetMin = new Vector2(10f, 10f);
+            infoIcon.rectTransform.offsetMax = new Vector2(-10f, -10f);
+            var infoTitle = Text(info.transform, "Title", "", 30, TextAnchor.MiddleLeft, font);
+            infoTitle.fontStyle = FontStyle.Bold;
+            infoTitle.raycastTarget = false;
+            AnchorBox(infoTitle.rectTransform, new Vector2(0f, 1f), new Vector2(134f, -20f), new Vector2(430f, 40f));
+            var levelPill = Graphic(info.transform, "LevelPill", pillSprite, Color.white);
+            AnchorBox(levelPill.rectTransform, new Vector2(1f, 1f), new Vector2(-26f - 126f, -24f), new Vector2(126f, 36f));
+            var infoLevel = Text(levelPill.transform, "Level", "Lv 1/10", 19, TextAnchor.MiddleCenter, font);
+            infoLevel.fontStyle = FontStyle.Bold;
+            infoLevel.raycastTarget = false;
+            Stretch(infoLevel.rectTransform);
+            var infoDescription = Text(info.transform, "Description", "", 19, TextAnchor.UpperLeft, font);
+            infoDescription.color = new Color(0.84f, 0.86f, 0.92f);
+            infoDescription.raycastTarget = false;
+            AnchorBox(infoDescription.rectTransform, new Vector2(0f, 1f), new Vector2(134f, -64f), new Vector2(580f, 48f));
+            var divider = Graphic(info.transform, "Divider", whiteSprite, new Color(1f, 1f, 1f, 0.1f));
+            AnchorBox(divider.rectTransform, new Vector2(0f, 1f), new Vector2(34f, -120f), new Vector2(680f, 2f));
+            var chips = new Text[3];
+            for (int i = 0; i < chips.Length; i++)
+            {
+                var chip = Graphic(info.transform, "Chip" + i, pillSprite, new Color(1f, 1f, 1f, 0.09f));
+                AnchorBox(chip.rectTransform, new Vector2(0f, 1f), new Vector2(34f + i * 228f, -134f), new Vector2(216f, 38f));
+                chips[i] = Text(chip.transform, "Text", "", 18, TextAnchor.MiddleCenter, font);
+                chips[i].fontStyle = FontStyle.Bold;
+                chips[i].raycastTarget = false;
+                Stretch(chips[i].rectTransform);
+            }
+            var infoBonus = Text(info.transform, "Bonus", "", 18, TextAnchor.MiddleLeft, font);
+            infoBonus.raycastTarget = false;
+            AnchorBox(infoBonus.rectTransform, new Vector2(0f, 1f), new Vector2(34f, -184f), new Vector2(680f, 28f));
+            var bossDot = Graphic(info.transform, "BossDot", circleSprite, Color.white);
+            AnchorBox(bossDot.rectTransform, new Vector2(0f, 1f), new Vector2(38f, -224f), new Vector2(14f, 14f));
+            var infoBoss = Text(info.transform, "Boss", "", 18, TextAnchor.MiddleLeft, font);
+            infoBoss.raycastTarget = false;
+            AnchorBox(infoBoss.rectTransform, new Vector2(0f, 1f), new Vector2(62f, -217f), new Vector2(650f, 28f));
             info.SetActive(false);
+
+            // Boss HP: under the floor bar, shown only while a boss is alive.
+            var bossBar = new GameObject("BossBar", typeof(RectTransform));
+            Place(bossBar, safe, new Vector2(0.52f, 0.818f), new Vector2(780f, 92f));
+            var bossTag = Graphic(bossBar.transform, "Tag", pillSprite, new Color(0.78f, 0.14f, 0.18f));
+            AnchorBox(bossTag.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 0f), new Vector2(112f, 34f));
+            var bossTagText = Text(bossTag.transform, "Text", "BOSS", 19, TextAnchor.MiddleCenter, font);
+            bossTagText.fontStyle = FontStyle.Bold;
+            bossTagText.raycastTarget = false;
+            Stretch(bossTagText.rectTransform);
+            var bossName = Text(bossBar.transform, "Name", "ROCK SLIME", 26, TextAnchor.MiddleLeft, font);
+            bossName.fontStyle = FontStyle.Bold;
+            bossName.raycastTarget = false;
+            AnchorBox(bossName.rectTransform, new Vector2(0f, 1f), new Vector2(124f, 0f), new Vector2(420f, 34f));
+            var bossTrack = Graphic(bossBar.transform, "Track", trackSprite, Color.white);
+            AnchorBox(bossTrack.rectTransform, new Vector2(0f, 1f), new Vector2(0f, -42f), new Vector2(780f, 40f));
+            var bossTrail = Graphic(bossTrack.transform, "Trail", fillSprite, new Color(1f, 0.78f, 0.55f, 0.45f));
+            bossTrail.type = Image.Type.Filled;
+            bossTrail.fillMethod = Image.FillMethod.Horizontal;
+            bossTrail.fillOrigin = (int)Image.OriginHorizontal.Left;
+            Stretch(bossTrail.rectTransform);
+            bossTrail.rectTransform.offsetMin = new Vector2(5f, 5f);
+            bossTrail.rectTransform.offsetMax = new Vector2(-5f, -5f);
+            var bossFill = Graphic(bossTrack.transform, "Fill", fillSprite, new Color(0.9f, 0.2f, 0.26f));
+            bossFill.type = Image.Type.Filled;
+            bossFill.fillMethod = Image.FillMethod.Horizontal;
+            bossFill.fillOrigin = (int)Image.OriginHorizontal.Left;
+            Stretch(bossFill.rectTransform);
+            bossFill.rectTransform.offsetMin = new Vector2(5f, 5f);
+            bossFill.rectTransform.offsetMax = new Vector2(-5f, -5f);
+            var bossValue = Text(bossTrack.transform, "Value", "10.000 / 10.000", 21, TextAnchor.MiddleCenter, font);
+            bossValue.fontStyle = FontStyle.Bold;
+            bossValue.raycastTarget = false;
+            Stretch(bossValue.rectTransform);
+            var bossValueShadow = bossValue.gameObject.AddComponent<Shadow>();
+            bossValueShadow.effectColor = new Color(0f, 0f, 0f, 0.8f);
+            bossValueShadow.effectDistance = new Vector2(1.5f, -1.5f);
+            bossBar.SetActive(false);
 
             // Boss Breaker countdown under the skill slots.
             var breaker = Text(safe, "BossBreaker", "BOSS BREAKER 60s", 26, TextAnchor.MiddleRight, font);
@@ -2177,7 +2284,7 @@ namespace SlimeBreaker.EditorTools
             ui.floorProgress = floorBar;
             ui.floorProgressText = floorProgressLabel;
             ui.damageText = damage;
-            ui.statusText = status;
+            ui.statValues = statusValues;
             ui.timerText = timer;
             ui.dashFill = dashFill;
             ui.levelUpPanel = levelPanel;
@@ -2195,7 +2302,23 @@ namespace SlimeBreaker.EditorTools
             ui.skillLevels = slotLevels;
             ui.skillFrames = slotFrames;
             ui.skillInfoPanel = info;
-            ui.skillInfoText = infoText;
+            ui.skillInfoAccent = infoAccent;
+            ui.skillInfoIcon = infoIcon;
+            ui.skillInfoTitle = infoTitle;
+            ui.skillInfoLevelPill = levelPill;
+            ui.skillInfoLevel = infoLevel;
+            ui.skillInfoDescription = infoDescription;
+            ui.skillInfoChips = chips;
+            ui.skillInfoBonus = infoBonus;
+            ui.skillInfoBossDot = bossDot;
+            ui.skillInfoBoss = infoBoss;
+            ui.bossBar = bossBar;
+            ui.bossBarName = bossName;
+            ui.bossBarTag = bossTag;
+            ui.bossBarTagText = bossTagText;
+            ui.bossBarFill = bossFill;
+            ui.bossBarTrail = bossTrail;
+            ui.bossBarValue = bossValue;
             ui.breakerText = breaker;
             ui.toastGroup = toastGroup;
             ui.toastText = toastText;
@@ -2292,8 +2415,8 @@ namespace SlimeBreaker.EditorTools
         {
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
-            PlayerSettings.bundleVersion = "0.12.0";
-            PlayerSettings.Android.bundleVersionCode = 12;
+            PlayerSettings.bundleVersion = "0.13.0";
+            PlayerSettings.Android.bundleVersionCode = 13;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;
@@ -2482,6 +2605,10 @@ namespace SlimeBreaker.EditorTools
             joystickBaseSprite = UiSprite("UI_Joystick_Base", panelSprite);
             joystickKnobSprite = UiSprite("UI_Joystick_Knob", whiteSprite);
             circleSprite = UiSprite("UI_Circle", buttonSprite);
+            cardSprite = UiSprite("UI_Card_Glass", panelSprite);
+            pillSprite = UiSprite("UI_Pill", whiteSprite);
+            trackSprite = UiSprite("UI_Bar_Track", barSprite);
+            fillSprite = UiSprite("UI_Bar_Fill", whiteSprite);
             if (panelSprite == null || buttonSprite == null || whiteSprite == null)
                 throw new InvalidOperationException("Sprite UI tidak ter-load.");
         }
@@ -2534,6 +2661,28 @@ namespace SlimeBreaker.EditorTools
             rect.anchoredPosition = Vector2.zero;
             rect.localScale = Vector3.one;
             return rect;
+        }
+
+        /// <summary>Raycast-free sliced image (or simple, for the white sprite) used for HUD decoration.</summary>
+        static Image Graphic(Transform parent, string name, Sprite sprite, Color color)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(parent, false);
+            var image = go.GetComponent<Image>();
+            ApplyImage(image, sprite, sprite != null && sprite != whiteSprite && sprite.border != Vector4.zero ? Image.Type.Sliced : Image.Type.Simple, color);
+            image.raycastTarget = false;
+            return image;
+        }
+
+        /// <summary>Anchors a rect to one corner of its parent with a pixel offset (to the rect's top-left) and size.</summary>
+        static void AnchorBox(RectTransform rect, Vector2 corner, Vector2 offset, Vector2 size)
+        {
+            rect.anchorMin = corner;
+            rect.anchorMax = corner;
+            rect.pivot = new Vector2(0f, 1f);
+            rect.sizeDelta = size;
+            rect.anchoredPosition = offset;
+            rect.localScale = Vector3.one;
         }
 
         static void Stretch(RectTransform rect)

@@ -14,7 +14,9 @@ namespace SlimeBreaker
         public Slider floorProgress;
         public Text floorProgressText;
         public Text damageText;
-        public Text statusText;
+        [Header("Status card")]
+        /// <summary>Value cells of the status card, in <see cref="StatKeys"/> order.</summary>
+        public Text[] statValues;
         public Text timerText;
         public Image dashFill;
         public GameObject levelUpPanel;
@@ -37,7 +39,25 @@ namespace SlimeBreaker
 
         [Header("Skill info (long press)")]
         public GameObject skillInfoPanel;
-        public Text skillInfoText;
+        public Image skillInfoAccent;
+        public Image skillInfoIcon;
+        public Text skillInfoTitle;
+        public Image skillInfoLevelPill;
+        public Text skillInfoLevel;
+        public Text skillInfoDescription;
+        public Text[] skillInfoChips;
+        public Text skillInfoBonus;
+        public Image skillInfoBossDot;
+        public Text skillInfoBoss;
+
+        [Header("Boss HP")]
+        public GameObject bossBar;
+        public Text bossBarName;
+        public Image bossBarTag;
+        public Text bossBarTagText;
+        public Image bossBarFill;
+        public Image bossBarTrail;
+        public Text bossBarValue;
 
         [Header("Boss Breaker")]
         public Text breakerText;
@@ -137,6 +157,7 @@ namespace SlimeBreaker
             }
 
             RefreshBreaker();
+            RefreshBossBar();
 
             if (toastGroup != null && toastTimer > 0f)
             {
@@ -164,6 +185,94 @@ namespace SlimeBreaker
                 flow.TogglePause();
         }
 
+        EnemyHealth trackedBoss;
+        float trail01 = 1f;
+        float trailHold;
+        int lastBossHp = -1;
+
+        public bool BossBarVisible => bossBar != null && bossBar.activeSelf;
+        public float BossBarFill01 => bossBarFill != null ? bossBarFill.fillAmount : 0f;
+        public string BossBarText => bossBarValue != null ? bossBarValue.text : string.Empty;
+        public string BossBarName => bossBarName != null ? bossBarName.text : string.Empty;
+
+        static EnemyHealth FindBoss()
+        {
+            for (int i = 0; i < EnemyHealth.Active.Count; i++)
+            {
+                var enemy = EnemyHealth.Active[i];
+                if (enemy != null && !enemy.IsDead && enemy.IsBoss)
+                    return enemy;
+            }
+            return null;
+        }
+
+        /// <summary>Top-centre boss HP bar: name + BOSS tag, red fill, a white trail that catches up, and "7.250 / 10.000".</summary>
+        void RefreshBossBar()
+        {
+            if (bossBar == null)
+                return;
+            if (trackedBoss == null || trackedBoss.IsDead)
+            {
+                trackedBoss = FindBoss();
+                lastBossHp = -1;
+                trail01 = 1f;
+            }
+            bool on = trackedBoss != null && trackedBoss.Max > 0;
+            if (bossBar.activeSelf != on)
+                bossBar.SetActive(on);
+            if (!on)
+                return;
+            int hp = Mathf.Max(0, trackedBoss.Current);
+            int max = trackedBoss.Max;
+            float value01 = Mathf.Clamp01((float)hp / max);
+            if (bossBarFill != null)
+                bossBarFill.fillAmount = value01;
+            if (hp != lastBossHp)
+            {
+                if (lastBossHp >= 0 && hp < lastBossHp)
+                    trailHold = 0.35f;
+                if (bossBarValue != null)
+                    bossBarValue.text = Thousands(hp) + " / " + Thousands(max);
+                lastBossHp = hp;
+            }
+            float dt = Time.unscaledDeltaTime;
+            if (trailHold > 0f)
+                trailHold -= dt;
+            else
+                trail01 = Mathf.MoveTowards(trail01, value01, dt * 1.5f);
+            trail01 = Mathf.Max(trail01, value01);
+            if (bossBarTrail != null)
+                bossBarTrail.fillAmount = trail01;
+
+            var controller = trackedBoss.GetComponent<BossController>();
+            bool enraged = controller != null && controller.Enraged;
+            if (bossBarName != null)
+                bossBarName.text = controller != null ? BossCatalog.DisplayName(controller.kind).ToUpperInvariant() : "BOSS";
+            if (bossBarTagText != null)
+                bossBarTagText.text = enraged ? "ENRAGE" : "BOSS";
+            float pulse = 0.5f + 0.5f * Mathf.Sin(Time.unscaledTime * 8f);
+            if (bossBarTag != null)
+                bossBarTag.color = enraged ? Color.Lerp(new Color(0.85f, 0.1f, 0.08f), new Color(1f, 0.45f, 0.2f), pulse) : new Color(0.78f, 0.14f, 0.18f);
+            if (bossBarFill != null)
+                bossBarFill.color = enraged
+                    ? Color.Lerp(new Color(0.95f, 0.18f, 0.1f), new Color(1f, 0.5f, 0.18f), pulse)
+                    : new Color(0.9f, 0.2f, 0.26f);
+        }
+
+        /// <summary>10000 → "10.000" (Indonesian grouping, culture-independent).</summary>
+        public static string Thousands(int value)
+        {
+            string digits = Mathf.Abs(value).ToString();
+            var builder = new System.Text.StringBuilder();
+            for (int i = 0; i < digits.Length; i++)
+            {
+                if (i > 0 && (digits.Length - i) % 3 == 0)
+                    builder.Append('.');
+                builder.Append(digits[i]);
+            }
+            return (value < 0 ? "-" : string.Empty) + builder;
+        }
+
         void RefreshBreaker()
         {
             if (breakerText == null)
@@ -181,9 +290,34 @@ namespace SlimeBreaker
         }
 
         public bool SkillInfoVisible => skillInfoPanel != null && skillInfoPanel.activeSelf;
-        public string SkillInfo => skillInfoText != null ? skillInfoText.text : string.Empty;
 
-        /// <summary>Shows the description of owned skill <paramref name="index"/> (long press on its HUD slot).</summary>
+        /// <summary>All visible text of the skill card, for tests and accessibility.</summary>
+        public string SkillInfo
+        {
+            get
+            {
+                var parts = new System.Text.StringBuilder();
+                Append(parts, skillInfoTitle);
+                Append(parts, skillInfoLevel);
+                Append(parts, skillInfoDescription);
+                if (skillInfoChips != null)
+                {
+                    foreach (var chip in skillInfoChips)
+                        Append(parts, chip);
+                }
+                Append(parts, skillInfoBonus);
+                Append(parts, skillInfoBoss);
+                return parts.ToString();
+            }
+        }
+
+        static void Append(System.Text.StringBuilder parts, Text text)
+        {
+            if (text != null && text.gameObject.activeInHierarchy && !string.IsNullOrEmpty(text.text))
+                parts.Append(text.text).Append('\n');
+        }
+
+        /// <summary>Shows the description card of owned skill <paramref name="index"/> (long press on its HUD slot).</summary>
         public bool ShowSkillInfo(int index)
         {
             if (skills == null || index < 0 || index >= skills.Count || skillInfoPanel == null)
@@ -193,36 +327,82 @@ namespace SlimeBreaker
             if (d == null)
                 return false;
             int level = skill.level;
-            string levelLabel = d.IsMax(level) ? "MAX" : "Lv " + level + " / " + d.maxLevel;
-            string stats = "Damage " + d.DamageAt(level);
+            bool max = d.IsMax(level);
+            Color accent = Color.Lerp(d.color, Color.white, 0.2f);
+            if (skillInfoAccent != null)
+                skillInfoAccent.color = accent;
+            if (skillInfoIcon != null)
+            {
+                skillInfoIcon.sprite = d.icon;
+                skillInfoIcon.enabled = d.icon != null;
+            }
+            if (skillInfoTitle != null)
+            {
+                skillInfoTitle.text = d.title;
+                skillInfoTitle.color = Color.Lerp(d.color, Color.white, 0.45f);
+            }
+            if (skillInfoLevel != null)
+            {
+                skillInfoLevel.text = max ? "MAX" : "Lv " + level + "/" + d.maxLevel;
+                skillInfoLevel.color = max ? new Color(0.16f, 0.1f, 0.02f) : Color.white;
+            }
+            if (skillInfoLevelPill != null)
+                skillInfoLevelPill.color = max ? MaxLevelColor : new Color(d.color.r * 0.55f, d.color.g * 0.55f, d.color.b * 0.55f, 0.95f);
+            if (skillInfoDescription != null)
+                skillInfoDescription.text = d.description;
+
+            var chips = new System.Collections.Generic.List<string> { "DMG  " + d.DamageAt(level) };
             switch (d.kind)
             {
                 case SkillKind.IceOrbit:
-                    stats += "   Pecahan " + d.CountAt(level) + "   Radius " + d.RadiusAt(level).ToString("0.0") + " m";
+                    chips.Add("SHARD  " + d.CountAt(level));
+                    chips.Add("RADIUS  " + d.RadiusAt(level).ToString("0.0") + " m");
                     break;
                 case SkillKind.LightningChain:
-                    stats += "   Lompatan " + d.CountAt(level) + "   CD " + d.CooldownAt(level).ToString("0.0") + " s";
+                    chips.Add("JUMP  " + d.CountAt(level));
+                    chips.Add("CD  " + d.CooldownAt(level).ToString("0.0") + " s");
                     break;
                 case SkillKind.FireNova:
-                    stats += "   Radius " + d.RadiusAt(level).ToString("0.0") + " m   CD " + d.CooldownAt(level).ToString("0.0") + " s";
+                    chips.Add("RADIUS  " + d.RadiusAt(level).ToString("0.0") + " m");
+                    chips.Add("CD  " + d.CooldownAt(level).ToString("0.0") + " s");
                     break;
                 case SkillKind.ArcaneMissile:
-                    stats += "   Misil " + d.CountAt(level) + "   CD " + d.CooldownAt(level).ToString("0.0") + " s";
+                    chips.Add("MISSILE  " + d.CountAt(level));
+                    chips.Add("CD  " + d.CooldownAt(level).ToString("0.0") + " s");
                     break;
             }
-            string bonus = d.kind switch
+            if (skillInfoChips != null)
             {
-                SkillKind.IceOrbit => "Bonus MAX: slow hampir membeku.",
-                SkillKind.LightningChain => "Bonus MAX: lompatan tanpa penurunan damage.",
-                SkillKind.FireNova => "Bonus MAX: bakar 2× lebih kuat.",
-                _ => "Bonus MAX: +2 misil."
-            };
-            string boss = SkillController.BossBreakerActive
-                ? "<color=#FFB13A>Boss Breaker aktif: bisa melukai boss.</color>"
-                : "<color=#B8BCC8>Tidak melukai boss tanpa Boss Breaker.</color>";
-            string hex = ColorUtility.ToHtmlStringRGB(Color.Lerp(d.color, Color.white, 0.3f));
-            skillInfoText.text = "<b><color=#" + hex + ">" + d.title + "</color></b>   " + levelLabel + "\n"
-                + d.description + "\n" + stats + "\n" + bonus + "\n" + boss;
+                for (int i = 0; i < skillInfoChips.Length; i++)
+                {
+                    if (skillInfoChips[i] == null)
+                        continue;
+                    bool on = i < chips.Count;
+                    skillInfoChips[i].transform.parent.gameObject.SetActive(on);
+                    if (on)
+                        skillInfoChips[i].text = chips[i];
+                }
+            }
+            if (skillInfoBonus != null)
+            {
+                string bonus = d.kind switch
+                {
+                    SkillKind.IceOrbit => "slow hampir membeku",
+                    SkillKind.LightningChain => "lompatan tanpa penurunan damage",
+                    SkillKind.FireNova => "bakar 2× lebih kuat",
+                    _ => "+2 misil"
+                };
+                skillInfoBonus.text = (max ? "★ Bonus MAX aktif: " : "☆ Bonus MAX: ") + bonus;
+                skillInfoBonus.color = max ? MaxLevelColor : new Color(0.72f, 0.74f, 0.82f);
+            }
+            bool breaker = SkillController.BossBreakerActive;
+            if (skillInfoBoss != null)
+            {
+                skillInfoBoss.text = breaker ? "Boss Breaker aktif — bisa melukai boss" : "Tidak melukai boss tanpa Boss Breaker";
+                skillInfoBoss.color = breaker ? SkillController.BreakerColor : new Color(0.66f, 0.68f, 0.76f);
+            }
+            if (skillInfoBossDot != null)
+                skillInfoBossDot.color = breaker ? SkillController.BreakerColor : new Color(0.5f, 0.52f, 0.6f);
             skillInfoPanel.SetActive(true);
             return true;
         }
@@ -361,21 +541,38 @@ namespace SlimeBreaker
             if (floorProgress != null)
             {
                 if (boss)
-                    floorProgress.value = stage != null && stage.FloorCleared ? 1f : BossHealth01();
+                    floorProgress.value = 1f;
                 else
                     floorProgress.value = quota <= 0 ? 0f : Mathf.Clamp01((float)kills / quota);
             }
         }
 
-        static float BossHealth01()
+        /// <summary>Stat cells of the status card, left-to-right, top-to-bottom.</summary>
+        public static readonly string[] StatKeys = { "DMG", "ATK SPD", "CRIT", "CRIT RATE", "RANGE", "MOVE", "LS", "EXP", "DEF", "TAKEN" };
+
+        static readonly Color StatDim = new Color(0.62f, 0.64f, 0.72f);
+        static readonly Color StatGold = new Color(1f, 0.82f, 0.3f);
+        static readonly Color StatGreen = new Color(0.45f, 1f, 0.55f);
+        static readonly Color StatBlue = new Color(0.5f, 0.78f, 1f);
+
+        readonly string[] statText = new string[10];
+
+        /// <summary>"DMG 12  ATK SPD 1.82/s  …" — every stat with its current value.</summary>
+        public string StatusSummary
         {
-            for (int i = 0; i < EnemyHealth.Active.Count; i++)
+            get
             {
-                var enemy = EnemyHealth.Active[i];
-                if (enemy != null && !enemy.IsDead && enemy.IsBoss && enemy.Max > 0)
-                    return 1f - (float)enemy.Current / enemy.Max;
+                var builder = new System.Text.StringBuilder();
+                for (int i = 0; i < StatKeys.Length; i++)
+                    builder.Append(StatKeys[i]).Append(' ').Append(statText[i]).Append("  ");
+                return builder.ToString();
             }
-            return 0f;
+        }
+
+        public string StatValue(string key)
+        {
+            int index = System.Array.IndexOf(StatKeys, key);
+            return index >= 0 ? statText[index] : null;
         }
 
         void RefreshStatus(RunStats stats)
@@ -384,19 +581,29 @@ namespace SlimeBreaker
                 return;
             if (damageText != null)
                 damageText.text = "ATK " + stats.damage;
-            if (statusText == null)
-                return;
-            string crit = stats.HasCrit ? stats.critMultiplier.ToString("0.0") + "x" : "—";
-            string rate = stats.HasCrit ? Mathf.RoundToInt(stats.critChance * 100f) + "%" : "0%";
-            string steal = Mathf.RoundToInt(stats.lifesteal * 100f) + "%";
             int expBonus = Mathf.RoundToInt(Mathf.Max(0f, stats.xpMultiplier - 1f) * 100f);
             int defense = Mathf.RoundToInt(stats.damageReduction * 100f);
-            statusText.text =
-                "DMG " + stats.damage + "     CRIT " + crit + "\n"
-                + "CRIT RATE " + rate + "     ATK SPD " + stats.AttacksPerSecond.ToString("0.00") + "\n"
-                + "RANGE " + stats.attackRange.ToString("0.0") + "     MOVE " + stats.moveSpeed.ToString("0.0") + "\n"
-                + "EXP +" + expBonus + "%     LS " + steal + "\n"
-                + "DEF " + defense + "%     TAKEN " + (100 - defense) + "%";
+            int steal = Mathf.RoundToInt(stats.lifesteal * 100f);
+            SetStat(0, stats.damage.ToString(), Color.white);
+            SetStat(1, stats.AttacksPerSecond.ToString("0.00") + "/s", Color.white);
+            SetStat(2, stats.HasCrit ? stats.critMultiplier.ToString("0.0") + "x" : "—", stats.HasCrit ? StatGold : StatDim);
+            SetStat(3, (stats.HasCrit ? Mathf.RoundToInt(stats.critChance * 100f) : 0) + "%", stats.HasCrit ? StatGold : StatDim);
+            SetStat(4, stats.attackRange.ToString("0.0") + " m", Color.white);
+            SetStat(5, stats.moveSpeed.ToString("0.0"), Color.white);
+            SetStat(6, steal + "%", steal > 0 ? StatGreen : StatDim);
+            SetStat(7, "+" + expBonus + "%", expBonus > 0 ? Color.white : StatDim);
+            SetStat(8, defense + "%", defense > 0 ? StatBlue : StatDim);
+            SetStat(9, (100 - defense) + "%", defense > 0 ? StatBlue : StatDim);
+        }
+
+        void SetStat(int index, string value, Color color)
+        {
+            statText[index] = value;
+            if (statValues == null || index >= statValues.Length || statValues[index] == null)
+                return;
+            if (statValues[index].text != value)
+                statValues[index].text = value;
+            statValues[index].color = color;
         }
 
         void RefreshHealth()

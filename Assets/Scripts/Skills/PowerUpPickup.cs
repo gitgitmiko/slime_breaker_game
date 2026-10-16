@@ -108,6 +108,7 @@ namespace SlimeBreaker
             if (bossBreaker)
             {
                 SkillController.Instance?.ActivateBossBreaker();
+                PlayerHealth.Instance?.Emote("Cast");
                 GameFlowController.Instance?.ui?.ShowToast("BOSS BREAKER! Power-up melukai boss 60 dtk", SkillController.BreakerColor);
                 AudioService.Instance?.Play("powerup");
                 VfxPlayer.Instance?.Play("powerup", transform.position + Vector3.up * 0.8f, SkillController.BreakerColor);
@@ -126,6 +127,7 @@ namespace SlimeBreaker
             }
             AudioService.Instance?.Play("powerup");
             VfxPlayer.Instance?.Play("powerup", transform.position + Vector3.up * 0.8f, skill != null ? skill.color : Color.white);
+            PlayerHealth.Instance?.Emote("Cast");
             GameFlowController.Instance?.PersistRun();
             Destroy(gameObject);
         }

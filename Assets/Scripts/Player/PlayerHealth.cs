@@ -50,6 +50,25 @@ namespace SlimeBreaker
         }
 
         /// <summary>Heals from lifesteal and batches the amount into one green number over the hero's head.</summary>
+        /// <summary>Plays a one-shot hero animation (Cast, Victory) if the controller has that trigger.</summary>
+        public bool Emote(string trigger)
+        {
+            if (animator == null || IsDead || animator.runtimeAnimatorController == null)
+                return false;
+            foreach (var parameter in animator.parameters)
+            {
+                if (parameter.name == trigger && parameter.type == AnimatorControllerParameterType.Trigger)
+                {
+                    animator.SetTrigger(trigger);
+                    LastEmote = trigger;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public string LastEmote { get; private set; }
+
         public void Lifesteal(int amount)
         {
             int before = Current;

@@ -207,6 +207,7 @@ namespace SlimeBreaker
             {
                 var kind = ActiveBoss;
                 ActiveBoss = BossKind.None;
+                PlayerHealth.Instance?.Emote("Victory");
                 Intermission = false;
                 VanishMinions();
                 if (spawner != null)

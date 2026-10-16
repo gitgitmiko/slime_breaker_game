@@ -20,22 +20,26 @@ import bpy
 import mathutils
 
 PALETTE = {
-    # hero (anime sorceress)
-    "skin": (1.0, 0.86, 0.78, 1),
-    "blush": (1.0, 0.62, 0.70, 1),
-    "hair": (0.84, 0.78, 1.0, 1),
-    "hair_dark": (0.62, 0.54, 0.86, 1),
-    "robe": (0.23, 0.18, 0.56, 1),
-    "robe_light": (0.42, 0.36, 0.84, 1),
-    "hat": (0.16, 0.13, 0.40, 1),
-    "cape_inner": (0.86, 0.32, 0.62, 1),
-    "boot": (0.22, 0.17, 0.30, 1),
+    # hero (chibi purple witch)
+    "skin": (1.0, 0.87, 0.80, 1),
+    "blush": (1.0, 0.58, 0.68, 1),
+    "hair": (0.36, 0.23, 0.64, 1),
+    "hair_dark": (0.20, 0.12, 0.36, 1),
+    "hair_light": (0.74, 0.64, 1.0, 1),
+    "robe": (0.46, 0.28, 0.82, 1),
+    "robe_light": (0.64, 0.48, 0.96, 1),
+    "hat": (0.22, 0.13, 0.42, 1),
+    "hat_band": (0.80, 0.60, 1.0, 1),
+    "frill": (0.97, 0.95, 1.0, 1),
+    "stocking": (0.21, 0.13, 0.36, 1),
+    "cape_inner": (0.30, 0.17, 0.54, 1),
+    "boot": (0.17, 0.10, 0.27, 1),
     "gold": (0.96, 0.78, 0.30, 1),
     "iris": (0.49, 0.36, 1.0, 1),
     "pupil": (0.08, 0.06, 0.16, 1),
     "eye_white": (0.98, 0.98, 1.0, 1),
     "eye_highlight": (1.0, 1.0, 1.0, 1),
-    "mouth": (0.72, 0.30, 0.38, 1),
+    "mouth": (0.40, 0.12, 0.22, 1),
     "crystal": (0.55, 0.90, 1.0, 1),
     "staff_wood": (0.36, 0.22, 0.14, 1),
     # enemies
@@ -114,7 +118,7 @@ def parse_args():
         raise SystemExit("Pass output, preview, and texture directories after --")
     args = argv[argv.index("--") + 1 :]
     if len(args) < 3:
-        raise SystemExit("Expected: <out_dir> <preview_dir> <texture_dir> [env]")
+        raise SystemExit("Expected: <out_dir> <preview_dir> <texture_dir> [env|hero]")
     mode = args[3] if len(args) >= 4 else "all"
     return args[0], args[1], args[2], mode
 
@@ -135,7 +139,8 @@ def sh(cmd):
 
 def make_textures():
     script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build_textures.py")
-    sh(["python3", script, TEX])
+    if MODE != "hero":
+        sh(["python3", script, TEX])
     return {
         "ground": os.path.join(TEX, "TEX_Forest_Ground.png"),
         "bark": os.path.join(TEX, "TEX_Bark.png"),
@@ -447,7 +452,7 @@ def add_action(arm, name, frames, apply_pose):
 
 def cleanup_objects():
     for obj in list(bpy.data.objects):
-        if obj.type == "CAMERA":
+        if obj.type in ("CAMERA", "LIGHT"):
             continue
         bpy.data.objects.remove(obj, do_unlink=True)
     for action in list(bpy.data.actions):
@@ -546,127 +551,469 @@ def pulse(t, start, end):
 def hero_bones():
     return [
         ("Root", (0, 0, 0), (0, 0, 0.2), None),
-        ("Hips", (0, 0, 0.45), (0, 0, 0.56), "Root"),
-        ("Spine", (0, 0, 0.56), (0, 0, 0.68), "Hips"),
-        ("Chest", (0, 0, 0.68), (0, 0, 0.80), "Spine"),
-        ("Neck", (0, 0, 0.80), (0, 0, 0.86), "Chest"),
-        ("Head", (0, 0, 0.86), (0, 0, 1.25), "Neck"),
-        ("HatTip", (0, 0.02, 1.48), (0, 0.06, 1.72), "Head"),
-        ("Hair.L", (-0.25, 0.13, 1.06), (-0.29, 0.17, 0.80), "Head"),
-        ("Hair.L.2", (-0.29, 0.17, 0.80), (-0.34, 0.21, 0.52), "Hair.L"),
-        ("Hair.R", (0.25, 0.13, 1.06), (0.29, 0.17, 0.80), "Head"),
-        ("Hair.R.2", (0.29, 0.17, 0.80), (0.34, 0.21, 0.52), "Hair.R"),
-        ("Cape", (0, 0.12, 0.78), (0, 0.20, 0.45), "Chest"),
-        ("Shoulder.L", (-0.07, 0, 0.77), (-0.20, 0, 0.75), "Chest"),
-        ("UpperArm.L", (-0.20, 0, 0.75), (-0.27, -0.02, 0.57), "Shoulder.L"),
-        ("Forearm.L", (-0.27, -0.02, 0.57), (-0.30, -0.08, 0.42), "UpperArm.L"),
-        ("Hand.L", (-0.30, -0.08, 0.42), (-0.32, -0.12, 0.33), "Forearm.L"),
-        ("Shoulder.R", (0.07, 0, 0.77), (0.20, 0, 0.75), "Chest"),
-        ("UpperArm.R", (0.20, 0, 0.75), (0.27, -0.02, 0.57), "Shoulder.R"),
-        ("Forearm.R", (0.27, -0.02, 0.57), (0.30, -0.08, 0.42), "UpperArm.R"),
-        ("Hand.R", (0.30, -0.08, 0.42), (0.32, -0.12, 0.33), "Forearm.R"),
-        ("Staff", (0.33, -0.13, 0.40), (0.33, -0.13, 1.05), "Hand.R"),
-        ("StaffTip", (0.33, -0.13, 1.36), (0.33, -0.13, 1.46), "Staff"),
-        ("UpLeg.L", (-0.09, 0, 0.47), (-0.095, 0, 0.26), "Hips"),
-        ("Leg.L", (-0.095, 0, 0.26), (-0.10, 0, 0.10), "UpLeg.L"),
-        ("Foot.L", (-0.10, 0, 0.10), (-0.10, -0.12, 0.02), "Leg.L"),
-        ("UpLeg.R", (0.09, 0, 0.47), (0.095, 0, 0.26), "Hips"),
-        ("Leg.R", (0.095, 0, 0.26), (0.10, 0, 0.10), "UpLeg.R"),
-        ("Foot.R", (0.10, 0, 0.10), (0.10, -0.12, 0.02), "Leg.R"),
+        ("Hips", (0, 0, 0.40), (0, 0, 0.50), "Root"),
+        ("Spine", (0, 0, 0.50), (0, 0, 0.60), "Hips"),
+        ("Chest", (0, 0, 0.60), (0, 0, 0.70), "Spine"),
+        ("Neck", (0, 0, 0.70), (0, 0, 0.76), "Chest"),
+        ("Head", (0, 0, 0.76), (0, 0, 1.20), "Neck"),
+        ("Hat", (0, 0.0, 1.20), (0, 0.02, 1.38), "Head"),
+        ("HatTip", (0, 0.10, 1.46), (0, 0.24, 1.68), "Hat"),
+        ("Hair.L", (-0.17, 0.17, 0.98), (-0.21, 0.21, 0.82), "Head"),
+        ("Hair.L.2", (-0.21, 0.21, 0.82), (-0.24, 0.24, 0.66), "Hair.L"),
+        ("Hair.R", (0.17, 0.17, 0.98), (0.21, 0.21, 0.82), "Head"),
+        ("Hair.R.2", (0.21, 0.21, 0.82), (0.24, 0.24, 0.66), "Hair.R"),
+        ("Cape", (0, 0.10, 0.69), (0, 0.17, 0.44), "Chest"),
+        ("Shoulder.L", (-0.05, 0, 0.67), (-0.13, 0, 0.67), "Chest"),
+        ("UpperArm.L", (-0.13, 0, 0.67), (-0.19, -0.01, 0.52), "Shoulder.L"),
+        ("Forearm.L", (-0.19, -0.01, 0.52), (-0.21, -0.04, 0.40), "UpperArm.L"),
+        ("Hand.L", (-0.21, -0.04, 0.40), (-0.22, -0.06, 0.33), "Forearm.L"),
+        ("Shoulder.R", (0.05, 0, 0.67), (0.13, 0, 0.67), "Chest"),
+        ("UpperArm.R", (0.13, 0, 0.67), (0.19, -0.01, 0.52), "Shoulder.R"),
+        ("Forearm.R", (0.19, -0.01, 0.52), (0.21, -0.04, 0.40), "UpperArm.R"),
+        ("Hand.R", (0.21, -0.04, 0.40), (0.22, -0.06, 0.33), "Forearm.R"),
+        ("Staff", (0.225, -0.07, 0.37), (0.225, -0.07, 0.85), "Hand.R"),
+        ("StaffTip", (0.225, -0.07, 1.01), (0.225, -0.07, 1.10), "Staff"),
+        ("UpLeg.L", (-0.065, 0, 0.40), (-0.07, 0, 0.22), "Hips"),
+        ("Leg.L", (-0.07, 0, 0.22), (-0.072, 0, 0.07), "UpLeg.L"),
+        ("Foot.L", (-0.072, 0, 0.07), (-0.072, -0.10, 0.02), "Leg.L"),
+        ("UpLeg.R", (0.065, 0, 0.40), (0.07, 0, 0.22), "Hips"),
+        ("Leg.R", (0.07, 0, 0.22), (0.072, 0, 0.07), "UpLeg.R"),
+        ("Foot.R", (0.072, 0, 0.07), (0.072, -0.10, 0.02), "Leg.R"),
     ]
 
 
+# ---------------------------------------------------------------- hero mesh helpers
+
+
+def loft(name, centers, radii, segments=16, ovals=None, wave=None, cap_start=True, cap_end=True):
+    """Tube through `centers` with per-ring radius. `ovals` scales (x, y) per ring; `wave(theta, i)` adds to the radius."""
+    bm = bmesh.new()
+    rings = []
+    count = len(centers)
+    for i, (center, radius) in enumerate(zip(centers, radii)):
+        c = mathutils.Vector(center)
+        prev = mathutils.Vector(centers[max(0, i - 1)])
+        nxt = mathutils.Vector(centers[min(count - 1, i + 1)])
+        axis = (nxt - prev)
+        if axis.length < 1e-6:
+            axis = mathutils.Vector((0, 0, 1))
+        axis.normalize()
+        ref = mathutils.Vector((0, 0, 1)) if abs(axis.z) < 0.9 else mathutils.Vector((1, 0, 0))
+        u = axis.cross(ref).normalized()
+        v = axis.cross(u).normalized()
+        if abs(axis.z) >= 0.9:
+            # Vertical rings: keep u on world X and v on world Y so ovals mean what they say.
+            u = mathutils.Vector((1, 0, 0))
+            v = mathutils.Vector((0, 1, 0)) if axis.z > 0 else mathutils.Vector((0, -1, 0))
+        sx, sy = ovals[i] if ovals else (1.0, 1.0)
+        ring = []
+        for k in range(segments):
+            theta = k / segments * math.tau
+            r = radius + (wave(theta, i) if wave else 0.0)
+            ring.append(bm.verts.new(c + u * math.cos(theta) * r * sx + v * math.sin(theta) * r * sy))
+        rings.append(ring)
+    for a, b in zip(rings, rings[1:]):
+        for k in range(segments):
+            bm.faces.new((a[k], a[(k + 1) % segments], b[(k + 1) % segments], b[k]))
+    if cap_start:
+        bm.faces.new(list(reversed(rings[0])))
+    if cap_end:
+        bm.faces.new(rings[-1])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.scene.collection.objects.link(obj)
+    smooth(obj, math.radians(80))
+    return obj
+
+
+def path_tube(name, points, radius, segments=8, taper=None):
+    radii = [radius * (taper(i / max(1, len(points) - 1)) if taper else 1.0) for i in range(len(points))]
+    return loft(name, points, radii, segments)
+
+
+def surface_y(obj, x, z, offset=0.0):
+    """Front surface (-Y side) of `obj` at (x, z), pushed `offset` further out."""
+    hit, location, _normal, _index = obj.ray_cast(mathutils.Vector((x, -2.0, z)), mathutils.Vector((0, 1, 0)))
+    if not hit:
+        return -0.2
+    return location.y - offset
+
+
+def lock(name, root, tip, width, depth=None, bend=(0.0, 0.0), segments=14, rings=12):
+    """Teardrop hair clump hanging from `root` to a point at `tip`; `bend` curls the tip in local x/y."""
+    depth = width * 0.7 if depth is None else depth
+    root = mathutils.Vector(root)
+    tip = mathutils.Vector(tip)
+    length = (tip - root).length
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=segments, ring_count=rings, radius=1.0, location=(0, 0, 0))
+    obj = bpy.context.active_object
+    for vert in obj.data.vertices:
+        s = (vert.co.z + 1.0) / 2.0  # 1 at the root, 0 at the tip
+        along = (1.0 - s)
+        fat = min(1.0, s * 1.3) ** 1.05
+        x = vert.co.x * width * fat
+        y = vert.co.y * depth * fat
+        x += bend[0] * along * along
+        y += bend[1] * along * along
+        vert.co = mathutils.Vector((x, y, -along * length))
+    direction = (tip - root).normalized()
+    obj.rotation_mode = "QUATERNION"
+    obj.rotation_quaternion = mathutils.Vector((0, 0, -1)).rotation_difference(direction)
+    obj.location = root
+    apply_xform(obj)
+    obj.rotation_mode = "XYZ"
+    obj.name = name
+    smooth(obj, math.radians(75))
+    return obj
+
+
+def eye_texture(path, size=256):
+    """Anime eye drawn with signed distances: sclera, violet gradient iris, pupil, two highlights, thick lash."""
+    import numpy as np
+
+    v, u = np.mgrid[size - 1:-1:-1, 0:size].astype(np.float32)
+    u = u / (size - 1) * 2.0 - 1.0
+    v = v / (size - 1) * 2.0 - 1.0
+    aa = 2.5 / size
+
+    def fill(d):
+        return np.clip(0.5 - d / aa, 0.0, 1.0)[..., None]
+
+    def ellipse(cx, cy, rx, ry):
+        return (np.sqrt(((u - cx) / rx) ** 2 + ((v - cy) / ry) ** 2) - 1.0) * min(rx, ry)
+
+    def lerp(a, b, t):
+        return a * (1.0 - t) + b * t
+
+    img = np.zeros((size, size, 3), np.float32)
+    img[:] = (0.99, 0.98, 1.0)
+    # Iris: deep violet at the top to bright lilac at the bottom, darker rim.
+    t = np.clip((0.55 - v) / 1.3, 0.0, 1.0)[..., None]
+    iris_col = lerp(np.array((0.30, 0.10, 0.58), np.float32), np.array((0.92, 0.60, 1.0), np.float32), t ** 1.4)
+    iris = ellipse(0.0, -0.10, 0.66, 0.82)
+    img = lerp(img, np.array((0.20, 0.07, 0.36), np.float32), fill(iris))
+    img = lerp(img, iris_col, fill(iris + 0.07))
+    # Pupil and a soft glow crescent under it.
+    img = lerp(img, np.array((0.14, 0.04, 0.26), np.float32), fill(ellipse(0.0, 0.02, 0.30, 0.42)))
+    img = lerp(img, np.array((1.0, 0.78, 1.0), np.float32), 0.55 * fill(ellipse(0.0, -0.58, 0.38, 0.16)))
+    # Highlights (same corner on both eyes = one light source).
+    img = lerp(img, np.array((1.0, 1.0, 1.0), np.float32), fill(ellipse(-0.30, 0.26, 0.24, 0.28)))
+    img = lerp(img, np.array((1.0, 1.0, 1.0), np.float32), fill(ellipse(0.30, -0.40, 0.10, 0.11)))
+    img = lerp(img, np.array((1.0, 1.0, 1.0), np.float32), 0.85 * fill(ellipse(0.36, 0.30, 0.06, 0.06)))
+    # Thick upper lash band following the eye outline; thin lower lash.
+    top = np.power(np.clip(1.0 - np.abs(u) ** 2.4, 0.0, 1.0), 1.0 / 2.2)
+    lash_depth = 0.30 + 0.08 * (1.0 - np.abs(u))
+    upper = fill(-(v - (top - lash_depth)) * 0.35)
+    img = lerp(img, np.array((0.11, 0.05, 0.18), np.float32), upper)
+    lower = np.clip(1.0 - np.abs(v + top - 0.05) / 0.06, 0.0, 1.0)[..., None] * (np.abs(u) > 0.15)[..., None]
+    img = lerp(img, np.array((0.40, 0.20, 0.50), np.float32), lower * 0.8)
+    rgba = np.concatenate([img, np.ones((size, size, 1), np.float32)], axis=2)
+    image = bpy.data.images.new("TEX_Hero_Eye", size, size, alpha=False)
+    image.pixels.foreach_set(rgba[::-1].reshape(-1))
+    image.filepath_raw = path
+    image.file_format = "PNG"
+    image.save()
+    return path
+
+
+def eye_decal(name, head, cx, cz, width, height, segments=36, rings=6):
+    """Eye-shaped patch projected onto the face. UVs span the eye outline so the texture fills it."""
+    bm = bmesh.new()
+    uv_layer = bm.loops.layers.uv.new("UVMap")
+    grid = []
+    for ri in range(rings + 1):
+        scale = ri / rings
+        ring = []
+        for k in range(segments if ri > 0 else 1):
+            theta = k / segments * math.tau
+            c, s = math.cos(theta), math.sin(theta)
+            # Superellipse outline: flatter top (lash line), rounder bottom.
+            ex = 2.4
+            ey = 2.2 if s > 0 else 2.0
+            r = 1.0 / ((abs(c) ** ex + abs(s) ** ey) ** (1.0 / max(ex, ey)) + 1e-6)
+            lu = c * r * scale
+            lv = s * r * scale
+            lu = max(-1.0, min(1.0, lu))
+            lv = max(-1.0, min(1.0, lv))
+            x = cx + lu * width / 2
+            z = cz + lv * height / 2
+            vert = bm.verts.new((x, surface_y(head, x, z, 0.004), z))
+            ring.append((vert, (lu * 0.5 + 0.5, lv * 0.5 + 0.5)))
+        grid.append(ring)
+    centre = grid[0][0]
+    for k in range(segments):
+        a = grid[1][k]
+        b = grid[1][(k + 1) % segments]
+        face = bm.faces.new((centre[0], a[0], b[0]))
+        for loop, (_v, uv) in zip(face.loops, (centre, a, b)):
+            loop[uv_layer].uv = uv
+    for ri in range(1, rings):
+        inner, outer = grid[ri], grid[ri + 1]
+        for k in range(segments):
+            quad = (inner[k], inner[(k + 1) % segments], outer[(k + 1) % segments], outer[k])
+            face = bm.faces.new([q[0] for q in quad][::-1])
+            for loop, (_v, uv) in zip(face.loops, quad[::-1]):
+                loop[uv_layer].uv = uv
+    mesh = bpy.data.meshes.new(name)
+    bm.to_mesh(mesh)
+    bm.free()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.scene.collection.objects.link(obj)
+    for poly in obj.data.polygons:
+        poly.use_smooth = True
+    return obj
+
+
+# A lone metaball's surface sits at ~0.57 of its radius at threshold 0.6, stiffness 2.
+METABALL_REACH = 1.0 / 0.573
+
+
+def metaball_mesh(name, elements, resolution=0.02, threshold=0.6):
+    """Blobby surface from (kind, co, radius, size, negative) elements, converted to a mesh.
+
+    Radii are the intended surface radii; they are scaled up by METABALL_REACH internally.
+    """
+    data = bpy.data.metaballs.new(name + "_mb")
+    data.resolution = resolution
+    data.render_resolution = resolution
+    data.threshold = threshold
+    obj = bpy.data.objects.new(name, data)
+    bpy.context.scene.collection.objects.link(obj)
+    for kind, co, radius, size, negative in elements:
+        element = data.elements.new(type=kind)
+        element.co = co
+        element.radius = radius * METABALL_REACH
+        element.stiffness = 2.0
+        element.use_negative = negative
+        if kind == "ELLIPSOID":
+            element.size_x, element.size_y, element.size_z = size
+    bpy.context.view_layer.update()
+    activate(obj)
+    bpy.ops.object.convert(target="MESH")
+    mesh_obj = bpy.context.active_object
+    mesh_obj.name = name
+    for poly in mesh_obj.data.polygons:
+        poly.use_smooth = True
+    return mesh_obj
+
+
+def decimate(obj, ratio):
+    activate(obj)
+    mod = obj.modifiers.new("Decimate", "DECIMATE")
+    mod.ratio = ratio
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+    for poly in obj.data.polygons:
+        poly.use_smooth = True
+    return obj
+
+
 def build_hero(mats):
+    """Original chibi purple witch: big soft hair, painted anime eyes, witch hat, frilled dress, moon staff."""
     arm = new_armature("CHR_Hero_Main", hero_bones())
     p = []
 
-    # --- head and face
-    p.append(assign(add_sphere("head", 0.265, (0, 0, 1.04), scale=(1.0, 0.96, 1.0), seg=36, rings=20), "Head", mats["skin"]))
+    # --- head: round with full cheeks and a small chin
+    head = add_sphere("head", 0.25, (0, 0, 0.98), scale=(1.04, 0.96, 0.98), seg=40, rings=24)
+    for vert in head.data.vertices:
+        below = max(0.0, 0.98 - vert.co.z) / 0.25
+        vert.co.x *= 1.0 + 0.05 * math.sin(min(1.0, below * 1.6) * math.pi) - 0.10 * below ** 3
+        if vert.co.y < 0:
+            vert.co.y *= 1.0 - 0.06 * below
+    head.data.update()
+    bpy.context.view_layer.update()
+    p.append(assign(head, "Head", mats["skin"]))
     for side in (-1, 1):
-        x = 0.1 * side
-        p.append(assign(add_sphere(f"eye_white{side}", 0.072, (x, -0.232, 1.045), scale=(1.0, 0.32, 1.35), seg=20, rings=12, rot=(0, 0, 0.18 * side)), "Head", mats["eye_white"]))
-        p.append(assign(add_sphere(f"iris{side}", 0.052, (x, -0.252, 1.035), scale=(1.0, 0.25, 1.32), seg=20, rings=12), "Head", mats["iris"]))
-        p.append(assign(add_sphere(f"pupil{side}", 0.026, (x, -0.262, 1.025), scale=(1.0, 0.25, 1.4), seg=14, rings=8), "Head", mats["pupil"]))
-        p.append(assign(add_sphere(f"shine{side}", 0.018, (x - 0.018 * side, -0.272, 1.072), scale=(1, 0.3, 1), seg=12, rings=8), "Head", mats["eye_highlight"]))
-        p.append(assign(add_sphere(f"shine_small{side}", 0.009, (x + 0.02 * side, -0.271, 1.0), scale=(1, 0.3, 1), seg=10, rings=6), "Head", mats["eye_highlight"]))
-        p.append(assign(add_sphere(f"lash{side}", 0.075, (x, -0.228, 1.08), scale=(1.05, 0.3, 0.5), seg=20, rings=10), "Head", mats["hair_dark"]))
-        p.append(assign(add_cube(f"brow{side}", 0.08, (x, -0.205, 1.165), scale=(1.1, 0.22, 0.2), rot=(0, 0.12 * side, 0)), "Head", mats["hair_dark"]))
-        p.append(assign(add_sphere(f"blush{side}", 0.038, (0.175 * side, -0.185, 0.975), scale=(1.0, 0.25, 0.6), seg=16, rings=8, rot=(0, 0, 0.6 * side)), "Head", mats["blush"]))
-    p.append(assign(add_sphere("mouth", 0.02, (0, -0.246, 0.955), scale=(1.4, 0.3, 0.55), seg=12, rings=6), "Head", mats["mouth"]))
+        p.append(assign(add_sphere(f"ear{side}", 0.045, (0.245 * side, 0.02, 0.95), scale=(0.5, 0.8, 1.0)), "Head", mats["skin"]))
 
-    # --- hair: cap leaves the face open, then bangs, side locks, twin tails
-    cap = add_sphere("hair_cap", 0.285, (0, 0.012, 1.065), scale=(1.03, 1.0, 1.0), seg=36, rings=20)
-    carve(cap, lambda co: co.y < -0.05 and co.z < 1.14)
-    p.append(assign(cap, "Head", mats["hair"]))
-    for index, (x, drop, tilt) in enumerate(((-0.17, 1.27, 0.35), (-0.085, 1.24, 0.15), (0.0, 1.25, 0.0), (0.085, 1.23, -0.15), (0.17, 1.27, -0.35))):
-        p.append(assign(add_sphere(f"bang{index}", 0.06, (x, -0.21, drop), scale=(0.95, 0.5, 1.7), seg=14, rings=10, rot=(-0.25, tilt, 0)), "Head", mats["hair"]))
+    # --- face: eye decals, brows, cat mouth with a fang, blush
+    eye_path = eye_texture(os.path.join(TEX, "TEX_Hero_Eye.png"))
+    eye_mat = material("MAT_eye_decal", (1, 1, 1, 1), rough=0.25, image_path=eye_path)
     for side in (-1, 1):
-        p.append(assign(add_sphere(f"lock{side}", 0.065, (0.245 * side, -0.09, 0.93), scale=(0.7, 0.7, 2.3), seg=14, rings=10, rot=(0.1, -0.12 * side, 0)), "Head", mats["hair"]))
-        tail_name = "Hair.L" if side < 0 else "Hair.R"
-        tail = add_sphere(f"tail{side}", 0.08, (0.29 * side, 0.17, 0.80), scale=(1.0, 1.0, 3.4), seg=18, rings=16, rot=(0.12, -0.18 * side, 0))
-        p.append(assign(tail, ["Head", tail_name, tail_name + ".2"], mats["hair"], sharpness=3.0))
-        p.append(assign(add_sphere(f"tail_tip{side}", 0.05, (0.34 * side, 0.21, 0.52), scale=(1.0, 1.0, 1.6), seg=14, rings=10), tail_name + ".2", mats["hair_dark"]))
-        p.append(assign(add_torus(f"tie{side}", 0.065, 0.02, (0.25 * side, 0.13, 1.06), rot=(0.3, 0.9 * side, 0), major_segments=20, minor_segments=8), tail_name, mats["gold"]))
+        decal = eye_decal(f"eye{side}", head, 0.092 * side, 0.955, 0.108, 0.13)
+        p.append(assign(decal, "Head", eye_mat))
+        brow = [(0.092 * side + dx * side, 0, 1.055 + dz) for dx, dz in ((-0.04, -0.004), (0.0, 0.006), (0.04, 0.0))]
+        brow = [(x, surface_y(head, x, z, 0.003), z) for x, _y, z in brow]
+        p.append(assign(path_tube(f"brow{side}", brow, 0.0055, taper=lambda t: 0.6 + 0.4 * math.sin(t * math.pi)), "Head", mats["hair_dark"]))
+        bx, bz = 0.158 * side, 0.895
+        p.append(assign(add_sphere(f"blush{side}", 0.034, (bx, surface_y(head, bx, bz, -0.006), bz), scale=(1.15, 0.25, 0.62), seg=16, rings=8, rot=(0, 0, 0.45 * side)), "Head", mats["blush"]))
+    mouth = [(x, 0, z) for x, z in ((-0.032, 0.868), (-0.016, 0.857), (0.0, 0.866), (0.016, 0.857), (0.032, 0.868))]
+    mouth = [(x, surface_y(head, x, z, 0.003), z) for x, _y, z in mouth]
+    p.append(assign(path_tube("mouth", mouth, 0.0048, taper=lambda t: 0.55 + 0.45 * math.sin(t * math.pi)), "Head", mats["mouth"]))
+    fx, fz = 0.018, 0.851
+    p.append(assign(add_cone("fang", 0.006, 0.014, (fx, surface_y(head, fx, fz, 0.003), fz), rot=(math.pi, 0, 0), vertices=8), "Head", mats["eye_white"]))
 
-    # --- witch hat
-    brim = add_cylinder("hat_brim", 0.40, 0.035, (0, 0.0, 1.265), vertices=40)
+    # --- hair: one blobby volume (metaballs), a face opening carved out, then pointed locks
+    elements = [
+        ("ELLIPSOID", (0, 0.03, 1.04), 0.29, (1.08, 1.0, 1.0), False),
+        ("BALL", (0, 0.10, 0.94), 0.25, None, False),
+        ("BALL", (0, 0.12, 0.82), 0.19, None, False),
+    ]
+    for side in (-1, 1):
+        elements += [
+            ("BALL", (0.22 * side, -0.01, 0.97), 0.14, None, False),
+            ("BALL", (0.24 * side, 0.05, 0.85), 0.12, None, False),
+            ("BALL", (0.17 * side, 0.15, 0.80), 0.12, None, False),
+            ("BALL", (0.12 * side, -0.11, 1.15), 0.10, None, False),
+        ]
+    # Carve the face open below the fringe line.
+    elements.append(("ELLIPSOID", (0, -0.30, 0.90), 0.20, (1.15, 1.0, 1.05), True))
+    hair = metaball_mesh("hair", elements, resolution=0.016)
+    decimate(hair, 0.4)
+    zs = [v.co.z for v in hair.data.vertices]
+    print(f"HAIR bounds z {min(zs):.3f}..{max(zs):.3f} x {min(v.co.x for v in hair.data.vertices):.3f}..{max(v.co.x for v in hair.data.vertices):.3f}", flush=True)
+    bpy.context.view_layer.update()
+    p.append(assign(hair, "Head", mats["hair"]))
+    # Bangs: pointed clumps over the forehead, ending around the eyes.
+    bangs = ((-0.21, 1.13, 0.93, 0.07, -0.02), (-0.13, 1.17, 1.00, 0.075, -0.015), (-0.05, 1.18, 1.035, 0.07, 0.01),
+             (0.025, 1.18, 0.985, 0.072, 0.0), (0.095, 1.17, 1.03, 0.07, -0.01), (0.165, 1.16, 0.99, 0.075, 0.015),
+             (0.22, 1.12, 0.92, 0.065, 0.02))
+    for index, (x, top, bottom, width, curl) in enumerate(bangs):
+        tx = x + curl * 2.0
+        root = (x, surface_y(head, x, top, 0.035), top)
+        tip = (tx, surface_y(head, tx, bottom, 0.012), bottom)
+        p.append(assign(lock(f"bang{index}", root, tip, width, 0.028, bend=(curl, -0.012)), "Head", mats["hair"]))
+    for side in (-1, 1):
+        # Long side locks framing the face, and flicked clumps around the back.
+        x = 0.215 * side
+        root = (x, surface_y(head, x, 1.02, 0.03), 1.02)
+        tip = (0.205 * side, -0.13, 0.74)
+        p.append(assign(lock(f"sidelock{side}", root, tip, 0.05, 0.035, bend=(0.02 * side, -0.01)), "Head", mats["hair"]))
+        tail = "Hair.L" if side < 0 else "Hair.R"
+        for k, (angle, length) in enumerate(((0.35, 0.21), (0.75, 0.24), (1.15, 0.22))):
+            a = angle * side
+            root = (math.sin(a) * 0.27, 0.04 + math.cos(a) * 0.22, 0.90)
+            tip = (math.sin(a) * 0.35, 0.06 + math.cos(a) * 0.30, 0.90 - length)
+            clump = lock(f"back{side}{k}", root, tip, 0.075, 0.06, bend=(0.03 * side, 0.03))
+            p.append(assign(clump, ["Head", tail, tail + ".2"], mats["hair"], sharpness=3.0))
+    p.append(assign(lock("backcenter", (0, 0.24, 0.92), (0, 0.30, 0.68), 0.08, 0.06, bend=(0.0, 0.03)), "Head", mats["hair"]))
+    # Glossy highlight spots on the crown, like the reference's soft hair shine.
+    for side in (-1, 1):
+        hx, hz = 0.12 * side, 1.20
+        hit, loc, normal, _ = hair.ray_cast(mathutils.Vector((hx, -1.5, hz)), mathutils.Vector((0, 1, 0)))
+        if hit:
+            shine = add_sphere(f"hair_shine{side}", 0.04, loc + normal * 0.002, scale=(1.0, 0.25, 0.55), seg=14, rings=8, rot=(0.6, 0, -0.5 * side))
+            p.append(assign(shine, "Head", mats["hair_light"]))
+
+    # --- witch hat: wavy upturned brim, tall crown bending back, band, moon buckle, bow
+    hat_z = 1.215
+    brim_r = 0.36
+    brim = add_cylinder("hat_brim", brim_r, 0.022, (0, 0, hat_z), vertices=48)
     for vert in brim.data.vertices:
-        r = math.hypot(vert.co.x, vert.co.y - 0.0)
-        vert.co.z += (r / 0.4) ** 2 * 0.07 + math.sin(math.atan2(vert.co.y, vert.co.x) * 3.0) * 0.02 * (r / 0.4)
-    p.append(assign(brim, "Head", mats["hat"]))
-    p.append(assign(add_cylinder("hat_crown", 0.25, 0.30, (0, 0.0, 1.40), vertices=32, radius2=0.12), "Head", mats["hat"]))
-    p.append(assign(add_torus("hat_band", 0.235, 0.028, (0, 0.0, 1.30), major_segments=36, minor_segments=10), "Head", mats["gold"]))
-    p.append(assign(add_ico("hat_buckle", 0.05, (0, -0.235, 1.31), scale=(1, 0.5, 1.3), subdiv=2), "Head", mats["crystal"]))
-    tip = add_cylinder("hat_tip", 0.12, 0.34, (0, 0.05, 1.66), vertices=24, radius2=0.012, rot=(0.55, 0, 0))
-    p.append(assign(tip, ["Head", "HatTip"], mats["hat"], sharpness=3.0))
+        r = math.hypot(vert.co.x, vert.co.y)
+        a = math.atan2(vert.co.y, vert.co.x)
+        vert.co.z += (r / brim_r) ** 3 * 0.06 + math.sin(a * 5.0) * 0.012 * (r / brim_r) ** 2
+    p.append(assign(brim, "Hat", mats["hat"]))
+    centers, radii = [], []
+    for i in range(14):
+        t = i / 13
+        centers.append((0.03 * t * t, 0.30 * t ** 2.2, hat_z + 0.02 + t * 0.50 - 0.10 * t ** 3))
+        radii.append(0.20 * (1 - t) ** 0.95 + 0.012)
+    crown = loft("hat_crown", centers, radii, segments=24, cap_start=False)
+    p.append(assign(crown, ["Hat", "HatTip"], mats["hat"], sharpness=3.0))
+    p.append(assign(add_torus("hat_band", 0.195, 0.026, (0, 0.004, hat_z + 0.05), major_segments=36, minor_segments=10, scale=(1, 1, 1.3)), "Hat", mats["hat_band"]))
+    moon = add_torus("hat_moon", 0.036, 0.012, (0, -0.205, hat_z + 0.06), rot=(math.pi / 2, 0, 0), major_segments=24, minor_segments=8)
+    carve(moon, lambda co: co.x > 0.012)
+    p.append(assign(moon, "Hat", mats["gold"]))
+    for side in (-1, 1):
+        loop_ = add_sphere(f"bow{side}", 0.06, (0.11 * side + 0.13, 0.12, hat_z + 0.07), scale=(1.2, 0.45, 0.8), seg=16, rings=10, rot=(0, 0.35 * side, 0.4))
+        p.append(assign(loop_, "Hat", mats["hat_band"]))
+    p.append(assign(add_sphere("bow_knot", 0.03, (0.13, 0.16, hat_z + 0.07), seg=12, rings=8), "Hat", mats["hat_band"]))
 
-    # --- neck, torso, cape, skirt
-    p.append(assign(add_cylinder("neck", 0.065, 0.12, (0, 0, 0.80), vertices=16), ["Chest", "Neck"], mats["skin"]))
-    p.append(assign(add_sphere("bodice", 0.205, (0, 0, 0.66), scale=(0.95, 0.72, 1.05), seg=28, rings=16), ["Spine", "Chest"], mats["robe"]))
-    p.append(assign(add_torus("collar", 0.11, 0.035, (0, 0, 0.79), major_segments=28, minor_segments=10), "Chest", mats["robe_light"]))
-    p.append(assign(add_ico("brooch", 0.045, (0, -0.16, 0.74), scale=(1, 0.6, 1), subdiv=2), "Chest", mats["gold"]))
-    cape = add_cylinder("cape", 0.36, 0.44, (0, 0.17, 0.52), vertices=28, radius2=0.19, rot=(0.28, 0, 0))
-    carve(cape, lambda co: co.y < 0.08)
+    # --- body: neck, bodice, collar + bell, frilled skirt, cape, ribbon belt
+    p.append(assign(add_cylinder("neck", 0.04, 0.10, (0, 0, 0.73), vertices=14), ["Chest", "Neck"], mats["skin"]))
+    bodice = loft("bodice", [(0, 0, 0.45), (0, 0, 0.53), (0, 0, 0.62), (0, 0.005, 0.70)], [0.105, 0.11, 0.125, 0.10],
+                  segments=24, ovals=[(1.0, 0.82)] * 4)
+    p.append(assign(bodice, ["Hips", "Spine", "Chest"], mats["robe"]))
+    collar = loft("collar", [(0, 0, 0.705), (0, 0.004, 0.69)], [0.07, 0.135], segments=28,
+                  wave=lambda th, i: 0.012 * i * math.cos(th * 6), cap_start=False, cap_end=False)
+    p.append(assign(collar, "Chest", mats["frill"]))
+    p.append(assign(add_sphere("bell", 0.024, (0, -0.108, 0.675), seg=14, rings=10), "Chest", mats["gold"]))
+    skirt = loft("skirt", [(0, 0.005, 0.50), (0, 0.01, 0.42), (0, 0.015, 0.34), (0, 0.02, 0.28)], [0.115, 0.165, 0.22, 0.25],
+                 segments=40, ovals=[(1.0, 0.86)] * 4, wave=lambda th, i: (i / 3) ** 2 * 0.016 * math.cos(th * 8), cap_start=False, cap_end=False)
+    p.append(assign(skirt, ["Hips", "UpLeg.L", "UpLeg.R"], mats["robe"], sharpness=2.5))
+    petticoat = loft("petticoat", [(0, 0.02, 0.30), (0, 0.022, 0.255)], [0.245, 0.262], segments=40, ovals=[(1.0, 0.86)] * 2,
+                     wave=lambda th, i: 0.014 * math.cos(th * 16), cap_start=False, cap_end=False)
+    p.append(assign(petticoat, ["Hips", "UpLeg.L", "UpLeg.R"], mats["frill"], sharpness=2.5))
+    p.append(assign(add_torus("hem", 0.25, 0.012, (0, 0.02, 0.28), scale=(1.0, 0.86, 1.0), major_segments=40, minor_segments=8), ["Hips", "UpLeg.L", "UpLeg.R"], mats["hat_band"], sharpness=2.5))
+    p.append(assign(add_torus("belt", 0.112, 0.016, (0, 0.002, 0.50), scale=(1.0, 0.84, 1.0), major_segments=32, minor_segments=8), "Hips", mats["hat_band"]))
+    for side in (-1, 1):
+        p.append(assign(add_sphere(f"belt_bow{side}", 0.035, (0.04 * side, 0.10, 0.50), scale=(1.3, 0.5, 0.8), seg=12, rings=8), "Hips", mats["hat_band"]))
+    cape = loft("cape", [(0, 0.06, 0.70), (0, 0.10, 0.60), (0, 0.15, 0.50), (0, 0.19, 0.42)], [0.12, 0.16, 0.20, 0.22],
+                segments=28, ovals=[(1.0, 0.9)] * 4, cap_start=False, cap_end=False)
+    carve(cape, lambda co: co.y < 0.06 + (0.70 - co.z) * 0.15)
     p.append(assign(cape, ["Chest", "Cape"], mats["cape_inner"], sharpness=3.0))
-    cape_outer = add_cylinder("cape_outer", 0.375, 0.44, (0, 0.185, 0.525), vertices=28, radius2=0.2, rot=(0.28, 0, 0))
-    carve(cape_outer, lambda co: co.y < 0.095)
-    p.append(assign(cape_outer, ["Chest", "Cape"], mats["hat"], sharpness=3.0))
-    p.append(assign(add_cylinder("skirt", 0.36, 0.28, (0, 0, 0.42), vertices=32, radius2=0.19), ["Hips", "Spine"], mats["robe"], sharpness=3.0))
-    p.append(assign(add_torus("hem", 0.345, 0.025, (0, 0, 0.29), major_segments=36, minor_segments=10), "Hips", mats["gold"]))
-    p.append(assign(add_torus("belt", 0.205, 0.028, (0, 0, 0.555), major_segments=32, minor_segments=10), "Hips", mats["gold"]))
 
-    # --- arms
+    # --- arms: puff sleeves, slim bare arms, lilac cuffs, mitten hands
     for side, prefix in ((-1, "L"), (1, "R")):
         s = side
-        p.append(assign(add_sphere(f"shoulder{prefix}", 0.075, (0.20 * s, 0, 0.75), seg=20, rings=12), f"Shoulder.{prefix}", mats["robe_light"]))
-        p.append(assign(add_tube(f"upperarm{prefix}", (0.20 * s, 0, 0.75), (0.27 * s, -0.02, 0.57), 0.058, vertices=16, radius2=0.062), f"UpperArm.{prefix}", mats["robe"]))
-        p.append(assign(add_sphere(f"elbow{prefix}", 0.062, (0.27 * s, -0.02, 0.57), seg=18, rings=10), [f"UpperArm.{prefix}", f"Forearm.{prefix}"], mats["robe"]))
-        p.append(assign(add_tube(f"sleeve{prefix}", (0.27 * s, -0.02, 0.57), (0.30 * s, -0.08, 0.44), 0.07, vertices=16, radius2=0.095), f"Forearm.{prefix}", mats["robe"]))
-        p.append(assign(add_torus(f"cuff{prefix}", 0.09, 0.016, (0.30 * s, -0.08, 0.44), rot=(0.4, 0.2 * s, 0), major_segments=24, minor_segments=8), f"Forearm.{prefix}", mats["gold"]))
-        p.append(assign(add_sphere(f"hand{prefix}", 0.055, (0.315 * s, -0.11, 0.37), scale=(1, 1, 1.15), seg=18, rings=10), f"Hand.{prefix}", mats["skin"]))
+        p.append(assign(add_sphere(f"puff{prefix}", 0.062, (0.125 * s, 0, 0.665), scale=(1.0, 1.0, 0.9), seg=20, rings=12), [f"Shoulder.{prefix}", f"UpperArm.{prefix}"], mats["robe_light"]))
+        upper = loft(f"upperarm{prefix}", [(0.13 * s, 0, 0.66), (0.19 * s, -0.01, 0.52)], [0.033, 0.029], segments=12)
+        p.append(assign(upper, f"UpperArm.{prefix}", mats["skin"]))
+        p.append(assign(add_sphere(f"elbow{prefix}", 0.029, (0.19 * s, -0.01, 0.52), seg=12, rings=8), [f"UpperArm.{prefix}", f"Forearm.{prefix}"], mats["skin"]))
+        fore = loft(f"forearm{prefix}", [(0.19 * s, -0.01, 0.52), (0.21 * s, -0.04, 0.41)], [0.029, 0.026], segments=12)
+        p.append(assign(fore, f"Forearm.{prefix}", mats["skin"]))
+        p.append(assign(add_torus(f"cuff{prefix}", 0.03, 0.011, (0.207 * s, -0.035, 0.425), rot=(0.25, 0.15 * s, 0), major_segments=18, minor_segments=8), f"Forearm.{prefix}", mats["frill"]))
+        p.append(assign(add_sphere(f"hand{prefix}", 0.036, (0.215 * s, -0.05, 0.375), scale=(0.9, 1.0, 1.15), seg=16, rings=10), f"Hand.{prefix}", mats["skin"]))
 
-    # --- staff (held in the right hand)
-    p.append(assign(add_tube("staff", (0.33, -0.13, 0.02), (0.33, -0.13, 1.30), 0.022, vertices=12, radius2=0.03), "Staff", mats["staff_wood"]))
-    p.append(assign(add_torus("staff_grip", 0.03, 0.012, (0.33, -0.13, 0.33), major_segments=16, minor_segments=8), "Staff", mats["gold"]))
-    p.append(assign(add_torus("staff_ring", 0.11, 0.018, (0.33, -0.13, 1.40), rot=(math.pi / 2, 0, 0), major_segments=28, minor_segments=10), "Staff", mats["gold"]))
-    for angle in (0.0, 2.1, 4.2):
-        p.append(assign(add_cone(f"staff_prong{angle}", 0.02, 0.1, (0.33, -0.13 + math.sin(angle) * 0.05, 1.31 + math.cos(angle) * 0.02), rot=(angle, 0, 0), vertices=8), "Staff", mats["gold"]))
-    p.append(assign(add_ico("staff_crystal", 0.075, (0.33, -0.13, 1.40), scale=(0.75, 0.75, 1.35), subdiv=2), "StaffTip", mats["crystal"]))
-
-    # --- legs and boots
+    # --- legs: skin thighs, purple stockings with a lilac band, round boots with buckles
     for side, prefix in ((-1, "L"), (1, "R")):
         s = side
-        p.append(assign(add_tube(f"thigh{prefix}", (0.09 * s, 0, 0.47), (0.095 * s, 0, 0.26), 0.062, vertices=16, radius2=0.055), f"UpLeg.{prefix}", mats["skin"]))
-        p.append(assign(add_sphere(f"knee{prefix}", 0.056, (0.095 * s, 0, 0.26), seg=16, rings=10), [f"UpLeg.{prefix}", f"Leg.{prefix}"], mats["skin"]))
-        p.append(assign(add_tube(f"shin{prefix}", (0.095 * s, 0, 0.26), (0.10 * s, 0, 0.10), 0.054, vertices=16, radius2=0.062), f"Leg.{prefix}", mats["boot"]))
-        p.append(assign(add_torus(f"boot_cuff{prefix}", 0.064, 0.016, (0.10 * s, 0, 0.19), major_segments=20, minor_segments=8), f"Leg.{prefix}", mats["gold"]))
-        p.append(assign(add_sphere(f"boot{prefix}", 0.07, (0.10 * s, -0.035, 0.065), scale=(1.0, 1.6, 0.9), seg=18, rings=10), f"Foot.{prefix}", mats["boot"]))
+        p.append(assign(loft(f"thigh{prefix}", [(0.065 * s, 0, 0.40), (0.069 * s, 0, 0.30)], [0.045, 0.041], segments=14), f"UpLeg.{prefix}", mats["skin"]))
+        stocking = loft(f"stocking{prefix}", [(0.069 * s, 0, 0.31), (0.07 * s, 0, 0.22), (0.072 * s, 0, 0.09)], [0.0425, 0.036, 0.032], segments=14)
+        p.append(assign(stocking, [f"UpLeg.{prefix}", f"Leg.{prefix}"], mats["stocking"], sharpness=3.0))
+        p.append(assign(add_torus(f"band{prefix}", 0.043, 0.008, (0.069 * s, 0, 0.305), major_segments=18, minor_segments=6), f"UpLeg.{prefix}", mats["hat_band"]))
+        boot = add_sphere(f"boot{prefix}", 0.05, (0.072 * s, -0.022, 0.046), scale=(0.95, 1.55, 0.95), seg=18, rings=12)
+        for vert in boot.data.vertices:
+            vert.co.z = max(vert.co.z, 0.0)
+        p.append(assign(boot, f"Foot.{prefix}", mats["boot"]))
+        p.append(assign(loft(f"bootcuff{prefix}", [(0.072 * s, 0, 0.07), (0.072 * s, 0, 0.12)], [0.04, 0.037], segments=14), f"Leg.{prefix}", mats["boot"]))
+        p.append(assign(add_ico(f"buckle{prefix}", 0.012, (0.072 * s, -0.095, 0.06), scale=(1, 0.5, 1), subdiv=1), f"Foot.{prefix}", mats["gold"]))
+
+    # --- staff: wooden shaft, curled top holding a crescent moon and a glowing crystal
+    sx, sy = 0.225, -0.07
+    p.append(assign(loft("staff", [(sx, sy, 0.03), (sx, sy, 0.55), (sx, sy, 0.93)], [0.016, 0.018, 0.021], segments=10), "Staff", mats["staff_wood"]))
+    curl = []
+    for i in range(22):
+        t = i / 21
+        angle = -math.pi / 2 + t * math.tau * 0.85
+        r = 0.08 * (1 - 0.45 * t)
+        curl.append((sx + math.cos(angle) * r, sy, 1.0 + math.sin(angle) * r))
+    curl = [(sx, sy, 0.915)] + curl
+    p.append(assign(path_tube("staff_curl", curl, 0.019, segments=10, taper=lambda t: 1.0 - 0.45 * t), "Staff", mats["staff_wood"]))
+    p.append(assign(add_torus("staff_grip", 0.022, 0.007, (sx, sy, 0.37), major_segments=14, minor_segments=6), "Staff", mats["gold"]))
+    moon = add_torus("staff_moon", 0.07, 0.016, (sx, sy - 0.005, 1.02), rot=(math.pi / 2, 0, 0), major_segments=28, minor_segments=8)
+    carve(moon, lambda co: co.x > sx + 0.028)
+    p.append(assign(moon, "StaffTip", mats["gold"]))
+    p.append(assign(add_ico("staff_crystal", 0.042, (sx + 0.01, sy - 0.01, 1.02), scale=(0.75, 0.75, 1.3), subdiv=2), "StaffTip", mats["crystal"]))
 
     mesh = join(p, "CHR_Hero_Main")
     bind(mesh, arm)
+    actions = animate_hero(arm)
+    return arm, mesh, actions
 
-    def sway(frame, frames, speed=1.0, offset=0.0):
-        return math.sin(((frame - 1) / frames * math.tau + offset) * speed)
+
+def animate_hero(arm):
+    def aim(name, direction, weight=1.0, spin=0.0):
+        """Point bone `name` along world `direction`, blended from its current pose by `weight`.
+
+        Euler pitches on tilted arm bones swing them across the body; aiming in world space does not.
+        """
+        if weight <= 1e-4 and abs(spin) < 1e-6:
+            return
+        bpy.context.view_layer.update()
+        pb = bone(arm, name)
+        current = pb.matrix.copy()
+        y_axis = current.to_3x3() @ mathutils.Vector((0, 1, 0))
+        target = mathutils.Vector(direction).normalized()
+        wanted = y_axis.normalized().slerp(target, max(0.0, min(1.0, weight)))
+        turn = y_axis.rotation_difference(wanted)
+        rot = turn.to_matrix() @ current.to_3x3()
+        if spin:
+            rot = rot @ mathutils.Matrix.Rotation(spin, 3, "Y")
+        pb.matrix = mathutils.Matrix.Translation(current.to_translation()) @ rot.to_4x4()
 
     def hair_follow(amount, lag=0.0):
         for side in ("L", "R"):
@@ -674,134 +1021,156 @@ def build_hero(mats):
             bone(arm, f"Hair.{side}.2").rotation_euler.x += amount * 0.8 + lag
 
     def staff_world_pitch(target):
-        """Rotate the staff inside the hand so its world pitch (positive = crystal forward) ignores the arm swing.
-
-        Every bone in the chain has local X aligned with world X, so pitches add up.
-        """
+        """Rotate the staff inside the hand so its world pitch (positive = top forward) ignores the arm swing."""
         total = 0.0
         for name in ("Hips", "Spine", "Chest", "Shoulder.R", "UpperArm.R", "Forearm.R", "Hand.R"):
             total += bone(arm, name).rotation_euler.x
         bone(arm, "Staff").rotation_euler.x = target - total
 
+    def hat(pitch=0.0, roll=0.0, tip=0.0, lift=0.0):
+        bone(arm, "Hat").rotation_euler.x += pitch
+        bone(arm, "Hat").rotation_euler.y += roll
+        bone(arm, "Hat").location.y += lift
+        bone(arm, "HatTip").rotation_euler.x += tip
+
+    def rest_arms(breathe=0.0):
+        bone(arm, "UpperArm.L").rotation_euler.z = 0.20 + breathe * 0.04
+        bone(arm, "UpperArm.L").rotation_euler.x = 0.10 + breathe * 0.03
+        bone(arm, "Forearm.L").rotation_euler.x = -0.30
+        bone(arm, "UpperArm.R").rotation_euler.z = -0.16 - breathe * 0.03
+        bone(arm, "UpperArm.R").rotation_euler.x = 0.05
+        bone(arm, "Forearm.R").rotation_euler.x = -0.55
+
     def idle(frame, frames):
         phase = (frame - 1) / frames * math.tau
         breathe = math.sin(phase)
-        bone(arm, "Hips").location.y = breathe * 0.012
-        bone(arm, "Spine").rotation_euler.x = breathe * 0.03
-        bone(arm, "Chest").rotation_euler.x = breathe * 0.035
-        bone(arm, "Head").rotation_euler.z = math.sin(phase * 0.5) * 0.06
-        bone(arm, "Head").rotation_euler.x = -0.03 + math.sin(phase + 0.6) * 0.025
-        bone(arm, "HatTip").rotation_euler.x = math.sin(phase + 1.0) * 0.12
-        bone(arm, "HatTip").rotation_euler.z = math.cos(phase * 0.7) * 0.08
-        hair_follow(math.sin(phase + 0.8) * 0.06, math.cos(phase) * 0.04)
+        bone(arm, "Hips").location.y = breathe * 0.008
+        bone(arm, "Spine").rotation_euler.x = breathe * 0.025
+        bone(arm, "Chest").rotation_euler.x = breathe * 0.03
+        bone(arm, "Head").rotation_euler.z = math.sin(phase * 0.5) * 0.07
+        bone(arm, "Head").rotation_euler.y = math.sin(phase * 0.5 + 0.4) * 0.05
+        bone(arm, "Head").rotation_euler.x = -0.03 + math.sin(phase + 0.6) * 0.02
+        hat(tip=math.sin(phase + 1.0) * 0.10)
+        bone(arm, "HatTip").rotation_euler.z = math.cos(phase * 0.5) * 0.08
+        hair_follow(math.sin(phase + 0.8) * 0.05, math.cos(phase) * 0.03)
         bone(arm, "Cape").rotation_euler.x = math.sin(phase + 0.3) * 0.05
-        bone(arm, "UpperArm.L").rotation_euler.z = 0.22 + breathe * 0.04
-        bone(arm, "UpperArm.L").rotation_euler.x = 0.15 + breathe * 0.03
-        bone(arm, "Forearm.L").rotation_euler.x = -0.35
-        bone(arm, "UpperArm.R").rotation_euler.z = -0.18 - breathe * 0.03
-        bone(arm, "UpperArm.R").rotation_euler.x = 0.05
-        bone(arm, "Forearm.R").rotation_euler.x = -0.55
-        staff_world_pitch(-0.12 + breathe * 0.02)
+        rest_arms(breathe)
+        staff_world_pitch(-0.10 + breathe * 0.02)
 
     def run(frame, frames):
+        """Bouncy chibi trot: big head bob, short quick steps, free arm pumping, staff carried."""
         phase = (frame - 1) / frames * math.tau
         swing = math.sin(phase)
         bounce = abs(math.cos(phase))
-        bone(arm, "Hips").location.y = bounce * 0.035 - 0.01
-        bone(arm, "Hips").rotation_euler.y = swing * 0.08
-        bone(arm, "Spine").rotation_euler.x = 0.14
-        bone(arm, "Chest").rotation_euler.x = 0.10 + math.sin(phase * 2) * 0.03
-        bone(arm, "Chest").rotation_euler.y = -swing * 0.1
-        bone(arm, "Head").rotation_euler.x = -0.12
-        bone(arm, "HatTip").rotation_euler.x = 0.35 + math.sin(phase * 2 + 1) * 0.15
-        hair_follow(0.45 + math.sin(phase * 2 + 0.5) * 0.18, 0.1)
-        bone(arm, "Cape").rotation_euler.x = 0.55 + math.sin(phase * 2) * 0.12
+        bone(arm, "Hips").location.y = bounce * 0.03 - 0.012
+        bone(arm, "Hips").rotation_euler.y = swing * 0.09
+        bone(arm, "Hips").rotation_euler.z = swing * 0.05
+        bone(arm, "Spine").rotation_euler.x = 0.12
+        bone(arm, "Chest").rotation_euler.x = 0.08 + math.sin(phase * 2) * 0.03
+        bone(arm, "Chest").rotation_euler.y = -swing * 0.12
+        bone(arm, "Head").rotation_euler.x = -0.10 + math.sin(phase * 2 + 0.6) * 0.04
+        bone(arm, "Head").rotation_euler.y = swing * 0.05
+        hat(pitch=-0.04, tip=0.30 + math.sin(phase * 2 + 1) * 0.15)
+        hair_follow(0.35 + math.sin(phase * 2 + 0.5) * 0.15, 0.1)
+        bone(arm, "Cape").rotation_euler.x = 0.45 + math.sin(phase * 2) * 0.10
         for side, offset in (("L", 0.0), ("R", math.pi)):
             leg = math.sin(phase + offset)
-            bone(arm, f"UpLeg.{side}").rotation_euler.x = -leg * 0.85
-            # The knee bends most mid-swing, before the thigh reaches its forward peak.
-            bone(arm, f"Leg.{side}").rotation_euler.x = max(0.0, math.sin(phase + offset + 1.2)) * 1.0 + 0.1
-        bone(arm, "UpperArm.L").rotation_euler.x = swing * 0.9
-        bone(arm, "UpperArm.L").rotation_euler.z = 0.25
-        bone(arm, "Forearm.L").rotation_euler.x = -0.8
-        bone(arm, "UpperArm.R").rotation_euler.x = -0.35 - swing * 0.25
-        bone(arm, "UpperArm.R").rotation_euler.z = -0.2
-        bone(arm, "Forearm.R").rotation_euler.x = -0.9
-        staff_world_pitch(0.35 + math.sin(phase * 2) * 0.05)
+            bone(arm, f"UpLeg.{side}").rotation_euler.x = -leg * 0.8
+            bone(arm, f"Leg.{side}").rotation_euler.x = max(0.0, math.sin(phase + offset + 1.2)) * 1.1 + 0.08
+            bone(arm, f"Foot.{side}").rotation_euler.x = -max(0.0, -leg) * 0.3
+        bone(arm, "UpperArm.L").rotation_euler.x = swing * 1.0
+        bone(arm, "UpperArm.L").rotation_euler.z = 0.28
+        bone(arm, "Forearm.L").rotation_euler.x = -0.9
+        bone(arm, "UpperArm.R").rotation_euler.x = -0.30 - swing * 0.2
+        bone(arm, "UpperArm.R").rotation_euler.z = -0.22
+        bone(arm, "Forearm.R").rotation_euler.x = -0.95
+        staff_world_pitch(0.15 + math.sin(phase * 2) * 0.05)
 
     def attack(frame, frames):
+        """Staff bonk: quick overhead wind-up, smash down in front (impact ~frame 6), follow-through, recover."""
         t = (frame - 1) / (frames - 1)
-        wind = curve(t, [(0.0, 0.0), (0.25, 1.0), (0.45, 0.0)])
-        thrust = curve(t, [(0.25, 0.0), (0.42, 1.0), (0.72, 1.0), (1.0, 0.0)])
-        bone(arm, "Hips").rotation_euler.y = -0.25 * wind + 0.35 * thrust
-        bone(arm, "Spine").rotation_euler.x = -0.18 * wind + 0.28 * thrust
-        bone(arm, "Chest").rotation_euler.x = -0.12 * wind + 0.18 * thrust
-        bone(arm, "Chest").rotation_euler.y = -0.2 * wind + 0.25 * thrust
-        bone(arm, "Head").rotation_euler.x = 0.1 * wind - 0.12 * thrust
-        bone(arm, "HatTip").rotation_euler.x = -0.3 * wind + 0.5 * thrust
-        hair_follow(-0.25 * wind + 0.4 * thrust)
-        bone(arm, "Cape").rotation_euler.x = -0.1 * wind + 0.45 * thrust
-        bone(arm, "UpperArm.R").rotation_euler.x = 0.7 * wind - 1.65 * thrust
-        bone(arm, "UpperArm.R").rotation_euler.z = -0.25 - 0.15 * thrust
-        bone(arm, "Forearm.R").rotation_euler.x = -0.6 + 0.2 * wind
-        bone(arm, "UpperArm.L").rotation_euler.x = -0.4 * wind + 0.6 * thrust
-        bone(arm, "UpperArm.L").rotation_euler.z = 0.45 * wind + 0.2
-        bone(arm, "Forearm.L").rotation_euler.x = -0.5 - 0.3 * thrust
-        staff_world_pitch(-0.5 * wind + 1.05 * thrust)
-        glow = pulse(t, 0.38, 0.75)
-        bone(arm, "StaffTip").scale = (1 + glow * 0.5, 1 + glow * 0.5, 1 + glow * 0.5)
-        bone(arm, "UpLeg.L").rotation_euler.x = -0.25 * thrust
-        bone(arm, "UpLeg.R").rotation_euler.x = 0.3 * thrust
-        bone(arm, "Leg.R").rotation_euler.x = 0.3 * thrust
+        wind = curve(t, [(0.0, 0.0), (0.18, 1.0), (0.33, 0.0)])
+        smash = curve(t, [(0.18, 0.0), (0.33, 1.0), (0.62, 1.0), (1.0, 0.0)])
+        bone(arm, "Hips").rotation_euler.y = 0.08 * wind - 0.08 * smash
+        bone(arm, "Hips").location.y = -0.025 * smash
+        bone(arm, "Spine").rotation_euler.x = -0.22 * wind + 0.30 * smash
+        bone(arm, "Chest").rotation_euler.x = -0.12 * wind + 0.18 * smash
+        bone(arm, "Chest").rotation_euler.y = 0.10 * wind - 0.10 * smash
+        bone(arm, "Head").rotation_euler.x = 0.15 * wind - 0.05 * smash
+        hat(pitch=-0.12 * wind + 0.10 * smash, tip=-0.4 * wind + 0.7 * smash)
+        hair_follow(-0.35 * wind + 0.45 * smash)
+        bone(arm, "Cape").rotation_euler.x = -0.15 * wind + 0.50 * smash
+        rest_arms()
+        bone(arm, "UpperArm.L").rotation_euler.z += 0.25 * smash
+        bone(arm, "UpLeg.L").rotation_euler.x = -0.35 * smash
+        bone(arm, "Leg.L").rotation_euler.x = 0.25 * smash
+        bone(arm, "UpLeg.R").rotation_euler.x = 0.28 * smash
+        bone(arm, "Leg.R").rotation_euler.x = 0.35 * smash
+        staff_world_pitch(-0.10)
+        # Arm and staff: up behind the head, then down hard in front.
+        lift = max(wind, 0.0)
+        aim("UpperArm.R", (0.12, 0.25, 1.0), lift)
+        aim("Forearm.R", (0.05, 0.5, 0.9), lift)
+        aim("Staff", (0.0, 0.8, 0.6), lift)
+        aim("UpperArm.R", (0.12, -0.92, -0.30), smash)
+        aim("Forearm.R", (0.05, -0.95, -0.25), smash)
+        aim("Staff", (0.0, -0.80, -0.60), smash)
+        glow = pulse(t, 0.28, 0.6)
+        bone(arm, "StaffTip").scale = (1 + glow * 0.6, 1 + glow * 0.6, 1 + glow * 0.6)
 
     def dash(frame, frames):
         t = (frame - 1) / (frames - 1)
         lean = curve(t, [(0.0, 0.0), (0.25, 1.0), (0.7, 1.0), (1.0, 0.0)])
+        bone(arm, "Hips").location.y = 0.03 * lean
         bone(arm, "Spine").rotation_euler.x = 0.55 * lean
         bone(arm, "Chest").rotation_euler.x = 0.2 * lean
-        bone(arm, "Head").rotation_euler.x = -0.35 * lean
-        bone(arm, "HatTip").rotation_euler.x = 0.9 * lean
-        hair_follow(1.0 * lean, 0.2 * lean)
-        bone(arm, "Cape").rotation_euler.x = 1.1 * lean
-        for side in ("L", "R"):
-            bone(arm, f"UpperArm.{side}").rotation_euler.x = 0.9 * lean
-            bone(arm, f"Forearm.{side}").rotation_euler.x = -0.3 * lean
-        bone(arm, "UpLeg.L").rotation_euler.x = -0.7 * lean
-        bone(arm, "Leg.L").rotation_euler.x = 0.9 * lean
-        bone(arm, "UpLeg.R").rotation_euler.x = 0.5 * lean
-        bone(arm, "Leg.R").rotation_euler.x = 0.4 * lean
-        staff_world_pitch(0.9 * lean)
+        bone(arm, "Head").rotation_euler.x = -0.40 * lean
+        hat(pitch=-0.25 * lean, tip=1.0 * lean, lift=0.02 * lean)
+        hair_follow(1.0 * lean, 0.25 * lean)
+        bone(arm, "Cape").rotation_euler.x = 1.15 * lean
+        bone(arm, "UpperArm.L").rotation_euler.x = 1.1 * lean
+        bone(arm, "UpperArm.L").rotation_euler.z = 0.3 * lean
+        bone(arm, "Forearm.L").rotation_euler.x = -0.2 * lean
+        bone(arm, "UpperArm.R").rotation_euler.x = 0.9 * lean
+        bone(arm, "Forearm.R").rotation_euler.x = -0.4 * lean
+        bone(arm, "UpLeg.L").rotation_euler.x = -0.8 * lean
+        bone(arm, "Leg.L").rotation_euler.x = 1.2 * lean
+        bone(arm, "UpLeg.R").rotation_euler.x = 0.45 * lean
+        bone(arm, "Leg.R").rotation_euler.x = 0.6 * lean
+        staff_world_pitch(1.2 * lean)
 
     def hit(frame, frames):
         t = (frame - 1) / (frames - 1)
         kick = curve(t, [(0.0, 0.0), (0.2, 1.0), (1.0, 0.0)])
-        bone(arm, "Hips").location.y = 0.03 * kick
-        bone(arm, "Spine").rotation_euler.x = -0.4 * kick
+        bone(arm, "Hips").location.y = 0.02 * kick
+        bone(arm, "Spine").rotation_euler.x = -0.38 * kick
         bone(arm, "Chest").rotation_euler.x = -0.2 * kick
         bone(arm, "Head").rotation_euler.x = -0.35 * kick
-        bone(arm, "Head").rotation_euler.z = 0.15 * kick
-        bone(arm, "HatTip").rotation_euler.x = -0.6 * kick
+        bone(arm, "Head").rotation_euler.z = 0.18 * kick
+        hat(pitch=-0.2 * kick, tip=-0.7 * kick, lift=0.03 * kick)
         hair_follow(-0.6 * kick)
         bone(arm, "Cape").rotation_euler.x = -0.3 * kick
         for side, sign in (("L", 1), ("R", -1)):
             bone(arm, f"UpperArm.{side}").rotation_euler.x = -0.7 * kick
             bone(arm, f"UpperArm.{side}").rotation_euler.z = 0.5 * kick * sign
-            bone(arm, f"Forearm.{side}").rotation_euler.x = -0.4 * kick
+            bone(arm, f"Forearm.{side}").rotation_euler.x = -0.5 * kick
         bone(arm, "UpLeg.L").rotation_euler.x = -0.3 * kick
-        bone(arm, "Leg.L").rotation_euler.x = 0.3 * kick
+        bone(arm, "Leg.L").rotation_euler.x = 0.35 * kick
         staff_world_pitch(-0.6 * kick)
 
     def death(frame, frames):
         t = (frame - 1) / (frames - 1)
         kneel = curve(t, [(0.0, 0.0), (0.4, 1.0), (1.0, 1.0)])
         fall = curve(t, [(0.35, 0.0), (1.0, 1.0)])
-        bone(arm, "Hips").location.y = -0.22 * kneel - 0.18 * fall
+        pop = curve(t, [(0.05, 0.0), (0.35, 1.0), (0.75, 0.6), (1.0, 0.55)])
+        bone(arm, "Hips").location.y = -0.20 * kneel - 0.16 * fall
         bone(arm, "Hips").rotation_euler.x = 0.2 * kneel - 1.5 * fall
         bone(arm, "Spine").rotation_euler.x = 0.35 * kneel - 0.1 * fall
         bone(arm, "Chest").rotation_euler.x = 0.25 * kneel
         bone(arm, "Head").rotation_euler.x = 0.4 * kneel - 0.3 * fall
         bone(arm, "Head").rotation_euler.z = 0.3 * fall
-        bone(arm, "HatTip").rotation_euler.x = -0.7 * fall
+        # The hat pops off and tumbles.
+        hat(pitch=-0.9 * pop, roll=0.6 * pop, tip=-0.8 * fall, lift=0.18 * pop)
         hair_follow(-0.4 * fall)
         for side in ("L", "R"):
             bone(arm, f"UpLeg.{side}").rotation_euler.x = -1.3 * kneel + 0.4 * fall
@@ -811,15 +1180,98 @@ def build_hero(mats):
         bone(arm, "Staff").rotation_euler.x = 1.3 * fall
         bone(arm, "Staff").rotation_euler.z = -0.8 * fall
 
-    actions = [
+    def cast(frame, frames):
+        """Skill pickup: thrust the staff straight up and twirl it, crystal flaring."""
+        t = (frame - 1) / (frames - 1)
+        rise = curve(t, [(0.0, 0.0), (0.3, 1.0), (0.75, 1.0), (1.0, 0.0)])
+        spin = curve(t, [(0.15, 0.0), (0.7, 1.0)])
+        bone(arm, "Hips").location.y = 0.03 * pulse(t, 0.2, 0.6)
+        bone(arm, "Spine").rotation_euler.x = -0.10 * rise
+        bone(arm, "Chest").rotation_euler.x = -0.10 * rise
+        bone(arm, "Head").rotation_euler.x = 0.20 * rise
+        hat(pitch=-0.12 * rise, tip=-0.3 * rise)
+        hair_follow(-0.2 * rise)
+        bone(arm, "Cape").rotation_euler.x = 0.3 * pulse(t, 0.1, 0.6)
+        rest_arms()
+        bone(arm, "UpperArm.L").rotation_euler.z += 0.6 * rise
+        staff_world_pitch(-0.10)
+        aim("UpperArm.R", (0.25, -0.15, 1.0), rise)
+        aim("Forearm.R", (0.1, -0.1, 1.0), rise)
+        aim("Staff", (0.0, 0.0, 1.0), rise, spin=spin * math.tau)
+        glow = pulse(t, 0.3, 0.85)
+        bone(arm, "StaffTip").scale = (1 + glow * 0.8, 1 + glow * 0.8, 1 + glow * 0.8)
+
+    def victory(frame, frames):
+        """Boss down: a hop, staff thrust up, the free hand holding the hat brim."""
+        t = (frame - 1) / (frames - 1)
+        hop = pulse(t, 0.05, 0.4)
+        pose = curve(t, [(0.0, 0.0), (0.2, 1.0), (0.85, 1.0), (1.0, 0.0)])
+        bone(arm, "Hips").location.y = 0.12 * hop - 0.02 * pose
+        bone(arm, "Spine").rotation_euler.x = -0.1 * pose
+        bone(arm, "Head").rotation_euler.x = 0.1 * pose
+        bone(arm, "Head").rotation_euler.z = 0.15 * pose * math.sin(t * math.tau * 2)
+        hat(tip=0.4 * hop - 0.2 * pose)
+        hair_follow(-0.4 * hop + 0.1 * pose)
+        bone(arm, "Cape").rotation_euler.x = 0.5 * hop
+        for side in ("L", "R"):
+            bone(arm, f"UpLeg.{side}").rotation_euler.x = -0.5 * hop
+            bone(arm, f"Leg.{side}").rotation_euler.x = 0.9 * hop
+        rest_arms()
+        staff_world_pitch(-0.10)
+        aim("UpperArm.R", (0.45, -0.2, 1.0), pose)
+        aim("Forearm.R", (0.3, -0.15, 1.0), pose)
+        aim("Staff", (0.15, -0.1, 1.0), pose)
+        aim("UpperArm.L", (-0.55, -0.45, 0.70), pose)
+        aim("Forearm.L", (0.45, -0.35, 0.82), pose)
+        glow = pulse(t, 0.15, 0.9)
+        bone(arm, "StaffTip").scale = (1 + glow * 0.5, 1 + glow * 0.5, 1 + glow * 0.5)
+
+    def menu(frame, frames):
+        """Main-menu loop (4 s): idle sway, a friendly wave, a staff twirl, and a little hop; seamless."""
+        t = (frame - 1) / frames
+        phase = t * math.tau
+        breathe = math.sin(phase * 2)
+        wave_in = curve(t, [(0.05, 0.0), (0.12, 1.0), (0.38, 1.0), (0.45, 0.0)])
+        twirl = curve(t, [(0.52, 0.0), (0.72, 1.0)])
+        twirl_arm = curve(t, [(0.50, 0.0), (0.56, 1.0), (0.72, 1.0), (0.80, 0.0)])
+        hop = pulse(t, 0.82, 0.94)
+        bone(arm, "Hips").location.y = breathe * 0.006 + 0.07 * hop
+        bone(arm, "Hips").rotation_euler.z = math.sin(phase) * 0.04
+        bone(arm, "Spine").rotation_euler.x = breathe * 0.02
+        bone(arm, "Chest").rotation_euler.y = -0.12 * wave_in + math.sin(phase) * 0.03
+        bone(arm, "Head").rotation_euler.z = 0.12 * wave_in + math.sin(phase) * 0.05
+        bone(arm, "Head").rotation_euler.x = -0.04 + 0.05 * hop
+        hat(roll=0.06 * wave_in, tip=math.sin(phase * 2 + 1.0) * 0.12 + 0.3 * hop)
+        bone(arm, "HatTip").rotation_euler.z = math.cos(phase) * 0.08
+        hair_follow(math.sin(phase * 2 + 0.8) * 0.05 - 0.3 * hop)
+        bone(arm, "Cape").rotation_euler.x = math.sin(phase * 2 + 0.3) * 0.05 + 0.3 * hop
+        rest_arms(breathe)
+        for side in ("L", "R"):
+            bone(arm, f"UpLeg.{side}").rotation_euler.x = -0.35 * hop
+            bone(arm, f"Leg.{side}").rotation_euler.x = 0.7 * hop
+        staff_world_pitch(-0.10)
+        # Wave with the free hand: arm raised to the side, forearm swinging.
+        waving = math.sin(t * math.tau * 9.0)
+        aim("UpperArm.L", (-0.65, -0.65, 0.40), wave_in)
+        aim("Forearm.L", (-0.20 + 0.45 * waving, -0.40, 0.95), wave_in)
+        # Staff held out in front and spun once.
+        aim("UpperArm.R", (0.30, -0.85, -0.10), twirl_arm)
+        aim("Forearm.R", (0.10, -0.95, 0.20), twirl_arm)
+        aim("Staff", (0.0, -0.25, 1.0), twirl_arm, spin=twirl * math.tau)
+        glow = pulse(t, 0.55, 0.8)
+        bone(arm, "StaffTip").scale = (1 + glow * 0.5, 1 + glow * 0.5, 1 + glow * 0.5)
+
+    return [
         add_action(arm, "Idle", 48, idle),
         add_action(arm, "Run", 20, run),
-        add_action(arm, "Attack", 14, attack),
+        add_action(arm, "Attack", 16, attack),
         add_action(arm, "Dash", 10, dash),
         add_action(arm, "Hit", 10, hit),
         add_action(arm, "Death", 30, death),
+        add_action(arm, "Cast", 20, cast),
+        add_action(arm, "Victory", 40, victory),
+        add_action(arm, "Menu", 120, menu),
     ]
-    return arm, mesh, actions
 
 
 # ---------------------------------------------------------------- slimes
@@ -1224,6 +1676,13 @@ def render_action_frames(arm, asset_id, target_z, distance, height, clips):
             bpy.context.scene.frame_set(frame)
             bpy.context.view_layer.update()
             render_preview(os.path.join(PREVIEW, f"{asset_id}_{action_name}_{int(fraction * 100):02d}.png"), (0, 0, target_z), distance, height)
+            if os.environ.get("HERO_DEBUG_VIEWS"):
+                cam = bpy.context.scene.camera
+                for view, location in (("front", (0.0, -distance, target_z + 0.1)), ("side", (distance, 0.0, target_z + 0.1))):
+                    cam.location = location
+                    look_at(cam, (0, 0, target_z))
+                    bpy.context.scene.render.filepath = os.path.join(PREVIEW, "debug", f"{action_name}_{int(fraction * 100):02d}_{view}.png")
+                    bpy.ops.render.render(write_still=True)
 
 
 def produce_character(asset_id, folder, builder, preview_distance, preview_height, target_z, action_sheet=None):
@@ -1232,6 +1691,13 @@ def produce_character(asset_id, folder, builder, preview_distance, preview_heigh
         render_action_frames(arm, asset_id, target_z, preview_distance, preview_height, action_sheet)
     pose_idle(arm)
     render_preview(os.path.join(PREVIEW, asset_id + ".png"), (0, 0, target_z), preview_distance, preview_height)
+    if asset_id == "CHR_Hero_Main":
+        render_preview(os.path.join(PREVIEW, asset_id + "_Face.png"), (0, 0, 1.02), 1.25, 1.05)
+        cam = bpy.context.scene.camera
+        cam.location = (0.0, 3.4, 1.2)
+        look_at(cam, (0, 0, 0.8))
+        bpy.context.scene.render.filepath = os.path.join(PREVIEW, asset_id + "_Back.png")
+        bpy.ops.render.render(write_still=True)
     filename = os.path.join(folder, asset_id + ".fbx")
     export_fbx(os.path.join(OUT, filename), [arm], True)
     record(asset_id, filename, "character", [mesh], "generic rig, in-place clips")
@@ -1278,16 +1744,23 @@ def main():
     mats["rock_tex"] = material("MAT_rock_tex", PALETTE["rock"], rough=0.85, image_path=textures["rock"])
 
     env_only = MODE == "env"
+    hero_only = MODE == "hero"
     if not env_only:
+        studio = hero_studio()
         produce_character(
             "CHR_Hero_Main",
             "Characters/Hero",
             lambda: build_hero(mats),
-            4.2,
-            1.5,
-            0.85,
-            action_sheet=[("Attack", (0.25, 0.45, 0.7)), ("Run", (0.0, 0.25, 0.5)), ("Hit", (0.2,)), ("Death", (1.0,)), ("Dash", (0.5,))],
+            3.6,
+            1.25,
+            0.8,
+            action_sheet=HERO_SHEET,
         )
+        hero_studio_off(studio)
+    if hero_only:
+        write_catalog(merge=True)
+        return
+    if not env_only:
         produce_character("ENM_Slime_Normal", "Enemies/Slime", lambda: build_slime("ENM_Slime_Normal", mats["slime"], 0.48, 0.9, "normal", mats), 3.2, 1.2, 0.4)
         produce_character("ENM_Slime_Fast", "Enemies/Slime", lambda: build_slime("ENM_Slime_Fast", mats["slime_fast"], 0.36, 0.72, "fast", mats), 2.8, 1.05, 0.3)
         produce_character("ENM_Slime_Tank", "Enemies/Slime", lambda: build_slime("ENM_Slime_Tank", mats["slime_tank"], 0.62, 1.05, "tank", mats), 3.8, 1.45, 0.55)
@@ -1327,9 +1800,59 @@ def main():
         halo = static_mesh(add_torus("VFX_PowerUp_Crystal_ring", 0.5, 0.03, (0, 0, 0.0), major_segments=40, minor_segments=8), mats["gold"])
         produce_static("VFX_PowerUp_Crystal", "VFX", join([crystal, halo], "VFX_PowerUp_Crystal"), 2.4, 1.0, 0.0)
 
+    write_catalog(merge=env_only)
+
+
+def hero_studio():
+    """EEVEE with a key/fill/rim rig so hero previews show real materials and the eye texture."""
+    scene = bpy.context.scene
+    scene.render.engine = "BLENDER_EEVEE"
+    scene.view_settings.view_transform = "Standard"
+    scene.world.use_nodes = True
+    background = scene.world.node_tree.nodes.get("Background")
+    if background is not None:
+        background.inputs["Color"].default_value = (0.62, 0.68, 0.78, 1)
+        background.inputs["Strength"].default_value = 0.45
+    lights = []
+    for name, kind, energy, location, color in (
+        ("Key", "SUN", 2.0, (-2.0, -3.0, 4.0), (1.0, 0.97, 0.92)),
+        ("Fill", "SUN", 0.5, (3.0, -2.0, 1.5), (0.80, 0.85, 1.0)),
+        ("Rim", "SUN", 1.6, (0.5, 3.5, 3.0), (0.90, 0.80, 1.0)),
+    ):
+        data = bpy.data.lights.new(name, kind)
+        data.energy = energy
+        data.color = color
+        light = bpy.data.objects.new(name, data)
+        bpy.context.scene.collection.objects.link(light)
+        light.location = location
+        look_at(light, (0, 0, 0.8))
+        lights.append(light)
+    return lights
+
+
+def hero_studio_off(lights):
+    for light in lights:
+        bpy.data.objects.remove(light, do_unlink=True)
+    bpy.context.scene.render.engine = "BLENDER_WORKBENCH"
+
+
+HERO_SHEET = [
+    ("Idle", (0.0, 0.5)),
+    ("Run", (0.0, 0.25, 0.5, 0.75)),
+    ("Attack", (0.0, 0.18, 0.33, 0.5, 0.8)),
+    ("Dash", (0.5,)),
+    ("Hit", (0.2,)),
+    ("Death", (0.4, 1.0)),
+    ("Cast", (0.5,)),
+    ("Victory", (0.25, 0.6)),
+    ("Menu", (0.0, 0.2, 0.3, 0.62, 0.88)),
+]
+
+
+def write_catalog(merge):
     catalog_path = os.path.join(OUT, "catalog.json")
     merged = CATALOG
-    if env_only and os.path.isfile(catalog_path):
+    if merge and os.path.isfile(catalog_path):
         with open(catalog_path, "r", encoding="utf-8") as handle:
             existing = json.load(handle)
         seen = {entry.get("id") for entry in CATALOG}

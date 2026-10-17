@@ -142,10 +142,10 @@ Shader "SlimeBreaker/Ground"
                 baseColor *= lerp(half3(1.04, 1.0, 0.94), half3(0.95, 1.0, 1.05), macro.b);
 
                 // World XZ mapping: tangent along +X, bitangent along +Z, orthonormalised against the mesh normal.
-                float3 N = normalize(input.normalWS);
-                float3 T = normalize(float3(1, 0, 0) - N * N.x);
+                float3 N = SafeNormalize(float3(input.normalWS));
+                float3 T = SafeNormalize(float3(1, 0, 0) - N * N.x);
                 float3 B = cross(T, N);
-                float3 normalWS = normalize(T * normalTS.x + B * normalTS.y + N * normalTS.z);
+                float3 normalWS = SafeNormalize(T * normalTS.x + B * normalTS.y + N * normalTS.z);
 
                 SurfaceData surfaceData = (SurfaceData)0;
                 surfaceData.albedo = baseColor;
@@ -175,6 +175,8 @@ Shader "SlimeBreaker/Ground"
 
                 half4 color = UniversalFragmentPBR(inputData, surfaceData);
                 color.rgb = MixFog(color.rgb, inputData.fogCoord);
+                // Last line of defence: no NaN/Inf/negative may reach bloom (max() drops NaN on GPUs).
+                color.rgb = min(max(color.rgb, 0.0), 32.0);
                 return color;
             }
             ENDHLSL

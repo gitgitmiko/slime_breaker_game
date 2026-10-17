@@ -165,6 +165,10 @@
 
 - Partikel cuaca melayang di depan kamera; diturunkan ke dekat tanah dan ukurannya dibatasi. APK 0.17.2.
 
+### Putaran 21 — glitch kaktus (NaN) dan cuaca acak
+
+- UV runtuh di ujung kaktus → NaN → bloom; diperbaiki di mesh, shader, kamera, bloom. Hujan bisa siang atau malam. APK 0.17.3.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

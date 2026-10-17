@@ -117,19 +117,27 @@ namespace SlimeBreaker
             };
         }
 
-        /// <summary>Floor 1 is always a calm daytime forest. Later floors keep the 10-floor biome and rotate weather + day/night.</summary>
+        /// <summary>
+        /// Floor 1 is always a calm daytime forest. Later floors keep the 10-floor biome; weather and time of day are
+        /// rolled independently from the run seed (so rain can fall by day or night), and the weather never repeats
+        /// on two consecutive floors of the same biome. The same run seed and floor always give the same theme.
+        /// </summary>
         public static ArenaTheme ForFloor(int floor, int runSeed, ArenaTheme previous = default)
         {
             floor = Mathf.Clamp(floor, 1, RunRules.MaxFloor);
             var biome = BiomeAtFloor(floor);
-            var weathers = WeathersFor(biome);
-            var weather = weathers[(floor - 1) % weathers.Length];
-            if (floor > 1 && previous.biome == biome && weather == previous.weather && weathers.Length > 1)
-                weather = weathers[floor % weathers.Length];
-            var time = floor % 2 == 1 ? TimeOfDay.Day : TimeOfDay.Night;
             int seed = unchecked(runSeed * 397 ^ floor * 104729);
             if (seed == 0)
                 seed = floor;
+            if (floor == 1)
+                return new ArenaTheme(biome, Weather.Clear, TimeOfDay.Day, seed);
+            var rng = new System.Random(unchecked(seed * 31 + 17));
+            var weathers = WeathersFor(biome);
+            var weather = weathers[rng.Next(weathers.Length)];
+            if (previous.biome == biome && weather == previous.weather && weathers.Length > 1)
+                weather = weathers[(System.Array.IndexOf(weathers, weather) + 1 + rng.Next(weathers.Length - 1)) % weathers.Length];
+            // Slightly more days than nights so the HD environment is mostly seen in daylight.
+            var time = rng.NextDouble() < 0.6 ? TimeOfDay.Day : TimeOfDay.Night;
             return new ArenaTheme(biome, weather, time, seed);
         }
 

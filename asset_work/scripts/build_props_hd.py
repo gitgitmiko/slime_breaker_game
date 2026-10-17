@@ -76,8 +76,37 @@ def surface(key):
 # ---------------------------------------------------------------- mesh helpers
 
 
+def fix_degenerate_uvs(obj, scale=2.0):
+    """Faces whose UVs collapse to a line or point (closed tube tips, cone apexes) get a planar projection, so the
+    importer can build valid tangents (zero tangents became NaN normals in the shader)."""
+    mesh = obj.data
+    if not mesh.uv_layers:
+        return 0
+    uv = mesh.uv_layers.active.data
+    fixed = 0
+    for poly in mesh.polygons:
+        pts = [uv[li].uv.copy() for li in poly.loop_indices]
+        area = 0.0
+        for i in range(len(pts)):
+            a, b = pts[i], pts[(i + 1) % len(pts)]
+            area += a.x * b.y - b.x * a.y
+        if abs(area) * 0.5 > 1e-7:
+            continue
+        n = poly.normal
+        axis = max(range(3), key=lambda k: abs(n[k]))
+        u_axis, v_axis = [(1, 2), (0, 2), (0, 1)][axis]
+        for li in poly.loop_indices:
+            co = mesh.vertices[mesh.loops[li].vertex_index].co
+            uv[li].uv = (co[u_axis] * scale, co[v_axis] * scale)
+        fixed += 1
+    return fixed
+
+
 def finish_part(obj, key, ao=None, wind=None):
     """Assign the material, paint vertex colours (R = AO, A = wind weight) and return the object."""
+    fixed = fix_degenerate_uvs(obj)
+    if fixed:
+        print(f"UVFIX {obj.name}: {fixed} faces", flush=True)
     obj.data.materials.clear()
     obj.data.materials.append(surface(key))
     paint(obj, ao or (lambda co: 1.0), wind or (lambda co: 0.0))

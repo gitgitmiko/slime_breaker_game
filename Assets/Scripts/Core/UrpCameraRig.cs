@@ -15,6 +15,8 @@ namespace SlimeBreaker
             // Post-processing (tonemapping, bloom, grading) comes from the PostFx volume; Low turns it off.
             extra.renderPostProcessing = GraphicsService.Instance == null || GraphicsService.Instance.Level != GraphicsService.Low;
             extra.antialiasing = AntialiasingMode.None;
+            // Replace any stray NaN/Inf pixel before post-processing; otherwise bloom grows one bad pixel into a disc.
+            extra.stopNaN = true;
         }
     }
 }

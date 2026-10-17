@@ -96,7 +96,7 @@ Shader "SlimeBreaker/Jelly"
 
             half4 frag(Varyings input) : SV_Target
             {
-                float3 N = normalize(input.normalWS);
+                float3 N = SafeNormalize(float3(input.normalWS));
                 float3 V = GetWorldSpaceNormalizeViewDir(input.positionWS);
                 half ndv = saturate(dot(N, V));
                 half fresnel = pow(1.0 - ndv, _RimPower);
@@ -142,6 +142,8 @@ Shader "SlimeBreaker/Jelly"
 
                 half4 color = UniversalFragmentPBR(inputData, surfaceData);
                 color.rgb = MixFog(color.rgb, inputData.fogCoord);
+                // Last line of defence: no NaN/Inf/negative may reach bloom (max() drops NaN on GPUs).
+                color.rgb = min(max(color.rgb, 0.0), 32.0);
                 return color;
             }
             ENDHLSL

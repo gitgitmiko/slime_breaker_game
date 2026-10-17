@@ -200,6 +200,13 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Perbaikan: kunang-kunang, debu, spora, dan percikan kini di lapisan rendah (1,2–1,5 m) di sekitar hero; semua partikel cuaca dibatasi `maxParticleSize` 0,02 layar. Tes `RenderBudgetPerBiome` memeriksa keduanya.
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 22/22; PlayMode 32/32; APK `SLIMEBREAKER_APK_OK` 0.17.2 (versionCode 20).
 
+## Hasil 17 Oktober 2026 (putaran 21 — glitch kaktus NaN, cuaca acak)
+
+- Akar masalah cahaya putih / segi delapan hitam: ujung kubah kaktus (2 face di puncak batang, 1 di tiap ujung lengan) punya UV runtuh ke satu titik → tangent nol dari importer → `normalize(0)` = NaN di `SlimeBreaker/Lit` → bloom melebarkan satu piksel NaN/Inf jadi cakram putih atau hitam. Muncul saat bergerak karena tergantung sudut kamera.
+- Perbaikan berlapis: `fix_degenerate_uvs` di `build_props_hd.py` (proyeksi planar untuk face ber-UV nol; hanya kaktus yang terkena), TBN aman (`SafeNormalize` + tangent cadangan) dan clamp output 0–32 di ketiga shader, `stopNaN` di kamera, `bloom.clamp` 24.
+- Cuaca dan siang/malam kini diacak terpisah per lantai dari seed run (60% siang); cuaca tidak berulang di dua lantai berturut bioma sama. Sebelumnya cuaca dan waktu sama-sama berotasi ganjil/genap, sehingga hujan selalu malam. Tes EditMode `RainFallsByDayAndByNight`.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 23/23; PlayMode 32/32; APK `SLIMEBREAKER_APK_OK` 0.17.3 (versionCode 21).
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

@@ -156,11 +156,39 @@ namespace SlimeBreaker.Tests
             Assert.AreEqual(Weather.Clear, floor1.weather);
             Assert.AreEqual(TimeOfDay.Day, floor1.time);
             Assert.AreEqual(Biome.Forest, floor2.biome);
-            Assert.AreEqual(TimeOfDay.Night, floor2.time);
             Assert.AreNotEqual(floor1.weather, floor2.weather);
             Assert.AreNotEqual(floor1.seed, floor2.seed);
+            Assert.AreEqual(floor2.weather, ArenaTheme.ForFloor(2, 42, floor1).weather, "same run seed must give the same theme");
+            Assert.AreEqual(floor2.time, ArenaTheme.ForFloor(2, 42, floor1).time, "same run seed must give the same theme");
             var desert = ArenaTheme.ForFloor(15, 42);
             Assert.AreEqual(Biome.Desert, desert.biome);
+        }
+
+        [Test]
+        public void RainFallsByDayAndByNight()
+        {
+            int rainyDays = 0;
+            int rainyNights = 0;
+            for (int run = 1; run <= 60; run++)
+            {
+                var previous = ArenaTheme.ForFloor(1, run);
+                for (int floor = 2; floor <= 100; floor++)
+                {
+                    var theme = ArenaTheme.ForFloor(floor, run, previous);
+                    if (previous.biome == theme.biome && ArenaTheme.WeathersFor(theme.biome).Length > 1)
+                        Assert.AreNotEqual(previous.weather, theme.weather, "weather repeated on floor " + floor);
+                    if (theme.weather == Weather.Rain)
+                    {
+                        if (theme.IsNight)
+                            rainyNights++;
+                        else
+                            rainyDays++;
+                    }
+                    previous = theme;
+                }
+            }
+            Assert.Greater(rainyDays, 50, "rain should also fall during the day");
+            Assert.Greater(rainyNights, 30, "rain should still fall at night too");
         }
 
         [Test]

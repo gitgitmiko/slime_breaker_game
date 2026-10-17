@@ -1193,7 +1193,7 @@ namespace SlimeBreaker.Tests
             yield return null;
             Assert.IsNotNull(ExitPortal.Active, "the door should open after 20 kills on floor 2");
             Assert.AreEqual(Biome.Forest, stage.Theme.biome, "floors 1-10 stay on the grass biome");
-            Assert.AreEqual(TimeOfDay.Night, stage.Theme.time, "floor 2 should be night");
+            Assert.AreNotEqual(firstTheme.weather, stage.Theme.weather, "weather should change between floors");
             Assert.AreNotEqual(firstTheme.seed, stage.Theme.seed, "layout seed should change every floor");
         }
 

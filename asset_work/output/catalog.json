@@ -104,6 +104,14 @@
     "notes": "no rig"
   },
   {
+    "id": "CHR_Hero_Main",
+    "file": "Characters/Hero/CHR_Hero_Main.fbx",
+    "kind": "character",
+    "triangles": 28578,
+    "vertices": 14595,
+    "notes": "generic rig, in-place clips"
+  },
+  {
     "id": "ENV_Forest_Tree_A",
     "file": "Environment/ForestArena/ENV_Forest_Tree_A.fbx",
     "kind": "static",
@@ -181,6 +189,14 @@
     "kind": "static",
     "triangles": 624,
     "vertices": 314,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Desert_Cactus",
+    "file": "Environment/Biomes/ENV_Desert_Cactus.fbx",
+    "kind": "static",
+    "triangles": 2056,
+    "vertices": 1062,
     "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
   },
   {
@@ -262,21 +278,5 @@
     "triangles": 2144,
     "vertices": 1080,
     "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
-  },
-  {
-    "id": "ENV_Desert_Cactus",
-    "file": "Environment/Biomes/ENV_Desert_Cactus.fbx",
-    "kind": "static",
-    "triangles": 2056,
-    "vertices": 1062,
-    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
-  },
-  {
-    "id": "CHR_Hero_Main",
-    "file": "Characters/Hero/CHR_Hero_Main.fbx",
-    "kind": "character",
-    "triangles": 28578,
-    "vertices": 14595,
-    "notes": "generic rig, in-place clips"
   }
 ]

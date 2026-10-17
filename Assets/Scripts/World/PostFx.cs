@@ -86,6 +86,8 @@ namespace SlimeBreaker
             bloom.filter.Override(BloomFilterMode.Dual);
             bloom.downscale.Override(BloomDownscaleMode.Quarter);
             bloom.maxIterations.Override(4);
+            // Cap the brightness bloom may pick up, so a single over-bright pixel cannot blow up into a white blob.
+            bloom.clamp.Override(24f);
             colorAdjustments = Profile.Add<ColorAdjustments>(true);
             whiteBalance = Profile.Add<WhiteBalance>(true);
             splitToning = Profile.Add<SplitToning>(true);

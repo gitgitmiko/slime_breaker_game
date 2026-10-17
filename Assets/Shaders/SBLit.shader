@@ -163,7 +163,7 @@ Shader "SlimeBreaker/Lit"
             #if defined(_COVER)
                 // Moss / snow / sand settles on upward faces; the albedo alpha (height) lets it fill crevices first.
                 half amount = _SB_CoverAmount * _CoverWeight;
-                half up = normalize(input.normalWS).y * sign;
+                half up = SafeNormalize(float3(input.normalWS)).y * sign;
                 half cover = saturate((up - (1.0 - amount * 1.3)) * _CoverSharpness + (0.5 - albedoTex.a) * amount * 1.5);
                 cover *= step(0.001, amount);
                 half3 coverTex = SAMPLE_TEXTURE2D(_SB_CoverMap, sampler_SB_CoverMap, input.uv * 2.0).rgb;
@@ -172,10 +172,15 @@ Shader "SlimeBreaker/Lit"
                 mask.r = lerp(mask.r, 1.0, cover * 0.5);
                 normalTS = normalize(lerp(normalTS, half3(0, 0, 1), cover * 0.6));
             #endif
-                float3 N = normalize(input.normalWS) * sign;
-                float3 T = normalize(input.tangentWS.xyz);
-                float3 B = cross(N, T) * input.tangentWS.w * sign;
-                float3 normalWS = normalize(TransformTangentToWorld(normalTS, half3x3(T, B, N)));
+                // Robust TBN: collapsed UVs (e.g. at the closed tip of a cactus arm) give zero tangents, and
+                // normalize(0) = NaN, which bloom then smears into a big white/black disc on screen.
+                float3 N = SafeNormalize(float3(input.normalWS)) * sign;
+                float3 T = float3(input.tangentWS.xyz) - N * dot(N, float3(input.tangentWS.xyz));
+                float tangentLength = dot(T, T);
+                float3 fallbackT = abs(N.y) < 0.99 ? normalize(cross(float3(0, 1, 0), N)) : float3(1, 0, 0);
+                T = tangentLength > 1e-6 ? T * rsqrt(tangentLength) : fallbackT;
+                float3 B = cross(N, T) * (input.tangentWS.w < 0 ? -1.0 : 1.0) * sign;
+                float3 normalWS = SafeNormalize(TransformTangentToWorld(normalTS, half3x3(T, B, N)));
 
                 half vertexAO = lerp(1.0, input.color.r, _VertexAO);
 
@@ -219,6 +224,8 @@ Shader "SlimeBreaker/Lit"
 
                 half4 color = UniversalFragmentPBR(inputData, surfaceData);
                 color.rgb = MixFog(color.rgb, inputData.fogCoord);
+                // Last line of defence: no NaN/Inf/negative may reach bloom (max() drops NaN on GPUs).
+                color.rgb = min(max(color.rgb, 0.0), 32.0);
                 return color;
             }
             ENDHLSL

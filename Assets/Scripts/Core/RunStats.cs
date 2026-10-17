@@ -18,6 +18,9 @@ namespace SlimeBreaker
         public float critChance;
         public float critMultiplier = 1.5f;
         public int level = 1;
+        /// <summary>Fractional remainders of percentage upgrades on the integer stats.</summary>
+        public float damageCarry;
+        public float healthCarry;
 
         public bool HasCrit => critChance > 0.0001f;
         public float AttacksPerSecond => attackCooldown <= 0.01f ? 0f : 1f / attackCooldown;

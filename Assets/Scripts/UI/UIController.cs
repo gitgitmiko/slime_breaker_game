@@ -23,6 +23,9 @@ namespace SlimeBreaker
         public Button[] choiceButtons;
         public Text[] choiceLabels;
         public Image[] choiceIcons;
+        public Text[] choiceRarityLabels;
+        public Image[] choiceRarityBands;
+        public Image[] choiceRarityFills;
         public GameObject pausePanel;
         public GameObject resultPanel;
         public Text resultTitle;
@@ -456,7 +459,7 @@ namespace SlimeBreaker
                 toastGroup.alpha = 0f;
         }
 
-        public void ShowLevelUp(UpgradeDefinition[] choices)
+        public void ShowLevelUp(UpgradeOffer[] choices)
         {
             if (levelUpPanel != null)
                 levelUpPanel.SetActive(true);
@@ -465,18 +468,33 @@ namespace SlimeBreaker
             int count = choices != null ? choices.Length : 0;
             for (int i = 0; i < choiceButtons.Length; i++)
             {
-                bool visible = i < count && choices[i] != null;
+                bool visible = i < count && choices[i].IsValid;
                 choiceButtons[i].gameObject.SetActive(visible);
                 if (!visible)
                     continue;
-                choiceLabels[i].text = choices[i].title + "\n<size=22>" + choices[i].description + "</size>";
+                var offer = choices[i];
+                Color tint = UpgradeRarities.Color(offer.rarity);
+                // Card body takes the rarity colour (green / blue / purple / orange), title and tag stay readable.
+                choiceLabels[i].text = offer.Title + "\n<size=22>" + offer.Description + "</size>";
+                if (choiceRarityLabels != null && i < choiceRarityLabels.Length && choiceRarityLabels[i] != null)
+                {
+                    choiceRarityLabels[i].text = UpgradeRarities.Name(offer.rarity);
+                    choiceRarityLabels[i].color = Color.white;
+                }
+                if (choiceRarityBands != null && i < choiceRarityBands.Length && choiceRarityBands[i] != null)
+                    choiceRarityBands[i].color = tint;
+                if (choiceRarityFills != null && i < choiceRarityFills.Length && choiceRarityFills[i] != null)
+                    choiceRarityFills[i].color = new Color(tint.r, tint.g, tint.b, 0.42f);
                 if (choiceIcons != null && i < choiceIcons.Length && choiceIcons[i] != null)
                 {
-                    choiceIcons[i].sprite = choices[i].icon;
-                    choiceIcons[i].enabled = choices[i].icon != null;
+                    choiceIcons[i].sprite = offer.definition.icon;
+                    choiceIcons[i].enabled = offer.definition.icon != null;
                 }
             }
         }
+
+        /// <summary>Rarity tag shown on a visible level-up card (playtests).</summary>
+        public string ChoiceRarity(int index) => choiceRarityLabels != null && index < choiceRarityLabels.Length && choiceRarityLabels[index] != null ? choiceRarityLabels[index].text : null;
 
         public void HideLevelUp()
         {
@@ -581,20 +599,23 @@ namespace SlimeBreaker
                 return;
             if (damageText != null)
                 damageText.text = "ATK " + stats.damage;
-            int expBonus = Mathf.RoundToInt(Mathf.Max(0f, stats.xpMultiplier - 1f) * 100f);
-            int defense = Mathf.RoundToInt(stats.damageReduction * 100f);
-            int steal = Mathf.RoundToInt(stats.lifesteal * 100f);
+            float expBonus = Mathf.Max(0f, stats.xpMultiplier - 1f) * 100f;
+            float defense = stats.damageReduction * 100f;
+            float steal = stats.lifesteal * 100f;
             SetStat(0, stats.damage.ToString(), Color.white);
             SetStat(1, stats.AttacksPerSecond.ToString("0.00") + "/s", Color.white);
-            SetStat(2, stats.HasCrit ? stats.critMultiplier.ToString("0.0") + "x" : "—", stats.HasCrit ? StatGold : StatDim);
-            SetStat(3, (stats.HasCrit ? Mathf.RoundToInt(stats.critChance * 100f) : 0) + "%", stats.HasCrit ? StatGold : StatDim);
-            SetStat(4, stats.attackRange.ToString("0.0") + " m", Color.white);
-            SetStat(5, stats.moveSpeed.ToString("0.0"), Color.white);
-            SetStat(6, steal + "%", steal > 0 ? StatGreen : StatDim);
-            SetStat(7, "+" + expBonus + "%", expBonus > 0 ? Color.white : StatDim);
-            SetStat(8, defense + "%", defense > 0 ? StatBlue : StatDim);
-            SetStat(9, (100 - defense) + "%", defense > 0 ? StatBlue : StatDim);
+            SetStat(2, stats.HasCrit ? stats.critMultiplier.ToString("0.0##", System.Globalization.CultureInfo.InvariantCulture) + "x" : "—", stats.HasCrit ? StatGold : StatDim);
+            SetStat(3, Pct(stats.HasCrit ? stats.critChance * 100f : 0f) + "%", stats.HasCrit ? StatGold : StatDim);
+            SetStat(4, stats.attackRange.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " m", Color.white);
+            SetStat(5, stats.moveSpeed.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture), Color.white);
+            SetStat(6, Pct(steal) + "%", steal > 0.01f ? StatGreen : StatDim);
+            SetStat(7, "+" + Pct(expBonus) + "%", expBonus > 0.01f ? Color.white : StatDim);
+            SetStat(8, Pct(defense) + "%", defense > 0.01f ? StatBlue : StatDim);
+            SetStat(9, Pct(100f - defense) + "%", defense > 0.01f ? StatBlue : StatDim);
         }
+
+        /// <summary>Percentages in 0.1% steps (rarity cards add 0.1–1%): 16 → "16", 8.3 → "8.3".</summary>
+        static string Pct(float value) => (Mathf.Round(value * 10f) / 10f).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
 
         void SetStat(int index, string value, Color color)
         {

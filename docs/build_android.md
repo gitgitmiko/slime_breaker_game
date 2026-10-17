@@ -207,6 +207,12 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Cuaca dan siang/malam kini diacak terpisah per lantai dari seed run (60% siang); cuaca tidak berulang di dua lantai berturut bioma sama. Sebelumnya cuaca dan waktu sama-sama berotasi ganjil/genap, sehingga hujan selalu malam. Tes EditMode `RainFallsByDayAndByNight`.
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 23/23; PlayMode 32/32; APK `SLIMEBREAKER_APK_OK` 0.17.3 (versionCode 21).
 
+## Hasil 17 Oktober 2026 (putaran 22 — rarity upgrade, HP boss 10.000)
+
+- Kartu level-up ber-rarity: Normal hijau 65% +0,1%, Rare biru 20% +0,3%, Legend ungu 10% +0,5%, Ultra oranye 5% +1% (sisa 5% dari 95% ditambahkan ke Normal sesuai pilihan). Kartu memakai pita + warna rarity; status HUD 0,1% presisi.
+- HP boss kembali 10.000 × tier (lantai 100 = 100.000).
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 25/25; PlayMode 32/32; APK `SLIMEBREAKER_APK_OK` 0.18.0 (versionCode 22).
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

@@ -19,7 +19,8 @@ namespace SlimeBreaker
         public PowerUpSpawner powerUps;
 
         int queuedLevelUps;
-        UpgradeDefinition[] currentChoices;
+        UpgradeOffer[] currentChoices;
+        public UpgradeOffer[] CurrentChoices => currentChoices;
 
         void Awake()
         {
@@ -129,7 +130,7 @@ namespace SlimeBreaker
         {
             if (State != GameState.LevelUp || currentChoices == null)
                 return;
-            if (index >= 0 && index < currentChoices.Length && currentChoices[index] != null)
+            if (index >= 0 && index < currentChoices.Length && currentChoices[index].IsValid)
             {
                 upgrades.Apply(currentChoices[index], Stats);
                 audioService?.Play("ui");

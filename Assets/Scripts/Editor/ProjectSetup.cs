@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.17.3";
+        const string AppVersion = "0.18.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -2690,6 +2690,9 @@ namespace SlimeBreaker.EditorTools
             var choices = new Button[3];
             var labels = new Text[3];
             var icons = new Image[3];
+            var rarityTags = new Text[3];
+            var bands = new Image[3];
+            var fills = new Image[3];
             for (int i = 0; i < 3; i++)
             {
                 choices[i] = Button(levelPanel.transform, "Choice" + i, "Upgrade", font, Color.white, ghostSprite);
@@ -2707,6 +2710,21 @@ namespace SlimeBreaker.EditorTools
                 ApplyImage(icons[i], whiteSprite, Image.Type.Simple, Color.white);
                 icons[i].preserveAspect = true;
                 icons[i].raycastTarget = false;
+                // Rarity wash over the whole glass card, behind the icon and text.
+                var fill = Graphic(choices[i].transform, "RarityFill", pillSprite, Color.white);
+                fill.raycastTarget = false;
+                Stretch(fill.rectTransform);
+                fill.rectTransform.SetSiblingIndex(0);
+                fills[i] = fill;
+                // Solid rarity band across the top of the card (green / blue / purple / orange) carrying the tag.
+                var band = Graphic(choices[i].transform, "RarityBand", pillSprite, Color.white);
+                band.raycastTarget = false;
+                Place(band.gameObject, choices[i].transform, new Vector2(0.5f, 1.0f), new Vector2(200f, 40f));
+                rarityTags[i] = Text(band.transform, "Rarity", "NORMAL", 22, TextAnchor.MiddleCenter, font);
+                rarityTags[i].fontStyle = FontStyle.Bold;
+                rarityTags[i].raycastTarget = false;
+                Stretch(rarityTags[i].rectTransform);
+                bands[i] = band;
             }
             levelPanel.SetActive(false);
 
@@ -2755,6 +2773,9 @@ namespace SlimeBreaker.EditorTools
             ui.choiceButtons = choices;
             ui.choiceLabels = labels;
             ui.choiceIcons = icons;
+            ui.choiceRarityLabels = rarityTags;
+            ui.choiceRarityBands = bands;
+            ui.choiceRarityFills = fills;
             ui.pausePanel = pausePanel;
             ui.resultPanel = resultPanel;
             ui.resultTitle = resultTitle;
@@ -2880,7 +2901,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 21;
+            PlayerSettings.Android.bundleVersionCode = 22;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

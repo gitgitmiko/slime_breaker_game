@@ -33,9 +33,9 @@ Seluruh HUD dan menu memakai gaya yang sama dengan bar HP boss: kaca gelap, gari
 
 Saat lantai mencapai kelipatan 10, arena masuk mode boss: minion lenyap, spawner berhenti, banner **BOSS LANTAI N** muncul, kamera zoom ke bos selama ~2,5 detik, lalu pertarungan dimulai. Boss memanggil **10 slime kecil setiap 20 detik** (maks ~14 hidup) supaya hero tetap bisa naik level dan mengambil power-up tiap 20 level. Setelah boss kalah, pintu muncul; masuk pintu baru ke lantai berikutnya.
 
-HP boss = lantai × 1.000.000 (lantai 10 = 10.000.000, lantai 20 = 20.000.000, … lantai 100 = 100.000.000). Damage boss naik tiap lantai: **basic 50 + 3×(lantai−1)**, **skill 100 + 3×(lantai−1)**, **skill enrage 200 + 3×(lantai−1)** (lantai 10 = 77 / 127 / 227). Ketika HP boss turun di bawah 30%, ia **enrage** dan memakai N skill elemental (N = lantai / 10). Masuk enrage memutar **cutscene** 2,2 s: pertarungan beku, slow-motion, kamera zoom close-up ke boss, banner **ENRAGE!**, tubuh berdenyut merah-putih, gelombang kejut cincin api + guncangan kamera. Selama enrage tubuh boss terus berdenyut merah dan memercikkan bara; setiap skill enrage ditambah gelombang kejut cincin api, petir merah menyambar di sekitar boss, ledakan di target, dan guncangan kamera. Warna jatuhan/hujan skill condong ke merah.
+HP boss = lantai × 1000 (lantai 10 = 10.000, lantai 20 = 20.000, … lantai 100 = 100.000). Damage boss naik tiap lantai: **basic 50 + 3×(lantai−1)**, **skill 100 + 3×(lantai−1)**, **skill enrage 200 + 3×(lantai−1)** (lantai 10 = 77 / 127 / 227). Ketika HP boss turun di bawah 30%, ia **enrage** dan memakai N skill elemental (N = lantai / 10). Masuk enrage memutar **cutscene** 2,2 s: pertarungan beku, slow-motion, kamera zoom close-up ke boss, banner **ENRAGE!**, tubuh berdenyut merah-putih, gelombang kejut cincin api + guncangan kamera. Selama enrage tubuh boss terus berdenyut merah dan memercikkan bara; setiap skill enrage ditambah gelombang kejut cincin api, petir merah menyambar di sekitar boss, ledakan di target, dan guncangan kamera. Warna jatuhan/hujan skill condong ke merah.
 
-**HP boss** tampil di atas layar di bawah bar lantai selama boss hidup: pil **BOSS** (berubah **ENRAGE** berdenyut saat enrage), nama boss, bar merah (oranye saat enrage) dengan jejak damage kuning redup yang menyusul, dan angka `7.250.000 / 10.000.000` (pemisah ribuan titik). Bar lantai di stage boss hanya berlabel BOSS.
+**HP boss** tampil di atas layar di bawah bar lantai selama boss hidup: pil **BOSS** (berubah **ENRAGE** berdenyut saat enrage), nama boss, bar merah (oranye saat enrage) dengan jejak damage kuning redup yang menyusul, dan angka `7.250 / 10.000` (pemisah ribuan titik). Bar lantai di stage boss hanya berlabel BOSS.
 
 **Boss kebal power-up.** Hanya serangan dasar (bolt) yang melukai boss. Skill power-up (Cincin Es, Petir Berantai, Nova Api, Misil Arkana) tidak membidik boss dan sentuhan ke boss memunculkan **IMMUNE** abu-abu; skill tetap melukai minion. Setiap gelombang minion punya peluang **35%** berisi satu **slime emas pembawa** (berkilau emas). Bunuh slime itu untuk menjatuhkan kristal emas **Boss Breaker** (ditunjuk panah power-up). Mengambilnya membuat semua power-up yang dimiliki bisa melukai boss selama **60 detik**. Selama aktif hero memakai aura emas-merah (cincin cahaya di kaki, api naik, percikan, bara tiap 0,45 s) dan HUD menampilkan hitung mundur **BOSS BREAKER Ns**. Hanya satu Boss Breaker beredar sekaligus (pembawa/kristal/efek aktif), dan pembawa hanya muncul jika hero sudah punya minimal satu skill. Skill memakai telegraf sesuai elemen: batu/es/racun/magma jatuh dari langit dengan **bayangan lunak** yang membesar dan menggelap saat batu mendekat tanah, api menembak bolt api, petir menyambar. Model boss memakai palet per-bagian: tubuh sesuai elemen, **jubah merah**, **mahkota emas**, permata mengikuti elemen.
 
@@ -58,18 +58,30 @@ Masuk pintu meregenerasi arena (fade). Cuaca dan siang/malam berganti setiap lan
 
 | Lantai | Nama | HP | Skill enrage | Keunikan |
 |---|---|---|---|---|
-| 10 | Rock Slime | 10.000.000 | 1 | Kulit batu, lempar batu ke atas lalu jatuh ke bayangan di tanah, slam lebih lebar |
-| 20 | Flame Slime | 20.000.000 | 2 | Tembakan api (`HostileProjectile`) + genangan bakar |
-| 30 | Frost Slime | 30.000.000 | 3 | Hujan es + aura dingin yang memperlambat hero |
-| 40 | Volt Slime | 40.000.000 | 4 | Sambaran petir + jatuhan kilat |
-| 50 | Toxic Slime | 50.000.000 | 5 | Hujan racun dan genangan |
-| 60 | Shadow Slime | 60.000.000 | 6 | Blink, hujan bayangan, selubung gelap |
-| 70 | Magma Slime | 70.000.000 | 7 | Hujan magma + jejak lava saat charge |
-| 80 | Storm Slime | 80.000.000 | 8 | Dorongan angin + jatuhan petir |
-| 90 | Crystal Slime | 90.000.000 | 9 | Cincin duri + perisai yang menahan bolt |
-| 100 | Royal Slime | 100.000.000 | 10 | Campuran tembakan api, hujan, dan zap. Kalahkan untuk **Tamat!** |
+| 10 | Rock Slime | 10.000 | 1 | Kulit batu, lempar batu ke atas lalu jatuh ke bayangan di tanah, slam lebih lebar |
+| 20 | Flame Slime | 20.000 | 2 | Tembakan api (`HostileProjectile`) + genangan bakar |
+| 30 | Frost Slime | 30.000 | 3 | Hujan es + aura dingin yang memperlambat hero |
+| 40 | Volt Slime | 40.000 | 4 | Sambaran petir + jatuhan kilat |
+| 50 | Toxic Slime | 50.000 | 5 | Hujan racun dan genangan |
+| 60 | Shadow Slime | 60.000 | 6 | Blink, hujan bayangan, selubung gelap |
+| 70 | Magma Slime | 70.000 | 7 | Hujan magma + jejak lava saat charge |
+| 80 | Storm Slime | 80.000 | 8 | Dorongan angin + jatuhan petir |
+| 90 | Crystal Slime | 90.000 | 9 | Cincin duri + perisai yang menahan bolt |
+| 100 | Royal Slime | 100.000 | 10 | Campuran tembakan api, hujan, dan zap. Kalahkan untuk **Tamat!** |
 
 ## Upgrade run (level-up)
+
+Setiap kartu level-up mendapat **rarity** acak (berlaku untuk semua jenis upgrade):
+
+| Rarity | Warna | Chance | Kenaikan |
+|---|---|---|---|
+| Normal | hijau | 65% | +0,1% |
+| Rare | biru | 20% | +0,3% |
+| Legend | ungu | 10% | +0,5% |
+| Ultra | oranye | 5% | +1% |
+
+Kenaikan berlaku sebagai persen stat: DMG, HP, MOVE, RANGE dikali (1 + p); cooldown serangan/dash dikali (1 − p); EXP, DEF, LS, CRIT RATE, CRIT ditambah p poin persen. DMG dan HP menyimpan pecahan (`damageCarry`/`healthCarry`) agar kartu kecil tetap terakumulasi. Status HUD menampilkan persen dengan 0,1% presisi.
+
 
 Setiap naik level, serangan dasar otomatis **+10**, lalu pilihan 3 upgrade (nama berbahasa Inggris): **Power** (+20% damage), **Swiftness** (+12% gerak), **Vitality** (+25 HP), **Attack Speed**, **Dash**, **Reach** (+20% jangkauan), **EXP**, **Defender** (-8% damage masuk, cap 60%), **Lifesteal**, **Crit Rate** (+8% peluang, cap 70%), dan **Critical** (+30% pengali crit, cap 3,5×). Hero mulai hanya dengan damage dasar — **tidak ada critical** sampai mengambil Crit Rate atau Critical. Crit Rate membuka peluang 8% dengan pengali 1,5×; Critical sendiri membuka crit (peluang 8%) dan menaikkan pengali. Serangan yang crit menampilkan angka **CRIT** emas.
 

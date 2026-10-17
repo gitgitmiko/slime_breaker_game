@@ -26,18 +26,18 @@ namespace SlimeBreaker.Tests
         }
 
         [Test]
-        public void FloorTenBossHasTenMillionHpAndOneEnrageSkill()
+        public void FloorTenBossHasTenThousandHpAndOneEnrageSkill()
         {
             Assert.AreEqual(BossKind.Rock, BossCatalog.KindAtFloor(10));
-            Assert.AreEqual(10000000, BossCatalog.HealthForFloor(10));
+            Assert.AreEqual(10000, BossCatalog.HealthForFloor(10));
             Assert.AreEqual(1, BossCatalog.EnrageSkillCount(10));
         }
 
         [Test]
-        public void FloorTwentyBossHasTwentyMillionHpAndTwoEnrageSkills()
+        public void FloorTwentyBossHasTwentyThousandHpAndTwoEnrageSkills()
         {
             Assert.AreEqual(BossKind.Flame, BossCatalog.KindAtFloor(20));
-            Assert.AreEqual(20000000, BossCatalog.HealthForFloor(20));
+            Assert.AreEqual(20000, BossCatalog.HealthForFloor(20));
             Assert.AreEqual(2, BossCatalog.EnrageSkillCount(20));
         }
 
@@ -45,7 +45,7 @@ namespace SlimeBreaker.Tests
         public void FloorOneHundredBossIsRoyalWithTenSkills()
         {
             Assert.AreEqual(BossKind.Royal, BossCatalog.KindAtFloor(100));
-            Assert.AreEqual(100000000, BossCatalog.HealthForFloor(100));
+            Assert.AreEqual(100000, BossCatalog.HealthForFloor(100));
             Assert.AreEqual(10, BossCatalog.EnrageSkillCount(100));
             Assert.IsTrue(BossCatalog.IsFinal(BossKind.Royal));
         }
@@ -86,6 +86,66 @@ namespace SlimeBreaker.Tests
                 crit.amount = 0.3f;
                 manager.Apply(crit, stats);
                 Assert.AreEqual(1.8f, stats.critMultiplier, 0.001f);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void UpgradeRarityChancesAndBonuses()
+        {
+            int[] counts = new int[4];
+            const int samples = 100000;
+            for (int i = 0; i < samples; i++)
+                counts[(int)UpgradeRarities.FromRoll((i + 0.5f) / samples)]++;
+            Assert.AreEqual(65f, counts[0] * 100f / samples, 0.01f, "Normal chance");
+            Assert.AreEqual(20f, counts[1] * 100f / samples, 0.01f, "Rare chance");
+            Assert.AreEqual(10f, counts[2] * 100f / samples, 0.01f, "Legend chance");
+            Assert.AreEqual(5f, counts[3] * 100f / samples, 0.01f, "Ultra chance");
+            Assert.AreEqual(0.001f, UpgradeRarities.Fraction(UpgradeRarity.Normal), 1e-6f);
+            Assert.AreEqual(0.003f, UpgradeRarities.Fraction(UpgradeRarity.Rare), 1e-6f);
+            Assert.AreEqual(0.005f, UpgradeRarities.Fraction(UpgradeRarity.Legend), 1e-6f);
+            Assert.AreEqual(0.01f, UpgradeRarities.Fraction(UpgradeRarity.Ultra), 1e-6f);
+            Assert.AreEqual("+0.3% magic damage", UpgradeRarities.Describe(UpgradeKind.Damage, UpgradeRarity.Rare));
+            Assert.AreEqual("+1.0% critical chance", UpgradeRarities.Describe(UpgradeKind.CritChance, UpgradeRarity.Ultra));
+        }
+
+        [Test]
+        public void RarityUpgradesAddTheirPercentToEveryStat()
+        {
+            var host = new UnityEngine.GameObject("UpgradeHost");
+            try
+            {
+                var manager = host.AddComponent<UpgradeManager>();
+                var stats = new RunStats { damage = 1000, maxHealth = 1000 };
+                UpgradeOffer Offer(UpgradeKind kind, UpgradeRarity rarity)
+                {
+                    var def = UnityEngine.ScriptableObject.CreateInstance<UpgradeDefinition>();
+                    def.kind = kind;
+                    def.title = kind.ToString();
+                    return new UpgradeOffer(def, rarity);
+                }
+                manager.Apply(Offer(UpgradeKind.Damage, UpgradeRarity.Ultra), stats);
+                Assert.AreEqual(1010, stats.damage, "Ultra damage should add 1%");
+                manager.Apply(Offer(UpgradeKind.Health, UpgradeRarity.Legend), stats);
+                Assert.AreEqual(1005, stats.maxHealth, "Legend HP should add 0.5%");
+                float range = stats.attackRange;
+                manager.Apply(Offer(UpgradeKind.Range, UpgradeRarity.Rare), stats);
+                Assert.AreEqual(range * 1.003f, stats.attackRange, 1e-5f);
+                manager.Apply(Offer(UpgradeKind.Lifesteal, UpgradeRarity.Normal), stats);
+                Assert.AreEqual(0.001f, stats.lifesteal, 1e-6f);
+                manager.Apply(Offer(UpgradeKind.CritChance, UpgradeRarity.Ultra), stats);
+                Assert.AreEqual(0.01f, stats.critChance, 1e-6f);
+                float cooldown = stats.attackCooldown;
+                manager.Apply(Offer(UpgradeKind.AttackRate, UpgradeRarity.Legend), stats);
+                Assert.AreEqual(cooldown * 0.995f, stats.attackCooldown, 1e-6f);
+                // Small Normal cards on a small integer stat still accumulate instead of rounding away.
+                var small = new RunStats { damage = 32 };
+                for (int i = 0; i < 40; i++)
+                    manager.Apply(Offer(UpgradeKind.Damage, UpgradeRarity.Normal), small);
+                Assert.AreEqual(33, small.damage, "40 Normal damage cards on 32 should reach 33");
             }
             finally
             {

@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 69637054574984027}
   - component: {fileID: 8112420291167126174}
-  - component: {fileID: 2614406328771353683}
+  - component: {fileID: 7694398555240710524}
   m_Layer: 8
   m_Name: OBS_Pillar
   m_TagString: Untagged
@@ -55,7 +55,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.95, y: 1.85, z: 0.95}
   m_Center: {x: 0, y: 0.9, z: 0}
---- !u!114 &2614406328771353683
+--- !u!114 &7694398555240710524
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

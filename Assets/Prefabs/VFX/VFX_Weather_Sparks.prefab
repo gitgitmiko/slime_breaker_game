@@ -612,7 +612,7 @@ ParticleSystem:
     gravityModifier:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 0.05
+      scalar: -0.03
       minScalar: 0
       maxCurve:
         serializedVersion: 2
@@ -4810,7 +4810,7 @@ ParticleSystemRenderer:
   m_MeshDistribution: 0
   m_SortMode: 0
   m_MinParticleSize: 0
-  m_MaxParticleSize: 0.5
+  m_MaxParticleSize: 0.02
   m_CameraVelocityScale: 0
   m_VelocityScale: 0
   m_LengthScale: 2
@@ -4849,5 +4849,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2dffafd04647fbfeade5542e8c01c01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.WeatherRig
-  height: 10
+  height: 1.5
   ambienceId: 

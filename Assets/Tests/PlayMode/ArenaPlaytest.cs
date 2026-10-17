@@ -1302,6 +1302,17 @@ namespace SlimeBreaker.Tests
                 Assert.Less(renderers, 200, biome + " arena has too many renderers (draw calls)");
                 Assert.AreEqual(0, blocks, biome + " props use property blocks, which break SRP batching");
                 Assert.Less(casters, 140, biome + " has too many shadow casters");
+                foreach (var rig in Object.FindObjectsByType<WeatherRig>(FindObjectsSortMode.None))
+                {
+                    var main = Camera.main;
+                    foreach (var particleRenderer in rig.GetComponentsInChildren<ParticleSystemRenderer>())
+                    {
+                        if (particleRenderer.renderMode == ParticleSystemRenderMode.Billboard && particleRenderer.name != "Splashes" && !rig.name.Contains("Mist"))
+                            Assert.LessOrEqual(particleRenderer.maxParticleSize, 0.05f, rig.name + " particles can blow up into screen-filling blobs near the camera");
+                    }
+                    if (rig.ambienceId == null && main != null)
+                        Assert.Less(rig.height, main.transform.position.y - 3f, rig.name + " drifts at camera height");
+                }
             }
         }
 

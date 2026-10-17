@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.17.1";
+        const string AppVersion = "0.17.2";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -328,11 +328,12 @@ namespace SlimeBreaker.EditorTools
             var mistMat = ParticleMaterial("Assets/Art/VFX/Materials/MAT_FX_Mist.mat", "TEX_FX_Mist", false);
             var rain = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Rain.prefab", new Color(0.7f, 0.78f, 0.92f, 0.55f), 650, 16f, 0.06f, 2.6f, ParticleSystemShapeType.Box, 22f, "rain", true, rainMat, false, ringMat);
             var snowWx = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Snow.prefab", new Color(0.95f, 0.97f, 1f, 0.9f), 320, 1.2f, 0.11f, 0.22f, ParticleSystemShapeType.Box, 22f, "wind", false, snowMat, true);
-            var fireflies = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Fireflies.prefab", new Color(1f, 0.92f, 0.45f), 44, 0.35f, 0.09f, -0.05f, ParticleSystemShapeType.Sphere, 10f, null, false, glowMat, true);
-            var dust = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Dust.prefab", new Color(1f, 0.85f, 0.6f, 0.35f), 90, 0.5f, 0.14f, -0.06f, ParticleSystemShapeType.Box, 20f, "wind", false, softMat, true);
+            // Ground-level drifters (fireflies, dust, spores, sparks) live in a low slab around the hero, well below the camera.
+            var fireflies = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Fireflies.prefab", new Color(1f, 0.92f, 0.45f, 0.8f), 44, 0.35f, 0.07f, -0.02f, ParticleSystemShapeType.Box, 22f, null, false, glowMat, true, null, 1.3f);
+            var dust = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Dust.prefab", new Color(1f, 0.85f, 0.6f, 0.35f), 90, 0.5f, 0.14f, -0.02f, ParticleSystemShapeType.Box, 20f, "wind", false, softMat, true, null, 1.2f);
             var ash = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Ash.prefab", new Color(0.45f, 0.4f, 0.38f, 0.75f), 130, 0.6f, 0.08f, 0.1f, ParticleSystemShapeType.Box, 20f, "wind", false, snowMat, true);
-            var spores = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Spores.prefab", new Color(0.6f, 0.9f, 0.35f, 0.7f), 70, 0.25f, 0.1f, -0.04f, ParticleSystemShapeType.Box, 18f, null, false, glowMat, true);
-            var sparks = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Sparks.prefab", new Color(1f, 0.85f, 0.4f), 50, 1.0f, 0.06f, 0.05f, ParticleSystemShapeType.Box, 18f, null, false, glowMat, true);
+            var spores = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Spores.prefab", new Color(0.6f, 0.9f, 0.35f, 0.7f), 70, 0.25f, 0.1f, -0.02f, ParticleSystemShapeType.Box, 18f, null, false, glowMat, true, null, 1.5f);
+            var sparks = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Sparks.prefab", new Color(1f, 0.85f, 0.4f), 50, 1.0f, 0.06f, -0.03f, ParticleSystemShapeType.Box, 18f, null, false, glowMat, true, null, 1.5f);
             var mist = MistPrefab("Assets/Prefabs/VFX/VFX_Weather_Mist.prefab", mistMat);
             var portal = PortalPrefab("Assets/Prefabs/Environment/ENV_Exit_Portal.prefab", env["RuneRing"]);
 
@@ -1483,7 +1484,7 @@ namespace SlimeBreaker.EditorTools
         }
 
         static GameObject WeatherPrefab(string path, Color color, int count, float speed, float size, float gravity, ParticleSystemShapeType shapeType, float shapeSize, string ambience, bool streaks,
-            Material material = null, bool turbulence = false, Material splashMaterial = null)
+            Material material = null, bool turbulence = false, Material splashMaterial = null, float height = 10f)
         {
             var root = new GameObject(Path.GetFileNameWithoutExtension(path));
             var particles = root.AddComponent<ParticleSystem>();
@@ -1518,6 +1519,8 @@ namespace SlimeBreaker.EditorTools
             var renderer = root.GetComponent<ParticleSystemRenderer>();
             renderer.sharedMaterial = material != null ? material : additiveParticleMaterial;
             renderer.shadowCastingMode = ShadowCastingMode.Off;
+            // Never let a flake or firefly that drifts past the lens fill the screen (it read as a white flash + bloom).
+            renderer.maxParticleSize = 0.02f;
             renderer.renderMode = streaks ? ParticleSystemRenderMode.Stretch : ParticleSystemRenderMode.Billboard;
             if (streaks)
             {
@@ -1527,7 +1530,7 @@ namespace SlimeBreaker.EditorTools
             if (splashMaterial != null)
                 AddRainSplashes(root.transform, splashMaterial, count);
             var rig = root.AddComponent<WeatherRig>();
-            rig.height = 10f;
+            rig.height = height;
             rig.ambienceId = ambience;
             return SavePrefab(root, path);
         }
@@ -2877,7 +2880,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 19;
+            PlayerSettings.Android.bundleVersionCode = 20;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

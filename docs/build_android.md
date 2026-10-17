@@ -194,6 +194,12 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Proporsi diukur dari gambar referensi lalu disamakan: rambut lebih ramping (±0,27 H) dengan tonjolan bergelombang di sisi/belakang dan ujung tidak turun di bawah dagu, kaki lebih tebal dan rapat (tulang kaki digeser ke x ±0,075–0,085), lengan/tangan lebih tebal, kaos lebih lebar, telinga di sudut atas rambut. `CHR_Hero_Main.fbx` 28.578 tris.
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 22/22; PlayMode 32/32; APK `SLIMEBREAKER_APK_OK` 0.17.1 (versionCode 19).
 
+## Hasil 17 Oktober 2026 (putaran 20 — bola cahaya putih)
+
+- Penyebab "cahaya putih" di dekat kaktus saat hero bergerak: kunang-kunang malam dipancarkan dari bola radius 10 m yang berpusat 10 m di atas hero, jadi sebagian lewat tepat di depan lensa kamera (kamera ±8 m di atas hero) dan tampil sebagai cakram putih raksasa + bloom.
+- Perbaikan: kunang-kunang, debu, spora, dan percikan kini di lapisan rendah (1,2–1,5 m) di sekitar hero; semua partikel cuaca dibatasi `maxParticleSize` 0,02 layar. Tes `RenderBudgetPerBiome` memeriksa keduanya.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 22/22; PlayMode 32/32; APK `SLIMEBREAKER_APK_OK` 0.17.2 (versionCode 20).
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

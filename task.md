@@ -161,6 +161,10 @@
 
 - Rambut, kepala, badan, lengan, kaki diukur dari referensi dan disamakan. Setup OK. EditMode 22/22. PlayMode 32/32. APK 0.17.1.
 
+### Putaran 20 — bola cahaya putih saat bergerak
+
+- Partikel cuaca melayang di depan kamera; diturunkan ke dekat tanah dan ukurannya dibatasi. APK 0.17.2.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

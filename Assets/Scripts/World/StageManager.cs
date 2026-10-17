@@ -150,6 +150,7 @@ namespace SlimeBreaker
             flow?.ui?.ShowBossWarning(BossCatalog.DisplayName(ActiveBoss), BossCatalog.Tint(ActiveBoss), Floor);
             flow?.ui?.ShowToast("BOSS LANTAI " + Floor + " — " + BossCatalog.DisplayName(ActiveBoss), BossCatalog.Tint(ActiveBoss));
             AudioService.Instance?.Play("bosswarn");
+            AudioService.Instance?.SetBossMusic(true);
 
             var boss = SpawnBoss(ActiveBoss);
             if (boss != null && cameraRig != null)
@@ -207,6 +208,7 @@ namespace SlimeBreaker
             {
                 var kind = ActiveBoss;
                 ActiveBoss = BossKind.None;
+                AudioService.Instance?.SetBossMusic(false);
                 PlayerHealth.Instance?.Emote("Victory");
                 Intermission = false;
                 VanishMinions();
@@ -278,6 +280,7 @@ namespace SlimeBreaker
             introducing = false;
             transitioning = false;
             ActiveBoss = BossKind.None;
+            AudioService.Instance?.SetBossMusic(false);
             VanishMinions();
             if (ExitPortal.Active != null)
                 Destroy(ExitPortal.Active.gameObject);

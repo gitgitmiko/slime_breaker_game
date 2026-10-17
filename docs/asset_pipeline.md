@@ -79,8 +79,25 @@ python3 asset_work/scripts/build_textures.py asset_work/textures
 blender --background --python asset_work/scripts/build_assets.py -- \
   asset_work/output asset_work/previews asset_work/textures
 
+python3 asset_work/scripts/build_pbr_textures.py asset_work/textures
+
+blender --background --python asset_work/scripts/build_props_hd.py -- \
+  asset_work/output asset_work/previews asset_work/textures
+
 python3 asset_work/scripts/build_audio_ui.py
+python3 asset_work/scripts/build_audio_hd.py all
 ```
+
+### Lingkungan HD (putaran 16)
+
+- `build_pbr_textures.py <out> [nama…]` memakai `pbr.py` (Perlin fbm tileable, Worley, normal + AO dari height). Tiap set: albedo (A = height), `_Normal`, `_Mask` (R AO, G smoothness, B metallic), opsional `_Emit`. Tanah Forest/Snow/Sand 2048, bioma lain 1024; properti (`Bark_HD`, `Rock_HD`, `Stone_Ruin`, `Marble_HD`, `Obsidian`, `Cactus_Skin`, `Mushroom_Cap`, `Ice_HD`), penutup bioma (`Cover_Moss/Snow/Sand/Ash`), atlas daun/rumput beralpha, `TEX_Noise_Macro`, dan sprite cuaca `TEX_FX_*`. Pratinjau ber-lighting ditulis ke `asset_work/previews/textures`.
+- `build_props_hd.py` (Blender) membangun ulang 21 properti dengan id lama (pohon daun lebar dan konifer berkartu daun, semak, rumput/bunga, batu displacement, reruntuhan, kaktus, es, kristal, kolom kerajaan, dll). Material `MAT_hd_<permukaan>`; warna verteks R = AO, A = bobot angin. Argumen id terakhir opsional untuk membangun sebagian.
+- Shader URP: `SlimeBreaker/Ground` (world-space, sampel kedua diputar 37° anti-tiling, noise makro, emisi berdenyut), `SlimeBreaker/Lit` (alpha clip, angin, translusensi daun, AO verteks, penutup bioma global `_SB_Cover*`), `SlimeBreaker/Jelly` (subsurface wrap, rim fresnel, inti padat, noise mengalir). Keyword global `SB_QUALITY_LOW` memilih jalur murah.
+- `PostFx` membuat Volume runtime (ACES, bloom, color adjustments, white balance, split toning, vignette) dengan grading per bioma/malam/cuaca; mati di preset Low.
+
+### Audio HD (putaran 16)
+
+`build_audio_hd.py [music|ambience|sfx|all] [nama…]`: komposer prosedural (pretty_midi, progresi akor, voice leading, melodi di-snap ke nada akor) → FluidSynth kering (`-R 0 -C 0`) dengan soundfont GeneralUser GS (`~/game-toolchain/soundfonts/GeneralUser-GS.sf2`) → pedalboard (HP, shelf, kompresor, reverb, tail di-wrap agar loop mulus) → pyloudnorm → soft-knee peak (tanpa make-up gain, puncak ≤ 0,97) → `oggenc`. Hasil: 12 musik (`MUS_Menu`, 10 bioma, `MUS_Boss`, −15 s.d. −19 LUFS), 11 ambience loop 34 s (`AMB_<Bioma>`, `AMB_Night`, sekitar −25 LUFS), 23 SFX/jingle. Tidak ada sampel yang clipping.
 
 Hanya sprite UI dan ikon (audio tidak disentuh): `python3 asset_work/scripts/build_audio_ui.py ui`. Sprite HUD modern: `UI_Card_Glass`, `UI_Pill`, `UI_Bar_Track`, `UI_Bar_Fill` (putih, diwarnai di Unity), `UI_Button_Ghost`, `UI_Circle_Glass`, `UI_Ring`, ikon `UI_Icon_Gear` dan `UI_Icon_Pause`. `UI_Panel`, `UI_Button*`, `UI_Slot`, dan joystick memakai gaya kaca yang sama.
 
@@ -104,13 +121,7 @@ blender --background --python asset_work/scripts/build_assets.py -- \
 
 `build_assets.py` juga merender preview dan lembar frame animasi hero (`asset_work/previews/CHR_Hero_Main_<Clip>_<persen>.png`) untuk pemeriksaan visual tanpa editor.
 
-Musik ditulis sebagai MIDI oleh `build_audio_ui.py` lalu:
-
-```bash
-fluidsynth -ni -g 0.8 -F /tmp/MUS_Arena.wav -r 44100 \
-  /usr/share/sounds/sf2/FluidR3_GM.sf2 /tmp/MUS_Arena.mid
-oggenc -q 5 /tmp/MUS_Arena.wav -o asset_work/output/Audio/Music/MUS_Arena.ogg
-```
+`build_audio_ui.py` kini default hanya menulis UI; musik/SFX lama hanya dengan argumen `legacy-audio` (digantikan `build_audio_hd.py`).
 
 Efek suara disintesis numpy 44,1 kHz (osilator, noise berfilter, envelope) ke WAV, lalu `oggenc -q 4`. Ikon dan panel UI dirender Pillow dengan supersampling 4×.
 
@@ -129,10 +140,11 @@ Efek suara disintesis numpy 44,1 kHz (osilator, noise berfilter, envelope) ke WA
 
 ## Integrasi Unity
 
-Skrip `SlimeBreaker.EditorTools.ProjectSetup.BuildAll` menyalin aset, mengatur importer (sprite, normal map, klip animasi), mengubah material ke URP Lit dengan tabel look, membuat Animator Controller, prefab (hero, musuh, boss, proyektil, skill, power-up, VFX), ScriptableObject (musuh, upgrade, skill, balance), scene Boot/MainMenu/GameArena, dan menyetel URP Mobile (render scale 1, MSAA 2×, HDR mati, bayangan 28 m). Perintahnya ada di `docs/build_android.md`.
+Skrip `SlimeBreaker.EditorTools.ProjectSetup.BuildAll` menyalin aset, mengatur importer (sprite, normal map, klip animasi), mengubah material ke URP Lit dengan tabel look, membuat Animator Controller, prefab (hero, musuh, boss, proyektil, skill, power-up, VFX), ScriptableObject (musuh, upgrade, skill, balance), scene Boot/MainMenu/GameArena, dan menyetel URP Mobile (render scale 1, MSAA 2×, HDR aktif untuk post-processing, bayangan 28 m). Audio: musik `Streaming`, ambience `CompressedInMemory`, SFX `DecompressOnLoad` (Vorbis). Perintahnya ada di `docs/build_android.md`.
 
 ## Lisensi aset
 
 - Mesh, tekstur, ikon, dan melodi dibuat sendiri di mesin ini.
+- Soundfont GeneralUser GS (S. Christian Collins) mengizinkan pemakaian komersial untuk musik yang dirender; dipakai `build_audio_hd.py`, tidak dimasukkan ke repositori.
 - Soundfont `/usr/share/sounds/sf2/FluidR3_GM.sf2` (paket `fluid-soundfont-gm`) berlisensi MIT dan hanya dipakai untuk merender MIDI orisinal. File soundfont tidak dimasukkan ke repositori.
 - Tidak ada aset pihak ketiga yang disalin.

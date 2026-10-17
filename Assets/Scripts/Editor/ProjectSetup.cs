@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.15.0";
+        const string AppVersion = "0.16.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -158,6 +158,7 @@ namespace SlimeBreaker.EditorTools
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
             ConfigureTextures();
+            ConfigureAudio();
             LoadUiArt();
             SharedMaterials();
             var models = AssetDatabase.FindAssets("t:Model", new[] { ArtRoot });
@@ -318,18 +319,26 @@ namespace SlimeBreaker.EditorTools
                 BiomeObstacle("Assets/Prefabs/Environment/OBS_CrystalSpire.prefab", Obstacle.Kind.Ruin, 0.75f, env["CrystalSpire"], Biome.Crystal),
                 BiomeObstacle("Assets/Prefabs/Environment/OBS_RoyalColumn.prefab", Obstacle.Kind.Ruin, 0.75f, env["RoyalColumn"], Biome.Royal)
             };
-            var rain = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Rain.prefab", new Color(0.65f, 0.75f, 0.9f), 280, 14f, 0.08f, 2.4f, ParticleSystemShapeType.Box, 20f, "rain", true);
-            var snowWx = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Snow.prefab", new Color(0.92f, 0.96f, 1f), 120, 1.4f, 0.12f, 0.25f, ParticleSystemShapeType.Box, 20f, "wind", false);
-            var fireflies = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Fireflies.prefab", new Color(1f, 0.92f, 0.45f), 36, 0.35f, 0.08f, -0.05f, ParticleSystemShapeType.Sphere, 10f, null, false);
-            var dust = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Dust.prefab", new Color(1f, 0.82f, 0.5f, 0.5f), 56, 0.4f, 0.16f, -0.08f, ParticleSystemShapeType.Box, 18f, "wind", false);
-            var ash = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Ash.prefab", new Color(0.55f, 0.32f, 0.18f, 0.7f), 70, 0.55f, 0.14f, 0.12f, ParticleSystemShapeType.Box, 18f, "wind", false);
-            var spores = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Spores.prefab", new Color(0.55f, 0.85f, 0.3f, 0.55f), 48, 0.28f, 0.12f, -0.04f, ParticleSystemShapeType.Box, 16f, null, false);
-            var sparks = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Sparks.prefab", new Color(1f, 0.92f, 0.45f), 40, 0.9f, 0.07f, 0.05f, ParticleSystemShapeType.Box, 16f, null, false);
+            // Weather sprites (build_pbr_textures.fx_textures): streaks for rain, flakes for snow, soft glows, mist puffs.
+            var rainMat = ParticleMaterial("Assets/Art/VFX/Materials/MAT_FX_Rain.mat", "TEX_FX_Rain", true);
+            var snowMat = ParticleMaterial("Assets/Art/VFX/Materials/MAT_FX_Snow.mat", "TEX_FX_Snow", false);
+            var glowMat = ParticleMaterial("Assets/Art/VFX/Materials/MAT_FX_Glow.mat", "TEX_FX_Glow", true);
+            var softMat = ParticleMaterial("Assets/Art/VFX/Materials/MAT_FX_Soft.mat", "TEX_FX_Glow", false);
+            var ringMat = ParticleMaterial("Assets/Art/VFX/Materials/MAT_FX_Ring.mat", "TEX_FX_Ring", false);
+            var mistMat = ParticleMaterial("Assets/Art/VFX/Materials/MAT_FX_Mist.mat", "TEX_FX_Mist", false);
+            var rain = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Rain.prefab", new Color(0.7f, 0.78f, 0.92f, 0.55f), 650, 16f, 0.06f, 2.6f, ParticleSystemShapeType.Box, 22f, "rain", true, rainMat, false, ringMat);
+            var snowWx = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Snow.prefab", new Color(0.95f, 0.97f, 1f, 0.9f), 320, 1.2f, 0.11f, 0.22f, ParticleSystemShapeType.Box, 22f, "wind", false, snowMat, true);
+            var fireflies = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Fireflies.prefab", new Color(1f, 0.92f, 0.45f), 44, 0.35f, 0.09f, -0.05f, ParticleSystemShapeType.Sphere, 10f, null, false, glowMat, true);
+            var dust = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Dust.prefab", new Color(1f, 0.85f, 0.6f, 0.35f), 90, 0.5f, 0.14f, -0.06f, ParticleSystemShapeType.Box, 20f, "wind", false, softMat, true);
+            var ash = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Ash.prefab", new Color(0.45f, 0.4f, 0.38f, 0.75f), 130, 0.6f, 0.08f, 0.1f, ParticleSystemShapeType.Box, 20f, "wind", false, snowMat, true);
+            var spores = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Spores.prefab", new Color(0.6f, 0.9f, 0.35f, 0.7f), 70, 0.25f, 0.1f, -0.04f, ParticleSystemShapeType.Box, 18f, null, false, glowMat, true);
+            var sparks = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Sparks.prefab", new Color(1f, 0.85f, 0.4f), 50, 1.0f, 0.06f, 0.05f, ParticleSystemShapeType.Box, 18f, null, false, glowMat, true);
+            var mist = MistPrefab("Assets/Prefabs/VFX/VFX_Weather_Mist.prefab", mistMat);
             var portal = PortalPrefab("Assets/Prefabs/Environment/ENV_Exit_Portal.prefab", env["RuneRing"]);
 
             BuildBoot();
             BuildMenu(hero, heroMenuController, env);
-            BuildArena(balance, upgrades, skills, hero, normal, fast, tank, ranged, boss, bossDefs, hostileBolt, lightning, env, vfx, powerUp, portal, obstacles, rain, snowWx, fireflies, dust, ash, spores, sparks);
+            BuildArena(balance, upgrades, skills, hero, normal, fast, tank, ranged, boss, bossDefs, hostileBolt, lightning, env, vfx, powerUp, portal, obstacles, rain, snowWx, fireflies, dust, ash, spores, sparks, mist);
             ConfigurePlayerSettings();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -441,7 +450,10 @@ namespace SlimeBreaker.EditorTools
                     importer.mipmapEnabled = true;
                     importer.anisoLevel = 4;
                     importer.filterMode = FilterMode.Trilinear;
-                    importer.wrapMode = TextureWrapMode.Repeat;
+                    bool fx = Path.GetFileName(path).StartsWith("TEX_FX_", StringComparison.OrdinalIgnoreCase);
+                    importer.wrapMode = fx ? TextureWrapMode.Clamp : TextureWrapMode.Repeat;
+                    if (fx)
+                        importer.alphaIsTransparency = true;
                     importer.maxTextureSize = 2048;
                     // Cut-out foliage atlases: keep alpha-test coverage in the mips so grass does not thin out with distance.
                     bool atlas = path.Contains("_Atlas");
@@ -516,6 +528,12 @@ namespace SlimeBreaker.EditorTools
                 // Hand-made particle/trail/beam materials keep their unlit shaders.
                 if (mat.shader != null && (mat.shader.name.Contains("Particles") || mat.shader.name.Contains("Unlit")))
                     continue;
+                // Slime bodies (and the boss body, not its cape) are gel.
+                if (IsJellyMaterial(mat.name))
+                {
+                    ConfigureJelly(mat);
+                    continue;
+                }
                 // Hand-built HD materials (ground sets) already use the Slime Breaker shaders; leave them alone.
                 if (mat.shader != null && mat.shader.name.StartsWith("SlimeBreaker/") && !mat.name.StartsWith("MAT_hd_", StringComparison.OrdinalIgnoreCase))
                     continue;
@@ -740,6 +758,37 @@ namespace SlimeBreaker.EditorTools
             mat.SetTexture("_EmissionMap", look.emissionFromTexture ? TextureNamed(look.texture + "_Emit") : null);
             SetKeyword(mat, "_EMISSION", emissive);
             mat.globalIlluminationFlags = emissive ? MaterialGlobalIlluminationFlags.RealtimeEmissive : MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            mat.enableInstancing = true;
+            EditorUtility.SetDirty(mat);
+        }
+
+        static bool IsJellyMaterial(string name)
+        {
+            string n = name.ToLowerInvariant();
+            return n.Contains("slime") || (n.StartsWith("mat_king") && !n.Contains("cape"));
+        }
+
+        /// <summary>SlimeBreaker/Jelly with the Blender colour; tank slimes are denser, the king glows more.</summary>
+        static void ConfigureJelly(Material mat)
+        {
+            var shader = Shader.Find("SlimeBreaker/Jelly");
+            if (shader == null)
+                throw new InvalidOperationException("Shader SlimeBreaker/Jelly tidak ditemukan.");
+            Color color = mat.HasProperty("_BaseColor") ? mat.GetColor("_BaseColor") : mat.HasProperty("_Color") ? mat.GetColor("_Color") : Color.green;
+            mat.shader = shader;
+            string n = mat.name.ToLowerInvariant();
+            mat.SetColor("_BaseColor", color);
+            mat.SetColor("_EmissionColor", Color.black);
+            mat.SetTexture("_NoiseMap", TextureNamed("TEX_Noise_Macro"));
+            mat.SetFloat("_Smoothness", 0.88f);
+            mat.SetFloat("_Wrap", 0.5f);
+            mat.SetFloat("_Subsurface", n.Contains("tank") ? 0.22f : 0.3f);
+            mat.SetFloat("_RimStrength", 0.45f);
+            mat.SetFloat("_RimPower", 3.2f);
+            mat.SetFloat("_CoreDarken", n.Contains("tank") ? 0.7f : 0.6f);
+            mat.SetFloat("_GlowStrength", n.Contains("king") ? 0.12f : 0.08f);
+            mat.SetFloat("_NoiseScale", n.Contains("king") ? 0.9f : 1.6f);
+            mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             mat.enableInstancing = true;
             EditorUtility.SetDirty(mat);
         }
@@ -1425,7 +1474,8 @@ namespace SlimeBreaker.EditorTools
                 SetLayerRecursive(root.GetChild(i), layer);
         }
 
-        static GameObject WeatherPrefab(string path, Color color, int count, float speed, float size, float gravity, ParticleSystemShapeType shapeType, float shapeSize, string ambience, bool streaks)
+        static GameObject WeatherPrefab(string path, Color color, int count, float speed, float size, float gravity, ParticleSystemShapeType shapeType, float shapeSize, string ambience, bool streaks,
+            Material material = null, bool turbulence = false, Material splashMaterial = null)
         {
             var root = new GameObject(Path.GetFileNameWithoutExtension(path));
             var particles = root.AddComponent<ParticleSystem>();
@@ -1434,7 +1484,7 @@ namespace SlimeBreaker.EditorTools
             main.playOnAwake = true;
             main.startLifetime = streaks ? 0.7f : 2.4f;
             main.startSpeed = speed;
-            main.startSize = size;
+            main.startSize = new ParticleSystem.MinMaxCurve(size * 0.6f, size * 1.4f);
             main.startColor = color;
             main.maxParticles = count * 3;
             main.gravityModifier = gravity;
@@ -1447,19 +1497,136 @@ namespace SlimeBreaker.EditorTools
                 shape.scale = new Vector3(shapeSize, 1.2f, shapeSize);
             else
                 shape.radius = shapeSize;
+            if (turbulence)
+            {
+                // Wind drift: flakes, ash and dust wander instead of falling on rails.
+                var noise = particles.noise;
+                noise.enabled = true;
+                noise.strength = 0.7f;
+                noise.frequency = 0.35f;
+                noise.scrollSpeed = 0.25f;
+                noise.quality = ParticleSystemNoiseQuality.Low;
+            }
             var renderer = root.GetComponent<ParticleSystemRenderer>();
-            renderer.sharedMaterial = additiveParticleMaterial;
+            renderer.sharedMaterial = material != null ? material : additiveParticleMaterial;
             renderer.shadowCastingMode = ShadowCastingMode.Off;
             renderer.renderMode = streaks ? ParticleSystemRenderMode.Stretch : ParticleSystemRenderMode.Billboard;
             if (streaks)
             {
-                renderer.lengthScale = 2.4f;
-                renderer.velocityScale = 0.12f;
+                renderer.lengthScale = 3.2f;
+                renderer.velocityScale = 0.06f;
             }
+            if (splashMaterial != null)
+                AddRainSplashes(root.transform, splashMaterial, count);
             var rig = root.AddComponent<WeatherRig>();
             rig.height = 10f;
             rig.ambienceId = ambience;
             return SavePrefab(root, path);
+        }
+
+        /// <summary>Little expanding rings on the ground under the rain (child of the rain rig, which floats at 10 m).</summary>
+        static void AddRainSplashes(Transform rig, Material material, int rainRate)
+        {
+            var go = new GameObject("Splashes");
+            go.transform.SetParent(rig, false);
+            go.transform.localPosition = new Vector3(0f, -9.97f, 0f);
+            var particles = go.AddComponent<ParticleSystem>();
+            var main = particles.main;
+            main.loop = true;
+            main.playOnAwake = true;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.4f);
+            main.startSpeed = 0f;
+            main.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.16f);
+            main.startColor = new Color(0.82f, 0.88f, 1f, 0.45f);
+            main.startRotation3D = true;
+            main.startRotationX = Mathf.PI * 0.5f;
+            main.maxParticles = rainRate;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            var emission = particles.emission;
+            emission.rateOverTime = rainRate * 0.45f;
+            var shape = particles.shape;
+            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.scale = new Vector3(18f, 0.01f, 18f);
+            var size = particles.sizeOverLifetime;
+            size.enabled = true;
+            size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 0.4f, 1f, 3.2f));
+            var fade = particles.colorOverLifetime;
+            fade.enabled = true;
+            var gradient = new Gradient();
+            gradient.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0f, 1f) });
+            fade.color = gradient;
+            var renderer = go.GetComponent<ParticleSystemRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.alignment = ParticleSystemRenderSpace.World;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+        }
+
+        /// <summary>Low ground mist: a few large, very faint puffs drifting around the hero (tinted to the fog at runtime).</summary>
+        static GameObject MistPrefab(string path, Material material)
+        {
+            var root = new GameObject(Path.GetFileNameWithoutExtension(path));
+            var particles = root.AddComponent<ParticleSystem>();
+            var main = particles.main;
+            main.loop = true;
+            main.playOnAwake = true;
+            main.prewarm = true;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(7f, 10f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.05f, 0.2f);
+            main.startSize = new ParticleSystem.MinMaxCurve(5f, 9f);
+            main.startColor = new Color(0.8f, 0.85f, 0.9f, 0.09f);
+            main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+            main.maxParticles = 70;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            var emission = particles.emission;
+            emission.rateOverTime = 7f;
+            var shape = particles.shape;
+            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.scale = new Vector3(28f, 0.4f, 28f);
+            var fade = particles.colorOverLifetime;
+            fade.enabled = true;
+            var gradient = new Gradient();
+            gradient.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.3f), new GradientAlphaKey(1f, 0.7f), new GradientAlphaKey(0f, 1f) });
+            fade.color = gradient;
+            var renderer = root.GetComponent<ParticleSystemRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.sortingFudge = -10f;
+            var rig = root.AddComponent<WeatherRig>();
+            rig.height = 0.7f;
+            return SavePrefab(root, path);
+        }
+
+        /// <summary>URP particle material with a sprite: additive (rain, glows) or alpha-blended (snow, rings, mist).</summary>
+        static Material ParticleMaterial(string path, string textureName, bool additive)
+        {
+            var shader = Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Universal Render Pipeline/Unlit");
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                material = new Material(shader);
+                AssetDatabase.CreateAsset(material, path);
+            }
+            material.shader = shader;
+            material.SetFloat("_Surface", 1f);
+            material.SetFloat("_Blend", additive ? 2f : 0f);
+            material.SetInt("_SrcBlend", (int)(additive ? BlendMode.One : BlendMode.SrcAlpha));
+            material.SetInt("_DstBlend", (int)(additive ? BlendMode.One : BlendMode.OneMinusSrcAlpha));
+            material.SetInt("_ZWrite", 0);
+            material.SetInt("_Cull", (int)CullMode.Off);
+            material.SetColor("_BaseColor", Color.white);
+            material.SetTexture("_BaseMap", TextureNamed(textureName));
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.renderQueue = (int)RenderQueue.Transparent;
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.DisableKeyword("_ALPHATEST_ON");
+            if (TextureNamed(textureName) == null)
+                Debug.LogWarning("Sprite partikel hilang: " + textureName);
+            EditorUtility.SetDirty(material);
+            return material;
         }
 
         static GameObject PortalPrefab(string path, GameObject runePrefab)
@@ -1860,7 +2027,9 @@ namespace SlimeBreaker.EditorTools
 
             var audio = new GameObject("Audio").AddComponent<AudioService>();
             audio.music = Clip("Assets/Audio/Music/MUS_Menu.ogg");
-            audio.musicVolume = 0.4f;
+            audio.musicVolume = 0.5f;
+            audio.biomeAmbience = new[] { Clip("Assets/Audio/Ambience/AMB_Forest.ogg") };
+            audio.ambienceVolume = 0.35f;
             audio.entries = new[] { Sfx("ui", "SFX_UI", 0.7f, 0.03f) };
 
             EventSystem();
@@ -1959,7 +2128,8 @@ namespace SlimeBreaker.EditorTools
             GameObject dust,
             GameObject ash,
             GameObject spores,
-            GameObject sparks)
+            GameObject sparks,
+            GameObject mist)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var groundInstance = (GameObject)PrefabUtility.InstantiatePrefab(env["ground"]);
@@ -2067,6 +2237,7 @@ namespace SlimeBreaker.EditorTools
             generator.royalGround = royalGroundMaterial;
             generator.rainRig = rain;
             generator.snowRig = snowWx;
+            generator.mistRig = mist;
             generator.firefliesRig = fireflies;
             generator.dustRig = dust;
             generator.ashRig = ash;
@@ -2088,7 +2259,13 @@ namespace SlimeBreaker.EditorTools
             stage.minionPrefab = normal;
             stage.portalPrefab = portalPrefab;
             stage.cameraRig = follow;
-            audio.music = Clip("Assets/Audio/Music/MUS_Arena.ogg");
+            audio.music = Clip("Assets/Audio/Music/MUS_Forest.ogg");
+            audio.musicVolume = 0.5f;
+            audio.biomeMusic = BiomeClips("Music", "MUS_");
+            audio.bossMusic = Clip("Assets/Audio/Music/MUS_Boss.ogg");
+            audio.biomeAmbience = BiomeClips("Ambience", "AMB_");
+            audio.nightAmbience = Clip("Assets/Audio/Ambience/AMB_Night.ogg");
+            audio.ambienceVolume = 0.6f;
             audio.entries = new[]
             {
                 Sfx("hit", "SFX_Hit", 0.42f, 0.05f, 0.1f),
@@ -2689,7 +2866,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 15;
+            PlayerSettings.Android.bundleVersionCode = 16;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;
@@ -2703,6 +2880,45 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.Android.optimizedFramePacing = true;
             PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.Vulkan, GraphicsDeviceType.OpenGLES3 });
             PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
+        }
+
+        static readonly string[] BiomeAudioNames = { "Forest", "Snow", "Desert", "Thunder", "Swamp", "Shadow", "Volcano", "Storm", "Crystal", "Royal" };
+
+        /// <summary>Music streams from disk (long tracks), ambience beds decompress on load, short effects stay in memory.</summary>
+        static void ConfigureAudio()
+        {
+            foreach (var guid in AssetDatabase.FindAssets("t:AudioClip", new[] { AudioRoot }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var importer = AssetImporter.GetAtPath(path) as AudioImporter;
+                if (importer == null)
+                    continue;
+                bool musicTrack = path.Contains("/Music/");
+                bool bed = path.Contains("/Ambience/") || path.EndsWith("SFX_Rain.ogg") || path.EndsWith("SFX_Wind.ogg");
+                var settings = importer.defaultSampleSettings;
+                var loadType = musicTrack ? AudioClipLoadType.Streaming : bed ? AudioClipLoadType.CompressedInMemory : AudioClipLoadType.DecompressOnLoad;
+                float quality = musicTrack ? 0.6f : bed ? 0.5f : 0.7f;
+                bool mono = bed && !path.Contains("/Ambience/");
+                if (settings.compressionFormat == AudioCompressionFormat.Vorbis && settings.loadType == loadType && Mathf.Approximately(settings.quality, quality)
+                    && settings.preloadAudioData == !musicTrack && importer.loadInBackground == musicTrack && importer.forceToMono == mono)
+                    continue;
+                settings.compressionFormat = AudioCompressionFormat.Vorbis;
+                settings.loadType = loadType;
+                settings.quality = quality;
+                settings.preloadAudioData = !musicTrack;
+                importer.defaultSampleSettings = settings;
+                importer.loadInBackground = musicTrack;
+                importer.forceToMono = mono;
+                importer.SaveAndReimport();
+            }
+        }
+
+        static AudioClip[] BiomeClips(string folder, string prefix)
+        {
+            var clips = new AudioClip[BiomeAudioNames.Length];
+            for (int i = 0; i < clips.Length; i++)
+                clips[i] = Clip("Assets/Audio/" + folder + "/" + prefix + BiomeAudioNames[i] + ".ogg");
+            return clips;
         }
 
         static AudioClip Clip(string path)

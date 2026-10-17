@@ -779,6 +779,37 @@ ATLASES = {
 }
 
 
+def fx_textures(out):
+    """Particle sprites (RGBA, white with alpha) for weather and ground mist."""
+    def save(name, alpha, size):
+        a = np.clip(alpha, 0, 1)
+        rgba = np.dstack((np.ones_like(a), np.ones_like(a), np.ones_like(a), a))
+        Image.fromarray((rgba * 255 + 0.5).astype(np.uint8), "RGBA").resize(size, Image.LANCZOS).save(os.path.join(out, name + ".png"))
+
+    n = 256
+    y, x = np.mgrid[0:n, 0:n].astype(F)
+    u = (x + 0.5) / n * 2 - 1
+    v = (y + 0.5) / n * 2 - 1
+    r = np.sqrt(u * u + v * v)
+    # Rain: thin bright core fading at both ends (stretched along velocity by the renderer).
+    streak = np.exp(-(u / 0.12) ** 2) * np.clip(1 - np.abs(v), 0, 1) ** 0.7
+    save("TEX_FX_Rain", streak, (64, 256))
+    # Snowflake: soft disc with a faint six-armed crystal.
+    ang = np.arctan2(v, u)
+    arms = np.clip(np.cos(ang * 6) * 0.5 + 0.5, 0, 1) ** 6 * np.clip(1 - r / 0.9, 0, 1)
+    flake = np.clip(np.exp(-(r / 0.35) ** 2) + arms * 0.6, 0, 1)
+    save("TEX_FX_Snow", flake, (64, 64))
+    # Splash ring: thin ring with a soft inner fill.
+    ring = np.exp(-((r - 0.7) / 0.08) ** 2) + np.exp(-(r / 0.3) ** 2) * 0.15
+    save("TEX_FX_Ring", ring, (128, 128))
+    # Mist / smoke puff: noisy soft blob.
+    puff_noise = fbm(n, 4001, freq=4, octaves=5)
+    puff = np.clip(1 - r, 0, 1) ** 1.5 * (0.45 + 0.75 * puff_noise)
+    save("TEX_FX_Mist", puff, (128, 128))
+    # Glow: smooth gaussian (embers, fireflies, spores).
+    save("TEX_FX_Glow", np.exp(-(r / 0.42) ** 2), (64, 64))
+
+
 def macro_noise(out):
     """Small tileable noise the ground shader samples in world space to hide tiling (R, G, B = three scales)."""
     n = 256
@@ -807,6 +838,7 @@ def main():
     preview_dir = os.path.join(os.path.dirname(out.rstrip("/")) or ".", "previews", "textures")
     os.makedirs(preview_dir, exist_ok=True)
     macro_noise(out)
+    fx_textures(out)
     for name, (builder, size) in list(GROUNDS.items()) + list(PROPS.items()):
         if only and name not in only:
             continue

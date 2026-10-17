@@ -135,6 +135,16 @@
 - Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 22/22. PlayMode 30/30. APK `SLIMEBREAKER_APK_OK` 0.15.0.
 - Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
 
+### Putaran 16 — lingkungan, material, dan audio HD
+
+- Tekstur PBR prosedural (albedo/normal/mask) untuk 10 tanah bioma, properti, atlas daun/rumput, penutup bioma.
+- 21 properti dibangun ulang HD (pohon berkartu daun, batu displacement, reruntuhan, kaktus, kristal…).
+- Shader URP sendiri: Ground (anti-tiling), Lit (angin, translusensi, penutup lumut/salju/pasir/abu), Jelly (slime gel).
+- Post-processing ACES + grading per bioma/malam; cuaca dengan sprite hujan/salju, percikan hujan, kabut.
+- Audio: 12 musik orkestra (per bioma + boss + menu, crossfade), 11 ambience alam, SFX dan jingle baru; tanpa clipping.
+- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 22/22. PlayMode 31/31. APK `SLIMEBREAKER_APK_OK` 0.16.0.
+- Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

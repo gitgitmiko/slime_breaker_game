@@ -34,7 +34,9 @@ Semua aset dibuat sendiri di mesin ini (Blender, Python/numpy/Pillow, FluidSynth
 
 ## Material
 
-- URP Lit. Tanah, kulit kayu, dan batu memakai tekstur 1024/512 px + normal map prosedural.
+- Tanah: shader `SlimeBreaker/Ground` dengan set PBR 2048/1024 px (albedo, normal, mask AO/smoothness/metallic) dan anti-tiling. Properti: `SlimeBreaker/Lit` dengan daun/rumput beralpha yang bergoyang angin dan penutup bioma (lumut, salju, pasir, abu).
+- Slime dan Slime King: `SlimeBreaker/Jelly` — gel basah dengan subsurface, rim terang, inti lebih gelap.
+- Post-processing ACES + bloom + grading per bioma (gurun hangat, salju dingin, bayangan ungu, gunung api oranye); malam lebih biru dan bloom lebih kuat.
 - Slime, permata, iris, kristal, orb XP, dan mesh skill memakai emisi supaya tetap terbaca; musuh yang melambat berpendar biru, yang terbakar berpendar oranye (MaterialPropertyBlock).
 - Emas metallic 0,75. Partikel dan trail memakai material aditif tanpa tulis depth.
 - Satu-satunya transparansi alpha adalah sinar tipis di atas pickup power-up.

@@ -58,6 +58,7 @@ namespace SlimeBreaker
         public GameObject ashRig;
         public GameObject sporesRig;
         public GameObject sparksRig;
+        public GameObject mistRig;
         [Header("Biome cover (moss / snow / sand / ash on upward prop faces)")]
         public Texture2D coverMoss;
         public Texture2D coverSnow;
@@ -287,6 +288,7 @@ namespace SlimeBreaker
             equator *= ambientBoost;
             groundAmbient *= ambientBoost;
             PostFx.Instance?.ApplyTheme(theme);
+            AudioService.Instance?.SetTheme(theme);
 
             if (sun != null)
             {
@@ -772,12 +774,39 @@ namespace SlimeBreaker
                         rig = firefliesRig;
                     break;
             }
-            if (rig == null)
+            if (rig != null)
+            {
+                var instance = Instantiate(rig, Root);
+                instance.name = rig.name;
+                if (instance.GetComponent<WeatherRig>() == null)
+                    instance.AddComponent<WeatherRig>();
+            }
+            SpawnMist(theme);
+        }
+
+        public bool HasMist { get; private set; }
+
+        /// <summary>Ground mist for damp or dark scenes, tinted to the fog so it melts into the distance.</summary>
+        void SpawnMist(ArenaTheme theme)
+        {
+            HasMist = false;
+            if (mistRig == null)
                 return;
-            var instance = Instantiate(rig, Root);
-            instance.name = rig.name;
-            if (instance.GetComponent<WeatherRig>() == null)
-                instance.AddComponent<WeatherRig>();
+            bool damp = theme.biome == Biome.Swamp || theme.biome == Biome.Storm || theme.biome == Biome.Shadow
+                || theme.weather == Weather.Rain || (theme.IsNight && theme.biome == Biome.Forest);
+            if (!damp)
+                return;
+            var mist = Instantiate(mistRig, Root);
+            mist.name = mistRig.name;
+            var particles = mist.GetComponent<ParticleSystem>();
+            if (particles != null)
+            {
+                var main = particles.main;
+                Color tint = Color.Lerp(RenderSettings.fogColor, Color.white, 0.35f);
+                tint.a = theme.biome == Biome.Swamp ? 0.13f : 0.09f;
+                main.startColor = tint;
+            }
+            HasMist = true;
         }
     }
 }

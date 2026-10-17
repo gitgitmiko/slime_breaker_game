@@ -164,6 +164,14 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - PlayMode menambah tes klip hero + tekstur mata + emote Cast/Victory, dan menu utama memutar loop Menu 4 s.
 - Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
 
+## Hasil 17 Oktober 2026 (putaran 16 — lingkungan dan audio HD)
+
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 22/22; PlayMode 31/31 lolos; APK: `SLIMEBREAKER_APK_OK`.
+- APK: `Builds/SlimeBreaker.apk` (98 MB — tekstur PBR 2048 dan audio orkestra), disalin ke `~/Downloads/SlimeBreaker-0.16.0.apk`.
+- Paket: `com.gitgitmiko.slimebreaker` 0.16.0 (versionCode 16).
+- PlayMode menambah tes lingkungan HD di 10 bioma (PostFx, shader Ground, properti HD) dan audio per bioma + boss.
+- Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

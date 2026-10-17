@@ -592,6 +592,25 @@ namespace SlimeBreaker.Tests
             foreach (var id in new[] { "hit", "cast", "bolthit", "enemydeath", "playerhit", "dash", "pickup", "levelup", "powerup", "powerupspawn", "freeze", "lightning", "fire", "arcane", "bosswarn", "slam", "ui", "portal" })
                 Assert.IsTrue(audio.Has(id), "AudioService has no clip for '" + id + "'");
             Assert.IsNotNull(audio.music, "GameArena has no music clip");
+            Assert.AreEqual(10, audio.biomeMusic != null ? audio.biomeMusic.Length : 0, "AudioService needs one music track per biome");
+            Assert.AreEqual(10, audio.biomeAmbience != null ? audio.biomeAmbience.Length : 0, "AudioService needs one ambience bed per biome");
+            for (int i = 0; i < 10; i++)
+            {
+                Assert.IsNotNull(audio.biomeMusic[i], "no music for biome " + (Biome)i);
+                Assert.IsNotNull(audio.biomeAmbience[i], "no ambience for biome " + (Biome)i);
+            }
+            Assert.IsNotNull(audio.bossMusic, "AudioService has no boss track");
+            Assert.IsNotNull(audio.CurrentBed, "no ambience bed is playing in the arena");
+
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            stage.ForceFloor(11);
+            yield return null;
+            Assert.AreEqual(audio.biomeMusic[(int)stage.Theme.biome], audio.CurrentMusic, "floor music does not follow the biome");
+            audio.SetBossMusic(true);
+            Assert.AreEqual(audio.bossMusic, audio.CurrentMusic, "boss track did not start");
+            audio.SetBossMusic(false);
+            Assert.AreEqual(audio.biomeMusic[(int)stage.Theme.biome], audio.CurrentMusic, "biome track did not return after the boss");
+            Debug.Log("PLAYTEST audio biome=" + stage.Theme.biome + " music=" + audio.CurrentMusic.name + " bed=" + audio.CurrentBed.name);
         }
 
         [UnityTest]

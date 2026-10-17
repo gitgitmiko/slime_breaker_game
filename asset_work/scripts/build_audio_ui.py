@@ -6,7 +6,8 @@ MIT-licensed FluidR3 GM soundfont.
 
 Run from the repository root:
   python3 asset_work/scripts/build_audio_ui.py
-  python3 asset_work/scripts/build_audio_ui.py ui   # UI sprites and icons only
+  python3 asset_work/scripts/build_audio_ui.py ui   # UI sprites and icons only (default)
+  python3 asset_work/scripts/build_audio_ui.py legacy-audio   # old synth SFX + MIDI music (superseded by build_audio_hd.py)
 """
 
 import math
@@ -751,7 +752,8 @@ def icons():
 
 def main():
     import sys
-    if len(sys.argv) > 1 and sys.argv[1] == "ui":
+    # Audio is now produced by build_audio_hd.py; the old synth SFX/MIDI only run with "legacy-audio".
+    if len(sys.argv) <= 1 or sys.argv[1] != "legacy-audio":
         # UI sprites only; leaves audio untouched.
         panels()
         modern_ui()

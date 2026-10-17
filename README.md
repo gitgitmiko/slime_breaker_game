@@ -17,7 +17,11 @@ Game action roguelite 3D untuk Android, 60 fps. Seorang penyihir ungu chibi mela
 python3 asset_work/scripts/build_textures.py asset_work/textures
 blender --background --python asset_work/scripts/build_assets.py -- \
   asset_work/output asset_work/previews asset_work/textures
+python3 asset_work/scripts/build_pbr_textures.py asset_work/textures
+blender --background --python asset_work/scripts/build_props_hd.py -- \
+  asset_work/output asset_work/previews asset_work/textures
 python3 asset_work/scripts/build_audio_ui.py
+python3 asset_work/scripts/build_audio_hd.py all
 ```
 
 ## Membuka proyek

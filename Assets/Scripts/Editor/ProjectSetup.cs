@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.16.1";
+        const string AppVersion = "0.17.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -2276,13 +2276,13 @@ namespace SlimeBreaker.EditorTools
             audio.ambienceVolume = 0.6f;
             audio.entries = new[]
             {
-                Sfx("hit", "SFX_Hit", 0.42f, 0.05f, 0.1f),
+                Sfx("hit", "SFX_Hit", 0.38f, 0.05f, 0.1f, 0.15f),
                 Sfx("bolthit", "SFX_BoltHit", 0.5f, 0.04f, 0.1f),
                 Sfx("cast", "SFX_Cast", 0.32f, 0.08f, 0.08f),
-                Sfx("enemydeath", "SFX_EnemyDeath", 0.55f, 0.06f, 0.12f),
+                Sfx("enemydeath", "SFX_EnemyDeath", 0.4f, 0.09f, 0.12f, 0.3f),
                 Sfx("playerhit", "SFX_PlayerHit", 0.85f, 0.1f),
                 Sfx("dash", "SFX_Dash", 0.7f, 0.08f),
-                Sfx("pickup", "SFX_Pickup", 0.4f, 0.03f, 0.14f),
+                Sfx("pickup", "SFX_Pickup", 0.2f, 0.08f, 0.05f, 0.4f),
                 Sfx("levelup", "SFX_LevelUp", 0.9f, 0.2f),
                 Sfx("powerupspawn", "SFX_PowerUpSpawn", 0.9f, 0.2f),
                 Sfx("powerup", "SFX_PowerUp", 0.95f, 0.2f),
@@ -2373,7 +2373,7 @@ namespace SlimeBreaker.EditorTools
             return panel;
         }
 
-        static AudioService.Entry Sfx(string id, string file, float volume, float minInterval, float jitter = 0.06f)
+        static AudioService.Entry Sfx(string id, string file, float volume, float minInterval, float jitter = 0.06f, float crowdFalloff = 0f)
         {
             return new AudioService.Entry
             {
@@ -2381,7 +2381,8 @@ namespace SlimeBreaker.EditorTools
                 clip = Clip("Assets/Audio/SFX/" + file + ".ogg"),
                 volume = volume,
                 minInterval = minInterval,
-                pitchJitter = jitter
+                pitchJitter = jitter,
+                crowdFalloff = crowdFalloff
             };
         }
 
@@ -2876,7 +2877,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 17;
+            PlayerSettings.Android.bundleVersionCode = 18;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

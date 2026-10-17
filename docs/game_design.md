@@ -8,7 +8,7 @@ Satu run berlangsung di arena radius 22 m selama **100 lantai**. Level hero terp
 
 Menu → arena lantai 1 (hutan siang cerah) → gerak dan dash → penyihir otomatis menembakkan bolt sihir pelacak **hanya saat diam** ke musuh terdekat yang terlihat (jangkauan 4,4 m; batu/pohon memblokir tembakan) → orb EXP → setiap naik **level hero**, serangan dasar **+10**, lalu permainan jeda dan menawarkan 3 upgrade (hero max Lv 999) → setiap kelipatan 5 **level hero** satu kristal power-up muncul di map yang sama → lantai N butuh **N×10** slime (lantai 1 = 10, lantai 2 = 20, …) sebelum **pintu** muncul; hero masuk dulu baru naik lantai → setiap kelipatan 10 **lantai** slime biasa lenyap, peringatan **BOSS LANTAI N**, kamera zoom ke bos, lalu pertarungan (boss memanggil 10 slime kecil tiap 20 detik) → Royal Slime di lantai 100 = tamat → emas disimpan → upgrade permanen di menu. Keluar di tengah run menyimpan progres ke `slimebreaker-run.json`; tombol **Lanjutkan** di menu memulihkan lantai, level, skill, HP, dan EXP.
 
-Hero adalah penyihir ungu chibi (lihat `docs/art_direction.md`). Serangan dasar dianimasikan sebagai pukulan tongkat; bolt sihir lepas tepat saat tongkat menghantam. Mengambil power-up atau Boss Breaker memutar animasi Cast; mengalahkan boss memutar Victory. Menu utama menampilkan hero dengan animasi Menu (melambai, memutar tongkat) yang berayun pelan menghadap kamera.
+Hero adalah penyihir cat-boy chibi berambut hitam (lihat `docs/art_direction.md`). Serangan dasar dianimasikan sebagai pukulan tongkat; bolt sihir lepas tepat saat tongkat menghantam. Mengambil power-up atau Boss Breaker memutar animasi Cast; mengalahkan boss memutar Victory. Menu utama menampilkan hero dengan animasi Menu (melambai, memutar tongkat) yang berayun pelan menghadap kamera.
 
 Seluruh HUD dan menu memakai gaya yang sama dengan bar HP boss: kaca gelap, garis tepi tipis, pil berwarna untuk label (HP merah, EXP hijau, LANTAI biru, Lv ungu), track gelap dengan isi berkilap, dan teks tebal berbayang. Tombol utama berwarna solid (emas = aksi utama, ungu = pilihan aktif, merah = keluar/tutup), tombol lain kaca transparan; tombol bulat (jeda, pengaturan, dash) berupa cakram kaca dengan ikon. Dash menampilkan cincin cyan yang berputar saat cooldown terisi. HUD menampilkan **Lantai**, progres bunuh slime lantai itu (misalnya `3 / 10`), **Lv**, timer, HP, **EXP**, dan **kartu status** modern di kiri atas di bawah bar HP (panel kaca gelap, header STATUS, grid 2×5 sel label redup + nilai tebal; LS hijau, DEF/TAKEN biru, CRIT emas saat aktif, nilai 0 diredupkan): **DMG**, **CRIT**, **CRIT RATE**, **ATK SPD**, **RANGE**, **MOVE**, **EXP** (bonus), **LS**, dan **DEF** (pengurangan damage dari Defender) + **TAKEN** (persen damage yang masih masuk). Panah wayfinder menunjuk pintu dan power-up yang aktif. Angka damage mengambang di atas musuh (krem), critical (**CRIT** emas lebih besar), damage yang diterima hero (merah), dan heal lifesteal (**+N hijau** di atas kepala hero, digabung tiap 0,25 s). Bolt sihir dasar hanya tembak saat hero diam; jalan atau dash menahan serangan dasar. Skill power-up tetap jalan sambil bergerak.
 
@@ -33,9 +33,9 @@ Seluruh HUD dan menu memakai gaya yang sama dengan bar HP boss: kaca gelap, gari
 
 Saat lantai mencapai kelipatan 10, arena masuk mode boss: minion lenyap, spawner berhenti, banner **BOSS LANTAI N** muncul, kamera zoom ke bos selama ~2,5 detik, lalu pertarungan dimulai. Boss memanggil **10 slime kecil setiap 20 detik** (maks ~14 hidup) supaya hero tetap bisa naik level dan mengambil power-up tiap 20 level. Setelah boss kalah, pintu muncul; masuk pintu baru ke lantai berikutnya.
 
-HP boss = lantai × 1000 (lantai 10 = 10.000, lantai 20 = 20.000, … lantai 100 = 100.000). Damage boss naik tiap lantai: **basic 50 + 3×(lantai−1)**, **skill 100 + 3×(lantai−1)**, **skill enrage 200 + 3×(lantai−1)** (lantai 10 = 77 / 127 / 227). Ketika HP boss turun di bawah 30%, ia **enrage** dan memakai N skill elemental (N = lantai / 10). Masuk enrage memutar **cutscene** 2,2 s: pertarungan beku, slow-motion, kamera zoom close-up ke boss, banner **ENRAGE!**, tubuh berdenyut merah-putih, gelombang kejut cincin api + guncangan kamera. Selama enrage tubuh boss terus berdenyut merah dan memercikkan bara; setiap skill enrage ditambah gelombang kejut cincin api, petir merah menyambar di sekitar boss, ledakan di target, dan guncangan kamera. Warna jatuhan/hujan skill condong ke merah.
+HP boss = lantai × 1.000.000 (lantai 10 = 10.000.000, lantai 20 = 20.000.000, … lantai 100 = 100.000.000). Damage boss naik tiap lantai: **basic 50 + 3×(lantai−1)**, **skill 100 + 3×(lantai−1)**, **skill enrage 200 + 3×(lantai−1)** (lantai 10 = 77 / 127 / 227). Ketika HP boss turun di bawah 30%, ia **enrage** dan memakai N skill elemental (N = lantai / 10). Masuk enrage memutar **cutscene** 2,2 s: pertarungan beku, slow-motion, kamera zoom close-up ke boss, banner **ENRAGE!**, tubuh berdenyut merah-putih, gelombang kejut cincin api + guncangan kamera. Selama enrage tubuh boss terus berdenyut merah dan memercikkan bara; setiap skill enrage ditambah gelombang kejut cincin api, petir merah menyambar di sekitar boss, ledakan di target, dan guncangan kamera. Warna jatuhan/hujan skill condong ke merah.
 
-**HP boss** tampil di atas layar di bawah bar lantai selama boss hidup: pil **BOSS** (berubah **ENRAGE** berdenyut saat enrage), nama boss, bar merah (oranye saat enrage) dengan jejak damage kuning redup yang menyusul, dan angka `7.250 / 10.000` (pemisah ribuan titik). Bar lantai di stage boss hanya berlabel BOSS.
+**HP boss** tampil di atas layar di bawah bar lantai selama boss hidup: pil **BOSS** (berubah **ENRAGE** berdenyut saat enrage), nama boss, bar merah (oranye saat enrage) dengan jejak damage kuning redup yang menyusul, dan angka `7.250.000 / 10.000.000` (pemisah ribuan titik). Bar lantai di stage boss hanya berlabel BOSS.
 
 **Boss kebal power-up.** Hanya serangan dasar (bolt) yang melukai boss. Skill power-up (Cincin Es, Petir Berantai, Nova Api, Misil Arkana) tidak membidik boss dan sentuhan ke boss memunculkan **IMMUNE** abu-abu; skill tetap melukai minion. Setiap gelombang minion punya peluang **35%** berisi satu **slime emas pembawa** (berkilau emas). Bunuh slime itu untuk menjatuhkan kristal emas **Boss Breaker** (ditunjuk panah power-up). Mengambilnya membuat semua power-up yang dimiliki bisa melukai boss selama **60 detik**. Selama aktif hero memakai aura emas-merah (cincin cahaya di kaki, api naik, percikan, bara tiap 0,45 s) dan HUD menampilkan hitung mundur **BOSS BREAKER Ns**. Hanya satu Boss Breaker beredar sekaligus (pembawa/kristal/efek aktif), dan pembawa hanya muncul jika hero sudah punya minimal satu skill. Skill memakai telegraf sesuai elemen: batu/es/racun/magma jatuh dari langit dengan **bayangan lunak** yang membesar dan menggelap saat batu mendekat tanah, api menembak bolt api, petir menyambar. Model boss memakai palet per-bagian: tubuh sesuai elemen, **jubah merah**, **mahkota emas**, permata mengikuti elemen.
 
@@ -58,16 +58,16 @@ Masuk pintu meregenerasi arena (fade). Cuaca dan siang/malam berganti setiap lan
 
 | Lantai | Nama | HP | Skill enrage | Keunikan |
 |---|---|---|---|---|
-| 10 | Rock Slime | 10.000 | 1 | Kulit batu, lempar batu ke atas lalu jatuh ke bayangan di tanah, slam lebih lebar |
-| 20 | Flame Slime | 20.000 | 2 | Tembakan api (`HostileProjectile`) + genangan bakar |
-| 30 | Frost Slime | 30.000 | 3 | Hujan es + aura dingin yang memperlambat hero |
-| 40 | Volt Slime | 40.000 | 4 | Sambaran petir + jatuhan kilat |
-| 50 | Toxic Slime | 50.000 | 5 | Hujan racun dan genangan |
-| 60 | Shadow Slime | 60.000 | 6 | Blink, hujan bayangan, selubung gelap |
-| 70 | Magma Slime | 70.000 | 7 | Hujan magma + jejak lava saat charge |
-| 80 | Storm Slime | 80.000 | 8 | Dorongan angin + jatuhan petir |
-| 90 | Crystal Slime | 90.000 | 9 | Cincin duri + perisai yang menahan bolt |
-| 100 | Royal Slime | 100.000 | 10 | Campuran tembakan api, hujan, dan zap. Kalahkan untuk **Tamat!** |
+| 10 | Rock Slime | 10.000.000 | 1 | Kulit batu, lempar batu ke atas lalu jatuh ke bayangan di tanah, slam lebih lebar |
+| 20 | Flame Slime | 20.000.000 | 2 | Tembakan api (`HostileProjectile`) + genangan bakar |
+| 30 | Frost Slime | 30.000.000 | 3 | Hujan es + aura dingin yang memperlambat hero |
+| 40 | Volt Slime | 40.000.000 | 4 | Sambaran petir + jatuhan kilat |
+| 50 | Toxic Slime | 50.000.000 | 5 | Hujan racun dan genangan |
+| 60 | Shadow Slime | 60.000.000 | 6 | Blink, hujan bayangan, selubung gelap |
+| 70 | Magma Slime | 70.000.000 | 7 | Hujan magma + jejak lava saat charge |
+| 80 | Storm Slime | 80.000.000 | 8 | Dorongan angin + jatuhan petir |
+| 90 | Crystal Slime | 90.000.000 | 9 | Cincin duri + perisai yang menahan bolt |
+| 100 | Royal Slime | 100.000.000 | 10 | Campuran tembakan api, hujan, dan zap. Kalahkan untuk **Tamat!** |
 
 ## Upgrade run (level-up)
 
@@ -92,4 +92,4 @@ Emas membeli peringkat damage, nyawa, dan laju. Pilihan grafis ikut tersimpan. M
 
 ## Audio
 
-`AudioService` memutar musik per bioma (10 track + `MUS_Boss` saat boss, crossfade equal-power 1,6 s), ambience alam per bioma (`AMB_Night` untuk hutan/kerajaan malam) ditambah lapisan cuaca (hujan, angin), dan efek lewat pool 10 AudioSource dengan variasi pitch dan interval minimum per id supaya kerumunan tidak menumpuk jadi derau. Kamera utama membawa `AudioListener` (dipasang `ProjectSetup` dan dijaga `UrpSceneBootstrap`).
+Orb EXP memakai bunyi "bloop" lembut bernada rendah; pemutaran beruntun pada id yang sama (pickup, kematian slime, hit) otomatis dilembutkan (`crowdFalloff`), jadi panen puluhan orb terdengar tenang. `AudioService` memutar musik per bioma (10 track + `MUS_Boss` saat boss, crossfade equal-power 1,6 s), ambience alam per bioma (`AMB_Night` untuk hutan/kerajaan malam) ditambah lapisan cuaca (hujan, angin), dan efek lewat pool 10 AudioSource dengan variasi pitch dan interval minimum per id supaya kerumunan tidak menumpuk jadi derau. Kamera utama membawa `AudioListener` (dipasang `ProjectSetup` dan dijaga `UrpSceneBootstrap`).

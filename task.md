@@ -152,6 +152,11 @@
 - Kaktus: ujung kubah tertutup, kuncup merah.
 - Setup OK. EditMode 22/22. PlayMode 32/32. APK 0.16.1.
 
+### Putaran 18 — hero cat-boy penyihir, HP boss jutaan, audio tenang, kaktus
+
+- Hero mengikuti referensi cat-boy + gaya penyihir; HP boss 10 juta per 10 lantai; orb EXP lebih tenang; kilau kaktus hilang.
+- Setup OK. EditMode 22/22. PlayMode 32/32. APK 0.17.0.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

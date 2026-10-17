@@ -22,7 +22,10 @@ namespace SlimeBreaker
             [Range(0f, 0.5f)] public float pitchJitter = 0.06f;
             /// <summary>Minimum seconds between two plays of the same id, so swarms do not stack into noise.</summary>
             public float minInterval = 0.03f;
+            /// <summary>How strongly rapid repeats are softened (0 = never): each recent play lowers the next one's volume.</summary>
+            public float crowdFalloff;
             [NonSerialized] public float lastPlayed = -10f;
+            [NonSerialized] public float recent;
         }
 
         public AudioClip music;
@@ -203,9 +206,14 @@ namespace SlimeBreaker
             if (!lookup.TryGetValue(id, out var entry) || entry.clip == null)
                 return;
             float now = Time.unscaledTime;
-            if (now - entry.lastPlayed < entry.minInterval)
+            float since = now - entry.lastPlayed;
+            if (since < entry.minInterval)
                 return;
+            // "recent" decays with a 0.35 s half-life; a burst of 20 orb pickups settles into a quiet patter.
+            entry.recent = entry.recent * Mathf.Pow(0.5f, since / 0.35f) + 1f;
             entry.lastPlayed = now;
+            if (entry.crowdFalloff > 0f)
+                volumeScale /= 1f + (entry.recent - 1f) * entry.crowdFalloff;
 
             var source = pool[nextVoice];
             nextVoice = (nextVoice + 1) % pool.Length;

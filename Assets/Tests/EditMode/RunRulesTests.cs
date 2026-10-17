@@ -26,18 +26,18 @@ namespace SlimeBreaker.Tests
         }
 
         [Test]
-        public void FloorTenBossHasTenThousandHpAndOneEnrageSkill()
+        public void FloorTenBossHasTenMillionHpAndOneEnrageSkill()
         {
             Assert.AreEqual(BossKind.Rock, BossCatalog.KindAtFloor(10));
-            Assert.AreEqual(10000, BossCatalog.HealthForFloor(10));
+            Assert.AreEqual(10000000, BossCatalog.HealthForFloor(10));
             Assert.AreEqual(1, BossCatalog.EnrageSkillCount(10));
         }
 
         [Test]
-        public void FloorTwentyBossHasTwentyThousandHpAndTwoEnrageSkills()
+        public void FloorTwentyBossHasTwentyMillionHpAndTwoEnrageSkills()
         {
             Assert.AreEqual(BossKind.Flame, BossCatalog.KindAtFloor(20));
-            Assert.AreEqual(20000, BossCatalog.HealthForFloor(20));
+            Assert.AreEqual(20000000, BossCatalog.HealthForFloor(20));
             Assert.AreEqual(2, BossCatalog.EnrageSkillCount(20));
         }
 
@@ -45,7 +45,7 @@ namespace SlimeBreaker.Tests
         public void FloorOneHundredBossIsRoyalWithTenSkills()
         {
             Assert.AreEqual(BossKind.Royal, BossCatalog.KindAtFloor(100));
-            Assert.AreEqual(100000, BossCatalog.HealthForFloor(100));
+            Assert.AreEqual(100000000, BossCatalog.HealthForFloor(100));
             Assert.AreEqual(10, BossCatalog.EnrageSkillCount(100));
             Assert.IsTrue(BossCatalog.IsFinal(BossKind.Royal));
         }

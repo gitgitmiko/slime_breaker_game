@@ -1065,12 +1065,12 @@ namespace SlimeBreaker.Tests
                     boss = enemy;
             }
             Assert.IsNotNull(boss, "Rock Slime was not spawned");
-            Assert.AreEqual(10000, boss.Max, "floor 10 boss HP should be 10000");
+            Assert.AreEqual(10000000, boss.Max, "floor 10 boss HP should be 10.000.000");
             Assert.AreEqual(BossCatalog.ContactDamageForFloor(10), boss.ContactDamage, "boss basic attack should scale with the floor");
             yield return null;
             Assert.IsTrue(flow.ui.BossBarVisible, "boss HP bar did not appear");
             Assert.AreEqual("ROCK SLIME", flow.ui.BossBarName);
-            Assert.AreEqual("10.000 / 10.000", flow.ui.BossBarText);
+            Assert.AreEqual("10.000.000 / 10.000.000", flow.ui.BossBarText);
             Assert.AreEqual(1f, flow.ui.BossBarFill01, 0.001f);
             Capture("13_boss_intro");
             wait = 0f;
@@ -1100,14 +1100,14 @@ namespace SlimeBreaker.Tests
             Assert.IsNotNull(skyfall.transform.Find("Mark"), "skyfall has no impact mark");
             AssertCapeAndCrown(boss);
             while (boss != null && !boss.IsDead && boss.Current > boss.Max * 0.3f)
-                boss.TakeDamage(800);
+                boss.TakeDamage(800000);
             Assert.IsNotNull(boss);
             Assert.IsFalse(boss.IsDead);
             Assert.IsTrue(controller.Enraged, "boss should enrage below 30% HP");
             Assert.LessOrEqual((float)boss.Current / boss.Max, 0.3f);
             yield return null;
             Assert.AreEqual((float)boss.Current / boss.Max, flow.ui.BossBarFill01, 0.001f, "boss HP bar did not follow the damage");
-            Assert.AreEqual(UIController.Thousands(boss.Current) + " / 10.000", flow.ui.BossBarText);
+            Assert.AreEqual(UIController.Thousands(boss.Current) + " / 10.000.000", flow.ui.BossBarText);
             Assert.AreEqual("ENRAGE", flow.ui.bossBarTagText.text);
             Capture("23_boss_hp_bar");
 

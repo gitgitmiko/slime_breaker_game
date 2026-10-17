@@ -181,6 +181,14 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 22/22; PlayMode 32/32 (tes baru `RenderBudgetPerBiome`); APK `SLIMEBREAKER_APK_OK` 0.16.1 (versionCode 17).
 - Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
 
+## Hasil 17 Oktober 2026 (putaran 18 — hero cat-boy, HP boss, audio tenang)
+
+- Hero dibangun ulang mengikuti referensi cat-boy (rambut hitam bergerigi, telinga kucing, mata amber, :3 + taring, choker lonceng, kaos navy, celana hitam) + topi, jubah, tongkat penyihir. `CHR_Hero_Main.fbx` 28.546 tris, rig dan klip sama.
+- HP boss 10.000.000 × tier (lantai 100 = 100.000.000).
+- SFX pickup diganti "bloop" lembut; volume pickup/kematian/hit turun + pelembutan otomatis saat beruntun.
+- Kaktus: duri/areola diredam dan smoothness rendah, tak ada lagi kilau putih saat kamera bergerak.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 22/22; PlayMode 32/32; APK `SLIMEBREAKER_APK_OK` 0.17.0 (versionCode 18).
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

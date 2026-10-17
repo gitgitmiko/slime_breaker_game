@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6786162310857533401}
   - component: {fileID: 6640152907142459075}
-  - component: {fileID: 80681281847568123}
+  - component: {fileID: 6911238715482239697}
   m_Layer: 8
   m_Name: OBS_CrystalSpire
   m_TagString: Untagged
@@ -55,7 +55,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.95, y: 1.85, z: 0.95}
   m_Center: {x: 0, y: 0.9, z: 0}
---- !u!114 &80681281847568123
+--- !u!114 &6911238715482239697
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

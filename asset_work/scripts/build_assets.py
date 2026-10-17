@@ -20,26 +20,30 @@ import bpy
 import mathutils
 
 PALETTE = {
-    # hero (chibi purple witch)
-    "skin": (1.0, 0.87, 0.80, 1),
-    "blush": (1.0, 0.58, 0.68, 1),
-    "hair": (0.36, 0.23, 0.64, 1),
-    "hair_dark": (0.20, 0.12, 0.36, 1),
-    "hair_light": (0.74, 0.64, 1.0, 1),
-    "robe": (0.46, 0.28, 0.82, 1),
-    "robe_light": (0.64, 0.48, 0.96, 1),
-    "hat": (0.22, 0.13, 0.42, 1),
-    "hat_band": (0.80, 0.60, 1.0, 1),
+    # hero (chibi black-haired cat-boy witch)
+    "skin": (0.86, 0.60, 0.50, 1),
+    "blush": (0.92, 0.42, 0.40, 1),
+    "hair": (0.045, 0.045, 0.06, 1),
+    "hair_dark": (0.02, 0.02, 0.026, 1),
+    "hair_light": (0.60, 0.64, 0.86, 1),
+    "robe": (0.09, 0.09, 0.17, 1),
+    "robe_light": (0.42, 0.26, 0.72, 1),
+    "hat": (0.20, 0.11, 0.40, 1),
+    "hat_band": (0.48, 0.28, 0.82, 1),
+    "shirt": (0.10, 0.11, 0.20, 1),
+    "shorts": (0.035, 0.035, 0.045, 1),
+    "choker": (0.03, 0.03, 0.035, 1),
+    "ear_inner": (0.93, 0.87, 0.78, 1),
     "frill": (0.97, 0.95, 1.0, 1),
     "stocking": (0.21, 0.13, 0.36, 1),
-    "cape_inner": (0.30, 0.17, 0.54, 1),
+    "cape_inner": (0.34, 0.19, 0.60, 1),
     "boot": (0.17, 0.10, 0.27, 1),
     "gold": (0.96, 0.78, 0.30, 1),
     "iris": (0.49, 0.36, 1.0, 1),
     "pupil": (0.08, 0.06, 0.16, 1),
     "eye_white": (0.98, 0.98, 1.0, 1),
     "eye_highlight": (1.0, 1.0, 1.0, 1),
-    "mouth": (0.40, 0.12, 0.22, 1),
+    "mouth": (0.22, 0.07, 0.07, 1),
     "crystal": (0.55, 0.90, 1.0, 1),
     "staff_wood": (0.36, 0.22, 0.14, 1),
     # enemies
@@ -690,15 +694,15 @@ def eye_texture(path, size=256):
 
     img = np.zeros((size, size, 3), np.float32)
     img[:] = (0.99, 0.98, 1.0)
-    # Iris: deep violet at the top to bright lilac at the bottom, darker rim.
+    # Iris: deep amber at the top to bright golden orange at the bottom, dark brown rim (cat eye).
     t = np.clip((0.55 - v) / 1.3, 0.0, 1.0)[..., None]
-    iris_col = lerp(np.array((0.30, 0.10, 0.58), np.float32), np.array((0.92, 0.60, 1.0), np.float32), t ** 1.4)
-    iris = ellipse(0.0, -0.10, 0.66, 0.82)
-    img = lerp(img, np.array((0.20, 0.07, 0.36), np.float32), fill(iris))
+    iris_col = lerp(np.array((0.62, 0.22, 0.02), np.float32), np.array((1.0, 0.70, 0.22), np.float32), t ** 1.2)
+    iris = ellipse(0.0, -0.10, 0.70, 0.84)
+    img = lerp(img, np.array((0.30, 0.10, 0.02), np.float32), fill(iris))
     img = lerp(img, iris_col, fill(iris + 0.07))
-    # Pupil and a soft glow crescent under it.
-    img = lerp(img, np.array((0.14, 0.04, 0.26), np.float32), fill(ellipse(0.0, 0.02, 0.30, 0.42)))
-    img = lerp(img, np.array((1.0, 0.78, 1.0), np.float32), 0.55 * fill(ellipse(0.0, -0.58, 0.38, 0.16)))
+    # Pupil and a warm glow crescent under it.
+    img = lerp(img, np.array((0.28, 0.08, 0.01), np.float32), fill(ellipse(0.0, 0.04, 0.30, 0.40)))
+    img = lerp(img, np.array((1.0, 0.86, 0.45), np.float32), 0.6 * fill(ellipse(0.0, -0.56, 0.42, 0.18)))
     # Highlights (same corner on both eyes = one light source).
     img = lerp(img, np.array((1.0, 1.0, 1.0), np.float32), fill(ellipse(-0.30, 0.26, 0.24, 0.28)))
     img = lerp(img, np.array((1.0, 1.0, 1.0), np.float32), fill(ellipse(0.30, -0.40, 0.10, 0.11)))
@@ -707,9 +711,9 @@ def eye_texture(path, size=256):
     top = np.power(np.clip(1.0 - np.abs(u) ** 2.4, 0.0, 1.0), 1.0 / 2.2)
     lash_depth = 0.30 + 0.08 * (1.0 - np.abs(u))
     upper = fill(-(v - (top - lash_depth)) * 0.35)
-    img = lerp(img, np.array((0.11, 0.05, 0.18), np.float32), upper)
+    img = lerp(img, np.array((0.04, 0.03, 0.03), np.float32), upper)
     lower = np.clip(1.0 - np.abs(v + top - 0.05) / 0.06, 0.0, 1.0)[..., None] * (np.abs(u) > 0.15)[..., None]
-    img = lerp(img, np.array((0.40, 0.20, 0.50), np.float32), lower * 0.8)
+    img = lerp(img, np.array((0.35, 0.18, 0.14), np.float32), lower * 0.6)
     rgba = np.concatenate([img, np.ones((size, size, 1), np.float32)], axis=2)
     image = bpy.data.images.new("TEX_Hero_Eye", size, size, alpha=False)
     image.pixels.foreach_set(rgba[::-1].reshape(-1))
@@ -811,166 +815,185 @@ def decimate(obj, ratio):
 
 
 def build_hero(mats):
-    """Original chibi purple witch: big soft hair, painted anime eyes, witch hat, frilled dress, moon staff."""
+    """Chibi cat-boy witch: huge shaggy black hair with cat ears, big amber eyes, :3 mouth with fangs, choker and
+    bell, navy tee and black shorts, plus a witch hat the ears poke through, a short cape and the moon staff."""
     arm = new_armature("CHR_Hero_Main", hero_bones())
     p = []
 
-    # --- head: round with full cheeks and a small chin
-    head = add_sphere("head", 0.25, (0, 0, 0.98), scale=(1.04, 0.96, 0.98), seg=40, rings=24)
+    # --- head: wide soft face, full cheeks, small rounded chin
+    head = add_sphere("head", 0.25, (0, 0, 0.98), scale=(1.06, 0.95, 0.97), seg=40, rings=24)
     for vert in head.data.vertices:
         below = max(0.0, 0.98 - vert.co.z) / 0.25
-        vert.co.x *= 1.0 + 0.05 * math.sin(min(1.0, below * 1.6) * math.pi) - 0.10 * below ** 3
+        vert.co.x *= 1.0 + 0.06 * math.sin(min(1.0, below * 1.6) * math.pi) - 0.12 * below ** 3
         if vert.co.y < 0:
-            vert.co.y *= 1.0 - 0.06 * below
+            vert.co.y *= 1.0 - 0.05 * below
     head.data.update()
     bpy.context.view_layer.update()
     p.append(assign(head, "Head", mats["skin"]))
-    for side in (-1, 1):
-        p.append(assign(add_sphere(f"ear{side}", 0.045, (0.245 * side, 0.02, 0.95), scale=(0.5, 0.8, 1.0)), "Head", mats["skin"]))
 
-    # --- face: eye decals, brows, cat mouth with a fang, blush
+    # --- face: amber eye decals set low and wide, thick black brows, :3 mouth with two fangs, blush
     eye_path = eye_texture(os.path.join(TEX, "TEX_Hero_Eye.png"))
     eye_mat = material("MAT_eye_decal", (1, 1, 1, 1), rough=0.25, image_path=eye_path)
     for side in (-1, 1):
-        decal = eye_decal(f"eye{side}", head, 0.092 * side, 0.955, 0.108, 0.13)
+        decal = eye_decal(f"eye{side}", head, 0.098 * side, 0.935, 0.118, 0.13)
         p.append(assign(decal, "Head", eye_mat))
-        brow = [(0.092 * side + dx * side, 0, 1.055 + dz) for dx, dz in ((-0.04, -0.004), (0.0, 0.006), (0.04, 0.0))]
+        brow = [(0.098 * side + dx * side, 0, 1.028 + dz) for dx, dz in ((-0.045, -0.006), (0.0, 0.008), (0.045, 0.002))]
         brow = [(x, surface_y(head, x, z, 0.003), z) for x, _y, z in brow]
-        p.append(assign(path_tube(f"brow{side}", brow, 0.0055, taper=lambda t: 0.6 + 0.4 * math.sin(t * math.pi)), "Head", mats["hair_dark"]))
-        bx, bz = 0.158 * side, 0.895
-        p.append(assign(add_sphere(f"blush{side}", 0.034, (bx, surface_y(head, bx, bz, -0.006), bz), scale=(1.15, 0.25, 0.62), seg=16, rings=8, rot=(0, 0, 0.45 * side)), "Head", mats["blush"]))
-    mouth = [(x, 0, z) for x, z in ((-0.032, 0.868), (-0.016, 0.857), (0.0, 0.866), (0.016, 0.857), (0.032, 0.868))]
+        p.append(assign(path_tube(f"brow{side}", brow, 0.0085, taper=lambda t: 0.55 + 0.45 * math.sin(t * math.pi)), "Head", mats["hair_dark"]))
+        bx, bz = 0.125 * side, 0.872
+        p.append(assign(add_sphere(f"blush{side}", 0.036, (bx, surface_y(head, bx, bz, -0.006), bz), scale=(1.2, 0.25, 0.6), seg=16, rings=8), "Head", mats["blush"]))
+    mouth = [(x, 0, z) for x, z in ((-0.03, 0.852), (-0.015, 0.842), (0.0, 0.851), (0.015, 0.842), (0.03, 0.852))]
     mouth = [(x, surface_y(head, x, z, 0.003), z) for x, _y, z in mouth]
-    p.append(assign(path_tube("mouth", mouth, 0.0048, taper=lambda t: 0.55 + 0.45 * math.sin(t * math.pi)), "Head", mats["mouth"]))
-    fx, fz = 0.018, 0.851
-    p.append(assign(add_cone("fang", 0.006, 0.014, (fx, surface_y(head, fx, fz, 0.003), fz), rot=(math.pi, 0, 0), vertices=8), "Head", mats["eye_white"]))
+    p.append(assign(path_tube("mouth", mouth, 0.0042, taper=lambda t: 0.55 + 0.45 * math.sin(t * math.pi)), "Head", mats["mouth"]))
+    for side in (-1, 1):
+        fx, fz = 0.017 * side, 0.836
+        p.append(assign(add_cone(f"fang{side}", 0.0055, 0.013, (fx, surface_y(head, fx, fz, 0.003), fz), rot=(math.pi, 0, 0), vertices=8), "Head", mats["eye_white"]))
 
-    # --- hair: one blobby volume (metaballs), a face opening carved out, then pointed locks
+    # --- hair: one big shaggy dome (wider than the face), the face carved out, then jagged clumps
     elements = [
-        ("ELLIPSOID", (0, 0.03, 1.04), 0.29, (1.08, 1.0, 1.0), False),
-        ("BALL", (0, 0.10, 0.94), 0.25, None, False),
-        ("BALL", (0, 0.12, 0.82), 0.19, None, False),
+        ("ELLIPSOID", (0, 0.03, 1.05), 0.30, (1.18, 1.08, 0.98), False),
+        ("BALL", (0, 0.11, 0.93), 0.27, None, False),
+        ("BALL", (0, 0.13, 0.80), 0.19, None, False),
     ]
     for side in (-1, 1):
         elements += [
-            ("BALL", (0.22 * side, -0.01, 0.97), 0.14, None, False),
-            ("BALL", (0.24 * side, 0.05, 0.85), 0.12, None, False),
-            ("BALL", (0.17 * side, 0.15, 0.80), 0.12, None, False),
-            ("BALL", (0.12 * side, -0.11, 1.15), 0.10, None, False),
+            ("BALL", (0.25 * side, -0.02, 0.98), 0.15, None, False),
+            ("BALL", (0.27 * side, 0.04, 0.86), 0.13, None, False),
+            ("BALL", (0.20 * side, 0.14, 0.80), 0.13, None, False),
+            ("BALL", (0.13 * side, -0.10, 1.15), 0.11, None, False),
         ]
-    # Carve the face open below the fringe line.
-    elements.append(("ELLIPSOID", (0, -0.30, 0.90), 0.20, (1.15, 1.0, 1.05), True))
+    elements.append(("ELLIPSOID", (0, -0.31, 0.875), 0.2, (1.22, 1.0, 0.95), True))
     hair = metaball_mesh("hair", elements, resolution=0.016)
     decimate(hair, 0.4)
-    zs = [v.co.z for v in hair.data.vertices]
-    print(f"HAIR bounds z {min(zs):.3f}..{max(zs):.3f} x {min(v.co.x for v in hair.data.vertices):.3f}..{max(v.co.x for v in hair.data.vertices):.3f}", flush=True)
     bpy.context.view_layer.update()
     p.append(assign(hair, "Head", mats["hair"]))
-    # Bangs: pointed clumps over the forehead, ending around the eyes.
-    bangs = ((-0.21, 1.13, 0.93, 0.07, -0.02), (-0.13, 1.17, 1.00, 0.075, -0.015), (-0.05, 1.18, 1.035, 0.07, 0.01),
-             (0.025, 1.18, 0.985, 0.072, 0.0), (0.095, 1.17, 1.03, 0.07, -0.01), (0.165, 1.16, 0.99, 0.075, 0.015),
-             (0.22, 1.12, 0.92, 0.065, 0.02))
+    top_z = max(v.co.z for v in hair.data.vertices)
+    print(f"HAIR top {top_z:.3f}", flush=True)
+    # Bangs: chunky clumps to the brow line, one centre strand dipping between the eyes.
+    bangs = ((-0.23, 1.08, 0.93, 0.11, -0.03), (-0.165, 1.12, 0.985, 0.12, -0.02), (-0.10, 1.13, 1.01, 0.12, -0.01),
+             (-0.04, 1.14, 1.02, 0.11, 0.0), (0.0, 1.14, 0.945, 0.06, 0.004), (0.04, 1.14, 1.02, 0.11, 0.0),
+             (0.10, 1.13, 1.01, 0.12, 0.01), (0.165, 1.12, 0.985, 0.12, 0.02), (0.23, 1.08, 0.93, 0.11, 0.03))
     for index, (x, top, bottom, width, curl) in enumerate(bangs):
         tx = x + curl * 2.0
-        root = (x, surface_y(head, x, top, 0.035), top)
+        root = (x, surface_y(head, x, top, 0.04), top)
         tip = (tx, surface_y(head, tx, bottom, 0.012), bottom)
-        p.append(assign(lock(f"bang{index}", root, tip, width, 0.028, bend=(curl, -0.012)), "Head", mats["hair"]))
+        p.append(assign(lock(f"bang{index}", root, tip, width, 0.04, bend=(curl, -0.014)), "Head", mats["hair"]))
     for side in (-1, 1):
-        # Long side locks framing the face, and flicked clumps around the back.
-        x = 0.215 * side
-        root = (x, surface_y(head, x, 1.02, 0.03), 1.02)
-        tip = (0.205 * side, -0.13, 0.74)
-        p.append(assign(lock(f"sidelock{side}", root, tip, 0.05, 0.035, bend=(0.02 * side, -0.01)), "Head", mats["hair"]))
         tail = "Hair.L" if side < 0 else "Hair.R"
-        for k, (angle, length) in enumerate(((0.35, 0.21), (0.75, 0.24), (1.15, 0.22))):
+        # Side flicks sticking out sideways at cheek height (the reference's jagged silhouette).
+        flicks = ((1.16, 0.40, -0.02, 0.0, 0.07), (1.06, 0.47, 0.03, 0.02, 0.08), (0.96, 0.49, 0.07, 0.04, 0.08),
+                  (0.86, 0.46, 0.11, 0.08, 0.075), (0.78, 0.40, 0.13, 0.13, 0.07), (0.74, 0.30, 0.12, 0.22, 0.07))
+        for k, (z, out, drop, back, width) in enumerate(flicks):
+            root = (0.27 * side, 0.03 + back * 0.6, z)
+            tip = (out * side, 0.05 + back, z - drop)
+            p.append(assign(lock(f"flick{side}{k}", root, tip, width * 1.5, 0.08, bend=(0.0, 0.02)), ["Head", tail], mats["hair"], sharpness=3.0))
+        # Clumps around the back, flicking out at the ends.
+        for k, (angle, length) in enumerate(((0.35, 0.22), (0.8, 0.25), (1.2, 0.22))):
             a = angle * side
-            root = (math.sin(a) * 0.27, 0.04 + math.cos(a) * 0.22, 0.90)
-            tip = (math.sin(a) * 0.35, 0.06 + math.cos(a) * 0.30, 0.90 - length)
-            clump = lock(f"back{side}{k}", root, tip, 0.075, 0.06, bend=(0.03 * side, 0.03))
+            root = (math.sin(a) * 0.28, 0.05 + math.cos(a) * 0.23, 0.90)
+            tip = (math.sin(a) * 0.38, 0.08 + math.cos(a) * 0.32, 0.90 - length)
+            clump = lock(f"back{side}{k}", root, tip, 0.08, 0.06, bend=(0.04 * side, 0.04))
             p.append(assign(clump, ["Head", tail, tail + ".2"], mats["hair"], sharpness=3.0))
-    p.append(assign(lock("backcenter", (0, 0.24, 0.92), (0, 0.30, 0.68), 0.08, 0.06, bend=(0.0, 0.03)), "Head", mats["hair"]))
-    # Glossy highlight spots on the crown, like the reference's soft hair shine.
+        # Face-framing lock in front of the ear line.
+        x = 0.22 * side
+        root = (x, surface_y(head, x, 1.0, 0.03), 1.0)
+        p.append(assign(lock(f"sidelock{side}", root, (0.215 * side, -0.14, 0.78), 0.055, 0.035, bend=(0.02 * side, -0.01)), "Head", mats["hair"]))
+    p.append(assign(lock("backcenter", (0, 0.25, 0.92), (0, 0.33, 0.68), 0.09, 0.06, bend=(0.0, 0.04)), "Head", mats["hair"]))
+    # Soft blue-white shine ovals on the crown, as in the reference.
     for side in (-1, 1):
-        hx, hz = 0.12 * side, 1.20
+        hx, hz = 0.13 * side, 1.17
         hit, loc, normal, _ = hair.ray_cast(mathutils.Vector((hx, -1.5, hz)), mathutils.Vector((0, 1, 0)))
         if hit:
-            shine = add_sphere(f"hair_shine{side}", 0.04, loc + normal * 0.002, scale=(1.0, 0.25, 0.55), seg=14, rings=8, rot=(0.6, 0, -0.5 * side))
+            shine = add_sphere(f"hair_shine{side}", 0.036, loc - normal * 0.002, scale=(1.0, 0.1, 0.62), seg=14, rings=8, rot=(0.45, 0, -0.4 * side))
             p.append(assign(shine, "Head", mats["hair_light"]))
 
-    # --- witch hat: wavy upturned brim, tall crown bending back, band, moon buckle, bow
-    hat_z = 1.215
-    brim_r = 0.36
-    brim = add_cylinder("hat_brim", brim_r, 0.022, (0, 0, hat_z), vertices=48)
+    # --- cat ears: black outer shell, cream fluffy inner, poking up through the hat brim
+    for side in (-1, 1):
+        base = mathutils.Vector((0.27 * side, -0.01, top_z - 0.15))
+        ear = add_cone(f"catear{side}", 0.11, 0.27, (0, 0, 0.135), vertices=16)
+        for vert in ear.data.vertices:
+            vert.co.y *= 0.55
+        ear.rotation_euler = (0.08, -0.5 * side, 0.0)
+        ear.location = base
+        apply_xform(ear)
+        smooth(ear, math.radians(70))
+        p.append(assign(ear, "Head", mats["hair"]))
+        inner = add_cone(f"catear_in{side}", 0.08, 0.2, (0, -0.012, 0.11), vertices=12)
+        for vert in inner.data.vertices:
+            vert.co.y = vert.co.y * 0.3 - 0.04
+        inner.rotation_euler = (0.08, -0.5 * side, 0.0)
+        inner.location = base
+        apply_xform(inner)
+        smooth(inner, math.radians(70))
+        p.append(assign(inner, "Head", mats["ear_inner"]))
+
+    # --- witch hat: tilted back between the ears, wavy brim, bent crown, purple band, gold moon
+    hat_z = top_z - 0.04
+    brim_r = 0.26
+    brim = add_cylinder("hat_brim", brim_r, 0.02, (0, 0.03, hat_z), vertices=48)
     for vert in brim.data.vertices:
-        r = math.hypot(vert.co.x, vert.co.y)
-        a = math.atan2(vert.co.y, vert.co.x)
-        vert.co.z += (r / brim_r) ** 3 * 0.06 + math.sin(a * 5.0) * 0.012 * (r / brim_r) ** 2
+        r = math.hypot(vert.co.x, vert.co.y - 0.03)
+        a = math.atan2(vert.co.y - 0.03, vert.co.x)
+        vert.co.z += (r / brim_r) ** 3 * 0.05 + math.sin(a * 5.0) * 0.01 * (r / brim_r) ** 2 + (vert.co.y - 0.03) * 0.18
     p.append(assign(brim, "Hat", mats["hat"]))
     centers, radii = [], []
     for i in range(14):
         t = i / 13
-        centers.append((0.03 * t * t, 0.30 * t ** 2.2, hat_z + 0.02 + t * 0.50 - 0.10 * t ** 3))
-        radii.append(0.20 * (1 - t) ** 0.95 + 0.012)
+        centers.append((0.02 * t * t, 0.03 + 0.30 * t ** 2.2, hat_z + 0.02 + t * 0.44 - 0.09 * t ** 3))
+        radii.append(0.13 * (1 - t) ** 0.95 + 0.01)
     crown = loft("hat_crown", centers, radii, segments=24, cap_start=False)
     p.append(assign(crown, ["Hat", "HatTip"], mats["hat"], sharpness=3.0))
-    p.append(assign(add_torus("hat_band", 0.195, 0.026, (0, 0.004, hat_z + 0.05), major_segments=36, minor_segments=10, scale=(1, 1, 1.3)), "Hat", mats["hat_band"]))
-    moon = add_torus("hat_moon", 0.036, 0.012, (0, -0.205, hat_z + 0.06), rot=(math.pi / 2, 0, 0), major_segments=24, minor_segments=8)
-    carve(moon, lambda co: co.x > 0.012)
+    p.append(assign(add_torus("hat_band", 0.128, 0.02, (0, 0.034, hat_z + 0.05), major_segments=36, minor_segments=10, scale=(1, 1, 1.3)), "Hat", mats["hat_band"]))
+    moon = add_torus("hat_moon", 0.03, 0.01, (0, -0.10, hat_z + 0.06), rot=(math.pi / 2, 0, 0), major_segments=24, minor_segments=8)
+    carve(moon, lambda co: co.x > 0.01)
     p.append(assign(moon, "Hat", mats["gold"]))
-    for side in (-1, 1):
-        loop_ = add_sphere(f"bow{side}", 0.06, (0.11 * side + 0.13, 0.12, hat_z + 0.07), scale=(1.2, 0.45, 0.8), seg=16, rings=10, rot=(0, 0.35 * side, 0.4))
-        p.append(assign(loop_, "Hat", mats["hat_band"]))
-    p.append(assign(add_sphere("bow_knot", 0.03, (0.13, 0.16, hat_z + 0.07), seg=12, rings=8), "Hat", mats["hat_band"]))
 
-    # --- body: neck, bodice, collar + bell, frilled skirt, cape, ribbon belt
-    p.append(assign(add_cylinder("neck", 0.04, 0.10, (0, 0, 0.73), vertices=14), ["Chest", "Neck"], mats["skin"]))
-    bodice = loft("bodice", [(0, 0, 0.45), (0, 0, 0.53), (0, 0, 0.62), (0, 0.005, 0.70)], [0.105, 0.11, 0.125, 0.10],
-                  segments=24, ovals=[(1.0, 0.82)] * 4)
-    p.append(assign(bodice, ["Hips", "Spine", "Chest"], mats["robe"]))
-    collar = loft("collar", [(0, 0, 0.705), (0, 0.004, 0.69)], [0.07, 0.135], segments=28,
-                  wave=lambda th, i: 0.012 * i * math.cos(th * 6), cap_start=False, cap_end=False)
-    p.append(assign(collar, "Chest", mats["frill"]))
-    p.append(assign(add_sphere("bell", 0.024, (0, -0.108, 0.675), seg=14, rings=10), "Chest", mats["gold"]))
-    skirt = loft("skirt", [(0, 0.005, 0.50), (0, 0.01, 0.42), (0, 0.015, 0.34), (0, 0.02, 0.28)], [0.115, 0.165, 0.22, 0.25],
-                 segments=40, ovals=[(1.0, 0.86)] * 4, wave=lambda th, i: (i / 3) ** 2 * 0.016 * math.cos(th * 8), cap_start=False, cap_end=False)
-    p.append(assign(skirt, ["Hips", "UpLeg.L", "UpLeg.R"], mats["robe"], sharpness=2.5))
-    petticoat = loft("petticoat", [(0, 0.02, 0.30), (0, 0.022, 0.255)], [0.245, 0.262], segments=40, ovals=[(1.0, 0.86)] * 2,
-                     wave=lambda th, i: 0.014 * math.cos(th * 16), cap_start=False, cap_end=False)
-    p.append(assign(petticoat, ["Hips", "UpLeg.L", "UpLeg.R"], mats["frill"], sharpness=2.5))
-    p.append(assign(add_torus("hem", 0.25, 0.012, (0, 0.02, 0.28), scale=(1.0, 0.86, 1.0), major_segments=40, minor_segments=8), ["Hips", "UpLeg.L", "UpLeg.R"], mats["hat_band"], sharpness=2.5))
-    p.append(assign(add_torus("belt", 0.112, 0.016, (0, 0.002, 0.50), scale=(1.0, 0.84, 1.0), major_segments=32, minor_segments=8), "Hips", mats["hat_band"]))
-    for side in (-1, 1):
-        p.append(assign(add_sphere(f"belt_bow{side}", 0.035, (0.04 * side, 0.10, 0.50), scale=(1.3, 0.5, 0.8), seg=12, rings=8), "Hips", mats["hat_band"]))
-    cape = loft("cape", [(0, 0.06, 0.70), (0, 0.10, 0.60), (0, 0.15, 0.50), (0, 0.19, 0.42)], [0.12, 0.16, 0.20, 0.22],
+    # --- body: neck, choker with gold bell, boxy navy tee, black shorts, short witch cape
+    p.append(assign(add_cylinder("neck", 0.042, 0.10, (0, 0, 0.73), vertices=14), ["Chest", "Neck"], mats["skin"]))
+    p.append(assign(add_torus("choker", 0.044, 0.009, (0, 0, 0.735), major_segments=24, minor_segments=8), "Neck", mats["choker"]))
+    p.append(assign(add_sphere("bell", 0.017, (0, -0.052, 0.722), seg=14, rings=10), "Neck", mats["gold"]))
+    tee = loft("tee", [(0, 0, 0.44), (0, 0, 0.52), (0, 0, 0.62), (0, 0.004, 0.705)], [0.13, 0.12, 0.125, 0.085],
+               segments=28, ovals=[(1.0, 0.8)] * 4)
+    p.append(assign(tee, ["Hips", "Spine", "Chest"], mats["shirt"]))
+    p.append(assign(add_torus("tee_hem", 0.128, 0.007, (0, 0, 0.443), scale=(1.0, 0.8, 1.0), major_segments=36, minor_segments=6), "Hips", mats["shirt"]))
+    shorts = loft("shorts", [(0, 0, 0.47), (0, 0, 0.42), (0, 0, 0.385)], [0.122, 0.128, 0.12], segments=28, ovals=[(1.0, 0.78)] * 3, cap_start=False)
+    p.append(assign(shorts, ["Hips"], mats["shorts"]))
+    cape = loft("cape", [(0, 0.05, 0.71), (0, 0.10, 0.62), (0, 0.15, 0.52), (0, 0.19, 0.42)], [0.11, 0.15, 0.19, 0.21],
                 segments=28, ovals=[(1.0, 0.9)] * 4, cap_start=False, cap_end=False)
-    carve(cape, lambda co: co.y < 0.06 + (0.70 - co.z) * 0.15)
+    carve(cape, lambda co: co.y < 0.06 + (0.71 - co.z) * 0.15)
     p.append(assign(cape, ["Chest", "Cape"], mats["cape_inner"], sharpness=3.0))
+    outer = loft("cape_outer", [(0, 0.056, 0.71), (0, 0.106, 0.62), (0, 0.156, 0.52), (0, 0.196, 0.42)], [0.114, 0.154, 0.194, 0.214],
+                 segments=28, ovals=[(1.0, 0.9)] * 4, cap_start=False, cap_end=False)
+    carve(outer, lambda co: co.y < 0.065 + (0.71 - co.z) * 0.15)
+    p.append(assign(outer, ["Chest", "Cape"], mats["robe"], sharpness=3.0))
+    for side in (-1, 1):
+        p.append(assign(add_sphere(f"clasp{side}", 0.014, (0.075 * side, -0.035, 0.70), seg=10, rings=6), "Chest", mats["gold"]))
 
-    # --- arms: puff sleeves, slim bare arms, lilac cuffs, mitten hands
+    # --- arms: short tee sleeves, bare arms, mitten hands
     for side, prefix in ((-1, "L"), (1, "R")):
         s = side
-        p.append(assign(add_sphere(f"puff{prefix}", 0.062, (0.125 * s, 0, 0.665), scale=(1.0, 1.0, 0.9), seg=20, rings=12), [f"Shoulder.{prefix}", f"UpperArm.{prefix}"], mats["robe_light"]))
-        upper = loft(f"upperarm{prefix}", [(0.13 * s, 0, 0.66), (0.19 * s, -0.01, 0.52)], [0.033, 0.029], segments=12)
+        sleeve = loft(f"sleeve{prefix}", [(0.10 * s, 0, 0.685), (0.15 * s, -0.004, 0.62), (0.168 * s, -0.006, 0.585)], [0.05, 0.047, 0.045], segments=14)
+        p.append(assign(sleeve, [f"Shoulder.{prefix}", f"UpperArm.{prefix}"], mats["shirt"]))
+        upper = loft(f"upperarm{prefix}", [(0.15 * s, 0, 0.62), (0.19 * s, -0.01, 0.52)], [0.032, 0.029], segments=12)
         p.append(assign(upper, f"UpperArm.{prefix}", mats["skin"]))
         p.append(assign(add_sphere(f"elbow{prefix}", 0.029, (0.19 * s, -0.01, 0.52), seg=12, rings=8), [f"UpperArm.{prefix}", f"Forearm.{prefix}"], mats["skin"]))
-        fore = loft(f"forearm{prefix}", [(0.19 * s, -0.01, 0.52), (0.21 * s, -0.04, 0.41)], [0.029, 0.026], segments=12)
+        fore = loft(f"forearm{prefix}", [(0.19 * s, -0.01, 0.52), (0.21 * s, -0.04, 0.41)], [0.029, 0.027], segments=12)
         p.append(assign(fore, f"Forearm.{prefix}", mats["skin"]))
-        p.append(assign(add_torus(f"cuff{prefix}", 0.03, 0.011, (0.207 * s, -0.035, 0.425), rot=(0.25, 0.15 * s, 0), major_segments=18, minor_segments=8), f"Forearm.{prefix}", mats["frill"]))
-        p.append(assign(add_sphere(f"hand{prefix}", 0.036, (0.215 * s, -0.05, 0.375), scale=(0.9, 1.0, 1.15), seg=16, rings=10), f"Hand.{prefix}", mats["skin"]))
+        p.append(assign(add_sphere(f"hand{prefix}", 0.038, (0.215 * s, -0.05, 0.375), scale=(0.9, 1.0, 1.15), seg=16, rings=10), f"Hand.{prefix}", mats["skin"]))
 
-    # --- legs: skin thighs, purple stockings with a lilac band, round boots with buckles
+    # --- legs: bare, soft and straight, with rounded bare feet (as in the reference)
     for side, prefix in ((-1, "L"), (1, "R")):
         s = side
-        p.append(assign(loft(f"thigh{prefix}", [(0.065 * s, 0, 0.40), (0.069 * s, 0, 0.30)], [0.045, 0.041], segments=14), f"UpLeg.{prefix}", mats["skin"]))
-        stocking = loft(f"stocking{prefix}", [(0.069 * s, 0, 0.31), (0.07 * s, 0, 0.22), (0.072 * s, 0, 0.09)], [0.0425, 0.036, 0.032], segments=14)
-        p.append(assign(stocking, [f"UpLeg.{prefix}", f"Leg.{prefix}"], mats["stocking"], sharpness=3.0))
-        p.append(assign(add_torus(f"band{prefix}", 0.043, 0.008, (0.069 * s, 0, 0.305), major_segments=18, minor_segments=6), f"UpLeg.{prefix}", mats["hat_band"]))
-        boot = add_sphere(f"boot{prefix}", 0.05, (0.072 * s, -0.022, 0.046), scale=(0.95, 1.55, 0.95), seg=18, rings=12)
-        for vert in boot.data.vertices:
+        p.append(assign(loft(f"thigh{prefix}", [(0.062 * s, 0, 0.40), (0.068 * s, 0, 0.30), (0.07 * s, 0, 0.22)], [0.05, 0.046, 0.042], segments=16),
+                        [f"UpLeg.{prefix}", f"Leg.{prefix}"], mats["skin"], sharpness=3.0))
+        p.append(assign(loft(f"shin{prefix}", [(0.07 * s, 0, 0.22), (0.071 * s, 0, 0.12), (0.072 * s, 0, 0.05)], [0.042, 0.039, 0.036], segments=16),
+                        f"Leg.{prefix}", mats["skin"]))
+        p.append(assign(loft(f"shortleg{prefix}", [(0.062 * s, 0, 0.40), (0.066 * s, 0, 0.33)], [0.062, 0.058], segments=16, cap_start=False, cap_end=False),
+                        f"UpLeg.{prefix}", mats["shorts"]))
+        foot = add_sphere(f"foot{prefix}", 0.045, (0.072 * s, -0.025, 0.035), scale=(0.95, 1.5, 0.85), seg=18, rings=12)
+        for vert in foot.data.vertices:
             vert.co.z = max(vert.co.z, 0.0)
-        p.append(assign(boot, f"Foot.{prefix}", mats["boot"]))
-        p.append(assign(loft(f"bootcuff{prefix}", [(0.072 * s, 0, 0.07), (0.072 * s, 0, 0.12)], [0.04, 0.037], segments=14), f"Leg.{prefix}", mats["boot"]))
-        p.append(assign(add_ico(f"buckle{prefix}", 0.012, (0.072 * s, -0.095, 0.06), scale=(1, 0.5, 1), subdiv=1), f"Foot.{prefix}", mats["gold"]))
+        p.append(assign(foot, f"Foot.{prefix}", mats["skin"]))
 
     # --- staff: wooden shaft, curled top holding a crescent moon and a glowing crystal
     sx, sy = 0.225, -0.07

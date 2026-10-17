@@ -104,14 +104,6 @@
     "notes": "no rig"
   },
   {
-    "id": "CHR_Hero_Main",
-    "file": "Characters/Hero/CHR_Hero_Main.fbx",
-    "kind": "character",
-    "triangles": 26964,
-    "vertices": 13805,
-    "notes": "generic rig, in-place clips"
-  },
-  {
     "id": "ENV_Forest_Tree_A",
     "file": "Environment/ForestArena/ENV_Forest_Tree_A.fbx",
     "kind": "static",
@@ -278,5 +270,13 @@
     "triangles": 2056,
     "vertices": 1062,
     "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "CHR_Hero_Main",
+    "file": "Characters/Hero/CHR_Hero_Main.fbx",
+    "kind": "character",
+    "triangles": 28546,
+    "vertices": 14577,
+    "notes": "generic rig, in-place clips"
   }
 ]

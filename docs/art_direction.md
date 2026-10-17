@@ -1,6 +1,6 @@
 # Art Direction — Slime Breaker
 
-Gaya: anime 3D fantasy. Hero adalah **penyihir ungu chibi** orisinal: kepala besar (≈45% tinggi badan), rambut ungu tebal dan lembut (metaball) dengan poni runcing dan helai samping, mata anime besar yang dilukis prosedural (iris gradasi ungu, dua highlight, bulu mata tebal), mulut kucing "ω" dengan taring kecil, pipi merona, topi penyihir berujung bengkok dengan pita, gaun ungu berenda putih, stoking ungu, sepatu bot bulat, dan tongkat berujung bulan sabit + kristal. Proporsi dan rasa "chibi lembut" terinspirasi gaya model *Cat-boy Ashuo* (l4oyu, itch.io); model tersebut berbayar dan lisensinya melarang redistribusi, jadi tidak ada mesh, tekstur, atau rig yang disalin — semuanya dibangun ulang dari nol di `build_assets.py`.
+Gaya: anime 3D fantasy. Hero adalah **penyihir cat-boy chibi** yang mengikuti desain referensi *Cat-boy Ashuo* (l4oyu, itch.io): kepala sangat besar, rambut hitam tebal mengembang dengan ujung runcing bergerigi di sisi dan belakang, poni tebal dengan satu helai di tengah, kilau rambut oval kebiruan, telinga kucing hitam berbulu krem di dalam, mata anime besar amber/oranye bergradasi dengan bulu mata hitam tebal, alis hitam tebal, mulut ":3" dengan dua taring, pipi merona, kulit hangat, choker hitam dengan lonceng emas, kaos navy lengan pendek, celana pendek hitam, kaki telanjang. Tambahan gaya penyihir: topi penyihir ungu miring di antara telinga (pita ungu, bulan emas), jubah pendek navy berlapis ungu dengan kancing emas, dan tongkat bulan sabit + kristal. Model dibangun ulang dari nol di `build_assets.py` (`build_hero`) berdasarkan gambar pratinjau; file FBX/tekstur asli (berbayar) tidak dipakai atau disalin.
 
 Semua aset dibuat sendiri di mesin ini (Blender, Python/numpy/Pillow, FluidSynth). Tidak ada karakter, logo, atau desain berhak cipta yang disalin.
 
@@ -9,9 +9,9 @@ Semua aset dibuat sendiri di mesin ini (Blender, Python/numpy/Pillow, FluidSynth
 | Peran | Warna | Hex perkiraan |
 |---|---|---|
 | Kulit hero | peach hangat | `#FFDBC7` |
-| Rambut hero | ungu / kilau lavender | `#5C3BA3` / `#BDA3FF` |
-| Gaun hero | ungu / lengan lilac | `#7547D1` / `#A37AF5` |
-| Topi hero | ungu gelap + pita lilac | `#38216B` / `#CC99FF` |
+| Rambut hero | hitam / kilau biru pucat | `#0B0B0F` / `#99A3DB` |
+| Baju hero | kaos navy / celana hitam / jubah navy-ungu | `#1A1C33` / `#09090B` / `#57309A` |
+| Topi hero | ungu + pita ungu terang | `#331C66` / `#7A47D1` |
 | Topi dan cape luar | indigo | `#29216B` |
 | Cape dalam | magenta lembut | `#DB529E` |
 | Emas (sabuk, cincin tongkat) | kuning hangat | `#F5C74D` |

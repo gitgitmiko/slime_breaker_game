@@ -10,7 +10,7 @@ namespace SlimeBreaker
         public const int MaxFloor = 100;
         public const int BossEvery = 10;
         public const int PowerUpEvery = 20;
-        public const int BossHealthPerTier = 10000;
+        public const int BossHealthPerTier = 10000000;
         public const float BossEnrageHealth = 0.3f;
         public const int BossBasicDamage = 50;
         public const int BossSkillDamage = 100;

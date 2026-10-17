@@ -838,6 +838,17 @@ def jingle(name, notes, program, bpm=120, length=None, reverb=0.7):
     return audio
 
 
+def soft_pop(rng, seconds, f0, f1):
+    """Mellow 'bloop': a sine gliding f0 -> f1 with a soft 6 ms attack and a quick round decay (calm when repeated)."""
+    n = int(seconds * SR)
+    t = np.arange(n) / SR
+    freq = f0 + (f1 - f0) * (1 - np.exp(-t * 40))
+    phase = np.cumsum(freq) / SR * math.tau
+    tone = np.sin(phase) + 0.18 * np.sin(phase * 2.0)
+    env = np.minimum(1.0, t / 0.006) * np.exp(-t * 22)
+    return (tone * env * (1.0 + rng.uniform(-0.03, 0.03))).astype(np.float32)
+
+
 def layer(seconds, *items):
     """Mix (sound, offset_seconds, gain) items into one mono buffer of `seconds`."""
     out = np.zeros(int(seconds * SR), np.float32)
@@ -855,12 +866,12 @@ def sfx_specs():
 
     return {
         "SFX_Hit": mono(lambda r: layer(0.26, (squelch(r, 0.22, 1.2), 0.0, 0.8), (impact(r, 0.2, 140, 0.4, 0.3), 0.0, 1.0))),
-        "SFX_EnemyDeath": mono(lambda r: layer(0.55, (squelch(r, 0.4, 0.8), 0.0, 1.0), (squelch(r, 0.3, 1.4), 0.1, 0.6), (droplets(r, int(0.5 * SR), 30, 400, 1400), 0.05, 0.5))),
+        "SFX_EnemyDeath": mono(lambda r: layer(0.55, (squelch(r, 0.4, 0.8), 0.0, 1.0), (squelch(r, 0.3, 1.4), 0.1, 0.6), (droplets(r, int(0.5 * SR), 14, 300, 900), 0.05, 0.3))),
         "SFX_BoltHit": mono(lambda r: layer(0.3, (impact(r, 0.18, 220, 0.35, 0.6), 0.0, 1.0), (sparkle(r, 0.3, 2400, 4), 0.0, 0.8))),
         "SFX_Cast": mono(lambda r: layer(0.36, (whoosh(r, 0.32, 600, 3200), 0.0, 0.7), (sparkle(r, 0.32, 1800, 5), 0.02, 1.0))),
         "SFX_Dash": mono(lambda r: whoosh(r, 0.36, 300, 1800) * 1.1),
         "SFX_PlayerHit": mono(lambda r: impact(r, 0.3, 75, 1.0, 0.7)),
-        "SFX_Pickup": mono(lambda r: layer(0.4, (bell(1568, 0.35, r), 0.0, 0.7), (bell(2093, 0.35, r), 0.05, 0.5))),
+        "SFX_Pickup": mono(lambda r: layer(0.22, (soft_pop(r, 0.2, 520, 780), 0.0, 0.6), (soft_pop(r, 0.16, 1040, 1170), 0.0, 0.08))),
         "SFX_Ice": mono(lambda r: ice_crack(r, 0.5)),
         "SFX_Freeze": mono(lambda r: ice_crack(r, 0.35) * 0.8),
         "SFX_Lightning": mono(lambda r: layer(1.3, (zap(r, 0.45), 0.0, 1.0), (boom(r, 1.2), 0.06, 0.5))),

@@ -479,20 +479,23 @@ def cactus_skin():
     albedo = ramp(ribs * 0.6 + fine * 0.4, [(0.0, (0.10, 0.20, 0.08)), (0.5, (0.20, 0.36, 0.14)), (1.0, (0.33, 0.48, 0.22))])
     layer = Layer(P)
     rng = np.random.default_rng(2502)
+    # Areoles and spines stay muted tan, soft and sparse: bright one-pixel spines shimmered into white
+    # sparkles (and bloom) whenever the camera moved.
     for col in range(12):
         x = (col + 0.0) / 12 * P
-        for row in range(28):
-            y = (row + rng.uniform(-0.2, 0.2)) / 28 * P
-            layer.ellipse(x, y, 4, 4, (232, 226, 200, 255), 255)
-            for k in range(5):
+        for row in range(20):
+            y = (row + rng.uniform(-0.2, 0.2)) / 20 * P
+            layer.ellipse(x, y, 5, 5, (120, 112, 84, 255), 200)
+            for k in range(3):
                 a = rng.uniform(0, math.tau)
-                ln = rng.uniform(8, 16)
-                layer.line((x, y), (x + math.cos(a) * ln, y + math.sin(a) * ln), (238, 230, 205, 220), 230, 1.0, 20)
+                ln = rng.uniform(6, 11)
+                layer.line((x, y), (x + math.cos(a) * ln, y + math.sin(a) * ln), (140, 130, 100, 150), 160, 2.0, 20)
     sp_rgb, sp_a, sp_h = layer.result()
-    albedo = mix(albedo, sp_rgb, sp_a)
-    height = ribs * 0.6 + fine * 0.15 + sp_a * sp_h * 0.3
-    smooth = 0.35 + ribs * 0.1
-    surf = Surface(albedo, height, smooth, normal_strength=3.0)
+    sp_a = blur(sp_a, 1.2)
+    albedo = mix(albedo, sp_rgb, sp_a * 0.7)
+    height = ribs * 0.6 + fine * 0.15 + sp_a * sp_h * 0.08
+    smooth = 0.18 + ribs * 0.06
+    surf = Surface(albedo, height, smooth, normal_strength=1.8)
     surf.albedo = shade_ao(surf.albedo, surf.ao, 0.4)
     return surf
 

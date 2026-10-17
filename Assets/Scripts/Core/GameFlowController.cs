@@ -71,6 +71,8 @@ namespace SlimeBreaker
             run?.Restore(data.elapsed);
             var catalog = powerUps != null ? powerUps.skills : null;
             SkillController.Instance?.RestoreFrom(data.skillKinds, data.skillLevels, catalog);
+            Inventory.Instance?.Restore(data);
+            PlayerHealth.Instance?.Restore(data.hp);
         }
 
         void OnDestroy()
@@ -148,9 +150,35 @@ namespace SlimeBreaker
             PersistRun();
         }
 
+        public bool InventoryOpen { get; private set; }
+
+        /// <summary>Freeze the run while the inventory is open (like pause, without the pause menu).</summary>
+        public bool OpenInventory()
+        {
+            if (State != GameState.Playing)
+                return false;
+            State = GameState.Paused;
+            Time.timeScale = 0f;
+            InventoryOpen = true;
+            return true;
+        }
+
+        public void CloseInventory()
+        {
+            if (!InventoryOpen)
+                return;
+            InventoryOpen = false;
+            if (State == GameState.Paused)
+            {
+                State = GameState.Playing;
+                Time.timeScale = 1f;
+            }
+            PersistRun();
+        }
+
         public void TogglePause()
         {
-            if (State == GameState.BossIntro)
+            if (State == GameState.BossIntro || InventoryOpen)
                 return;
             if (State == GameState.Playing)
             {
@@ -222,7 +250,7 @@ namespace SlimeBreaker
                 stats = Stats ?? new RunStats(),
                 elapsed = run != null ? run.Elapsed : 0f,
                 xp = XPManager.Instance != null ? XPManager.Instance.Xp : 0,
-                hp = PlayerHealth.Instance != null ? PlayerHealth.Instance.Current : (Stats != null ? Stats.maxHealth : 100)
+                hp = PlayerHealth.Instance != null ? PlayerHealth.Instance.Current : (Stats != null ? Stats.TotalMaxHealth : 100)
             };
             var stage = StageManager.Instance;
             if (stage != null)
@@ -237,6 +265,7 @@ namespace SlimeBreaker
                 data.time = (int)stage.Theme.time;
                 data.themeSeed = stage.Theme.seed;
             }
+            Inventory.Instance?.Capture(data);
             var skills = SkillController.Instance;
             if (skills != null && skills.Count > 0)
             {

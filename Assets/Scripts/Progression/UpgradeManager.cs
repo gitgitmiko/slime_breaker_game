@@ -53,7 +53,7 @@ namespace SlimeBreaker
                     int before = stats.maxHealth;
                     stats.maxHealth = Mathf.Max(1, Mathf.FloorToInt(exact));
                     stats.healthCarry = exact - stats.maxHealth;
-                    PlayerHealth.Instance?.SetMaxHealth(stats.maxHealth, stats.maxHealth - before);
+                    PlayerHealth.Instance?.SetMaxHealth(stats.TotalMaxHealth, stats.maxHealth - before);
                     break;
                 }
                 case UpgradeKind.Speed:
@@ -104,7 +104,7 @@ namespace SlimeBreaker
                     break;
                 case UpgradeKind.Health:
                     stats.maxHealth += Mathf.RoundToInt(upgrade.amount);
-                    PlayerHealth.Instance?.SetMaxHealth(stats.maxHealth, Mathf.RoundToInt(upgrade.amount));
+                    PlayerHealth.Instance?.SetMaxHealth(stats.TotalMaxHealth, Mathf.RoundToInt(upgrade.amount));
                     break;
                 case UpgradeKind.AttackRate:
                     stats.attackCooldown = Mathf.Max(0.18f, stats.attackCooldown * (1f - upgrade.amount));

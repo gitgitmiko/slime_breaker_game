@@ -69,6 +69,22 @@ Masuk pintu meregenerasi arena (fade). Cuaca dan siang/malam berganti setiap lan
 | 90 | Crystal Slime | 90.000 | 9 | Cincin duri + perisai yang menahan bolt |
 | 100 | Royal Slime | 100.000 | 10 | Campuran tembakan api, hujan, dan zap. Kalahkan untuk **Tamat!** |
 
+## Item dan inventori
+
+Monster menjatuhkan perlengkapan (5% per slime; boss menjatuhkan **4 item, salah satunya pasti Ultra**). Rarity memakai chance yang sama dengan kartu upgrade (Normal 65%, Rare 20%, Legend 10%, Ultra 5%). Stat dikali **band lantai** tempat item jatuh (lantai 1–10 = ×1, 11–20 = ×2, … 91–100 = ×10).
+
+| Slot | Stat | Normal | Rare | Legend | Ultra |
+|---|---|---|---|---|---|
+| Staff | ATK serangan dasar | +100 | +300 | +1000 | +2000 |
+| Topi | HP | +20 | +50 | +120 | +250 |
+| Baju | HP + DEF | +30, 1% | +75, 2% | +180, 3,5% | +360, 5% |
+| Celana | HP | +15 | +40 | +100 | +200 |
+| Sepatu | Move speed | +2% | +4% | +6% | +9% |
+
+(Nilai di atas untuk band 1. ATK dan HP dikali band; DEF +0,25% dan move +0,3% per band. Total DEF dibatasi 75%.)
+
+Item diambil dengan berjalan ke permata berwarna rarity (ikon item melayang di atasnya; makin langka makin tinggi pilar cahayanya). Slot kosong langsung terpakai; item lain masuk tas (40 slot). Tombol tas di HUD membuka **Inventori** (game dijeda): kolom perlengkapan kiri, grid tas kanan, panel detail dengan perbandingan dan tombol **Pakai/Lepas** dan **Buang**. Item yang tertinggal saat masuk pintu/naik lantai otomatis diambil. Tas dan perlengkapan ikut tersimpan di save run (Lanjutkan).
+
 ## Upgrade run (level-up)
 
 Setiap kartu level-up mendapat **rarity** acak (berlaku untuk semua jenis upgrade):

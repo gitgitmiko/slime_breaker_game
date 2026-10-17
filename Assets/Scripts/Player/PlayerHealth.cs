@@ -27,7 +27,7 @@ namespace SlimeBreaker
             Instance = this;
             animator = GetComponentInChildren<Animator>();
             var stats = GameFlowController.Instance != null ? GameFlowController.Instance.Stats : null;
-            Max = stats != null ? stats.maxHealth : 100;
+            Max = stats != null ? stats.TotalMaxHealth : 100;
             Current = Max;
         }
 
@@ -109,7 +109,7 @@ namespace SlimeBreaker
         public void Restore(int hp)
         {
             Max = GameFlowController.Instance != null && GameFlowController.Instance.Stats != null
-                ? Mathf.Max(1, GameFlowController.Instance.Stats.maxHealth)
+                ? Mathf.Max(1, GameFlowController.Instance.Stats.TotalMaxHealth)
                 : Mathf.Max(1, Max);
             Current = Mathf.Clamp(hp, 1, Max);
             IsDead = false;
@@ -139,8 +139,8 @@ namespace SlimeBreaker
             if (IsInvulnerable || amount <= 0)
                 return;
             var stats = GameFlowController.Instance != null ? GameFlowController.Instance.Stats : null;
-            if (stats != null && stats.damageReduction > 0f)
-                amount = Mathf.Max(1, Mathf.RoundToInt(amount * (1f - Mathf.Clamp01(stats.damageReduction))));
+            if (stats != null && stats.TotalDamageReduction > 0f)
+                amount = Mathf.Max(1, Mathf.RoundToInt(amount * (1f - stats.TotalDamageReduction)));
             Current = Mathf.Max(0, Current - amount);
             DamagePopup.Show(transform.position + Vector3.up * 1.35f, amount, DamagePopup.Kind.Hero);
             Changed?.Invoke();

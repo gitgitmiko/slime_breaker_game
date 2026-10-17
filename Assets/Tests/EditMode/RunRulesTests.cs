@@ -154,6 +154,53 @@ namespace SlimeBreaker.Tests
         }
 
         [Test]
+        public void ItemStatsFollowSlotRarityAndFloorBand()
+        {
+            Assert.AreEqual(1, ItemCatalog.Band(1));
+            Assert.AreEqual(1, ItemCatalog.Band(10));
+            Assert.AreEqual(2, ItemCatalog.Band(11));
+            Assert.AreEqual(10, ItemCatalog.Band(100));
+            Assert.AreEqual(100, ItemCatalog.Create(ItemSlot.Staff, UpgradeRarity.Normal, 1).damage);
+            Assert.AreEqual(1000, ItemCatalog.Create(ItemSlot.Staff, UpgradeRarity.Legend, 1).damage, "Legend staff on floors 1-10 = +1000");
+            Assert.AreEqual(2000, ItemCatalog.Create(ItemSlot.Staff, UpgradeRarity.Legend, 2).damage, "Legend staff on floors 11-20 = +2000");
+            Assert.Greater(ItemCatalog.Create(ItemSlot.Staff, UpgradeRarity.Ultra, 1).damage, 1000);
+            var hat = ItemCatalog.Create(ItemSlot.Hat, UpgradeRarity.Rare, 3);
+            Assert.Greater(hat.health, 0);
+            Assert.AreEqual(0, hat.damage);
+            var armor = ItemCatalog.Create(ItemSlot.Armor, UpgradeRarity.Legend, 1);
+            Assert.Greater(armor.health, 0, "Baju gives HP");
+            Assert.Greater(armor.defense, 0f, "Baju gives DEF");
+            Assert.Greater(ItemCatalog.Create(ItemSlot.Pants, UpgradeRarity.Normal, 1).health, 0);
+            var boots = ItemCatalog.Create(ItemSlot.Boots, UpgradeRarity.Ultra, 1);
+            Assert.Greater(boots.speed, 0f, "Sepatu gives move speed");
+            Assert.AreEqual(0, boots.health);
+            for (int r = 1; r < 4; r++)
+            {
+                foreach (ItemSlot slot in System.Enum.GetValues(typeof(ItemSlot)))
+                    Assert.Greater(ItemCatalog.Create(slot, (UpgradeRarity)r, 1).Power, ItemCatalog.Create(slot, (UpgradeRarity)(r - 1), 1).Power, slot + " rarity order");
+            }
+        }
+
+        [Test]
+        public void BossDropsFourItemsWithAtLeastOneUltra()
+        {
+            var rng = new System.Random(7);
+            for (int run = 0; run < 200; run++)
+            {
+                var drops = ItemCatalog.RollBossDrops(() => (float)rng.NextDouble(), 10 * (1 + run % 10));
+                Assert.AreEqual(4, drops.Count);
+                Assert.IsTrue(drops.Exists(item => item.Rarity == UpgradeRarity.Ultra), "boss loot without an Ultra");
+            }
+            int[] rarities = new int[4];
+            for (int i = 0; i < 20000; i++)
+                rarities[ItemCatalog.Roll(() => (float)rng.NextDouble(), 5).rarity]++;
+            Assert.AreEqual(65f, rarities[0] / 200f, 1.5f);
+            Assert.AreEqual(20f, rarities[1] / 200f, 1.5f);
+            Assert.AreEqual(10f, rarities[2] / 200f, 1.5f);
+            Assert.AreEqual(5f, rarities[3] / 200f, 1.5f);
+        }
+
+        [Test]
         public void CriticalUpgradeAloneUnlocksCrits()
         {
             var host = new UnityEngine.GameObject("UpgradeHost");

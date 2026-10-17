@@ -281,6 +281,7 @@ namespace SlimeBreaker
             transitioning = false;
             ActiveBoss = BossKind.None;
             AudioService.Instance?.SetBossMusic(false);
+            ItemPickup.CollectAll();
             VanishMinions();
             if (ExitPortal.Active != null)
                 Destroy(ExitPortal.Active.gameObject);
@@ -311,6 +312,7 @@ namespace SlimeBreaker
                 Destroy(ExitPortal.Active.gameObject);
             if (spawner != null)
                 spawner.Paused = true;
+            ItemPickup.CollectAll();
             if (fader != null)
                 yield return fader.FadeOut(0.32f);
 

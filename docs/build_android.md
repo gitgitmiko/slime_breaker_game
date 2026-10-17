@@ -213,6 +213,12 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - HP boss kembali 10.000 × tier (lantai 100 = 100.000).
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 25/25; PlayMode 32/32; APK `SLIMEBREAKER_APK_OK` 0.18.0 (versionCode 22).
 
+## Hasil 17 Oktober 2026 (putaran 23 — item drop dan inventori)
+
+- Item Staff/Topi/Baju/Celana/Sepatu ber-rarity dengan stat per band lantai (Legend staff +1000 di lantai 1–10, +2000 di 11–20, …); drop 5% per slime, boss 4 item dengan 1 Ultra pasti.
+- Inventori 40 slot, layar perlengkapan + tas + detail (Pakai/Lepas/Buang), tersimpan di save run; stat gear dihitung terpisah (`RunStats.gear*`, `Total*`).
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 27/27; PlayMode 33/33; APK `SLIMEBREAKER_APK_OK` 0.19.0 (versionCode 23).
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

@@ -21,6 +21,17 @@ namespace SlimeBreaker
         /// <summary>Fractional remainders of percentage upgrades on the integer stats.</summary>
         public float damageCarry;
         public float healthCarry;
+        /// <summary>Equipment bonuses (recomputed by Inventory from the equipped items).</summary>
+        public int gearDamage;
+        public int gearHealth;
+        public float gearDefense;
+        public float gearSpeed;
+
+        public const float MaxDamageReduction = 0.75f;
+        public int TotalDamage => damage + gearDamage;
+        public int TotalMaxHealth => maxHealth + gearHealth;
+        public float TotalMoveSpeed => moveSpeed * (1f + gearSpeed);
+        public float TotalDamageReduction => UnityEngine.Mathf.Clamp(damageReduction + gearDefense, 0f, MaxDamageReduction);
 
         public bool HasCrit => critChance > 0.0001f;
         public float AttacksPerSecond => attackCooldown <= 0.01f ? 0f : 1f / attackCooldown;

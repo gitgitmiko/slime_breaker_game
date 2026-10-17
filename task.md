@@ -173,6 +173,10 @@
 
 - Normal/Rare/Legend/Ultra (65/20/10/5%, +0,1/0,3/0,5/1%) di semua upgrade; HP boss 10.000 per 10 lantai. APK 0.18.0.
 
+### Putaran 23 — item drop dan inventori
+
+- 5 slot perlengkapan ber-rarity, drop monster/boss, layar inventori, save run. APK 0.19.0.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

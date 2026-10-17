@@ -50,7 +50,7 @@ namespace SlimeBreaker
                 return;
             cooldown = stats.attackCooldown;
             bool crit;
-            int damage = CombatMath.ApplyCrit(stats.damage, out crit);
+            int damage = CombatMath.ApplyCrit(stats.TotalDamage, out crit);
             StartCoroutine(Cast(target, damage, stats.attackRange, crit));
         }
 

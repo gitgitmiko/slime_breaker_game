@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.18.0";
+        const string AppVersion = "0.19.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -42,6 +42,20 @@ namespace SlimeBreaker.EditorTools
         static Sprite fillSprite;
         static Sprite ghostSprite;
         static Sprite circleGlassSprite;
+        static GameObject itemPickupPrefab;
+        static readonly string[] ItemIconNames = { "Staff", "Hat", "Armor", "Pants", "Boots" };
+
+        static Sprite[] ItemIcons()
+        {
+            var icons = new Sprite[ItemIconNames.Length];
+            for (int i = 0; i < icons.Length; i++)
+            {
+                icons[i] = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Icons/ICON_Item_" + ItemIconNames[i] + ".png");
+                if (icons[i] == null)
+                    Debug.LogWarning("Ikon item hilang: " + ItemIconNames[i]);
+            }
+            return icons;
+        }
         static Sprite ringSprite;
         static Sprite gearSprite;
         static Sprite pauseIconSprite;
@@ -270,6 +284,7 @@ namespace SlimeBreaker.EditorTools
             var fireRing = FireNovaPrefab("Assets/Prefabs/Skills/SKL_Fire_Nova.prefab");
             var lightning = LightningPrefab("Assets/Prefabs/Skills/SKL_Lightning.prefab");
             var powerUp = PowerUpPrefab("Assets/Prefabs/Pickups/PWR_Crystal.prefab");
+            itemPickupPrefab = ItemPickupPrefab("Assets/Prefabs/Pickups/PCK_Item.prefab");
 
             var hero = CharacterPrefab("Assets/Prefabs/Player/CHR_Hero_Main.prefab", "Assets/Art/Characters/Hero/CHR_Hero_Main.fbx", heroController, 1.35f, true, null, null);
             var breakerAura = BreakerAuraPrefab("Assets/Prefabs/VFX/VFX_BossBreaker_Aura.prefab");
@@ -1772,6 +1787,43 @@ namespace SlimeBreaker.EditorTools
             return SavePrefab(root, path);
         }
 
+        /// <summary>Equipment drop: small spinning gem + rarity beam + the item icon floating above (billboard).</summary>
+        static GameObject ItemPickupPrefab(string path)
+        {
+            var root = new GameObject(Path.GetFileNameWithoutExtension(path));
+            var gem = (GameObject)PrefabUtility.InstantiatePrefab(LoadModel("Assets/Art/VFX/VFX_PowerUp_Crystal.fbx"));
+            gem.name = "Gem";
+            gem.transform.SetParent(root.transform, false);
+            gem.transform.localPosition = new Vector3(0f, 0.55f, 0f);
+            gem.transform.localScale = Vector3.one * 0.75f;
+            foreach (var r in gem.GetComponentsInChildren<Renderer>())
+                r.shadowCastingMode = ShadowCastingMode.Off;
+
+            var beam = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            beam.name = "Beam";
+            UnityEngine.Object.DestroyImmediate(beam.GetComponent<Collider>());
+            beam.transform.SetParent(root.transform, false);
+            beam.transform.localPosition = new Vector3(0f, 1f, 0f);
+            beam.transform.localScale = new Vector3(0.16f, 1f, 0.16f);
+            var beamRenderer = beam.GetComponent<MeshRenderer>();
+            beamRenderer.sharedMaterial = TranslucentMaterial("Assets/Art/VFX/Materials/MAT_Item_Beam.mat", new Color(1f, 1f, 1f, 0.16f));
+            beamRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            beamRenderer.receiveShadows = false;
+
+            var iconObject = new GameObject("Icon");
+            iconObject.transform.SetParent(root.transform, false);
+            iconObject.transform.localPosition = new Vector3(0f, 1.35f, 0f);
+            iconObject.transform.localScale = Vector3.one * 0.32f;
+            var icon = iconObject.AddComponent<SpriteRenderer>();
+            icon.sortingOrder = 5;
+
+            var pickup = root.AddComponent<ItemPickup>();
+            pickup.gem = gem.transform;
+            pickup.beam = beam.transform;
+            pickup.icon = icon;
+            return SavePrefab(root, path);
+        }
+
         static Material TranslucentMaterial(string path, Color color)
         {
             var shader = Shader.Find("Universal Render Pipeline/Unlit");
@@ -2185,6 +2237,9 @@ namespace SlimeBreaker.EditorTools
             var generator = systems.AddComponent<ArenaGenerator>();
             var stage = systems.AddComponent<StageManager>();
             AttachGraphics(systems);
+            var inventory = systems.AddComponent<Inventory>();
+            inventory.pickupPrefab = itemPickupPrefab != null ? itemPickupPrefab.GetComponent<ItemPickup>() : null;
+            inventory.slotIcons = ItemIcons();
             flow.balance = balance;
             flow.run = run;
             flow.upgrades = upgradeManager;
@@ -2331,6 +2386,125 @@ namespace SlimeBreaker.EditorTools
             var postFx = host.GetComponent<PostFx>() ?? host.AddComponent<PostFx>();
             postFx.menuCover = TextureNamed("TEX_Cover_Moss");
             return graphics;
+        }
+
+        /// <summary>HUD bag button + inventory screen (equipment column, 8×5 bag grid, detail strip).</summary>
+        static InventoryPanel BuildInventory(GameObject host, RectTransform safe, Font font)
+        {
+            var inv = host.AddComponent<InventoryPanel>();
+            var bag = Button(safe, "Bag", "", font, Color.white, circleGlassSprite);
+            Place(bag.gameObject, safe, new Vector2(0.905f, 0.925f), new Vector2(84f, 84f));
+            var bagIcon = Graphic(bag.transform, "Icon", AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Icons/ICON_Bag.png") ?? whiteSprite, Color.white);
+            bagIcon.preserveAspect = true;
+            bagIcon.raycastTarget = false;
+            Place(bagIcon.gameObject, bag.transform, new Vector2(0.5f, 0.5f), new Vector2(54f, 54f));
+            inv.openButton = bag;
+
+            var panel = Panel(safe, "Inventory", font, "Inventori");
+            var title = panel.transform.Find("Title");
+            if (title != null)
+                Place(title.gameObject, panel.transform, new Vector2(0.5f, 0.84f), new Vector2(1000f, 80f));
+            var accent = panel.transform.Find("TitleAccent");
+            if (accent != null)
+                Place(accent.gameObject, panel.transform, new Vector2(0.5f, 0.8f), new Vector2(96f, 8f));
+            var close = Button(panel.transform, "Close", "X", font, Color.white, dangerSprite);
+            Place(close.gameObject, panel.transform, new Vector2(0.835f, 0.845f), new Vector2(72f, 72f));
+            inv.closeButton = close;
+            inv.panel = panel;
+
+            // Equipment column.
+            var icons = ItemIcons();
+            int slots = ItemCatalog.SlotCount;
+            inv.slotButtons = new Button[slots];
+            inv.slotFrames = new Image[slots];
+            inv.slotIcons = new Image[slots];
+            inv.slotTexts = new Text[slots];
+            for (int i = 0; i < slots; i++)
+            {
+                var button = Button(panel.transform, "Slot_" + ItemIconNames[i], "", font, Color.white, ghostSprite);
+                Place(button.gameObject, panel.transform, new Vector2(0.27f, 0.72f - i * 0.1f), new Vector2(380f, 96f));
+                var frame = Graphic(button.transform, "Rarity", pillSprite, Color.white);
+                frame.raycastTarget = false;
+                Place(frame.gameObject, button.transform, new Vector2(0.14f, 0.5f), new Vector2(84f, 84f));
+                var icon = Graphic(button.transform, "Icon", icons[i] ?? whiteSprite, Color.white);
+                icon.preserveAspect = true;
+                icon.raycastTarget = false;
+                Place(icon.gameObject, button.transform, new Vector2(0.14f, 0.5f), new Vector2(70f, 70f));
+                var label = button.GetComponentInChildren<Text>();
+                label.alignment = TextAnchor.MiddleLeft;
+                label.fontSize = 24;
+                label.fontStyle = FontStyle.Normal;
+                var rect = label.rectTransform;
+                rect.anchorMin = new Vector2(0.28f, 0f);
+                rect.anchorMax = new Vector2(0.98f, 1f);
+                rect.offsetMin = Vector2.zero;
+                rect.offsetMax = Vector2.zero;
+                inv.slotButtons[i] = button;
+                inv.slotFrames[i] = frame;
+                inv.slotIcons[i] = icon;
+                inv.slotTexts[i] = label;
+            }
+            var totals = Text(panel.transform, "Totals", "", 24, TextAnchor.UpperCenter, font);
+            Place(totals.gameObject, panel.transform, new Vector2(0.27f, 0.17f), new Vector2(400f, 110f));
+            inv.totalsText = totals;
+
+            // Bag grid 8 × 5.
+            const int columns = 8;
+            const int rows = 5;
+            int cells = columns * rows;
+            inv.cellButtons = new Button[cells];
+            inv.cellFrames = new Image[cells];
+            inv.cellIcons = new Image[cells];
+            inv.cellMarks = new Text[cells];
+            for (int i = 0; i < cells; i++)
+            {
+                int col = i % columns;
+                int row = i / columns;
+                var cell = Button(panel.transform, "Cell" + i, "", font, Color.white, slotSprite);
+                Place(cell.gameObject, panel.transform, new Vector2(0.405f + col * 0.0505f, 0.72f - row * 0.088f), new Vector2(88f, 88f));
+                // Rarity wash inside the slot frame (green / blue / purple / orange).
+                var frame = Graphic(cell.transform, "Rarity", pillSprite, Color.white);
+                frame.raycastTarget = false;
+                Place(frame.gameObject, cell.transform, new Vector2(0.5f, 0.5f), new Vector2(78f, 78f));
+                frame.transform.SetSiblingIndex(0);
+                var icon = Graphic(cell.transform, "Icon", icons[0] ?? whiteSprite, Color.white);
+                icon.preserveAspect = true;
+                icon.raycastTarget = false;
+                Place(icon.gameObject, cell.transform, new Vector2(0.5f, 0.5f), new Vector2(66f, 66f));
+                var mark = cell.GetComponentInChildren<Text>();
+                mark.fontSize = 22;
+                mark.alignment = TextAnchor.UpperRight;
+                var markRect = mark.rectTransform;
+                markRect.offsetMin = new Vector2(4f, 4f);
+                markRect.offsetMax = new Vector2(-6f, -2f);
+                inv.cellButtons[i] = cell;
+                inv.cellFrames[i] = frame;
+                inv.cellIcons[i] = icon;
+                inv.cellMarks[i] = mark;
+            }
+            var capacity = Text(panel.transform, "Capacity", "0 / 40", 24, TextAnchor.MiddleRight, font);
+            Place(capacity.gameObject, panel.transform, new Vector2(0.73f, 0.775f), new Vector2(200f, 34f));
+            inv.capacityText = capacity;
+
+            // Detail strip under the grid.
+            var strip = Graphic(panel.transform, "Detail", pillSprite, new Color(1f, 1f, 1f, 0.07f));
+            Place(strip.gameObject, panel.transform, new Vector2(0.58f, 0.2f), new Vector2(790f, 130f));
+            var detailTitle = Text(strip.transform, "Title", "Pilih item", 28, TextAnchor.UpperLeft, font);
+            detailTitle.fontStyle = FontStyle.Bold;
+            Place(detailTitle.gameObject, strip.transform, new Vector2(0.33f, 0.72f), new Vector2(500f, 40f));
+            var detailBody = Text(strip.transform, "Body", "", 26, TextAnchor.UpperLeft, font);
+            Place(detailBody.gameObject, strip.transform, new Vector2(0.33f, 0.3f), new Vector2(500f, 70f));
+            var equip = Button(strip.transform, "Equip", "Pakai", font, Color.white, goldSprite);
+            Place(equip.gameObject, strip.transform, new Vector2(0.745f, 0.5f), new Vector2(150f, 80f));
+            var discard = Button(strip.transform, "Discard", "Buang", font, Color.white, dangerSprite);
+            Place(discard.gameObject, strip.transform, new Vector2(0.93f, 0.5f), new Vector2(110f, 80f));
+            inv.detailTitle = detailTitle;
+            inv.detailBody = detailBody;
+            inv.equipButton = equip;
+            inv.equipLabel = equip.GetComponentInChildren<Text>();
+            inv.discardButton = discard;
+            panel.SetActive(false);
+            return inv;
         }
 
         static SettingsPanel BuildSettingsOverlay(RectTransform safe, Font font)
@@ -2737,6 +2911,7 @@ namespace SlimeBreaker.EditorTools
             Place(menu.gameObject, pausePanel.transform, new Vector2(0.5f, 0.22f), new Vector2(380f, 96f));
             pausePanel.SetActive(false);
             var settings = BuildSettingsOverlay(safe, font);
+            BuildInventory(uiObject, safe, font);
 
             var resultPanel = Panel(safe, "Result", font, "Hasil");
             var resultTitle = resultPanel.GetComponentInChildren<Text>();
@@ -2901,7 +3076,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 22;
+            PlayerSettings.Android.bundleVersionCode = 23;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

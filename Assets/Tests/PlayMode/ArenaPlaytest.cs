@@ -1279,6 +1279,100 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
+        public IEnumerator ItemsDropEquipAndPersist()
+        {
+            yield return null;
+            var flow = GameFlowController.Instance;
+            var inventory = Inventory.Instance;
+            var panel = Object.FindAnyObjectByType<InventoryPanel>();
+            Assert.IsNotNull(inventory, "GameArena has no Inventory");
+            Assert.IsNotNull(panel, "HUD has no InventoryPanel");
+            Assert.IsNotNull(inventory.pickupPrefab, "Inventory has no pickup prefab");
+            for (int i = 0; i < ItemCatalog.SlotCount; i++)
+                Assert.IsNotNull(inventory.IconFor((ItemSlot)i), "missing icon for " + (ItemSlot)i);
+            PlayerHealth.Instance.GiveInvulnerability(120f);
+            var stats = flow.Stats;
+            int baseDamage = stats.TotalDamage;
+            int baseHp = stats.TotalMaxHealth;
+
+            // A dropped Legend staff lying next to the hero is picked up and auto-equipped (slot was empty).
+            var staff = ItemCatalog.Create(ItemSlot.Staff, UpgradeRarity.Legend, 1);
+            var pickup = inventory.Spawn(staff, PlayerHealth.Instance.transform.position + Vector3.right * 0.3f);
+            Assert.IsNotNull(pickup);
+            yield return null;
+            yield return null;
+            Assert.IsTrue(pickup == null, "item pickup was not collected");
+            Assert.AreEqual(1, inventory.Items.Count);
+            Assert.IsTrue(inventory.IsEquipped(staff));
+            Assert.AreEqual(baseDamage + 1000, stats.TotalDamage, "Legend staff should add +1000 ATK");
+            Assert.AreEqual((baseDamage + 1000).ToString(), flow.ui.StatValue("DMG"));
+
+            // Armor gives HP + DEF; a second staff goes to the bag without replacing the worn one.
+            var armor = ItemCatalog.Create(ItemSlot.Armor, UpgradeRarity.Ultra, 1);
+            inventory.Add(armor);
+            Assert.AreEqual(baseHp + armor.health, stats.TotalMaxHealth);
+            Assert.AreEqual(baseHp + armor.health, PlayerHealth.Instance.Max, "HP bar did not grow with the armor");
+            Assert.Greater(stats.TotalDamageReduction, 0f);
+            var better = ItemCatalog.Create(ItemSlot.Staff, UpgradeRarity.Ultra, 1);
+            inventory.Add(better);
+            Assert.IsTrue(inventory.IsEquipped(staff), "a new drop must not replace worn gear by itself");
+
+            // Inventory screen: opens paused, lists the bag, swaps the staff, discards the old one.
+            panel.Open();
+            yield return null;
+            Assert.IsTrue(panel.IsOpen);
+            Assert.AreEqual(0f, Time.timeScale, "game should pause while the inventory is open");
+            Assert.AreEqual(3, panel.Ordered.Count);
+            int cell = 0;
+            for (int i = 0; i < panel.Ordered.Count; i++)
+            {
+                if (panel.Ordered[i].id == better.id)
+                    cell = i;
+            }
+            panel.SelectCell(cell);
+            Assert.AreEqual("Pakai", panel.equipLabel.text);
+            panel.ToggleEquip();
+            Assert.IsTrue(inventory.IsEquipped(better));
+            Assert.AreEqual(baseDamage + better.damage, stats.TotalDamage);
+            Assert.AreEqual("ULTRA", panel.detailTitle.text.Substring(0, 5));
+            yield return null;
+            Capture("31_inventory");
+            for (int i = 0; i < panel.Ordered.Count; i++)
+            {
+                if (panel.Ordered[i].id == staff.id)
+                    panel.SelectCell(i);
+            }
+            panel.DiscardSelected();
+            Assert.AreEqual(2, inventory.Items.Count);
+            panel.Close();
+            Assert.AreEqual(1f, Time.timeScale);
+
+            // Save / resume keeps the bag and the worn gear.
+            var save = flow.CaptureRun();
+            Assert.AreEqual(2, save.items.Length);
+            inventory.Restore(new RunSave());
+            Assert.AreEqual(baseDamage, stats.TotalDamage);
+            inventory.Restore(save);
+            Assert.AreEqual(baseDamage + better.damage, stats.TotalDamage, "resume lost the equipped staff");
+
+            // Boss loot: four pickups, one Ultra.
+            int before = ItemPickup.Active.Count;
+            var drops = ItemCatalog.RollBossDrops(() => Random.value, 10);
+            Vector3 hero = PlayerHealth.Instance.transform.position;
+            for (int i = 0; i < drops.Count; i++)
+            {
+                float angle = (i + 0.5f) / drops.Count * Mathf.PI * 2f;
+                inventory.Spawn(drops[i], hero + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * 2.6f);
+            }
+            Assert.AreEqual(before + 4, ItemPickup.Active.Count);
+            Assert.IsTrue(ItemPickup.Active.Exists(p => p.Item.Rarity == UpgradeRarity.Ultra), "boss loot without an Ultra");
+            yield return null;
+            Capture("32_item_drops");
+            ItemPickup.CollectAll();
+            Assert.AreEqual(6, inventory.Items.Count, "floor change should sweep up loot");
+        }
+
+        [UnityTest]
         public IEnumerator RenderBudgetPerBiome()
         {
             var stage = Object.FindAnyObjectByType<StageManager>();

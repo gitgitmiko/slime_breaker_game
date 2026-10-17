@@ -523,7 +523,7 @@ namespace SlimeBreaker
                 ? GameFlowController.Instance.Stats.level
                 : 1;
             int damage = GameFlowController.Instance != null && GameFlowController.Instance.Stats != null
-                ? GameFlowController.Instance.Stats.damage
+                ? GameFlowController.Instance.Stats.TotalDamage
                 : 0;
             int floor = StageManager.Instance != null ? StageManager.Instance.Floor : 1;
             if (resultTitle != null)
@@ -598,16 +598,16 @@ namespace SlimeBreaker
             if (stats == null)
                 return;
             if (damageText != null)
-                damageText.text = "ATK " + stats.damage;
+                damageText.text = "ATK " + stats.TotalDamage;
             float expBonus = Mathf.Max(0f, stats.xpMultiplier - 1f) * 100f;
-            float defense = stats.damageReduction * 100f;
+            float defense = stats.TotalDamageReduction * 100f;
             float steal = stats.lifesteal * 100f;
-            SetStat(0, stats.damage.ToString(), Color.white);
+            SetStat(0, stats.TotalDamage.ToString(), stats.gearDamage > 0 ? StatGold : Color.white);
             SetStat(1, stats.AttacksPerSecond.ToString("0.00") + "/s", Color.white);
             SetStat(2, stats.HasCrit ? stats.critMultiplier.ToString("0.0##", System.Globalization.CultureInfo.InvariantCulture) + "x" : "—", stats.HasCrit ? StatGold : StatDim);
             SetStat(3, Pct(stats.HasCrit ? stats.critChance * 100f : 0f) + "%", stats.HasCrit ? StatGold : StatDim);
             SetStat(4, stats.attackRange.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " m", Color.white);
-            SetStat(5, stats.moveSpeed.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture), Color.white);
+            SetStat(5, stats.TotalMoveSpeed.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture), Color.white);
             SetStat(6, Pct(steal) + "%", steal > 0.01f ? StatGreen : StatDim);
             SetStat(7, "+" + Pct(expBonus) + "%", expBonus > 0.01f ? Color.white : StatDim);
             SetStat(8, Pct(defense) + "%", defense > 0.01f ? StatBlue : StatDim);

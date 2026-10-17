@@ -23,6 +23,10 @@ namespace SlimeBreaker
         public int weather;
         public int time;
         public int themeSeed;
+        public ItemData[] items = Array.Empty<ItemData>();
+        /// <summary>Equipped item id per <see cref="ItemSlot"/> (-1 = empty).</summary>
+        public int[] equippedItems = { -1, -1, -1, -1, -1 };
+        public int nextItemId = 1;
 
         public ArenaTheme ToTheme()
         {

@@ -47,7 +47,7 @@ namespace SlimeBreaker
             if (wish.sqrMagnitude > 1f)
                 wish.Normalize();
 
-            float speed = (stats != null ? stats.moveSpeed : 5f) * (health != null ? health.MoveScale : 1f);
+            float speed = (stats != null ? stats.TotalMoveSpeed : 5f) * (health != null ? health.MoveScale : 1f);
             Vector3 velocity = wish * speed;
             if (dash != null && dash.IsDashing)
                 velocity = dash.Direction * (flow.balance != null ? flow.balance.dashSpeed : 16f);

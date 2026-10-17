@@ -157,6 +157,10 @@
 - Hero mengikuti referensi cat-boy + gaya penyihir; HP boss 10 juta per 10 lantai; orb EXP lebih tenang; kilau kaktus hilang.
 - Setup OK. EditMode 22/22. PlayMode 32/32. APK 0.17.0.
 
+### Putaran 19 — proporsi hero disamakan dengan chibi cat-boy
+
+- Rambut, kepala, badan, lengan, kaki diukur dari referensi dan disamakan. Setup OK. EditMode 22/22. PlayMode 32/32. APK 0.17.1.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

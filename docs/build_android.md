@@ -189,6 +189,11 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Kaktus: duri/areola diredam dan smoothness rendah, tak ada lagi kilau putih saat kamera bergerak.
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 22/22; PlayMode 32/32; APK `SLIMEBREAKER_APK_OK` 0.17.0 (versionCode 18).
 
+## Hasil 17 Oktober 2026 (putaran 19 — proporsi hero mengikuti chibi cat-boy)
+
+- Proporsi diukur dari gambar referensi lalu disamakan: rambut lebih ramping (±0,27 H) dengan tonjolan bergelombang di sisi/belakang dan ujung tidak turun di bawah dagu, kaki lebih tebal dan rapat (tulang kaki digeser ke x ±0,075–0,085), lengan/tangan lebih tebal, kaos lebih lebar, telinga di sudut atas rambut. `CHR_Hero_Main.fbx` 28.578 tris.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 22/22; PlayMode 32/32; APK `SLIMEBREAKER_APK_OK` 0.17.1 (versionCode 19).
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

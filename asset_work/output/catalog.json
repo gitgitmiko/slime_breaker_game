@@ -275,8 +275,8 @@
     "id": "CHR_Hero_Main",
     "file": "Characters/Hero/CHR_Hero_Main.fbx",
     "kind": "character",
-    "triangles": 28546,
-    "vertices": 14577,
+    "triangles": 28578,
+    "vertices": 14595,
     "notes": "generic rig, in-place clips"
   }
 ]

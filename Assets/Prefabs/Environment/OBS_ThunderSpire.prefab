@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6843654841056494331}
   - component: {fileID: 2106702946607756217}
-  - component: {fileID: 6681099485083511937}
+  - component: {fileID: 5066745577271275530}
   m_Layer: 8
   m_Name: OBS_ThunderSpire
   m_TagString: Untagged
@@ -55,7 +55,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.95, y: 1.85, z: 0.95}
   m_Center: {x: 0, y: 0.9, z: 0}
---- !u!114 &6681099485083511937
+--- !u!114 &5066745577271275530
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

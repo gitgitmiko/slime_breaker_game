@@ -10,6 +10,7 @@ Unity's +Z forward.
 
 import json
 import math
+import random
 import os
 import subprocess
 import sys
@@ -577,12 +578,12 @@ def hero_bones():
         ("Hand.R", (0.21, -0.04, 0.40), (0.22, -0.06, 0.33), "Forearm.R"),
         ("Staff", (0.225, -0.07, 0.37), (0.225, -0.07, 0.85), "Hand.R"),
         ("StaffTip", (0.225, -0.07, 1.01), (0.225, -0.07, 1.10), "Staff"),
-        ("UpLeg.L", (-0.065, 0, 0.40), (-0.07, 0, 0.22), "Hips"),
-        ("Leg.L", (-0.07, 0, 0.22), (-0.072, 0, 0.07), "UpLeg.L"),
-        ("Foot.L", (-0.072, 0, 0.07), (-0.072, -0.10, 0.02), "Leg.L"),
-        ("UpLeg.R", (0.065, 0, 0.40), (0.07, 0, 0.22), "Hips"),
-        ("Leg.R", (0.07, 0, 0.22), (0.072, 0, 0.07), "UpLeg.R"),
-        ("Foot.R", (0.072, 0, 0.07), (0.072, -0.10, 0.02), "Leg.R"),
+        ("UpLeg.L", (-0.075, 0, 0.40), (-0.084, 0, 0.22), "Hips"),
+        ("Leg.L", (-0.084, 0, 0.22), (-0.085, 0, 0.07), "UpLeg.L"),
+        ("Foot.L", (-0.085, 0, 0.07), (-0.085, -0.10, 0.02), "Leg.L"),
+        ("UpLeg.R", (0.075, 0, 0.40), (0.084, 0, 0.22), "Hips"),
+        ("Leg.R", (0.084, 0, 0.22), (0.085, 0, 0.07), "UpLeg.R"),
+        ("Foot.R", (0.085, 0, 0.07), (0.085, -0.10, 0.02), "Leg.R"),
     ]
 
 
@@ -851,17 +852,26 @@ def build_hero(mats):
 
     # --- hair: one big shaggy dome (wider than the face), the face carved out, then jagged clumps
     elements = [
-        ("ELLIPSOID", (0, 0.03, 1.05), 0.30, (1.18, 1.08, 0.98), False),
-        ("BALL", (0, 0.11, 0.93), 0.27, None, False),
-        ("BALL", (0, 0.13, 0.80), 0.19, None, False),
+        ("ELLIPSOID", (0, 0.03, 1.06), 0.30, (1.06, 1.08, 0.98), False),
+        ("BALL", (0, 0.11, 0.95), 0.25, None, False),
+        ("BALL", (0, 0.13, 0.85), 0.17, None, False),
     ]
     for side in (-1, 1):
         elements += [
-            ("BALL", (0.25 * side, -0.02, 0.98), 0.15, None, False),
-            ("BALL", (0.27 * side, 0.04, 0.86), 0.13, None, False),
-            ("BALL", (0.20 * side, 0.14, 0.80), 0.13, None, False),
+            ("BALL", (0.21 * side, -0.02, 1.0), 0.15, None, False),
+            ("BALL", (0.22 * side, 0.04, 0.89), 0.125, None, False),
+            ("BALL", (0.17 * side, 0.14, 0.85), 0.12, None, False),
             ("BALL", (0.13 * side, -0.10, 1.15), 0.11, None, False),
         ]
+    # Lumpy wavy outline: a ring of hair tufts bulging from the dome around the sides and back (not the face).
+    tuft_rng = random.Random(77)
+    for ring, (z, radius, size, count) in enumerate(((1.22, 0.22, 0.085, 8), (1.1, 0.27, 0.095, 10), (0.98, 0.28, 0.095, 10), (0.88, 0.25, 0.09, 9))):
+        for k in range(count):
+            a = -2.45 + 4.9 * (k + 0.5 * (ring % 2)) / count + tuft_rng.uniform(-0.12, 0.12)
+            if abs(a) > 2.45:
+                continue
+            rr = radius + tuft_rng.uniform(-0.015, 0.02)
+            elements.append(("BALL", (math.sin(a) * rr, 0.04 + math.cos(a) * rr, z + tuft_rng.uniform(-0.03, 0.03)), size, None, False))
     elements.append(("ELLIPSOID", (0, -0.31, 0.875), 0.2, (1.22, 1.0, 0.95), True))
     hair = metaball_mesh("hair", elements, resolution=0.016)
     decimate(hair, 0.4)
@@ -881,24 +891,24 @@ def build_hero(mats):
     for side in (-1, 1):
         tail = "Hair.L" if side < 0 else "Hair.R"
         # Side flicks sticking out sideways at cheek height (the reference's jagged silhouette).
-        flicks = ((1.16, 0.40, -0.02, 0.0, 0.07), (1.06, 0.47, 0.03, 0.02, 0.08), (0.96, 0.49, 0.07, 0.04, 0.08),
-                  (0.86, 0.46, 0.11, 0.08, 0.075), (0.78, 0.40, 0.13, 0.13, 0.07), (0.74, 0.30, 0.12, 0.22, 0.07))
+        flicks = ((1.16, 0.33, -0.02, 0.0, 0.065), (1.06, 0.37, 0.03, 0.02, 0.07), (0.97, 0.38, 0.06, 0.04, 0.07),
+                  (0.89, 0.36, 0.08, 0.08, 0.065), (0.84, 0.31, 0.07, 0.14, 0.06), (0.83, 0.24, 0.06, 0.22, 0.06))
         for k, (z, out, drop, back, width) in enumerate(flicks):
-            root = (0.27 * side, 0.03 + back * 0.6, z)
+            root = (0.2 * side, 0.03 + back * 0.6, z)
             tip = (out * side, 0.05 + back, z - drop)
             p.append(assign(lock(f"flick{side}{k}", root, tip, width * 1.5, 0.08, bend=(0.0, 0.02)), ["Head", tail], mats["hair"], sharpness=3.0))
         # Clumps around the back, flicking out at the ends.
-        for k, (angle, length) in enumerate(((0.35, 0.22), (0.8, 0.25), (1.2, 0.22))):
+        for k, (angle, length) in enumerate(((0.35, 0.13), (0.8, 0.14), (1.2, 0.12))):
             a = angle * side
-            root = (math.sin(a) * 0.28, 0.05 + math.cos(a) * 0.23, 0.90)
-            tip = (math.sin(a) * 0.38, 0.08 + math.cos(a) * 0.32, 0.90 - length)
+            root = (math.sin(a) * 0.22, 0.05 + math.cos(a) * 0.22, 0.93)
+            tip = (math.sin(a) * 0.31, 0.08 + math.cos(a) * 0.31, 0.93 - length)
             clump = lock(f"back{side}{k}", root, tip, 0.08, 0.06, bend=(0.04 * side, 0.04))
             p.append(assign(clump, ["Head", tail, tail + ".2"], mats["hair"], sharpness=3.0))
         # Face-framing lock in front of the ear line.
         x = 0.22 * side
         root = (x, surface_y(head, x, 1.0, 0.03), 1.0)
         p.append(assign(lock(f"sidelock{side}", root, (0.215 * side, -0.14, 0.78), 0.055, 0.035, bend=(0.02 * side, -0.01)), "Head", mats["hair"]))
-    p.append(assign(lock("backcenter", (0, 0.25, 0.92), (0, 0.33, 0.68), 0.09, 0.06, bend=(0.0, 0.04)), "Head", mats["hair"]))
+    p.append(assign(lock("backcenter", (0, 0.24, 0.93), (0, 0.31, 0.77), 0.09, 0.06, bend=(0.0, 0.04)), "Head", mats["hair"]))
     # Soft blue-white shine ovals on the crown, as in the reference.
     for side in (-1, 1):
         hx, hz = 0.13 * side, 1.17
@@ -909,19 +919,19 @@ def build_hero(mats):
 
     # --- cat ears: black outer shell, cream fluffy inner, poking up through the hat brim
     for side in (-1, 1):
-        base = mathutils.Vector((0.27 * side, -0.01, top_z - 0.15))
-        ear = add_cone(f"catear{side}", 0.11, 0.27, (0, 0, 0.135), vertices=16)
+        base = mathutils.Vector((0.215 * side, 0.0, top_z - 0.1))
+        ear = add_cone(f"catear{side}", 0.1, 0.2, (0, 0, 0.1), vertices=16)
         for vert in ear.data.vertices:
             vert.co.y *= 0.55
-        ear.rotation_euler = (0.08, -0.5 * side, 0.0)
+        ear.rotation_euler = (0.06, -0.3 * side, 0.0)
         ear.location = base
         apply_xform(ear)
         smooth(ear, math.radians(70))
         p.append(assign(ear, "Head", mats["hair"]))
-        inner = add_cone(f"catear_in{side}", 0.08, 0.2, (0, -0.012, 0.11), vertices=12)
+        inner = add_cone(f"catear_in{side}", 0.07, 0.15, (0, -0.012, 0.085), vertices=12)
         for vert in inner.data.vertices:
-            vert.co.y = vert.co.y * 0.3 - 0.04
-        inner.rotation_euler = (0.08, -0.5 * side, 0.0)
+            vert.co.y = vert.co.y * 0.3 - 0.038
+        inner.rotation_euler = (0.06, -0.3 * side, 0.0)
         inner.location = base
         apply_xform(inner)
         smooth(inner, math.radians(70))
@@ -929,7 +939,7 @@ def build_hero(mats):
 
     # --- witch hat: tilted back between the ears, wavy brim, bent crown, purple band, gold moon
     hat_z = top_z - 0.04
-    brim_r = 0.26
+    brim_r = 0.21
     brim = add_cylinder("hat_brim", brim_r, 0.02, (0, 0.03, hat_z), vertices=48)
     for vert in brim.data.vertices:
         r = math.hypot(vert.co.x, vert.co.y - 0.03)
@@ -940,11 +950,11 @@ def build_hero(mats):
     for i in range(14):
         t = i / 13
         centers.append((0.02 * t * t, 0.03 + 0.30 * t ** 2.2, hat_z + 0.02 + t * 0.44 - 0.09 * t ** 3))
-        radii.append(0.13 * (1 - t) ** 0.95 + 0.01)
+        radii.append(0.12 * (1 - t) ** 0.95 + 0.01)
     crown = loft("hat_crown", centers, radii, segments=24, cap_start=False)
     p.append(assign(crown, ["Hat", "HatTip"], mats["hat"], sharpness=3.0))
-    p.append(assign(add_torus("hat_band", 0.128, 0.02, (0, 0.034, hat_z + 0.05), major_segments=36, minor_segments=10, scale=(1, 1, 1.3)), "Hat", mats["hat_band"]))
-    moon = add_torus("hat_moon", 0.03, 0.01, (0, -0.10, hat_z + 0.06), rot=(math.pi / 2, 0, 0), major_segments=24, minor_segments=8)
+    p.append(assign(add_torus("hat_band", 0.118, 0.019, (0, 0.034, hat_z + 0.05), major_segments=36, minor_segments=10, scale=(1, 1, 1.3)), "Hat", mats["hat_band"]))
+    moon = add_torus("hat_moon", 0.028, 0.009, (0, -0.092, hat_z + 0.06), rot=(math.pi / 2, 0, 0), major_segments=24, minor_segments=8)
     carve(moon, lambda co: co.x > 0.01)
     p.append(assign(moon, "Hat", mats["gold"]))
 
@@ -952,11 +962,11 @@ def build_hero(mats):
     p.append(assign(add_cylinder("neck", 0.042, 0.10, (0, 0, 0.73), vertices=14), ["Chest", "Neck"], mats["skin"]))
     p.append(assign(add_torus("choker", 0.044, 0.009, (0, 0, 0.735), major_segments=24, minor_segments=8), "Neck", mats["choker"]))
     p.append(assign(add_sphere("bell", 0.017, (0, -0.052, 0.722), seg=14, rings=10), "Neck", mats["gold"]))
-    tee = loft("tee", [(0, 0, 0.44), (0, 0, 0.52), (0, 0, 0.62), (0, 0.004, 0.705)], [0.13, 0.12, 0.125, 0.085],
-               segments=28, ovals=[(1.0, 0.8)] * 4)
+    tee = loft("tee", [(0, 0, 0.44), (0, 0, 0.52), (0, 0, 0.62), (0, 0.004, 0.69), (0, 0.004, 0.715)], [0.142, 0.136, 0.142, 0.125, 0.07],
+               segments=28, ovals=[(1.0, 0.74)] * 5)
     p.append(assign(tee, ["Hips", "Spine", "Chest"], mats["shirt"]))
-    p.append(assign(add_torus("tee_hem", 0.128, 0.007, (0, 0, 0.443), scale=(1.0, 0.8, 1.0), major_segments=36, minor_segments=6), "Hips", mats["shirt"]))
-    shorts = loft("shorts", [(0, 0, 0.47), (0, 0, 0.42), (0, 0, 0.385)], [0.122, 0.128, 0.12], segments=28, ovals=[(1.0, 0.78)] * 3, cap_start=False)
+    p.append(assign(add_torus("tee_hem", 0.141, 0.007, (0, 0, 0.443), scale=(1.0, 0.74, 1.0), major_segments=36, minor_segments=6), "Hips", mats["shirt"]))
+    shorts = loft("shorts", [(0, 0, 0.47), (0, 0, 0.42), (0, 0, 0.385)], [0.142, 0.158, 0.156], segments=28, ovals=[(1.0, 0.7)] * 3, cap_start=False)
     p.append(assign(shorts, ["Hips"], mats["shorts"]))
     cape = loft("cape", [(0, 0.05, 0.71), (0, 0.10, 0.62), (0, 0.15, 0.52), (0, 0.19, 0.42)], [0.11, 0.15, 0.19, 0.21],
                 segments=28, ovals=[(1.0, 0.9)] * 4, cap_start=False, cap_end=False)
@@ -972,25 +982,25 @@ def build_hero(mats):
     # --- arms: short tee sleeves, bare arms, mitten hands
     for side, prefix in ((-1, "L"), (1, "R")):
         s = side
-        sleeve = loft(f"sleeve{prefix}", [(0.10 * s, 0, 0.685), (0.15 * s, -0.004, 0.62), (0.168 * s, -0.006, 0.585)], [0.05, 0.047, 0.045], segments=14)
+        sleeve = loft(f"sleeve{prefix}", [(0.11 * s, 0, 0.685), (0.155 * s, -0.004, 0.62), (0.172 * s, -0.006, 0.582)], [0.058, 0.054, 0.052], segments=14)
         p.append(assign(sleeve, [f"Shoulder.{prefix}", f"UpperArm.{prefix}"], mats["shirt"]))
-        upper = loft(f"upperarm{prefix}", [(0.15 * s, 0, 0.62), (0.19 * s, -0.01, 0.52)], [0.032, 0.029], segments=12)
+        upper = loft(f"upperarm{prefix}", [(0.15 * s, 0, 0.62), (0.19 * s, -0.01, 0.52)], [0.039, 0.036], segments=14)
         p.append(assign(upper, f"UpperArm.{prefix}", mats["skin"]))
-        p.append(assign(add_sphere(f"elbow{prefix}", 0.029, (0.19 * s, -0.01, 0.52), seg=12, rings=8), [f"UpperArm.{prefix}", f"Forearm.{prefix}"], mats["skin"]))
-        fore = loft(f"forearm{prefix}", [(0.19 * s, -0.01, 0.52), (0.21 * s, -0.04, 0.41)], [0.029, 0.027], segments=12)
+        p.append(assign(add_sphere(f"elbow{prefix}", 0.036, (0.19 * s, -0.01, 0.52), seg=14, rings=8), [f"UpperArm.{prefix}", f"Forearm.{prefix}"], mats["skin"]))
+        fore = loft(f"forearm{prefix}", [(0.19 * s, -0.01, 0.52), (0.21 * s, -0.04, 0.41)], [0.036, 0.034], segments=14)
         p.append(assign(fore, f"Forearm.{prefix}", mats["skin"]))
-        p.append(assign(add_sphere(f"hand{prefix}", 0.038, (0.215 * s, -0.05, 0.375), scale=(0.9, 1.0, 1.15), seg=16, rings=10), f"Hand.{prefix}", mats["skin"]))
+        p.append(assign(add_sphere(f"hand{prefix}", 0.045, (0.215 * s, -0.05, 0.372), scale=(0.9, 1.0, 1.15), seg=16, rings=10), f"Hand.{prefix}", mats["skin"]))
 
     # --- legs: bare, soft and straight, with rounded bare feet (as in the reference)
     for side, prefix in ((-1, "L"), (1, "R")):
         s = side
-        p.append(assign(loft(f"thigh{prefix}", [(0.062 * s, 0, 0.40), (0.068 * s, 0, 0.30), (0.07 * s, 0, 0.22)], [0.05, 0.046, 0.042], segments=16),
+        p.append(assign(loft(f"thigh{prefix}", [(0.075 * s, 0, 0.40), (0.082 * s, 0, 0.30), (0.084 * s, 0, 0.22)], [0.072, 0.07, 0.068], segments=18),
                         [f"UpLeg.{prefix}", f"Leg.{prefix}"], mats["skin"], sharpness=3.0))
-        p.append(assign(loft(f"shin{prefix}", [(0.07 * s, 0, 0.22), (0.071 * s, 0, 0.12), (0.072 * s, 0, 0.05)], [0.042, 0.039, 0.036], segments=16),
+        p.append(assign(loft(f"shin{prefix}", [(0.084 * s, 0, 0.22), (0.085 * s, 0, 0.12), (0.085 * s, 0, 0.05)], [0.068, 0.067, 0.065], segments=18),
                         f"Leg.{prefix}", mats["skin"]))
-        p.append(assign(loft(f"shortleg{prefix}", [(0.062 * s, 0, 0.40), (0.066 * s, 0, 0.33)], [0.062, 0.058], segments=16, cap_start=False, cap_end=False),
+        p.append(assign(loft(f"shortleg{prefix}", [(0.075 * s, 0, 0.40), (0.08 * s, 0, 0.345)], [0.083, 0.08], segments=18, cap_start=False, cap_end=False),
                         f"UpLeg.{prefix}", mats["shorts"]))
-        foot = add_sphere(f"foot{prefix}", 0.045, (0.072 * s, -0.025, 0.035), scale=(0.95, 1.5, 0.85), seg=18, rings=12)
+        foot = add_sphere(f"foot{prefix}", 0.067, (0.085 * s, -0.012, 0.056), scale=(1.0, 1.15, 0.85), seg=18, rings=12)
         for vert in foot.data.vertices:
             vert.co.z = max(vert.co.z, 0.0)
         p.append(assign(foot, f"Foot.{prefix}", mats["skin"]))

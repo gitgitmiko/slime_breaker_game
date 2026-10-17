@@ -172,6 +172,15 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - PlayMode menambah tes lingkungan HD di 10 bioma (PostFx, shader Ground, properti HD) dan audio per bioma + boss.
 - Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
 
+## Hasil 17 Oktober 2026 (putaran 17 — performa 60 fps, kaktus)
+
+- Rumput/bunga/alang-alang digabung per material ke 8 sektor (tanpa bayangan); tint bioma memakai salinan material, bukan property block, jadi SRP batcher + static batching bekerja (mesh lingkungan kini readable). Renderer arena: hutan 581 → 141, kerajaan 361 → 84, rawa 311 → 93.
+- Preset High: MSAA 2×, shadow map 2048, PCF medium, jarak bayangan 32 m, HDR 32-bit; bloom dual-filter seperempat resolusi.
+- `AdaptiveResolution`: render scale turun bertahap (min 0,7) bila frame > 18 ms dan naik lagi saat longgar, di-upscale FSR 1; resolusi internal dibatasi ~1080p di layar sangat padat. Nonaktif di editor.
+- Kaktus: ujung batang/lengan kini kubah tertutup (tutup datar berbentuk bintang dulu salah triangulasi → kilau kuning/putih), kuncup putih diganti buah merah kecil.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 22/22; PlayMode 32/32 (tes baru `RenderBudgetPerBiome`); APK `SLIMEBREAKER_APK_OK` 0.16.1 (versionCode 17).
+- Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

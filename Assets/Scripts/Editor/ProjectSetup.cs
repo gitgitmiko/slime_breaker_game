@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.16.0";
+        const string AppVersion = "0.16.1";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -482,7 +482,8 @@ namespace SlimeBreaker.EditorTools
             importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
             importer.importAnimation = true;
             importer.importBlendShapes = false;
-            importer.isReadable = false;
+            // Arena props are merged at runtime (static batching, ground-cover combine), which needs CPU-readable meshes.
+            importer.isReadable = path.Contains("/Environment/");
             importer.animationCompression = ModelImporterAnimationCompression.Optimal;
             importer.materialImportMode = ModelImporterMaterialImportMode.ImportViaMaterialDescription;
             importer.materialLocation = ModelImporterMaterialLocation.External;
@@ -695,8 +696,8 @@ namespace SlimeBreaker.EditorTools
             { "gold", new HdLook { color = new Color(1f, 0.78f, 0.36f), smoothness = 0.82f, metallic = 1f } },
             { "obsidian", new HdLook { texture = "TEX_Obsidian", cover = 0.15f, rim = 0.35f, rimColor = new Color(0.5f, 0.3f, 0.9f) } },
             { "glyph", new HdLook { color = new Color(0.2f, 0.1f, 0.35f), emission = new Color(2.2f, 1.0f, 4.0f), smoothness = 0.6f, metallic = 0f } },
-            { "cactus", new HdLook { texture = "TEX_Cactus_Skin", cover = 0.15f, vertexAO = 0.5f } },
-            { "flower", new HdLook { color = new Color(0.95f, 0.72f, 0.82f), smoothness = 0.3f, metallic = 0f } },
+            { "cactus", new HdLook { texture = "TEX_Cactus_Skin", cover = 0.05f, vertexAO = 0.5f, bump = 0.6f } },
+            { "flower", new HdLook { color = new Color(0.62f, 0.12f, 0.2f), smoothness = 0.35f, metallic = 0f } },
             { "mushcap", new HdLook { texture = "TEX_Mushroom_Cap", vertexAO = 0.4f } },
             { "mushstem", new HdLook { color = new Color(0.9f, 0.87f, 0.78f), smoothness = 0.25f, metallic = 0f, vertexAO = 0.6f } },
             { "gills", new HdLook { color = new Color(0.82f, 0.76f, 0.62f), smoothness = 0.15f, metallic = 0f } },
@@ -913,15 +914,17 @@ namespace SlimeBreaker.EditorTools
             var mobile = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/Mobile_RPAsset.asset");
             var pc = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/PC_RPAsset.asset");
             // Default project quality stays High so a missing GraphicsService still looks sharp.
-            WriteUrp(mobile, 1f, 4, true, 40f, 4096, 2, true, 3, 1);
+            WriteUrp(mobile, 1f, 2, true, 32f, 2048, 2, true, 2, 1);
             WriteUrp(pc, 1f, 4, true, 48f, 4096, 2, true, 3, 1);
 
             graphicsPresets = new RenderPipelineAsset[3];
             if (mobile == null)
                 return;
             graphicsPresets[0] = MakeUrpPreset("Assets/Settings/URP_Low.asset", mobile, 0.8f, 1, false, 16f, 1024, 1, false, 1, 0);
-            graphicsPresets[1] = MakeUrpPreset("Assets/Settings/URP_Medium.asset", mobile, 1f, 2, true, 28f, 2048, 1, true, 2, 1);
-            graphicsPresets[2] = MakeUrpPreset("Assets/Settings/URP_High.asset", mobile, 1f, 4, true, 40f, 4096, 2, true, 3, 1);
+            // Mobile GPUs are fill-rate bound: MSAA 2x + 2048 shadows + medium PCF look the same at phone DPI but cost far less.
+            // Adaptive resolution (FSR upscale) then keeps 60 fps when a scene gets heavy.
+            graphicsPresets[1] = MakeUrpPreset("Assets/Settings/URP_Medium.asset", mobile, 1f, 2, true, 24f, 1024, 1, true, 1, 1);
+            graphicsPresets[2] = MakeUrpPreset("Assets/Settings/URP_High.asset", mobile, 1f, 2, true, 32f, 2048, 2, true, 2, 1);
         }
 
         static UniversalRenderPipelineAsset MakeUrpPreset(string path, UniversalRenderPipelineAsset source, float scale, int msaa, bool hdr, float shadowDistance, int shadowMap, int cascades, bool soft, int softQuality, int additionalLights)
@@ -953,6 +956,11 @@ namespace SlimeBreaker.EditorTools
             Set(so, "m_AnyShadowsSupported", true);
             Set(so, "m_RequireDepthTexture", false);
             Set(so, "m_RequireOpaqueTexture", false);
+            // FSR 1 upscaling is used whenever AdaptiveResolution lowers the render scale; 32-bit HDR (R11G11B10) halves bandwidth.
+            Set(so, "m_UpscalingFilter", 3);
+            Set(so, "m_FsrOverrideSharpness", true);
+            Set(so, "m_FsrSharpness", 0.85f);
+            Set(so, "m_HDRColorBufferPrecision", 0);
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
         }
@@ -2315,6 +2323,8 @@ namespace SlimeBreaker.EditorTools
             if (graphics == null)
                 graphics = host.AddComponent<GraphicsService>();
             graphics.presets = graphicsPresets;
+            if (host.GetComponent<AdaptiveResolution>() == null)
+                host.AddComponent<AdaptiveResolution>();
             var postFx = host.GetComponent<PostFx>() ?? host.AddComponent<PostFx>();
             postFx.menuCover = TextureNamed("TEX_Cover_Moss");
             return graphics;
@@ -2866,7 +2876,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 16;
+            PlayerSettings.Android.bundleVersionCode = 17;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

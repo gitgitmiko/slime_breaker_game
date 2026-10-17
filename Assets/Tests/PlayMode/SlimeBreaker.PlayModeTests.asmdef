@@ -5,7 +5,9 @@
     "UnityEngine.TestRunner",
     "Unity.InputSystem",
     "UnityEngine.UI",
-    "SlimeBreaker"
+    "SlimeBreaker",
+    "Unity.RenderPipelines.Universal.Runtime",
+    "Unity.RenderPipelines.Core.Runtime"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

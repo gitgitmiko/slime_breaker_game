@@ -36,7 +36,7 @@ SURFACES = {
     "obsidian": ((0.05, 0.04, 0.08, 1), "TEX_Obsidian"),
     "glyph": ((0.65, 0.35, 1.0, 1), None),
     "cactus": ((0.22, 0.38, 0.15, 1), "TEX_Cactus_Skin"),
-    "flower": ((0.95, 0.75, 0.85, 1), None),
+    "flower": ((0.62, 0.12, 0.2, 1), None),
     "mushcap": ((0.75, 0.12, 0.06, 1), "TEX_Mushroom_Cap"),
     "mushstem": ((0.92, 0.89, 0.80, 1), None),
     "gills": ((0.86, 0.80, 0.66, 1), None),
@@ -507,27 +507,52 @@ def crystal_cluster(name, seed, key, count=7, height=1.3, base_key="rock", base_
 # ---------------------------------------------------------------- biome props
 
 
+def domed(pts, radii, steps=4):
+    """Extend a loft path with rings that close it into a rounded dome (flat star-shaped caps triangulate badly)."""
+    a = pts[-2]
+    b = pts[-1]
+    d = [b[j] - a[j] for j in range(3)]
+    ln = math.sqrt(sum(x * x for x in d)) or 1.0
+    d = [x / ln for x in d]
+    r = radii[-1]
+    out_p = list(pts)
+    out_r = list(radii)
+    for k in range(1, steps + 1):
+        t = k / steps * (math.pi / 2) * 0.92
+        out_p.append(tuple(b[j] + d[j] * math.sin(t) * r for j in range(3)))
+        out_r.append(r * math.cos(t))
+    return out_p, out_r
+
+
 def saguaro(name, seed):
     rng = random.Random(seed)
     ribs = 12
-    rings = 12
-    pts = [(0, 0, i / (rings - 1) * 1.55) for i in range(rings)]
-    radii = [0.16 * (1.0 - 0.15 * (i / (rings - 1)) ** 3) for i in range(rings)]
-    trunk = ba.loft(name + "_trunk", pts, radii, segments=ribs * 3, wave=lambda th, i: 0.018 * math.cos(th * ribs))
-    for v in trunk.data.vertices:
-        if v.co.z > 1.45:
-            k = (v.co.z - 1.45) / 0.1
-            v.co.x *= max(0.2, 1 - k * 0.7)
-            v.co.y *= max(0.2, 1 - k * 0.7)
+    rings = 11
+    pts = [(0, 0, i / (rings - 1) * 1.45) for i in range(rings)]
+    radii = [0.16 * (1.0 - 0.1 * (i / (rings - 1)) ** 3) for i in range(rings)]
+    pts, radii = domed(pts, radii, 5)
+    base_rings = rings
+
+    def rib_wave(amp, full):
+        # Ribs fade out over the dome so the tip closes smoothly instead of into a star.
+        return lambda th, i: amp * math.cos(th * ribs) * (1.0 if i < full else max(0.0, 1.0 - (i - full + 1) / 5.0))
+
+    trunk = ba.loft(name + "_trunk", pts, radii, segments=ribs * 3, wave=rib_wave(0.018, base_rings), cap_start=True, cap_end=True)
     uv_cylinder(trunk, repeats=1.0, v_scale=0.5)
     parts = [finish_part(trunk, "cactus", ao_height(0.0, 0.6, 0.5))]
     for k, (side, z0, up_len) in enumerate(((1, 0.6, 0.55), (-1, 0.82, 0.4))):
         pts = [(0, 0, z0), (side * 0.22, 0, z0 + 0.02), (side * 0.33, 0, z0 + 0.12), (side * 0.36, 0, z0 + 0.12 + up_len)]
-        arm = ba.loft(f"{name}_arm{k}", pts, [0.085, 0.085, 0.082, 0.07], segments=ribs * 2, wave=lambda th, i: 0.012 * math.cos(th * ribs))
+        radii = [0.085, 0.085, 0.082, 0.072]
+        pts, radii = domed(pts, radii, 4)
+        arm = ba.loft(f"{name}_arm{k}", pts, radii, segments=ribs * 2, wave=rib_wave(0.012, 4), cap_start=False, cap_end=True)
         uv_cylinder(arm, repeats=1.0, v_scale=0.5, center=(side * 0.3, 0))
         parts.append(finish_part(arm, "cactus", lambda co: 0.75))
-    flower = ba.add_sphere(name + "_flower", 0.05, (0, 0, 1.56), scale=(1.4, 1.4, 0.45), seg=12, rings=6)
-    parts.append(finish_part(flower, "flower"))
+    # Small red fruit buds on the crown (a single white dome read as a light source under the desert sun + bloom).
+    top = 1.45 + 0.16 * 0.92
+    for j in range(3):
+        a = j / 3 * math.tau + rng.uniform(-0.3, 0.3)
+        bud = ba.add_sphere(f"{name}_bud{j}", 0.028, (math.cos(a) * 0.07, math.sin(a) * 0.07, top - 0.03), scale=(1.0, 1.0, 1.3), seg=8, rings=5)
+        parts.append(finish_part(bud, "flower"))
     return join(parts, name)
 
 

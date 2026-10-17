@@ -82,7 +82,10 @@ namespace SlimeBreaker
             bloom = Profile.Add<Bloom>(true);
             bloom.scatter.Override(0.68f);
             bloom.highQualityFiltering.Override(false);
-            bloom.maxIterations.Override(5);
+            // Quarter-res dual filtering: the same soft glow at a fraction of the bandwidth on mobile GPUs.
+            bloom.filter.Override(BloomFilterMode.Dual);
+            bloom.downscale.Override(BloomDownscaleMode.Quarter);
+            bloom.maxIterations.Override(4);
             colorAdjustments = Profile.Add<ColorAdjustments>(true);
             whiteBalance = Profile.Add<WhiteBalance>(true);
             splitToning = Profile.Add<SplitToning>(true);

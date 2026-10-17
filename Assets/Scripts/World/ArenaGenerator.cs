@@ -91,8 +91,13 @@ namespace SlimeBreaker
 
         readonly List<Obstacle> obstacles = new List<Obstacle>();
         readonly List<Vector3> occupied = new List<Vector3>();
+        /// <summary>Ground cover instances (grass, flowers, reeds) merged into a few meshes after placement.</summary>
+        readonly List<GameObject> scatterInstances = new List<GameObject>();
+        /// <summary>Biome-tinted copies of shared foliage materials (a material per tint keeps SRP batching intact).</summary>
+        readonly Dictionary<(Material, Color), Material> tintedMaterials = new Dictionary<(Material, Color), Material>();
+        readonly List<Mesh> combinedMeshes = new List<Mesh>();
+        const int ScatterSectors = 8;
         Light heroLight;
-        MaterialPropertyBlock block;
 
         void Start()
         {
@@ -115,16 +120,125 @@ namespace SlimeBreaker
             PlaceProps(theme, rng);
             PlaceObstacles(theme, rng);
             TintFoliage(theme);
+            CombineScatter();
             SpawnWeather(theme);
             if (theme.IsNight)
                 EnsureHeroLight();
             StaticBatchingUtility.Combine(rootObject);
         }
 
+        void OnDestroy()
+        {
+            foreach (var material in tintedMaterials.Values)
+            {
+                if (material != null)
+                    Destroy(material);
+            }
+            tintedMaterials.Clear();
+            foreach (var mesh in combinedMeshes)
+            {
+                if (mesh != null)
+                    Destroy(mesh);
+            }
+            combinedMeshes.Clear();
+        }
+
+        /// <summary>
+        /// Hundreds of grass/flower cards would each be a draw call (plus shadow passes). Merge them per material
+        /// into angular sectors (so frustum culling still drops the off-screen ones); the cards cast no shadows.
+        /// </summary>
+        void CombineScatter()
+        {
+            if (scatterInstances.Count == 0 || Root == null)
+                return;
+            var groups = new Dictionary<(Material, int), List<CombineInstance>>();
+            var toDestroy = new List<GameObject>();
+            Matrix4x4 rootInverse = Root.worldToLocalMatrix;
+            foreach (var instance in scatterInstances)
+            {
+                if (instance == null)
+                    continue;
+                bool merged = false;
+                foreach (var filter in instance.GetComponentsInChildren<MeshFilter>())
+                {
+                    var renderer = filter.GetComponent<MeshRenderer>();
+                    var mesh = filter.sharedMesh;
+                    if (renderer == null || mesh == null || !mesh.isReadable)
+                        continue;
+                    Vector3 p = filter.transform.position;
+                    int sector = Mathf.Clamp(Mathf.FloorToInt((Mathf.Atan2(p.z, p.x) / (Mathf.PI * 2f) + 0.5f) * ScatterSectors), 0, ScatterSectors - 1);
+                    var materials = renderer.sharedMaterials;
+                    for (int sub = 0; sub < mesh.subMeshCount && sub < materials.Length; sub++)
+                    {
+                        if (materials[sub] == null)
+                            continue;
+                        var key = (materials[sub], sector);
+                        if (!groups.TryGetValue(key, out var list))
+                            groups[key] = list = new List<CombineInstance>();
+                        list.Add(new CombineInstance { mesh = mesh, subMeshIndex = sub, transform = rootInverse * filter.transform.localToWorldMatrix });
+                    }
+                    merged = true;
+                }
+                if (merged)
+                    toDestroy.Add(instance);
+                else
+                    DisableScatterShadows(instance);
+            }
+            foreach (var pair in groups)
+            {
+                var mesh = new Mesh { name = "Scatter_" + pair.Key.Item1.name + "_" + pair.Key.Item2 };
+                mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+                mesh.CombineMeshes(pair.Value.ToArray(), true, true);
+                mesh.RecalculateBounds();
+                combinedMeshes.Add(mesh);
+                var go = new GameObject(mesh.name);
+                go.transform.SetParent(Root, false);
+                go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var renderer = go.AddComponent<MeshRenderer>();
+                renderer.sharedMaterial = pair.Key.Item1;
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+                renderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+            }
+            foreach (var instance in toDestroy)
+            {
+                instance.SetActive(false);
+                Destroy(instance);
+            }
+            scatterInstances.Clear();
+        }
+
+        static void DisableScatterShadows(GameObject instance)
+        {
+            foreach (var renderer in instance.GetComponentsInChildren<Renderer>())
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        }
+
+        /// <summary>Number of merged ground-cover meshes in the current arena (playtests).</summary>
+        public int CombinedScatterMeshes => Root == null ? 0 : CountCombined();
+
+        int CountCombined()
+        {
+            int count = 0;
+            foreach (Transform child in Root)
+            {
+                if (child.name.StartsWith("Scatter_"))
+                    count++;
+            }
+            return count;
+        }
+
         void Clear()
         {
             obstacles.Clear();
             occupied.Clear();
+            scatterInstances.Clear();
+            foreach (var mesh in combinedMeshes)
+            {
+                if (mesh != null)
+                    Destroy(mesh);
+            }
+            combinedMeshes.Clear();
             if (Root != null)
             {
                 Root.gameObject.SetActive(false);
@@ -500,7 +614,9 @@ namespace SlimeBreaker
                 float angle = (float)rng.NextDouble() * Mathf.PI * 2f;
                 float radius = Mathf.Lerp(minRadius, maxRadius, Mathf.Sqrt((float)rng.NextDouble()));
                 var position = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
-                Place(prefab, position, (float)rng.NextDouble() * 360f, 0.8f + (float)rng.NextDouble() * 0.5f, false);
+                var instance = Place(prefab, position, (float)rng.NextDouble() * 360f, 0.8f + (float)rng.NextDouble() * 0.5f, false);
+                if (!IsSolidProp(prefab.name))
+                    scatterInstances.Add(instance);
             }
         }
 
@@ -706,6 +822,24 @@ namespace SlimeBreaker
 
         // ------------------------------------------------------------------ biome tint & weather
 
+        Material Tinted(Material source, Color tint)
+        {
+            var key = (source, tint);
+            if (tintedMaterials.TryGetValue(key, out var material) && material != null)
+                return material;
+            material = new Material(source) { name = source.name + "_tint" };
+            Color value = tint;
+            if (source.HasProperty("_BaseColor"))
+                value *= Color.Lerp(source.GetColor("_BaseColor"), Color.white, 0.6f);
+            value.a = source.HasProperty("_BaseColor") ? source.GetColor("_BaseColor").a : 1f;
+            if (material.HasProperty("_BaseColor"))
+                material.SetColor("_BaseColor", value);
+            if (material.HasProperty("_Color"))
+                material.SetColor("_Color", value);
+            tintedMaterials[key] = material;
+            return material;
+        }
+
         void TintFoliage(ArenaTheme theme)
         {
             if (theme.biome == Biome.Forest || Root == null)
@@ -727,13 +861,12 @@ namespace SlimeBreaker
                 default:
                     leaf = DesertLeaf; grass = DesertGrass; break;
             }
-            if (block == null)
-                block = new MaterialPropertyBlock();
             foreach (var renderer in Root.GetComponentsInChildren<Renderer>())
             {
                 if (renderer is ParticleSystemRenderer)
                     continue;
                 var materials = renderer.sharedMaterials;
+                bool changed = false;
                 for (int i = 0; i < materials.Length; i++)
                 {
                     var material = materials[i];
@@ -747,14 +880,11 @@ namespace SlimeBreaker
                         tint = grass;
                     if (tint == null)
                         continue;
-                    Color value = tint.Value;
-                    if (material.HasProperty("_BaseColor"))
-                        value *= Color.Lerp(material.GetColor("_BaseColor"), Color.white, 0.6f);
-                    renderer.GetPropertyBlock(block, i);
-                    block.SetColor("_BaseColor", value);
-                    block.SetColor("_Color", value);
-                    renderer.SetPropertyBlock(block, i);
+                    materials[i] = Tinted(material, tint.Value);
+                    changed = true;
                 }
+                if (changed)
+                    renderer.sharedMaterials = materials;
             }
         }
 

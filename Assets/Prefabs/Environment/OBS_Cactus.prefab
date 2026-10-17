@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1603975815987652225}
   - component: {fileID: 7092314325961214042}
-  - component: {fileID: 1100402466612479816}
+  - component: {fileID: 7208239339636038732}
   m_Layer: 8
   m_Name: OBS_Cactus
   m_TagString: Untagged
@@ -57,7 +57,7 @@ CapsuleCollider:
   m_Height: 2.4
   m_Direction: 1
   m_Center: {x: 0, y: 1.15, z: 0}
---- !u!114 &1100402466612479816
+--- !u!114 &7208239339636038732
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

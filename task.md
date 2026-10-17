@@ -145,6 +145,13 @@
 - Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 22/22. PlayMode 31/31. APK `SLIMEBREAKER_APK_OK` 0.16.0.
 - Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
 
+### Putaran 17 — performa 60 fps dan perbaikan kaktus
+
+- Penyebab drop fps: ratusan kartu rumput = ratusan draw call + pass bayangan, property block mematikan SRP batching, mesh tidak readable sehingga static batching gagal diam-diam, MSAA 4× + shadow map 4096 + PCF high.
+- Perbaikan: gabung rumput per sektor, material tint ber-cache, mesh lingkungan readable, preset High lebih ringan, bloom murah, resolusi adaptif FSR.
+- Kaktus: ujung kubah tertutup, kuncup merah.
+- Setup OK. EditMode 22/22. PlayMode 32/32. APK 0.16.1.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

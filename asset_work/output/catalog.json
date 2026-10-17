@@ -192,14 +192,6 @@
     "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
   },
   {
-    "id": "ENV_Desert_Cactus",
-    "file": "Environment/Biomes/ENV_Desert_Cactus.fbx",
-    "kind": "static",
-    "triangles": 1356,
-    "vertices": 686,
-    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
-  },
-  {
     "id": "ENV_Snow_IceSpike",
     "file": "Environment/Biomes/ENV_Snow_IceSpike.fbx",
     "kind": "static",
@@ -277,6 +269,14 @@
     "kind": "static",
     "triangles": 2144,
     "vertices": 1080,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Desert_Cactus",
+    "file": "Environment/Biomes/ENV_Desert_Cactus.fbx",
+    "kind": "static",
+    "triangles": 2056,
+    "vertices": 1062,
     "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
   }
 ]

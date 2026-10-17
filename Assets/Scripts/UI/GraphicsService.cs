@@ -47,6 +47,7 @@ namespace SlimeBreaker
             else
                 Shader.DisableKeyword("SB_QUALITY_LOW");
             PostFx.Instance?.SetQuality(Level);
+            AdaptiveResolution.Instance?.ResetScale();
             if (!persist)
                 return;
             var save = SaveService.Load();

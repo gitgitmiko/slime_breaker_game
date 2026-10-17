@@ -1263,6 +1263,49 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
+        public IEnumerator RenderBudgetPerBiome()
+        {
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            var generator = Object.FindAnyObjectByType<ArenaGenerator>();
+            Assert.IsNotNull(Object.FindAnyObjectByType<AdaptiveResolution>(), "GameArena has no AdaptiveResolution");
+            foreach (int floor in new[] { 1, 11, 21, 31, 41, 51, 61, 71, 81, 91 })
+            {
+                stage.ForceFloor(floor);
+                foreach (var enemy in new List<EnemyHealth>(EnemyHealth.Active))
+                {
+                    if (enemy != null)
+                        enemy.Vanish();
+                }
+                PlayerHealth.Instance.GiveInvulnerability(120f);
+                yield return null;
+                yield return null;
+                int renderers = 0;
+                int blocks = 0;
+                int casters = 0;
+                int cards = 0;
+                foreach (var renderer in generator.Root.GetComponentsInChildren<Renderer>())
+                {
+                    if (!renderer.enabled || !renderer.gameObject.activeInHierarchy)
+                        continue;
+                    renderers++;
+                    if (renderer.HasPropertyBlock() && !(renderer is ParticleSystemRenderer))
+                        blocks++;
+                    if (renderer.shadowCastingMode != UnityEngine.Rendering.ShadowCastingMode.Off)
+                        casters++;
+                    string n = renderer.name.ToLowerInvariant();
+                    if (n.Contains("grass") || n.Contains("flower") || n.Contains("reed"))
+                        cards++;
+                }
+                var biome = stage.Theme.biome;
+                Debug.Log("PLAYTEST budget " + biome + " " + stage.Theme.weather + " renderers " + renderers + " casters " + casters + " mpb " + blocks
+                    + " scatter meshes " + generator.CombinedScatterMeshes + " loose cards " + cards);
+                Assert.Less(renderers, 200, biome + " arena has too many renderers (draw calls)");
+                Assert.AreEqual(0, blocks, biome + " props use property blocks, which break SRP batching");
+                Assert.Less(casters, 140, biome + " has too many shadow casters");
+            }
+        }
+
+        [UnityTest]
         public IEnumerator HudShowsFloorAndHeroDamage()
         {
             var flow = GameFlowController.Instance;

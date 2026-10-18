@@ -54,6 +54,7 @@ namespace SlimeBreaker
             data.musicLevel = Mathf.Clamp01(data.musicLevel);
             data.sfxLevel = Mathf.Clamp01(data.sfxLevel);
             data.difficulty = Mathf.Clamp(data.difficulty, 0, 2);
+            data.bossesDefeated = Mathf.Clamp(data.bossesDefeated, 0, RunRules.MaxFloor / RunRules.BossEvery);
             return data;
         }
 

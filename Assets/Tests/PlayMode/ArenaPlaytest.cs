@@ -1767,6 +1767,31 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
+        public IEnumerator MenuShowsBeatenBossesBehindTheHero()
+        {
+            Assert.AreEqual(0, GameFlowController.BossesDefeatedAt(10, false), "standing on the floor-10 boss means it is not beaten yet");
+            Assert.AreEqual(1, GameFlowController.BossesDefeatedAt(11, false));
+            Assert.AreEqual(2, GameFlowController.BossesDefeatedAt(25, false));
+            Assert.AreEqual(10, GameFlowController.BossesDefeatedAt(100, true));
+            var save = SaveService.Load();
+            save.bossesDefeated = 3;
+            SaveService.Save(save);
+            SceneManager.LoadScene("MainMenu");
+            yield return null;
+            yield return null;
+            var trophies = Object.FindAnyObjectByType<MenuTrophies>();
+            Assert.AreEqual(3, trophies.Shown);
+            Capture("37_menu_trophies_3");
+            trophies.Apply(10);
+            yield return null;
+            yield return null;
+            Assert.AreEqual(10, trophies.Shown);
+            Capture("38_menu_trophies_10");
+            save.bossesDefeated = 0;
+            SaveService.Save(save);
+        }
+
+        [UnityTest]
         public IEnumerator MenuDifficultyButtonsDecideTheNextRun()
         {
             SceneManager.LoadScene("MainMenu");
@@ -1786,7 +1811,6 @@ namespace SlimeBreaker.Tests
             yield return null;
             Assert.AreEqual((int)DifficultyLevel.Easy, SaveService.Load().difficulty);
             Assert.AreEqual("Easy", dropdown.captionText.text);
-            StringAssert.Contains("50%", menu.difficultyHint.text);
             Capture("35_menu_difficulty");
 
             // A new run on Easy: +50% hero HP, half boss HP, three times the card bonus.

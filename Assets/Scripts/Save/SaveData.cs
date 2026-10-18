@@ -21,5 +21,7 @@ namespace SlimeBreaker
         public float sfxLevel = 1f;
         /// <summary>Difficulty for the next new run: 0 Easy, 1 Normal (default), 2 Hard.</summary>
         public int difficulty = 1;
+        /// <summary>Highest number of stage bosses (floors 10, 20, ...) beaten on any run; they stand behind the hero in the menu.</summary>
+        public int bossesDefeated;
     }
 }

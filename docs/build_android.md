@@ -270,6 +270,7 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Tes: `DifficultyLevelsScaleMonstersBossesUpgradesAndDrops`, `DifficultyIsSavedWithTheRunAndOldSavesStayHard`, `MenuDifficultyButtonsDecideTheNextRun`; semua tes arena memakai Hard.
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 30/30; PlayMode 39/39; APK `SLIMEBREAKER_APK_OK` 0.22.0 (versionCode 32).
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 41/41; APK 0.23.0 (versionCode 33): jual item + auto pilih, dropdown kesulitan.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 42/42; APK 0.24.0 (versionCode 34): menu (Lanjutkan di atas Main, tanpa deskripsi), boss yang sudah dikalahkan berdiri di belakang hero.
 
 ## Pasang di HP
 

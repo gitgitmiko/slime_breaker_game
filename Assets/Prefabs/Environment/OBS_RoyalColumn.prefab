@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3222980173957757388}
   - component: {fileID: 2460776559467369371}
-  - component: {fileID: 1283589671687320925}
+  - component: {fileID: 7368144423310689886}
   m_Layer: 8
   m_Name: OBS_RoyalColumn
   m_TagString: Untagged
@@ -55,7 +55,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.61200005, y: 2.0800002, z: 0.6120003}
   m_Center: {x: 0, y: 1.0400001, z: 0}
---- !u!114 &1283589671687320925
+--- !u!114 &7368144423310689886
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

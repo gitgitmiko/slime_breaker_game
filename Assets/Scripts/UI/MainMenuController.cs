@@ -24,7 +24,10 @@ namespace SlimeBreaker
         public SettingsPanel settings;
         /// <summary>Easy / Normal / Hard picker for the next new run (index = DifficultyLevel).</summary>
         public Dropdown difficultyDropdown;
-        public Text difficultyHint;
+        /// <summary>Continue sits above Play; Play moves up into its place when there is no run to continue.</summary>
+        public RectTransform playRect;
+        public float playOffsetWithContinue = -424f;
+        public float playOffsetAlone = -322f;
 
         SaveData save;
         Quaternion showcaseRest;
@@ -119,12 +122,12 @@ namespace SlimeBreaker
             var current = (DifficultyLevel)Mathf.Clamp(save.difficulty, 0, 2);
             if (difficultyDropdown != null)
                 difficultyDropdown.SetValueWithoutNotify((int)current);
-            if (difficultyHint != null)
-                difficultyHint.text = Difficulty.Summary(current);
             var run = RunSaveService.Exists() ? RunSaveService.Load() : null;
             bool canContinue = run != null && run.level > 0;
             if (continueButton != null)
                 continueButton.gameObject.SetActive(canContinue);
+            if (playRect != null)
+                playRect.anchoredPosition = new Vector2(playRect.anchoredPosition.x, canContinue ? playOffsetWithContinue : playOffsetAlone);
             if (continueLabel != null && canContinue)
                 continueLabel.text = "Lanjutkan (Lv " + run.level + " · Lantai " + Mathf.Max(1, run.floor > 0 ? run.floor : run.stage) + " · " + Difficulty.Label((DifficultyLevel)Mathf.Clamp(run.difficulty, 0, 2)) + ")";
         }

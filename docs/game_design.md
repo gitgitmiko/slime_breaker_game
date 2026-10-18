@@ -145,3 +145,7 @@ Orb EXP memakai bunyi "bloop" lembut bernada rendah; pemutaran beruntun pada id 
 ## Jual item
 
 Di Inventori, tombol **Mode jual** membuat ketukan pada item menandainya (bukan memilihnya). Harga jual per rarity: Normal (hijau) 1 emas, Rare (biru) 3, Legend (ungu) 6, Ultra (oranye) 10. Tombol **rarity** dan **level** memilih filter, **Auto pilih** menandai semua item yang cocok (level "Semua" = semua level), **Jual** menjual semua yang ditandai dan emas langsung masuk ke save. Item yang sedang dipakai tidak pernah ikut terjual.
+
+## Riwayat boss di menu
+
+Save menyimpan `bossesDefeated` (rekor terbanyak boss lantai 10, 20, ... yang sudah dilewati; berdiri di lantai 11 berarti boss 10 terlewati, menang = 10). Dicatat saat jeda, keluar ke menu, tutup aplikasi, dan akhir run. Di menu utama, tiap boss itu berdiri sebagai dumpling kecil berwarna bosnya di belakang hero (boss 100 pelangi).

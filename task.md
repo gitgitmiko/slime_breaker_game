@@ -205,6 +205,7 @@
 
 - Easy/Normal/Hard di menu utama; Hard = angka asli. APK 0.22.0.
 - Jual item (1/3/6/10 emas per rarity), Auto pilih per rarity + level, kesulitan menjadi dropdown (bawaan Normal). APK 0.23.0.
+- Menu: Lanjutkan di atas Main, info kesulitan dan deskripsi dihapus; riwayat boss (lantai 10, 20, ...) yang sudah dilewati berdiri di belakang hero (`SaveData.bossesDefeated`, `MenuTrophies`). APK 0.24.0.
 
 ## Berikutnya
 

@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.23.0";
+        const string AppVersion = "0.24.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -357,7 +357,7 @@ namespace SlimeBreaker.EditorTools
             var portal = PortalPrefab("Assets/Prefabs/Environment/ENV_Exit_Portal.prefab", env["RuneRing"]);
 
             BuildBoot();
-            BuildMenu(hero, heroMenuController, env);
+            BuildMenu(hero, heroMenuController, bossController, env);
             BuildArena(balance, upgrades, skills, hero, normal, fast, tank, ranged, boss, bossDefs, hostileBolt, lightning, env, vfx, powerUp, portal, obstacles, rain, snowWx, fireflies, dust, ash, spores, sparks, mist);
             ConfigurePlayerSettings();
             AssetDatabase.SaveAssets();
@@ -2113,7 +2113,7 @@ namespace SlimeBreaker.EditorTools
             EditorSceneManager.SaveScene(scene, "Assets/Scenes/Boot.unity");
         }
 
-        static void BuildMenu(GameObject hero, RuntimeAnimatorController heroController, Dictionary<string, GameObject> env)
+        static void BuildMenu(GameObject hero, RuntimeAnimatorController heroController, RuntimeAnimatorController bossController, Dictionary<string, GameObject> env)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var camera = MakeCamera("Camera", new Color(0.09f, 0.12f, 0.2f));
@@ -2158,6 +2158,27 @@ namespace SlimeBreaker.EditorTools
                 animator = model.AddComponent<Animator>();
             animator.runtimeAnimatorController = heroController;
             animator.applyRootMotion = false;
+            // History: one dumpling per stage boss beaten (shown by MenuTrophies), in two arcs behind the hero.
+            var trophyRoot = new GameObject("BossTrophies").AddComponent<MenuTrophies>();
+            trophyRoot.trophies = new GameObject[10];
+            float[] trophyAngles = { 0f, -26f, 26f, -52f, 52f, -13f, 13f, -39f, 39f, 65f };
+            for (int t = 0; t < 10; t++)
+            {
+                var trophy = (GameObject)PrefabUtility.InstantiatePrefab(LoadModel("Assets/Art/Enemies/SlimeKing/BOSS_SlimeKing.fbx"));
+                trophy.name = "Trophy" + (t + 1) * 10;
+                trophy.transform.localScale = Vector3.one * 0.4f;
+                float radius = t < 5 ? 2.2f : 3.6f;
+                float angle = trophyAngles[t] * Mathf.Deg2Rad;
+                trophy.transform.position = new Vector3(1.9f + Mathf.Sin(angle) * radius, 0f, Mathf.Cos(angle) * radius);
+                trophy.transform.rotation = Quaternion.Euler(0f, 180f - trophyAngles[t] * 0.4f, 0f);
+                var trophyAnimator = trophy.GetComponentInChildren<Animator>();
+                if (trophyAnimator == null)
+                    trophyAnimator = trophy.AddComponent<Animator>();
+                trophyAnimator.runtimeAnimatorController = bossController;
+                trophyAnimator.applyRootMotion = false;
+                trophy.SetActive(false);
+                trophyRoot.trophies[t] = trophy;
+            }
             var rng = new System.Random(5);
             Scatter(env["Grass"], 14, 0.8f, 3.2f, rng, new Vector3(1.55f, 0f, 0f));
             Scatter(env["Flower"], 5, 1f, 3f, rng, new Vector3(1.55f, 0f, 0f));
@@ -2187,9 +2208,6 @@ namespace SlimeBreaker.EditorTools
             title.fontStyle = FontStyle.Bold;
             Shade(title);
             AnchorBox(title.rectTransform, new Vector2(0f, 1f), new Vector2(84f, -58f), new Vector2(780f, 110f));
-            var subtitle = Text(menuCard.transform, "Subtitle", "Satu arena. 100 lantai. 10 slime boss.", 28, TextAnchor.MiddleLeft, font);
-            subtitle.color = TextDim;
-            AnchorBox(subtitle.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -164f), new Vector2(760f, 40f));
             var goldPill = Graphic(menuCard.transform, "GoldPill", pillSprite, new Color(1f, 0.78f, 0.3f, 0.18f));
             AnchorBox(goldPill.rectTransform, new Vector2(0f, 1f), new Vector2(84f, -232f), new Vector2(360f, 56f));
             var gold = Text(goldPill.transform, "Gold", "Emas 0", 28, TextAnchor.MiddleCenter, font);
@@ -2201,19 +2219,17 @@ namespace SlimeBreaker.EditorTools
             var best = Text(bestPill.transform, "Best", "Rekor 00:00", 26, TextAnchor.MiddleCenter, font);
             best.fontStyle = FontStyle.Bold;
             Stretch(best.rectTransform);
+            // Continue sits above Play; MainMenuController moves Play up when there is no run to continue.
+            var cont = Button(menuCard.transform, "Continue", "Lanjutkan", font, Color.white, ghostSprite);
+            AnchorBox((RectTransform)cont.transform, new Vector2(0f, 1f), new Vector2(84f, -322f), new Vector2(736f, 92f));
             var play = Button(menuCard.transform, "Play", "Main", font, Color.white, goldSprite);
             play.GetComponentInChildren<Text>().fontSize = 42;
-            AnchorBox((RectTransform)play.transform, new Vector2(0f, 1f), new Vector2(84f, -322f), new Vector2(736f, 112f));
-            var cont = Button(menuCard.transform, "Continue", "Lanjutkan", font, Color.white, ghostSprite);
-            AnchorBox((RectTransform)cont.transform, new Vector2(0f, 1f), new Vector2(84f, -452f), new Vector2(736f, 92f));
+            AnchorBox((RectTransform)play.transform, new Vector2(0f, 1f), new Vector2(84f, -424f), new Vector2(736f, 112f));
             // Difficulty selector for the next new run (Easy / Normal / Hard) with a one-line summary.
             var difficultyLabel = Text(menuCard.transform, "DifficultyLabel", "KESULITAN", 20, TextAnchor.MiddleLeft, font);
             difficultyLabel.fontStyle = FontStyle.Bold;
             difficultyLabel.color = TextDim;
             AnchorBox(difficultyLabel.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -572f), new Vector2(200f, 30f));
-            var difficultyHint = Text(menuCard.transform, "DifficultyHint", "", 18, TextAnchor.MiddleRight, font);
-            difficultyHint.color = TextDim;
-            AnchorBox(difficultyHint.rectTransform, new Vector2(0f, 1f), new Vector2(286f, -572f), new Vector2(536f, 30f));
             var difficultyDropdown = BuildDropdown(menuCard.transform, "DifficultyDropdown", new[] { "Easy", "Normal", "Hard" }, font);
             AnchorBox((RectTransform)difficultyDropdown.transform, new Vector2(0f, 1f), new Vector2(84f, -610f), new Vector2(736f, 84f));
             difficultyDropdown.SetValueWithoutNotify((int)DifficultyLevel.Normal);
@@ -2249,7 +2265,7 @@ namespace SlimeBreaker.EditorTools
             menu.continueLabel = cont.GetComponentInChildren<Text>();
             menu.settings = settings;
             menu.difficultyDropdown = difficultyDropdown;
-            menu.difficultyHint = difficultyHint;
+            menu.playRect = (RectTransform)play.transform;
             AttachGraphics(new GameObject("Graphics"));
             UnityEventTools.AddPersistentListener(play.onClick, menu.Play);
             UnityEventTools.AddPersistentListener(cont.onClick, menu.Continue);
@@ -3283,7 +3299,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 33;
+            PlayerSettings.Android.bundleVersionCode = 34;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

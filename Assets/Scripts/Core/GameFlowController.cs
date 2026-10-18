@@ -216,6 +216,7 @@ namespace SlimeBreaker
                 ? 10
                 : (victory ? balance.victoryGold : balance.defeatGold) + floor * balance.goldPerLevel;
             save.gold += gold;
+            save.bossesDefeated = Mathf.Max(save.bossesDefeated, BossesDefeatedAt(floor, victory));
             float elapsed = run != null ? run.Elapsed : 0f;
             if (elapsed > save.bestRunTime)
                 save.bestRunTime = elapsed;
@@ -248,6 +249,25 @@ namespace SlimeBreaker
             if (health != null && health.IsDead)
                 return;
             RunSaveService.Save(CaptureRun());
+            RecordBossProgress();
+        }
+
+        /// <summary>Stage bosses already beaten when standing on this floor (a win beats all of them).</summary>
+        public static int BossesDefeatedAt(int floor, bool victory)
+        {
+            int total = RunRules.MaxFloor / RunRules.BossEvery;
+            return victory ? total : Mathf.Clamp((Mathf.Max(1, floor) - 1) / RunRules.BossEvery, 0, total);
+        }
+
+        void RecordBossProgress()
+        {
+            int floor = StageManager.Instance != null ? StageManager.Instance.Floor : 1;
+            int defeated = BossesDefeatedAt(floor, false);
+            var save = SaveService.Load();
+            if (defeated <= save.bossesDefeated)
+                return;
+            save.bossesDefeated = defeated;
+            SaveService.Save(save);
         }
 
         public RunSave CaptureRun()

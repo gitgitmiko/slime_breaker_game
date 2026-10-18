@@ -1582,6 +1582,67 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
+        public IEnumerator EveryBossSpawnsWithItsOwnLookAndHp()
+        {
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            var flow = GameFlowController.Instance;
+            PlayerHealth.Instance.GiveInvulnerability(600f);
+            for (int tier = 1; tier <= 10; tier++)
+            {
+                int floor = tier * 10;
+                stage.ForceFloor(floor);
+                PlayerHealth.Instance.transform.position = Vector3.zero;
+                EnemyHealth boss = null;
+                float waited = 0f;
+                while (boss == null && waited < 10f)
+                {
+                    yield return null;
+                    waited += Time.unscaledDeltaTime;
+                    foreach (var candidate in EnemyHealth.Active)
+                    {
+                        if (candidate != null && candidate.IsBoss)
+                            boss = candidate;
+                    }
+                }
+                Assert.IsNotNull(boss, "floor " + floor + " did not spawn a boss");
+                Assert.AreEqual((BossKind)tier, stage.ActiveBoss);
+                Assert.AreEqual(tier * 10000, boss.Max, "boss HP on floor " + floor);
+                // Let the intro cutscene finish, keep the boss in front of the hero, then take the picture.
+                waited = 0f;
+                while (flow.State != GameState.Playing && waited < 8f)
+                {
+                    PinNear(boss, PlayerHealth.Instance, 4.5f);
+                    yield return null;
+                    waited += Time.unscaledDeltaTime;
+                }
+                for (int i = 0; i < 20; i++)
+                {
+                    PinNear(boss, PlayerHealth.Instance, 3.2f);
+                    yield return null;
+                }
+                // Portrait shot: hide the HUD so the boss is not hidden behind its own HP bar.
+                var hidden = new List<GameObject>();
+                foreach (var canvas in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+                {
+                    if (canvas.isRootCanvas && canvas.gameObject.activeSelf)
+                    {
+                        canvas.gameObject.SetActive(false);
+                        hidden.Add(canvas.gameObject);
+                    }
+                }
+                Capture("boss_" + tier.ToString("00") + "_" + BossCatalog.DisplayName((BossKind)tier).Replace(' ', '_'));
+                foreach (var canvasObject in hidden)
+                    canvasObject.SetActive(true);
+                foreach (var enemy in new List<EnemyHealth>(EnemyHealth.Active))
+                {
+                    if (enemy != null)
+                        enemy.Vanish();
+                }
+                yield return null;
+            }
+        }
+
+        [UnityTest]
         public IEnumerator RenderBudgetPerBiome()
         {
             var stage = Object.FindAnyObjectByType<StageManager>();

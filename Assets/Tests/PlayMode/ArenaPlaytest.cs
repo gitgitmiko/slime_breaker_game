@@ -1609,6 +1609,19 @@ namespace SlimeBreaker.Tests
                 Assert.IsNotNull(boss, "floor " + floor + " did not spawn a boss");
                 Assert.AreEqual((BossKind)tier, stage.ActiveBoss);
                 Assert.AreEqual(tier * 10000, boss.Max, "boss HP on floor " + floor);
+                var bossLightObject = boss.transform.Find("BossLight");
+                if (stage.Theme.IsNight)
+                {
+                    Assert.IsNotNull(bossLightObject, "night boss on floor " + floor + " has no light above its head");
+                    var bossLight = bossLightObject.GetComponent<Light>();
+                    Assert.AreEqual(LightType.Point, bossLight.type);
+                    Assert.Greater(bossLight.intensity, 1f);
+                    Assert.Greater(bossLightObject.localPosition.y, boss.HitHeight, "the boss light should hang above its head");
+                }
+                else
+                {
+                    Assert.IsNull(bossLightObject, "day boss on floor " + floor + " should have no extra light");
+                }
                 // Let the intro cutscene finish, keep the boss in front of the hero, then take the picture.
                 waited = 0f;
                 while (flow.State != GameState.Playing && waited < 8f)

@@ -253,6 +253,11 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Tes: `EveryBossSpawnsWithItsOwnLookAndHp` (jenis, HP, potret) dan `AssertDumplingLook`.
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 38/38; APK `SLIMEBREAKER_APK_OK` 0.21.0 (versionCode 29).
 
+## Hasil 18 Oktober 2026 (putaran 30 — cahaya boss malam hari)
+
+- Saat lantai malam, tiap boss membawa lampu titik 2,9 m di atas kepalanya (range 9, intensitas 2,6), berwarna versi terang dari warna boss (Royal pelangi: putih hangat), seperti lampu hero. Siang tanpa lampu. Tes `EveryBossSpawnsWithItsOwnLookAndHp` memeriksa keduanya.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 38/38; APK `SLIMEBREAKER_APK_OK` 0.21.1 (versionCode 30).
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

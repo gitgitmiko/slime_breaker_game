@@ -197,6 +197,10 @@
 
 - 10 boss jadi dumpling jelly berglitter; boss lantai 100 pelangi. Berikutnya: hero baru. APK 0.21.0.
 
+### Putaran 30 — lampu boss malam hari
+
+- Boss memiliki lampu di atas kepala saat malam. APK 0.21.1.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

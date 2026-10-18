@@ -1373,6 +1373,63 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
+        public IEnumerator SettingsHaveMusicAndSoundVolumeSliders()
+        {
+            yield return null;
+            var audio = AudioService.Instance;
+            var settings = Object.FindAnyObjectByType<SettingsPanel>();
+            Assert.IsNotNull(audio);
+            Assert.IsNotNull(settings, "GameArena has no settings panel");
+            Assert.IsNotNull(settings.musicSlider, "settings has no BGM slider");
+            Assert.IsNotNull(settings.sfxSlider, "settings has no game-sound slider");
+            float musicBefore = audio.MusicSourceVolume / Mathf.Max(0.0001f, audio.MusicLevel);
+            try
+            {
+                settings.Show();
+                yield return null;
+                Assert.IsTrue(settings.musicSlider.interactable && settings.sfxSlider.interactable);
+                Assert.AreEqual(audio.MusicLevel, settings.musicSlider.value, 0.001f);
+                settings.musicSlider.value = 0.25f;
+                settings.sfxSlider.value = 0.5f;
+                yield return null;
+                Assert.AreEqual(0.25f, audio.MusicLevel, 0.001f, "BGM slider did not reach AudioService");
+                Assert.AreEqual(0.5f, audio.SfxLevel, 0.001f, "sound slider did not reach AudioService");
+                Assert.AreEqual(musicBefore * 0.25f, audio.MusicSourceVolume, 0.001f, "BGM source volume did not follow the slider");
+                Assert.AreEqual("25%", settings.musicValue.text);
+                Assert.AreEqual("50%", settings.sfxValue.text);
+                var handle = settings.musicSlider.handleRect.rect;
+                Assert.AreEqual(handle.width, handle.height, 1f, "slider handle should be a circle, not an oval");
+                Capture("33_settings_sound");
+                settings.musicSlider.value = 0f;
+                yield return null;
+                Assert.AreEqual(0f, audio.MusicSourceVolume, 0.0001f, "BGM should be silent at 0%");
+                // The choice is written to the meta save shortly after.
+                float wait = 0f;
+                while (wait < 1.2f)
+                {
+                    wait += Time.unscaledDeltaTime;
+                    yield return null;
+                }
+                var saved = SaveService.Load();
+                Assert.AreEqual(0f, saved.musicLevel, 0.001f, "BGM level was not saved");
+                Assert.AreEqual(0.5f, saved.sfxLevel, 0.001f, "sound level was not saved");
+            }
+            finally
+            {
+                settings.musicSlider.value = 1f;
+                settings.sfxSlider.value = 1f;
+                settings.Hide();
+            }
+            float settle = 0f;
+            while (settle < 1.0f)
+            {
+                settle += Time.unscaledDeltaTime;
+                yield return null;
+            }
+            Assert.AreEqual(1f, SaveService.Load().musicLevel, 0.001f, "volume was not restored for the other tests");
+        }
+
+        [UnityTest]
         public IEnumerator RenderBudgetPerBiome()
         {
             var stage = Object.FindAnyObjectByType<StageManager>();

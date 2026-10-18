@@ -201,6 +201,20 @@ namespace SlimeBreaker.Tests
         }
 
         [Test]
+        public void SavedVolumeLevelsAreClampedAndDefaultToFull()
+        {
+            var fresh = SaveService.ParseOrDefault("{\"schemaVersion\":2,\"gold\":5}");
+            Assert.AreEqual(1f, fresh.musicLevel, 0.0001f, "old saves keep full volume");
+            Assert.AreEqual(1f, fresh.sfxLevel, 0.0001f);
+            var wild = SaveService.ParseOrDefault("{\"schemaVersion\":2,\"musicLevel\":4,\"sfxLevel\":-2}");
+            Assert.AreEqual(1f, wild.musicLevel, 0.0001f);
+            Assert.AreEqual(0f, wild.sfxLevel, 0.0001f);
+            var quiet = SaveService.ParseOrDefault("{\"schemaVersion\":2,\"musicLevel\":0.3,\"sfxLevel\":0.6}");
+            Assert.AreEqual(0.3f, quiet.musicLevel, 0.0001f);
+            Assert.AreEqual(0.6f, quiet.sfxLevel, 0.0001f);
+        }
+
+        [Test]
         public void CriticalUpgradeAloneUnlocksCrits()
         {
             var host = new UnityEngine.GameObject("UpgradeHost");

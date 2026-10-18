@@ -219,6 +219,12 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Inventori 40 slot, layar perlengkapan + tas + detail (Pakai/Lepas/Buang), tersimpan di save run; stat gear dihitung terpisah (`RunStats.gear*`, `Total*`).
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 27/27; PlayMode 33/33; APK `SLIMEBREAKER_APK_OK` 0.19.0 (versionCode 23).
 
+## Hasil 18 Oktober 2026 (putaran 24 — pengaturan suara)
+
+- Peluru musuh tidak lagi memutar `bolthit` saat kena hero (suara kerumunan slime ranged menutupi BGM); `playerhit` milik hero tetap berbunyi.
+- Pengaturan: slider Musik (BGM) dan Suara game, persen tampil di sisi kanan, tersimpan ke save meta (ditulis ±0,4 dtk setelah digeser).
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 34/34; APK `SLIMEBREAKER_APK_OK` 0.19.1 (versionCode 24).
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

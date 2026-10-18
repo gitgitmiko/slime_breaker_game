@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace SlimeBreaker
@@ -14,6 +15,10 @@ namespace SlimeBreaker
         public Button joystickButton;
         public Text joystickLabel;
         public Text title;
+        public Slider musicSlider;
+        public Slider sfxSlider;
+        public Text musicValue;
+        public Text sfxValue;
         public Image[] highlights;
         /// <summary>Face for the active option (solid accent); others use <see cref="normalSprite"/> (glass).</summary>
         public Sprite selectedSprite;
@@ -31,6 +36,17 @@ namespace SlimeBreaker
                 closeButton.onClick.AddListener(Hide);
             if (joystickButton != null)
                 joystickButton.onClick.AddListener(ToggleJoystick);
+            if (musicSlider != null)
+                musicSlider.onValueChanged.AddListener(value => AudioService.Instance?.SetMusicLevel(value));
+            if (sfxSlider != null)
+            {
+                sfxSlider.onValueChanged.AddListener(value => AudioService.Instance?.SetSfxLevel(value));
+                // Let go of the game-sound slider and you hear the new level (a short blip), like any volume control.
+                var release = sfxSlider.gameObject.AddComponent<EventTrigger>();
+                var up = new EventTrigger.Entry { eventID = EventTriggerType.PointerUp };
+                up.callback.AddListener(_ => AudioService.Instance?.Play("ui"));
+                release.triggers.Add(up);
+            }
             if (panel != null)
                 panel.SetActive(false);
             Refresh();
@@ -84,6 +100,33 @@ namespace SlimeBreaker
             Mark(lowButton, current == GraphicsService.Low);
             Mark(mediumButton, current == GraphicsService.Medium);
             Mark(highButton, current == GraphicsService.High);
+            var audio = AudioService.Instance;
+            if (audio != null)
+            {
+                if (musicSlider != null)
+                    musicSlider.SetValueWithoutNotify(audio.MusicLevel);
+                if (sfxSlider != null)
+                    sfxSlider.SetValueWithoutNotify(audio.SfxLevel);
+                ShowPercent(musicValue, audio.MusicLevel);
+                ShowPercent(sfxValue, audio.SfxLevel);
+            }
+        }
+
+        public void ShowPercent(Text text, float level)
+        {
+            if (text != null)
+                text.text = Mathf.RoundToInt(level * 100f) + "%";
+        }
+
+        void Update()
+        {
+            // Keep the percentage labels in step while a slider is being dragged.
+            if (panel == null || !panel.activeSelf)
+                return;
+            if (musicSlider != null)
+                ShowPercent(musicValue, musicSlider.value);
+            if (sfxSlider != null)
+                ShowPercent(sfxValue, sfxSlider.value);
         }
 
         void Mark(Button button, bool selected)

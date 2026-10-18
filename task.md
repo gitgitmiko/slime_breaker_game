@@ -177,6 +177,10 @@
 
 - 5 slot perlengkapan ber-rarity, drop monster/boss, layar inventori, save run. APK 0.19.0.
 
+### Putaran 24 — suara
+
+- Hit peluru musuh dibisukan; slider volume BGM dan suara game di Pengaturan. APK 0.19.1.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

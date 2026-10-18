@@ -51,6 +51,8 @@ namespace SlimeBreaker
             if (data.schemaVersion < 2)
                 data.graphicsLevel = 2;
             data.graphicsLevel = Mathf.Clamp(data.graphicsLevel, 0, 2);
+            data.musicLevel = Mathf.Clamp01(data.musicLevel);
+            data.sfxLevel = Mathf.Clamp01(data.sfxLevel);
             return data;
         }
 

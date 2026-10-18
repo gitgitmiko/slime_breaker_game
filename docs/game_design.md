@@ -69,6 +69,8 @@ Masuk pintu meregenerasi arena (fade). Cuaca dan siang/malam berganti setiap lan
 | 90 | Crystal Slime | 90.000 | 9 | Cincin duri + perisai yang menahan bolt |
 | 100 | Royal Slime | 100.000 | 10 | Campuran tembakan api, hujan, dan zap. Kalahkan untuk **Tamat!** |
 
+Pengaturan memuat dua slider volume (disimpan di save meta, `musicLevel`/`sfxLevel`): **Musik (BGM)** mengatur musik, **Suara game** mengatur efek suara dan ambience (hujan, angin, bed biome). Peluru musuh (slime ranged dan boss) tidak punya suara saat mengenai hero; yang terdengar hanya bunyi hit milik hero (`playerhit`).
+
 ## Item dan inventori
 
 Monster menjatuhkan perlengkapan (5% per slime; boss menjatuhkan **4 item, salah satunya pasti Ultra**). Rarity memakai chance yang sama dengan kartu upgrade (Normal 65%, Rare 20%, Legend 10%, Ultra 5%). Stat dikali **band lantai** tempat item jatuh (lantai 1–10 = ×1, 11–20 = ×2, … 91–100 = ×10).

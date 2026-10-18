@@ -41,6 +41,16 @@ namespace SlimeBreaker
         public Entry[] entries;
         public int voices = 10;
 
+        /// <summary>BGM and game-sound volume chosen in Settings (0..1), kept in the meta save.</summary>
+        public float MusicLevel { get; private set; } = 1f;
+        public float SfxLevel { get; private set; } = 1f;
+        bool levelsDirty;
+        float nextLevelSave;
+
+        float MusicGain => musicVolume * musicDuck * MusicLevel;
+        public float MusicSourceVolume => musicSource != null ? musicSource.volume : 0f;
+        public float BedSourceVolume => bedSource != null ? bedSource.volume : 0f;
+
         AudioSource musicSource;
         AudioSource fadingSource;
         AudioSource bedSource;
@@ -55,9 +65,12 @@ namespace SlimeBreaker
         void Awake()
         {
             Instance = this;
-            musicSource = LoopSource(musicVolume);
+            var save = SaveService.Load();
+            MusicLevel = Mathf.Clamp01(save.musicLevel);
+            SfxLevel = Mathf.Clamp01(save.sfxLevel);
+            musicSource = LoopSource(musicVolume * MusicLevel);
             fadingSource = LoopSource(0f);
-            bedSource = LoopSource(ambienceVolume);
+            bedSource = LoopSource(ambienceVolume * SfxLevel);
 
             pool = new AudioSource[Mathf.Max(2, voices)];
             for (int i = 0; i < pool.Length; i++)
@@ -101,13 +114,58 @@ namespace SlimeBreaker
             return source;
         }
 
+        /// <summary>Settings sliders: BGM volume. Applies to what is playing right now and is saved shortly after.</summary>
+        public void SetMusicLevel(float level)
+        {
+            MusicLevel = Mathf.Clamp01(level);
+            if (fade >= 1f && musicSource != null)
+                musicSource.volume = MusicGain;
+            MarkLevelsDirty();
+        }
+
+        /// <summary>Settings sliders: game sound volume (effects, weather and the biome ambience bed).</summary>
+        public void SetSfxLevel(float level)
+        {
+            SfxLevel = Mathf.Clamp01(level);
+            if (bedSource != null)
+                bedSource.volume = ambienceVolume * SfxLevel;
+            if (ambienceSource != null && ambienceSource.clip != null && ambienceEntry != null)
+                ambienceSource.volume = ambienceEntry.volume * SfxLevel;
+            MarkLevelsDirty();
+        }
+
+        void MarkLevelsDirty()
+        {
+            levelsDirty = true;
+            nextLevelSave = Time.unscaledTime + 0.4f;
+        }
+
+        void SaveLevels()
+        {
+            if (!levelsDirty)
+                return;
+            levelsDirty = false;
+            var save = SaveService.Load();
+            save.musicLevel = MusicLevel;
+            save.sfxLevel = SfxLevel;
+            SaveService.Save(save);
+        }
+
+        void OnApplicationPause(bool paused)
+        {
+            if (paused)
+                SaveLevels();
+        }
+
         void Update()
         {
+            if (levelsDirty && Time.unscaledTime >= nextLevelSave)
+                SaveLevels();
             if (fade >= 1f)
                 return;
             fade = Mathf.MoveTowards(fade, 1f, Time.unscaledDeltaTime / Mathf.Max(0.05f, crossfadeSeconds));
             // Equal-power crossfade so the overall level does not dip mid-transition.
-            float target = musicVolume * musicDuck;
+            float target = MusicGain;
             musicSource.volume = target * Mathf.Sin(fade * Mathf.PI * 0.5f);
             fadingSource.volume = target * Mathf.Cos(fade * Mathf.PI * 0.5f);
             if (fade >= 1f)
@@ -152,7 +210,7 @@ namespace SlimeBreaker
             if (musicSource.clip == null || !musicSource.isPlaying || crossfadeSeconds <= 0f)
             {
                 musicSource.clip = clip;
-                musicSource.volume = musicVolume * musicDuck;
+                musicSource.volume = MusicGain;
                 musicSource.Play();
                 fade = 1f;
                 return;
@@ -180,7 +238,7 @@ namespace SlimeBreaker
             if (bedSource.clip == clip && bedSource.isPlaying)
                 return;
             bedSource.clip = clip;
-            bedSource.volume = ambienceVolume;
+            bedSource.volume = ambienceVolume * SfxLevel;
             // Start at a random point so floors sharing a biome do not open with the identical bird call.
             bedSource.time = Random.Range(0f, clip.length * 0.9f);
             bedSource.Play();
@@ -188,6 +246,7 @@ namespace SlimeBreaker
 
         void OnDestroy()
         {
+            SaveLevels();
             if (Instance == this)
                 Instance = null;
         }
@@ -218,7 +277,7 @@ namespace SlimeBreaker
             var source = pool[nextVoice];
             nextVoice = (nextVoice + 1) % pool.Length;
             source.pitch = 1f + Random.Range(-entry.pitchJitter, entry.pitchJitter);
-            source.PlayOneShot(entry.clip, Mathf.Clamp01(entry.volume * volumeScale));
+            source.PlayOneShot(entry.clip, Mathf.Clamp01(entry.volume * volumeScale * SfxLevel));
         }
 
         public void SetMusic(AudioClip clip)
@@ -238,7 +297,7 @@ namespace SlimeBreaker
         {
             musicDuck = Mathf.Clamp01(volume01);
             if (musicSource != null && fade >= 1f)
-                musicSource.volume = musicVolume * musicDuck;
+                musicSource.volume = MusicGain;
         }
 
         /// <summary>Loops a weather ambience (rain, wind) from the entry table; null stops the loop.</summary>
@@ -260,10 +319,12 @@ namespace SlimeBreaker
             if (ambienceSource.clip == entry.clip && ambienceSource.isPlaying)
                 return;
             ambienceSource.clip = entry.clip;
-            ambienceSource.volume = entry.volume;
+            ambienceEntry = entry;
+            ambienceSource.volume = entry.volume * SfxLevel;
             ambienceSource.Play();
         }
 
         AudioSource ambienceSource;
+        Entry ambienceEntry;
     }
 }

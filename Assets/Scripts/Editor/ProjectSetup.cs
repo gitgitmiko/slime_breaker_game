@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.19.0";
+        const string AppVersion = "0.19.1";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -2516,25 +2516,32 @@ namespace SlimeBreaker.EditorTools
             var graphicsLabel = Text(dim.transform, "GraphicsLabel", "GRAFIS", 20, TextAnchor.MiddleLeft, font);
             graphicsLabel.fontStyle = FontStyle.Bold;
             graphicsLabel.color = TextDim;
-            Place(graphicsLabel.gameObject, dim.transform, new Vector2(0.5f, 0.655f), new Vector2(860f, 30f));
+            Place(graphicsLabel.gameObject, dim.transform, new Vector2(0.5f, 0.70f), new Vector2(860f, 30f));
             var graphicsState = Text(dim.transform, "GraphicsState", "Grafis: High", 20, TextAnchor.MiddleRight, font);
             graphicsState.color = TextDim;
-            Place(graphicsState.gameObject, dim.transform, new Vector2(0.5f, 0.655f), new Vector2(860f, 30f));
+            Place(graphicsState.gameObject, dim.transform, new Vector2(0.5f, 0.70f), new Vector2(860f, 30f));
             var low = Button(dim.transform, "Low", "Low", font, Color.white, ghostSprite);
-            Place(low.gameObject, dim.transform, new Vector2(0.3f, 0.565f), new Vector2(276f, 100f));
+            Place(low.gameObject, dim.transform, new Vector2(0.3f, 0.625f), new Vector2(276f, 84f));
             var medium = Button(dim.transform, "Medium", "Medium", font, Color.white, ghostSprite);
-            Place(medium.gameObject, dim.transform, new Vector2(0.5f, 0.565f), new Vector2(276f, 100f));
+            Place(medium.gameObject, dim.transform, new Vector2(0.5f, 0.625f), new Vector2(276f, 84f));
             var high = Button(dim.transform, "High", "High", font, Color.white, ghostSprite);
-            Place(high.gameObject, dim.transform, new Vector2(0.7f, 0.565f), new Vector2(276f, 100f));
+            Place(high.gameObject, dim.transform, new Vector2(0.7f, 0.625f), new Vector2(276f, 84f));
             var controlLabel = Text(dim.transform, "ControlLabel", "KONTROL", 20, TextAnchor.MiddleLeft, font);
             controlLabel.fontStyle = FontStyle.Bold;
             controlLabel.color = TextDim;
-            Place(controlLabel.gameObject, dim.transform, new Vector2(0.5f, 0.45f), new Vector2(860f, 30f));
+            Place(controlLabel.gameObject, dim.transform, new Vector2(0.5f, 0.545f), new Vector2(860f, 30f));
             // Joystick mode toggle: Fixed (default) / Free.
             var joystickToggle = Button(dim.transform, "JoystickMode", "Joystick: Fixed", font, Color.white, ghostSprite);
-            Place(joystickToggle.gameObject, dim.transform, new Vector2(0.5f, 0.36f), new Vector2(860f, 96f));
+            Place(joystickToggle.gameObject, dim.transform, new Vector2(0.5f, 0.48f), new Vector2(860f, 80f));
+            // Sound: BGM and game-sound volume sliders.
+            var soundLabel = Text(dim.transform, "SoundLabel", "SUARA", 20, TextAnchor.MiddleLeft, font);
+            soundLabel.fontStyle = FontStyle.Bold;
+            soundLabel.color = TextDim;
+            Place(soundLabel.gameObject, dim.transform, new Vector2(0.5f, 0.40f), new Vector2(860f, 30f));
+            var musicSlider = VolumeSlider(dim.transform, "Musik", "Musik (BGM)", font, 0.335f, out var musicValue);
+            var sfxSlider = VolumeSlider(dim.transform, "SuaraGame", "Suara game", font, 0.26f, out var sfxValue);
             var close = Button(dim.transform, "Close", "Tutup", font, Color.white, dangerSprite);
-            Place(close.gameObject, dim.transform, new Vector2(0.5f, 0.19f), new Vector2(300f, 90f));
+            Place(close.gameObject, dim.transform, new Vector2(0.5f, 0.15f), new Vector2(300f, 80f));
             var title = graphicsState;
             panel.selectedSprite = buttonSprite;
             panel.normalSprite = ghostSprite;
@@ -2546,6 +2553,10 @@ namespace SlimeBreaker.EditorTools
             panel.joystickButton = joystickToggle;
             panel.joystickLabel = joystickToggle.GetComponentInChildren<Text>();
             panel.title = title;
+            panel.musicSlider = musicSlider;
+            panel.sfxSlider = sfxSlider;
+            panel.musicValue = musicValue;
+            panel.sfxValue = sfxValue;
             dim.SetActive(false);
             return panel;
         }
@@ -3076,7 +3087,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 23;
+            PlayerSettings.Android.bundleVersionCode = 24;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;
@@ -3249,6 +3260,60 @@ namespace SlimeBreaker.EditorTools
             Shade(text);
             Stretch(text.rectTransform);
             return button;
+        }
+
+        /// <summary>Settings row: label, draggable slider (large handle for touch) and a percentage readout.</summary>
+        static Slider VolumeSlider(Transform parent, string name, string label, Font font, float y, out Text value)
+        {
+            var caption = Text(parent, name + "Label", label, 26, TextAnchor.MiddleLeft, font);
+            Place(caption.gameObject, parent, new Vector2(0.345f, y), new Vector2(300f, 56f));
+            var root = new GameObject(name + "Slider", typeof(RectTransform));
+            Place(root, parent, new Vector2(0.575f, y), new Vector2(520f, 56f));
+            var track = new GameObject("Track", typeof(RectTransform), typeof(Image));
+            track.transform.SetParent(root.transform, false);
+            ApplyImage(track.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(1f, 1f, 1f, 0.18f));
+            var trackRect = track.GetComponent<RectTransform>();
+            trackRect.anchorMin = new Vector2(0f, 0.5f);
+            trackRect.anchorMax = new Vector2(1f, 0.5f);
+            trackRect.sizeDelta = new Vector2(0f, 14f);
+            var fillArea = new GameObject("FillArea", typeof(RectTransform));
+            fillArea.transform.SetParent(root.transform, false);
+            var areaRect = fillArea.GetComponent<RectTransform>();
+            areaRect.anchorMin = new Vector2(0f, 0.5f);
+            areaRect.anchorMax = new Vector2(1f, 0.5f);
+            areaRect.sizeDelta = new Vector2(-28f, 14f);
+            var fill = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+            fill.transform.SetParent(fillArea.transform, false);
+            ApplyImage(fill.GetComponent<Image>(), whiteSprite, Image.Type.Simple, AccentViolet);
+            var fillRect = fill.GetComponent<RectTransform>();
+            Stretch(fillRect);
+            var handleArea = new GameObject("HandleArea", typeof(RectTransform));
+            handleArea.transform.SetParent(root.transform, false);
+            // Zero-height strip: the Slider stretches the handle across the area's height, so the handle's own
+            // sizeDelta (48 px) becomes its real height and it stays a circle.
+            var handleAreaRect = handleArea.GetComponent<RectTransform>();
+            handleAreaRect.anchorMin = new Vector2(0f, 0.5f);
+            handleAreaRect.anchorMax = new Vector2(1f, 0.5f);
+            handleAreaRect.sizeDelta = new Vector2(-28f, 0f);
+            handleAreaRect.anchoredPosition = Vector2.zero;
+            var handle = new GameObject("Handle", typeof(RectTransform), typeof(Image));
+            handle.transform.SetParent(handleArea.transform, false);
+            ApplyImage(handle.GetComponent<Image>(), joystickKnobSprite != null ? joystickKnobSprite : whiteSprite, Image.Type.Simple, Color.white);
+            var handleRect = handle.GetComponent<RectTransform>();
+            handleRect.sizeDelta = new Vector2(48f, 48f);
+            var slider = root.AddComponent<Slider>();
+            slider.fillRect = fillRect;
+            slider.handleRect = handleRect;
+            slider.targetGraphic = handle.GetComponent<Image>();
+            slider.direction = UnityEngine.UI.Slider.Direction.LeftToRight;
+            slider.minValue = 0f;
+            slider.maxValue = 1f;
+            slider.value = 1f;
+            slider.transition = Selectable.Transition.None;
+            value = Text(parent, name + "Value", "100%", 26, TextAnchor.MiddleRight, font);
+            value.fontStyle = FontStyle.Bold;
+            Place(value.gameObject, parent, new Vector2(0.765f, y), new Vector2(110f, 56f));
+            return slider;
         }
 
         static Slider Slider(Transform parent, string name, Color color, Sprite background)

@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.20.0";
+        const string AppVersion = "0.20.1";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -43,7 +43,6 @@ namespace SlimeBreaker.EditorTools
         static Sprite ghostSprite;
         static Sprite circleGlassSprite;
         static GameObject itemPickupPrefab;
-        static GameObject menuBokehBackdrop;
         static readonly string[] ItemIconNames = { "Staff", "Hat", "Armor", "Pants", "Boots" };
 
         static Sprite[] ItemIcons()
@@ -67,8 +66,16 @@ namespace SlimeBreaker.EditorTools
         static readonly Color TextDim = new Color(0.66f, 0.68f, 0.78f);
         static Material additiveParticleMaterial;
         static Material trailMaterial;
-        static Material[] floorMaterials;
-        static Material[] tableMaterials;
+        static Material forestGroundMaterial;
+        static Material snowGroundMaterial;
+        static Material sandGroundMaterial;
+        static Material thunderGroundMaterial;
+        static Material swampGroundMaterial;
+        static Material shadowGroundMaterial;
+        static Material volcanoGroundMaterial;
+        static Material stormGroundMaterial;
+        static Material crystalGroundMaterial;
+        static Material royalGroundMaterial;
         static RenderPipelineAsset[] graphicsPresets;
 
         [MenuItem("Slime Breaker/Build Android APK")]
@@ -290,28 +297,44 @@ namespace SlimeBreaker.EditorTools
             var boss = BossPrefab("Assets/Prefabs/Bosses/BOSS_SlimeKing.prefab", bossController, bossDef);
 
             var env = new Dictionary<string, GameObject>();
-            env["ground"] = SteamerPrefab("Assets/Prefabs/Environment/ENV_Dimsum_Steamer.prefab");
-            const string dim = "Assets/Art/Environment/Dimsum/ENV_Dimsum_";
-            const string pre = "Assets/Prefabs/Environment/ENV_Dimsum_";
-            foreach (var name in new[] { "Dumpling_A", "Dumpling_B", "Bamboo", "BokChoy", "Scallion", "Chopsticks", "Sauce", "Teacup", "Chili", "Shiitake", "BambooLeaves", "Lid", "Tier", "ChopLying" })
-                env[name] = StaticPrefab(pre + name + ".prefab", dim + name + ".fbx", 0f, false);
-            // Kept from the HD prop set: garnish flowers, rock candy (ice / crystal spires) and the portal rune ring.
-            env["Flower"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Forest_Flower.prefab", "Assets/Art/Environment/ForestArena/ENV_Forest_Flower.fbx", 0.35f, false);
+            env["ground"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Forest_Ground.prefab", "Assets/Art/Environment/ForestArena/ENV_Forest_Ground.fbx", 3f, true);
+            var propHeights = new Dictionary<string, float>
+            {
+                { "Tree_A", 2.2f }, { "Tree_B", 2.4f }, { "Rock_A", 0.7f }, { "Rock_B", 0.6f }, { "Mushroom", 0.5f },
+                { "Bush", 0.5f }, { "RuinPillar", 1.6f }, { "Grass", 0.3f }, { "Flower", 0.35f }, { "BoundaryStone", 0.9f }
+            };
+            foreach (var pair in propHeights)
+                env[pair.Key] = StaticPrefab("Assets/Prefabs/Environment/ENV_Forest_" + pair.Key + ".prefab", "Assets/Art/Environment/ForestArena/ENV_Forest_" + pair.Key + ".fbx", pair.Value, false);
             env["RuneRing"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Arena_RuneRing.prefab", "Assets/Art/Environment/ForestArena/ENV_Arena_RuneRing.fbx", 0.05f, false);
+            env["Cactus"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Desert_Cactus.prefab", "Assets/Art/Environment/Biomes/ENV_Desert_Cactus.fbx", 1.7f, false);
             env["IceSpike"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Snow_IceSpike.prefab", "Assets/Art/Environment/Biomes/ENV_Snow_IceSpike.fbx", 1.4f, false);
+            env["ThunderSpire"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Thunder_Spire.prefab", "Assets/Art/Environment/Biomes/ENV_Thunder_Spire.fbx", 2.2f, false);
+            env["SwampRoot"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Swamp_Root.prefab", "Assets/Art/Environment/Biomes/ENV_Swamp_Root.fbx", 1.4f, false);
+            env["SwampReed"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Swamp_Reed.prefab", "Assets/Art/Environment/Biomes/ENV_Swamp_Reed.fbx", 0.7f, false);
+            env["ShadowObelisk"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Shadow_Obelisk.prefab", "Assets/Art/Environment/Biomes/ENV_Shadow_Obelisk.fbx", 2.1f, false);
+            env["VolcanoRock"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Volcano_Rock.prefab", "Assets/Art/Environment/Biomes/ENV_Volcano_Rock.fbx", 0.8f, false);
+            env["VolcanoPillar"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Volcano_Pillar.prefab", "Assets/Art/Environment/Biomes/ENV_Volcano_Pillar.fbx", 1.8f, false);
+            env["StormArch"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Storm_Arch.prefab", "Assets/Art/Environment/Biomes/ENV_Storm_Arch.fbx", 1.7f, false);
             env["CrystalSpire"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Crystal_Spire.prefab", "Assets/Art/Environment/Biomes/ENV_Crystal_Spire.fbx", 1.8f, false);
+            env["RoyalColumn"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Royal_Column.prefab", "Assets/Art/Environment/Biomes/ENV_Royal_Column.fbx", 2.1f, false);
+            // The arena edge: a woven-bamboo steamer wall (the floor and props stay as they were).
+            env["SteamerWall"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Dimsum_Wall.prefab", "Assets/Art/Environment/Dimsum/ENV_Dimsum_Wall.fbx", 3.5f, false);
 
             var obstacles = new[]
             {
-                DimsumObstacle("Assets/Prefabs/Environment/OBS_DumplingA.prefab", Obstacle.Kind.Rock, 1.0f, env["Dumpling_A"], 0.78f, 0.58f),
-                DimsumObstacle("Assets/Prefabs/Environment/OBS_DumplingB.prefab", Obstacle.Kind.Rock, 0.72f, env["Dumpling_B"], 0.54f, 0.4f),
-                DimsumObstacle("Assets/Prefabs/Environment/OBS_Bamboo.prefab", Obstacle.Kind.Tree, 0.8f, env["Bamboo"], 0.5f, 4.2f),
-                DimsumObstacle("Assets/Prefabs/Environment/OBS_Chopsticks.prefab", Obstacle.Kind.Ruin, 0.7f, env["Chopsticks"], 0.8f, 3.3f),
-                DimsumObstacle("Assets/Prefabs/Environment/OBS_Teacup.prefab", Obstacle.Kind.Rock, 1.0f, env["Teacup"], 0.88f, 0.5f, Biome.Snow, Biome.Thunder, Biome.Shadow, Biome.Storm, Biome.Crystal, Biome.Royal),
-                DimsumObstacle("Assets/Prefabs/Environment/OBS_Sauce.prefab", Obstacle.Kind.Rock, 1.0f, env["Sauce"], 0.95f, 0.2f, Biome.Desert, Biome.Swamp, Biome.Shadow, Biome.Volcano, Biome.Royal),
-                DimsumObstacle("Assets/Prefabs/Environment/OBS_Chili.prefab", Obstacle.Kind.Rock, 0.8f, env["Chili"], 0.7f, 0.28f, Biome.Desert, Biome.Volcano),
+                ObstaclePrefab("Assets/Prefabs/Environment/OBS_RockCluster.prefab", Obstacle.Kind.Rock, 1.15f, env["Rock_A"], env["Rock_B"]),
+                ObstaclePrefab("Assets/Prefabs/Environment/OBS_Tree.prefab", Obstacle.Kind.Tree, 0.85f, env["Tree_A"]),
+                ObstaclePrefab("Assets/Prefabs/Environment/OBS_Pillar.prefab", Obstacle.Kind.Ruin, 0.7f, env["RuinPillar"]),
+                ObstaclePrefab("Assets/Prefabs/Environment/OBS_Boulder.prefab", Obstacle.Kind.Rock, 1.25f, env["Rock_A"]),
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_Cactus.prefab", Obstacle.Kind.Tree, 0.7f, env["Cactus"], Biome.Desert),
                 BiomeObstacle("Assets/Prefabs/Environment/OBS_IceSpike.prefab", Obstacle.Kind.Rock, 0.7f, env["IceSpike"], Biome.Snow, Biome.Crystal),
-                BiomeObstacle("Assets/Prefabs/Environment/OBS_CrystalSpire.prefab", Obstacle.Kind.Ruin, 0.75f, env["CrystalSpire"], Biome.Crystal)
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_ThunderSpire.prefab", Obstacle.Kind.Ruin, 0.65f, env["ThunderSpire"], Biome.Thunder),
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_SwampRoot.prefab", Obstacle.Kind.Tree, 0.8f, env["SwampRoot"], Biome.Swamp),
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_Obelisk.prefab", Obstacle.Kind.Ruin, 0.7f, env["ShadowObelisk"], Biome.Shadow),
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_VolcanoRock.prefab", Obstacle.Kind.Rock, 1.05f, env["VolcanoRock"], Biome.Volcano),
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_StormArch.prefab", Obstacle.Kind.Ruin, 1.1f, env["StormArch"], Biome.Storm),
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_CrystalSpire.prefab", Obstacle.Kind.Ruin, 0.75f, env["CrystalSpire"], Biome.Crystal),
+                BiomeObstacle("Assets/Prefabs/Environment/OBS_RoyalColumn.prefab", Obstacle.Kind.Ruin, 0.75f, env["RoyalColumn"], Biome.Royal)
             };
             // Weather sprites (build_pbr_textures.fx_textures): streaks for rain, flakes for snow, soft glows, mist puffs.
             var rainMat = ParticleMaterial("Assets/Art/VFX/Materials/MAT_FX_Rain.mat", "TEX_FX_Rain", true);
@@ -329,16 +352,11 @@ namespace SlimeBreaker.EditorTools
             var spores = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Spores.prefab", new Color(0.6f, 0.9f, 0.35f, 0.7f), 70, 0.25f, 0.1f, -0.02f, ParticleSystemShapeType.Box, 18f, null, false, glowMat, true, null, 1.5f);
             var sparks = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Sparks.prefab", new Color(1f, 0.85f, 0.4f), 50, 1.0f, 0.06f, -0.03f, ParticleSystemShapeType.Box, 18f, null, false, glowMat, true, null, 1.5f);
             var mist = MistPrefab("Assets/Prefabs/VFX/VFX_Weather_Mist.prefab", mistMat);
-            var sparkleMat = ParticleMaterial("Assets/Art/VFX/Materials/MAT_FX_Sparkle.mat", "TEX_FX_Sparkle", true);
-            var bokehMat = ParticleMaterial("Assets/Art/VFX/Materials/MAT_FX_Bokeh.mat", "TEX_FX_Bokeh", true);
-            var sparkle = GlitterPrefab("Assets/Prefabs/VFX/VFX_Glitter_Sparkle.prefab", sparkleMat, 34, new Vector3(22f, 2.4f, 22f), 1.2f, 0.12f, 0.3f, new Vector2(1.2f, 2.6f), 0.9f, 0.02f, 0.03f);
-            var bokeh = GlitterPrefab("Assets/Prefabs/VFX/VFX_Glitter_Bokeh.prefab", bokehMat, 5f, new Vector3(30f, 2.4f, 30f), 3.2f, 0.7f, 1.7f, new Vector2(6f, 10f), 0.13f, 0.12f, 0.12f);
-            menuBokehBackdrop = GlitterPrefab("Assets/Prefabs/VFX/VFX_Bokeh_Backdrop.prefab", bokehMat, 26f, new Vector3(80f, 16f, 8f), 0f, 1.4f, 5.0f, new Vector2(7f, 11f), 0.4f, 0.28f, 0.3f, rig: false);
             var portal = PortalPrefab("Assets/Prefabs/Environment/ENV_Exit_Portal.prefab", env["RuneRing"]);
 
             BuildBoot();
             BuildMenu(hero, heroMenuController, env);
-            BuildArena(balance, upgrades, skills, hero, normal, fast, tank, ranged, boss, bossDefs, hostileBolt, lightning, env, vfx, powerUp, portal, obstacles, rain, snowWx, fireflies, dust, ash, spores, sparks, mist, sparkle, bokeh);
+            BuildArena(balance, upgrades, skills, hero, normal, fast, tank, ranged, boss, bossDefs, hostileBolt, lightning, env, vfx, powerUp, portal, obstacles, rain, snowWx, fireflies, dust, ash, spores, sparks, mist);
             ConfigurePlayerSettings();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -529,12 +547,6 @@ namespace SlimeBreaker.EditorTools
                 // Hand-made particle/trail/beam materials keep their unlit shaders.
                 if (mat.shader != null && (mat.shader.name.Contains("Particles") || mat.shader.name.Contains("Unlit")))
                     continue;
-                // Mini dumplings on the arena floor: soft translucent jelly, tinted per flavour at runtime.
-                if (mat.name.StartsWith("MAT_hd_jelly", StringComparison.OrdinalIgnoreCase))
-                {
-                    ConfigureDumplingJelly(mat);
-                    continue;
-                }
                 // Slime bodies (and the boss body, not its cape) are gel.
                 if (IsJellyMaterial(mat.name))
                 {
@@ -713,32 +725,10 @@ namespace SlimeBreaker.EditorTools
             { "basalt", new HdLook { texture = "TEX_Volcano_Ground", emissionFromTexture = true, emission = new Color(1.6f, 0.62f, 0.18f), cover = 0.4f, vertexAO = 0.6f } },
             { "slate", new HdLook { texture = "TEX_Storm_Ground", cover = 0.5f, vertexAO = 0.6f } },
             { "rune", new HdLook { color = new Color(0.2f, 0.6f, 0.7f), emission = new Color(0.6f, 2.4f, 3.0f), smoothness = 0.7f, metallic = 0f } },
-            // Dim sum steamer set (build_arena_dimsum.py)
+            // Dim sum steamer wall (build_arena_dimsum.py)
             { "steamwood", new HdLook { texture = "TEX_Steamer_Wood", vertexAO = 0.7f, bump = 0.8f } },
             { "bambooband", new HdLook { color = new Color(0.74f, 0.54f, 0.28f), smoothness = 0.55f, metallic = 0f, vertexAO = 0.5f } },
             { "weave", new HdLook { texture = "TEX_Bamboo_Weave", vertexAO = 0.6f } },
-            { "floor", new HdLook { color = new Color(0.86f, 0.68f, 0.38f), smoothness = 0.35f, metallic = 0f } },
-            { "glittertable", new HdLook { color = new Color(0.62f, 0.2f, 0.26f), smoothness = 0.4f, metallic = 0f } },
-            { "bamboogreen", new HdLook { color = new Color(0.5f, 0.7f, 0.26f), smoothness = 0.62f, metallic = 0f, vertexAO = 0.7f } },
-            { "bamboo_leaf", new HdLook { texture = "TEX_Bamboo_Leaf_Atlas", alpha = true, cutoff = 0.42f, wind = 0.05f, flutter = 0.03f, translucency = 0.8f, translucencyColor = new Color(0.7f, 0.9f, 0.3f), vertexAO = 0.8f, bump = 0.5f } },
-            { "jade", new HdLook { color = new Color(0.34f, 0.68f, 0.28f), smoothness = 0.6f, metallic = 0f, vertexAO = 0.8f, translucency = 0.6f, translucencyColor = new Color(0.5f, 0.85f, 0.3f) } },
-            { "bokstem", new HdLook { color = new Color(0.9f, 0.96f, 0.8f), smoothness = 0.55f, metallic = 0f, vertexAO = 0.7f } },
-            { "scallion_green", new HdLook { color = new Color(0.3f, 0.68f, 0.24f), smoothness = 0.6f, metallic = 0f, vertexAO = 0.5f } },
-            { "scallion_white", new HdLook { color = new Color(0.95f, 0.97f, 0.88f), smoothness = 0.5f, metallic = 0f, vertexAO = 0.6f } },
-            { "porcelain", new HdLook { color = new Color(0.97f, 0.97f, 0.95f), smoothness = 0.88f, metallic = 0f, vertexAO = 0.5f, rim = 0.2f } },
-            { "porcelain_blue", new HdLook { color = new Color(0.22f, 0.42f, 0.88f), smoothness = 0.9f, metallic = 0f } },
-            { "tea", new HdLook { color = new Color(0.7f, 0.36f, 0.08f), smoothness = 0.95f, metallic = 0f, emission = new Color(0.2f, 0.09f, 0.01f) } },
-            { "soy", new HdLook { color = new Color(0.09f, 0.035f, 0.02f), smoothness = 0.98f, metallic = 0f } },
-            { "chili_red", new HdLook { color = new Color(0.85f, 0.07f, 0.06f), smoothness = 0.85f, metallic = 0f, vertexAO = 0.5f, rim = 0.25f, rimColor = new Color(1f, 0.5f, 0.4f) } },
-            { "chili_stem", new HdLook { color = new Color(0.22f, 0.5f, 0.15f), smoothness = 0.5f, metallic = 0f } },
-            { "shiitake", new HdLook { color = new Color(0.4f, 0.24f, 0.13f), smoothness = 0.42f, metallic = 0f, vertexAO = 0.5f } },
-            { "shiitake_gill", new HdLook { color = new Color(0.9f, 0.84f, 0.7f), smoothness = 0.3f, metallic = 0f, vertexAO = 0.6f } },
-            { "lacquer_red", new HdLook { color = new Color(0.7f, 0.06f, 0.08f), smoothness = 0.92f, metallic = 0f } },
-            { "face_eye", new HdLook { color = new Color(0.02f, 0.02f, 0.03f), smoothness = 0.95f, metallic = 0f } },
-            { "face_white", new HdLook { color = new Color(1f, 1f, 1f), smoothness = 0.95f, metallic = 0f, emission = new Color(0.9f, 0.9f, 0.9f) } },
-            { "face_blush", new HdLook { color = new Color(1f, 0.52f, 0.58f), smoothness = 0.4f, metallic = 0f, emission = new Color(0.28f, 0.1f, 0.12f) } },
-            { "face_mouth", new HdLook { color = new Color(0.72f, 0.14f, 0.2f), smoothness = 0.7f, metallic = 0f } },
-            { "jelly", new HdLook { color = new Color(0.98f, 0.82f, 0.9f) } },
         };
 
         static void ConfigureHdMaterial(Material mat, string key)
@@ -801,29 +791,6 @@ namespace SlimeBreaker.EditorTools
             return n.Contains("slime") || (n.StartsWith("mat_king") && !n.Contains("cape"));
         }
 
-        /// <summary>Squishy-toy dumpling jelly: very glossy, light passes through the thin pleats, soft rim.</summary>
-        static void ConfigureDumplingJelly(Material mat)
-        {
-            var shader = Shader.Find("SlimeBreaker/Jelly");
-            if (shader == null)
-                throw new InvalidOperationException("Shader SlimeBreaker/Jelly tidak ditemukan.");
-            mat.shader = shader;
-            mat.SetColor("_BaseColor", HdLooks["jelly"].color);
-            mat.SetColor("_EmissionColor", Color.black);
-            mat.SetTexture("_NoiseMap", TextureNamed("TEX_Noise_Macro"));
-            mat.SetFloat("_Smoothness", 0.94f);
-            mat.SetFloat("_Wrap", 0.65f);
-            mat.SetFloat("_Subsurface", 0.55f);
-            mat.SetFloat("_RimStrength", 0.55f);
-            mat.SetFloat("_RimPower", 2.6f);
-            mat.SetFloat("_CoreDarken", 0.18f);
-            mat.SetFloat("_GlowStrength", 0.1f);
-            mat.SetFloat("_NoiseScale", 2.2f);
-            mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
-            mat.enableInstancing = true;
-            EditorUtility.SetDirty(mat);
-        }
-
         /// <summary>SlimeBreaker/Jelly with the Blender colour; tank slimes are denser, the king glows more.</summary>
         static void ConfigureJelly(Material mat)
         {
@@ -865,30 +832,21 @@ namespace SlimeBreaker.EditorTools
             additiveParticleMaterial = AdditiveMaterial("Assets/Art/VFX/Materials/MAT_Particle_Additive.mat", shader, true);
             trailMaterial = AdditiveMaterial("Assets/Art/VFX/Materials/MAT_Trail_Additive.mat", shader, false);
             var lavaGlow = new Color(1.6f, 0.62f, 0.18f);
-            // Steamer floor (woven bamboo, one tint per flavour) and the glitter tabletop outside the wall.
-            string[] flavour = { "Forest", "Desert", "Snow", "Thunder", "Swamp", "Shadow", "Volcano", "Storm", "Crystal", "Royal" };
-            Color[] floorTint =
-            {
-                Color.white, new Color(1f, 0.9f, 0.7f), new Color(0.94f, 0.97f, 1f), new Color(0.92f, 0.86f, 1f), new Color(0.88f, 1f, 0.84f),
-                new Color(0.66f, 0.6f, 0.8f), new Color(1f, 0.8f, 0.7f), new Color(0.84f, 0.9f, 1f), new Color(1f, 0.88f, 1f), new Color(1f, 0.93f, 0.76f)
-            };
-            Color[] tableTint =
-            {
-                new Color(0.95f, 0.3f, 0.4f), new Color(1f, 0.74f, 0.2f), new Color(0.6f, 0.76f, 1f), new Color(0.56f, 0.3f, 0.92f), new Color(0.3f, 0.76f, 0.4f),
-                new Color(0.26f, 0.14f, 0.48f), new Color(1f, 0.36f, 0.14f), new Color(0.2f, 0.4f, 0.88f), new Color(1f, 0.5f, 0.86f), new Color(0.92f, 0.66f, 0.14f)
-            };
-            floorMaterials = new Material[flavour.Length];
-            tableMaterials = new Material[flavour.Length];
-            for (int i = 0; i < flavour.Length; i++)
-            {
-                floorMaterials[i] = GroundMaterial("MAT_Floor_" + flavour[i], "TEX_Bamboo_Weave", 3.2f, 1.0f, 1.0f, default, 0f, floorTint[i], 0f, 0.1f);
-                tableMaterials[i] = GroundMaterial("MAT_Table_" + flavour[i], "TEX_Glitter_Table", 6f, 1.0f, 1.0f, new Color(2.4f, 2.4f, 2.4f), 0f, tableTint[i], 1f, 0.3f);
-            }
+            forestGroundMaterial = GroundMaterial("MAT_Ground_Forest", "TEX_Forest_Ground", 6f, 1.0f, 0.95f);
+            snowGroundMaterial = GroundMaterial("MAT_Ground_Snow", "TEX_Snow_Ground", 6f, 0.8f, 1.0f);
+            sandGroundMaterial = GroundMaterial("MAT_Ground_Sand", "TEX_Sand_Ground", 6f, 1.0f, 1.0f);
+            thunderGroundMaterial = GroundMaterial("MAT_Ground_Thunder", "TEX_Thunder_Ground", 5f, 1.0f, 1.0f);
+            swampGroundMaterial = GroundMaterial("MAT_Ground_Swamp", "TEX_Swamp_Ground", 5f, 1.0f, 1.0f);
+            shadowGroundMaterial = GroundMaterial("MAT_Ground_Shadow", "TEX_Shadow_Ground", 5f, 1.0f, 1.0f, new Color(1.4f, 0.9f, 2.2f), 0.5f);
+            volcanoGroundMaterial = GroundMaterial("MAT_Ground_Volcano", "TEX_Volcano_Ground", 5f, 1.0f, 1.0f, lavaGlow, 0.35f);
+            stormGroundMaterial = GroundMaterial("MAT_Ground_Storm", "TEX_Storm_Ground", 5f, 1.0f, 1.0f);
+            crystalGroundMaterial = GroundMaterial("MAT_Ground_Crystal", "TEX_Crystal_Ground", 5f, 1.0f, 1.0f, new Color(1.1f, 0.8f, 1.8f), 0.4f);
+            royalGroundMaterial = GroundMaterial("MAT_Ground_Royal", "TEX_Royal_Ground", 5f, 1.0f, 1.0f);
         }
 
         /// <summary>Arena floor on SlimeBreaker/Ground: albedo(+height), normal, mask, macro noise, optional pulsing emission.</summary>
         static Material GroundMaterial(string name, string baseName, float tileMeters, float bumpScale, float smoothScale,
-            Color emission = default, float pulse = 0f, Color? tint = null, float antiTile = 1f, float macro = 0.2f)
+            Color emission = default, float pulse = 0f)
         {
             string path = "Assets/Art/Environment/Materials/" + name + ".mat";
             var shader = Shader.Find("SlimeBreaker/Ground");
@@ -905,13 +863,13 @@ namespace SlimeBreaker.EditorTools
             material.SetTexture("_BumpMap", TextureNamed(baseName + "_Normal"));
             material.SetTexture("_MaskMap", TextureNamed(baseName + "_Mask"));
             material.SetTexture("_MacroMap", TextureNamed("TEX_Noise_Macro"));
-            material.SetColor("_BaseColor", tint ?? Color.white);
+            material.SetColor("_BaseColor", Color.white);
             material.SetFloat("_TileMeters", tileMeters);
             material.SetFloat("_BumpScale", bumpScale);
             material.SetFloat("_SmoothnessScale", smoothScale);
             material.SetFloat("_OcclusionStrength", 1f);
-            material.SetFloat("_MacroStrength", macro);
-            material.SetFloat("_AntiTile", antiTile);
+            material.SetFloat("_MacroStrength", 0.2f);
+            material.SetFloat("_AntiTile", 1f);
             var emit = TextureNamed(baseName + "_Emit");
             if (emit != null && emission.maxColorComponent > 0f)
             {
@@ -1835,118 +1793,6 @@ namespace SlimeBreaker.EditorTools
             return SavePrefab(root, path);
         }
 
-        /// <summary>The whole steamer set: woven floor, wall and the glitter table, with the big ground collider on the root.</summary>
-        static GameObject SteamerPrefab(string path)
-        {
-            var root = new GameObject(Path.GetFileNameWithoutExtension(path));
-            foreach (var (child, shadow) in new[] { ("Floor", ShadowCastingMode.Off), ("Wall", ShadowCastingMode.On), ("Table", ShadowCastingMode.Off) })
-            {
-                var instance = (GameObject)PrefabUtility.InstantiatePrefab(LoadModel("Assets/Art/Environment/Dimsum/ENV_Dimsum_" + child + ".fbx"));
-                instance.name = child;
-                instance.transform.SetParent(root.transform, false);
-                foreach (var renderer in instance.GetComponentsInChildren<Renderer>())
-                    renderer.shadowCastingMode = shadow;
-            }
-            var box = root.AddComponent<BoxCollider>();
-            box.center = new Vector3(0f, -0.5f, 0f);
-            box.size = new Vector3(100f, 1f, 100f);
-            return SavePrefab(root, path);
-        }
-
-        /// <summary>Solid dim sum prop with an explicit collider (sphere for low rounded things, capsule for tall ones, box for sticks).</summary>
-        static GameObject DimsumObstacle(string path, Obstacle.Kind kind, float footprint, GameObject visualPrefab, float radius, float height, params Biome[] biomes)
-        {
-            var root = new GameObject(Path.GetFileNameWithoutExtension(path));
-            var visual = (GameObject)PrefabUtility.InstantiatePrefab(visualPrefab);
-            visual.transform.SetParent(root.transform, false);
-            visual.name = visualPrefab.name;
-            if (kind == Obstacle.Kind.Tree)
-            {
-                var capsule = root.AddComponent<CapsuleCollider>();
-                capsule.radius = radius;
-                capsule.height = height;
-                capsule.center = new Vector3(0f, height * 0.5f, 0f);
-            }
-            else if (kind == Obstacle.Kind.Ruin)
-            {
-                var box = root.AddComponent<BoxCollider>();
-                box.size = new Vector3(radius, height, radius);
-                box.center = new Vector3(0f, height * 0.5f, 0f);
-            }
-            else
-            {
-                var sphere = root.AddComponent<SphereCollider>();
-                sphere.radius = radius;
-                sphere.center = new Vector3(0f, Mathf.Max(radius * 0.7f, height * 0.5f), 0f);
-            }
-            var marker = root.AddComponent<Obstacle>();
-            marker.kind = kind;
-            marker.footprint = footprint;
-            if (biomes != null && biomes.Length > 0)
-                marker.allowedBiomes = biomes;
-            SetLayerRecursive(root.transform, Obstacles.Layer);
-            return SavePrefab(root, path);
-        }
-
-        /// <summary>
-        /// Floating glitter: sparkle glints (small, twinkling) or bokeh lights (large, faint). `rig` makes it follow the hero.
-        /// Random pastel/rainbow colours, additive, capped on screen so a close particle can never become a white blob.
-        /// </summary>
-        static GameObject GlitterPrefab(string path, Material material, float rate, Vector3 box, float height, float sizeMin, float sizeMax, Vector2 lifetime, float alpha,
-            float drift, float maxScreen, bool rig = true)
-        {
-            var root = new GameObject(Path.GetFileNameWithoutExtension(path));
-            var particles = root.AddComponent<ParticleSystem>();
-            var main = particles.main;
-            main.loop = true;
-            main.playOnAwake = true;
-            main.prewarm = true;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(lifetime.x, lifetime.y);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(0f, drift);
-            main.startSize = new ParticleSystem.MinMaxCurve(sizeMin, sizeMax);
-            main.maxParticles = Mathf.CeilToInt(rate * lifetime.y * 1.2f);
-            main.simulationSpace = ParticleSystemSimulationSpace.World;
-            main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
-            var palette = new Gradient();
-            palette.SetKeys(new[]
-            {
-                new GradientColorKey(new Color(1f, 0.55f, 0.7f), 0f), new GradientColorKey(new Color(1f, 0.85f, 0.4f), 0.2f), new GradientColorKey(new Color(0.55f, 1f, 0.7f), 0.4f),
-                new GradientColorKey(new Color(0.5f, 0.85f, 1f), 0.6f), new GradientColorKey(new Color(0.75f, 0.6f, 1f), 0.8f), new GradientColorKey(new Color(1f, 1f, 1f), 1f)
-            }, new[] { new GradientAlphaKey(alpha, 0f), new GradientAlphaKey(alpha, 1f) });
-            var color = new ParticleSystem.MinMaxGradient(palette) { mode = ParticleSystemGradientMode.RandomColor };
-            main.startColor = color;
-            var emission = particles.emission;
-            emission.rateOverTime = rate;
-            var shape = particles.shape;
-            shape.shapeType = ParticleSystemShapeType.Box;
-            shape.scale = box;
-            var fade = particles.colorOverLifetime;
-            fade.enabled = true;
-            var fadeGradient = new Gradient();
-            fadeGradient.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
-                new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.3f), new GradientAlphaKey(1f, 0.7f), new GradientAlphaKey(0f, 1f) });
-            fade.color = fadeGradient;
-            var size = particles.sizeOverLifetime;
-            size.enabled = true;
-            size.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(new Keyframe(0f, 0.3f), new Keyframe(0.5f, 1f), new Keyframe(1f, 0.3f)));
-            var noise = particles.noise;
-            noise.enabled = true;
-            noise.strength = 0.3f;
-            noise.frequency = 0.25f;
-            noise.quality = ParticleSystemNoiseQuality.Low;
-            var renderer = root.GetComponent<ParticleSystemRenderer>();
-            renderer.sharedMaterial = material;
-            renderer.renderMode = ParticleSystemRenderMode.Billboard;
-            renderer.shadowCastingMode = ShadowCastingMode.Off;
-            renderer.maxParticleSize = maxScreen;
-            if (rig)
-            {
-                var follow = root.AddComponent<WeatherRig>();
-                follow.height = height;
-            }
-            return SavePrefab(root, path);
-        }
-
         /// <summary>Equipment drop: small spinning gem + rarity beam + the item icon floating above (billboard).</summary>
         static GameObject ItemPickupPrefab(string path)
         {
@@ -2151,13 +1997,10 @@ namespace SlimeBreaker.EditorTools
         {
             var instance = (GameObject)PrefabUtility.InstantiatePrefab(LoadModel(modelPath));
             instance.name = Path.GetFileNameWithoutExtension(path);
-            if (expectedHeight > 0f)
-                FitHeight(instance, expectedHeight);
+            FitHeight(instance, expectedHeight);
             if (!ground)
             {
-                bool small = path.Contains("Grass") || path.Contains("Flower") || path.Contains("Mushroom") || path.Contains("RuneRing")
-                    || path.Contains("BambooLeaves") || path.Contains("Scallion") || path.Contains("Shiitake") || path.Contains("Lid")
-                    || path.Contains("Tier") || path.Contains("ChopLying");
+                bool small = path.Contains("Grass") || path.Contains("Flower") || path.Contains("Mushroom") || path.Contains("RuneRing");
                 foreach (var renderer in instance.GetComponentsInChildren<Renderer>())
                     renderer.shadowCastingMode = small ? ShadowCastingMode.Off : ShadowCastingMode.On;
                 return SavePrefab(instance, path);
@@ -2208,7 +2051,7 @@ namespace SlimeBreaker.EditorTools
         static void BuildMenu(GameObject hero, RuntimeAnimatorController heroController, Dictionary<string, GameObject> env)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            var camera = MakeCamera("Camera", new Color(0.24f, 0.08f, 0.12f));
+            var camera = MakeCamera("Camera", new Color(0.09f, 0.12f, 0.2f));
             camera.fieldOfView = 36f;
             camera.transform.position = new Vector3(0.1f, 1.35f, -4.3f);
             camera.transform.rotation = Quaternion.LookRotation(new Vector3(0.85f, 0.9f, 0f) - camera.transform.position, Vector3.up);
@@ -2226,38 +2069,17 @@ namespace SlimeBreaker.EditorTools
             RenderSettings.fogStartDistance = 8f;
             RenderSettings.fogEndDistance = 30f;
 
-            // Showcase: the hero stands in a dim sum steamer; the wall, glitter table, bokeh lights and giant tableware sit behind.
-            var steamer = (GameObject)PrefabUtility.InstantiatePrefab(env["ground"]);
-            steamer.transform.position = new Vector3(0f, 0f, -14f);
-            steamer.transform.Find("Floor").GetComponentInChildren<Renderer>().sharedMaterial = floorMaterials[0];
-            steamer.transform.Find("Table").GetComponentInChildren<Renderer>().sharedMaterial = tableMaterials[0];
-            camera.backgroundColor = new Color(0.24f, 0.08f, 0.12f);
-            RenderSettings.fogColor = new Color(0.3f, 0.1f, 0.16f);
-            RenderSettings.fogStartDistance = 14f;
-            RenderSettings.fogEndDistance = 70f;
-            RenderSettings.ambientSkyColor = new Color(0.78f, 0.7f, 0.72f);
-            RenderSettings.ambientEquatorColor = new Color(0.62f, 0.5f, 0.46f);
-            RenderSettings.ambientGroundColor = new Color(0.3f, 0.2f, 0.18f);
-            if (menuBokehBackdrop != null)
-            {
-                var backdrop = (GameObject)PrefabUtility.InstantiatePrefab(menuBokehBackdrop);
-                backdrop.transform.position = new Vector3(2f, 7f, 18f);
-            }
-            void Decor(string key, Vector3 position, float yaw, float scale)
-            {
-                if (!env.ContainsKey(key) || env[key] == null)
-                    return;
-                var decor = (GameObject)PrefabUtility.InstantiatePrefab(env[key]);
-                decor.transform.position = position;
-                decor.transform.rotation = Quaternion.Euler(0f, yaw, 0f) * env[key].transform.rotation;
-                decor.transform.localScale = env[key].transform.localScale * scale;
-                MarkStatic(decor);
-            }
-            Decor("Tier", new Vector3(14f, 0f, 26f), 20f, 1f);
-            Decor("Lid", new Vector3(-9f, 0f, 22f), 200f, 1f);
-            Decor("Dumpling_A", new Vector3(3f, 0f, 24f), 175f, 5f);
-            Decor("Teacup", new Vector3(-22f, 0f, 30f), 20f, 4f);
-            Decor("ChopLying", new Vector3(-2f, 0f, 20f), 8f, 1f);
+            // Showcase: ground, rune ring and the idle sorceress to the right of the menu.
+            var ground = (GameObject)PrefabUtility.InstantiatePrefab(env["ground"]);
+            foreach (var groundRenderer in ground.GetComponentsInChildren<Renderer>())
+                groundRenderer.sharedMaterial = forestGroundMaterial;
+            ground.transform.position = Vector3.zero;
+            var menuVisual = ground.transform.Find("Visual");
+            if (menuVisual != null)
+                menuVisual.localScale = new Vector3(1.6f, 1f, 1.6f);
+            var menuWall = (GameObject)PrefabUtility.InstantiatePrefab(env["SteamerWall"]);
+            menuWall.transform.position = new Vector3(0f, 0f, -9f);
+            MarkStatic(menuWall);
             var rune = (GameObject)PrefabUtility.InstantiatePrefab(env["RuneRing"]);
             rune.transform.position = new Vector3(1.55f, 0.012f, 0f);
             rune.transform.localScale = Vector3.one * 0.55f;
@@ -2272,14 +2094,11 @@ namespace SlimeBreaker.EditorTools
             animator.runtimeAnimatorController = heroController;
             animator.applyRootMotion = false;
             var rng = new System.Random(5);
-            Scatter(env["BambooLeaves"], 26, 0.8f, 5.5f, rng, new Vector3(1.55f, 0f, 0f));
-            Scatter(env["Flower"], 6, 1.2f, 3.4f, rng, new Vector3(1.55f, 0f, 0f));
-            Scatter(env["Dumpling_A"], 2, 3.4f, 4.4f, rng, new Vector3(2.4f, 0f, 3.6f));
-            Scatter(env["Dumpling_B"], 3, 2.8f, 5.2f, rng, new Vector3(0.4f, 0f, 3.2f));
-            Scatter(env["Scallion"], 4, 2.6f, 4.6f, rng, new Vector3(1.55f, 0f, 1.8f));
-            Scatter(env["BokChoy"], 3, 3.6f, 5.2f, rng, new Vector3(3.2f, 0f, 2.4f));
-            Scatter(env["Bamboo"], 2, 6.5f, 8f, rng, new Vector3(1.55f, 0f, 6f));
-            Scatter(env["Chopsticks"], 2, 6f, 8f, rng, new Vector3(2f, 0f, 4f));
+            Scatter(env["Grass"], 14, 0.8f, 3.2f, rng, new Vector3(1.55f, 0f, 0f));
+            Scatter(env["Flower"], 5, 1f, 3f, rng, new Vector3(1.55f, 0f, 0f));
+            Scatter(env["Tree_A"], 5, 6f, 11f, rng, new Vector3(1.55f, 0f, 2f));
+            Scatter(env["Tree_B"], 4, 6f, 12f, rng, new Vector3(1.55f, 0f, 2f));
+            Scatter(env["Bush"], 4, 3.5f, 6f, rng, new Vector3(1.55f, 0f, 1.5f));
 
             var audio = new GameObject("Audio").AddComponent<AudioService>();
             audio.music = Clip("Assets/Audio/Music/MUS_Menu.ogg");
@@ -2385,21 +2204,25 @@ namespace SlimeBreaker.EditorTools
             GameObject ash,
             GameObject spores,
             GameObject sparks,
-            GameObject mist,
-            GameObject sparkle,
-            GameObject bokeh)
+            GameObject mist)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var groundInstance = (GameObject)PrefabUtility.InstantiatePrefab(env["ground"]);
             groundInstance.transform.position = Vector3.zero;
-            var floorRenderer = groundInstance.transform.Find("Floor").GetComponentInChildren<Renderer>();
-            var tableRenderer = groundInstance.transform.Find("Table").GetComponentInChildren<Renderer>();
-            floorRenderer.sharedMaterial = floorMaterials[0];
-            tableRenderer.sharedMaterial = tableMaterials[0];
+            foreach (var groundRenderer in groundInstance.GetComponentsInChildren<Renderer>())
+                groundRenderer.sharedMaterial = forestGroundMaterial;
+            // The steamer wall stands at r = 23 m: stretch the terrain so its edge (and the clear colour) never shows past the wall.
+            var groundVisual = groundInstance.transform.Find("Visual");
+            if (groundVisual != null)
+                groundVisual.localScale = new Vector3(1.6f, 1f, 1.6f);
+
+            var wallInstance = (GameObject)PrefabUtility.InstantiatePrefab(env["SteamerWall"]);
+            wallInstance.transform.position = Vector3.zero;
+            MarkStatic(wallInstance);
 
             var player = (GameObject)PrefabUtility.InstantiatePrefab(hero);
             player.transform.position = Vector3.zero;
-            var camera = MakeCamera("Camera", new Color(0.3f, 0.1f, 0.15f));
+            var camera = MakeCamera("Camera", new Color(0.36f, 0.56f, 0.7f));
             camera.fieldOfView = 50f;
             camera.nearClipPlane = 0.3f;
             camera.farClipPlane = 90f;
@@ -2411,15 +2234,15 @@ namespace SlimeBreaker.EditorTools
             new GameObject("UrpBootstrap").AddComponent<UrpSceneBootstrap>();
             var sun = Light();
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.78f, 0.7f, 0.66f);
-            RenderSettings.ambientEquatorColor = new Color(0.6f, 0.5f, 0.42f);
-            RenderSettings.ambientGroundColor = new Color(0.28f, 0.2f, 0.16f);
+            RenderSettings.ambientSkyColor = new Color(0.58f, 0.7f, 0.78f);
+            RenderSettings.ambientEquatorColor = new Color(0.4f, 0.5f, 0.38f);
+            RenderSettings.ambientGroundColor = new Color(0.16f, 0.18f, 0.12f);
             RenderSettings.sun = sun;
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
-            RenderSettings.fogColor = new Color(0.62f, 0.4f, 0.42f);
-            RenderSettings.fogStartDistance = 34f;
-            RenderSettings.fogEndDistance = 90f;
+            RenderSettings.fogColor = new Color(0.52f, 0.68f, 0.76f);
+            RenderSettings.fogStartDistance = 26f;
+            RenderSettings.fogEndDistance = 80f;
             EventSystem();
 
             var systems = new GameObject("Systems");
@@ -2459,35 +2282,45 @@ namespace SlimeBreaker.EditorTools
             powerUps.everyLevels = RunRules.PowerUpEvery;
             generator.props = new ArenaGenerator.PropSet
             {
-                bamboo = env["Bamboo"],
-                dumplingA = env["Dumpling_A"],
-                dumplingB = env["Dumpling_B"],
-                chopsticks = env["Chopsticks"],
-                sauce = env["Sauce"],
-                teacup = env["Teacup"],
-                chili = env["Chili"],
-                rockCandy = env["IceSpike"],
-                crystalCandy = env["CrystalSpire"],
-                bokChoy = env["BokChoy"],
-                scallion = env["Scallion"],
-                shiitake = env["Shiitake"],
-                bambooLeaves = env["BambooLeaves"],
-                garnish = env["Flower"],
-                lid = env["Lid"],
-                tier = env["Tier"],
-                chopLying = env["ChopLying"]
+                treeA = env["Tree_A"],
+                treeB = env["Tree_B"],
+                rockA = env["Rock_A"],
+                rockB = env["Rock_B"],
+                mushroom = env["Mushroom"],
+                bush = env["Bush"],
+                pillar = env["RuinPillar"],
+                grass = env["Grass"],
+                flower = env["Flower"],
+                boundaryStone = env["BoundaryStone"],
+                runeRing = env["RuneRing"],
+                cactus = env["Cactus"],
+                iceSpike = env["IceSpike"],
+                thunderSpire = env["ThunderSpire"],
+                swampRoot = env["SwampRoot"],
+                swampReed = env["SwampReed"],
+                shadowObelisk = env["ShadowObelisk"],
+                volcanoRock = env["VolcanoRock"],
+                volcanoPillar = env["VolcanoPillar"],
+                stormArch = env["StormArch"],
+                crystalSpire = env["CrystalSpire"],
+                royalColumn = env["RoyalColumn"]
             };
             generator.obstaclePrefabs = obstaclePrefabs;
-            generator.groundRenderer = floorRenderer;
-            generator.tableRenderer = tableRenderer;
-            generator.floorMaterials = floorMaterials;
-            generator.tableMaterials = tableMaterials;
+            generator.groundRenderer = groundInstance.GetComponentInChildren<Renderer>();
+            generator.forestGround = forestGroundMaterial;
             generator.coverMoss = TextureNamed("TEX_Cover_Moss");
             generator.coverSnow = TextureNamed("TEX_Cover_Snow");
             generator.coverSand = TextureNamed("TEX_Cover_Sand");
             generator.coverAsh = TextureNamed("TEX_Cover_Ash");
-            generator.sparkleRig = sparkle;
-            generator.bokehRig = bokeh;
+            generator.snowGround = snowGroundMaterial;
+            generator.sandGround = sandGroundMaterial;
+            generator.thunderGround = thunderGroundMaterial;
+            generator.swampGround = swampGroundMaterial;
+            generator.shadowGround = shadowGroundMaterial;
+            generator.volcanoGround = volcanoGroundMaterial;
+            generator.stormGround = stormGroundMaterial;
+            generator.crystalGround = crystalGroundMaterial;
+            generator.royalGround = royalGroundMaterial;
             generator.rainRig = rain;
             generator.snowRig = snowWx;
             generator.mistRig = mist;
@@ -3274,7 +3107,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 25;
+            PlayerSettings.Android.bundleVersionCode = 26;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

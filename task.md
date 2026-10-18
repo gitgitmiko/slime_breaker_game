@@ -181,9 +181,9 @@
 
 - Hit peluru musuh dibisukan; slider volume BGM dan suara game di Pengaturan. APK 0.19.1.
 
-### Putaran 25 — arena wadah dimsum (tahap 1 redesign)
+### Putaran 26 — dinding steamer dimsum (tahap 1 redesign)
 
-- Arena + menu di dalam steamer dimsum; boss squishy dumpling (lantai 100 pelangi) dan hero baru menyusul di tahap berikutnya. APK 0.20.0.
+- Lantai/properti tetap; dinding arena = steamer bambu anyaman; properti luar dipindah ke dalam. Boss squishy dumpling (lantai 100 pelangi) dan hero baru menyusul. APK 0.20.1.
 
 ## Berikutnya
 

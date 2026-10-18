@@ -32,9 +32,9 @@ Semua aset dibuat sendiri di mesin ini (Blender, Python/numpy/Pillow, FluidSynth
 - Kamera gameplay: offset (0, 8.3, -6.9) dari hero, FOV 50, sedikit mengarah ke arah gerak (`FollowCamera.leadDistance`), goyang pendek saat hero terkena damage.
 - Arena bermain r = 11,2 m dibatasi cincin rune emisif dan 18 batu batas; di luar itu tanah naik menjadi bukit berpohon sampai 40 m supaya tepi mesh tidak pernah terlihat.
 
-## Arena: wadah dimsum
+## Arena: dinding wadah dimsum
 
-Konsep "Squishy Dumpling Co.": arena adalah bagian dalam steamer bambu. Lantai anyaman bambu (twill, strip ±0,2 m), dinding kayu pucat setinggi 2,5 m (rendah supaya kamera tidak menutupi hero di tepi), di luarnya meja glitter dengan dekor raksasa (tutup anyaman bersandar, steamer tingkat kedua, sumpit, mangkuk, cangkir, dumpling). Tiap bioma adalah satu rasa dumpling: jasmine (hutan), custard emas (gurun), kelapa (salju), talas (petir), matcha (rawa), wijen hitam (bayangan), cabai (gunung api), blueberry (badai), permen batu (kristal), kuning telur (kerajaan) — rasa menentukan tint lantai, warna glitter meja, dan warna jelly dumpling mini. Properti: dumpling mini jelly berwajah (mata mengilap, pipi merona), rumpun bambu, pak choi, daun bawang, sumpit tegak, piring kecap, cangkir teh, cabai, kristal permen. Partikel: kilau glitter, bokeh warna-warni, uap hangat.
+Konsep "Squishy Dumpling Co.": arena berada di dalam steamer dimsum. Lantai (rumput, pasir, salju, …), properti, dan pencahayaan per bioma tetap; yang berubah adalah tepinya: dinding setinggi 2,5 m berlapis anyaman bambu (twill) dengan bibir kayu pucat membulat, gelang bambu dan simpul di luar. Semua properti yang dulu berdiri di luar batas (pohon di bukit) kini berdiri di dalam, dalam sabuk 2–4 m di sepanjang dinding. Dinding rendah supaya kamera tinggi tidak menutupi hero di tepi. Tahap berikutnya: boss jadi squishy dumpling (lantai 100 pelangi), lalu hero.
 
 ## Material
 

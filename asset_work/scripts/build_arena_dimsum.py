@@ -63,7 +63,7 @@ bp.SURFACES.update({
 # ---------------------------------------------------------------- generic geometry
 
 
-def revolve(name, profile, segments=48, uv_u=1.0, uv_v=1.0, probe=None):
+def revolve(name, profile, segments=48, uv_u=1.0, uv_v=1.0, probe=None, facing="up"):
     """Surface of revolution about Z from a (radius, z) profile. Points with radius 0 collapse to the axis.
 
     UV: u = angle × uv_u, v = path length / uv_v. `probe(normal)` is checked on the highest face to pick the
@@ -102,7 +102,13 @@ def revolve(name, profile, segments=48, uv_u=1.0, uv_v=1.0, probe=None):
                 loop[uv_layer].uv = (ku / segments * uv_u, lengths[pj] / uv_v)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     top = max(bm.faces, key=lambda f: f.calc_center_median().z)
-    ok = (probe or (lambda n: n.z > 0))(top.normal)
+    if facing == "up":
+        ok = (probe or (lambda n: n.z > 0))(top.normal)
+    else:
+        centre = top.calc_center_median()
+        radial = Vector((centre.x, centre.y, 0.0)).normalized()
+        along = top.normal.dot(radial)
+        ok = along > 0 if facing == "out" else along < 0
     if not ok:
         bmesh.ops.reverse_faces(bm, faces=bm.faces)
     mesh = bpy.data.meshes.new(name)
@@ -146,20 +152,29 @@ def floor_disc():
 
 
 def steamer_wall():
-    inner_r, outer_r = 24.5, 26.4
-    profile = [(inner_r, 0.0), (inner_r, 1.9), (inner_r + 0.06, 2.22), (inner_r + 0.28, 2.42), (inner_r + 0.7, 2.52), (25.45, 2.55),
-               (outer_r - 0.7, 2.52), (outer_r - 0.28, 2.42), (outer_r - 0.04, 2.2), (outer_r, 1.9), (outer_r, 0.0)]
-    # Revolved from inside-bottom up and over to outside-bottom: outward normals point away from the wood.
-    wall = revolve("wall", profile, segments=192, uv_u=26.0 * math.tau / 3.0, uv_v=3.0, probe=lambda n: n.z > 0)
-    parts = [part(wall, "steamwood", lambda co: 0.55 + 0.45 * min(1.0, co.z / 2.0))]
-    for z, minor in ((0.45, 0.11), (1.55, 0.1)):
-        band = ba.add_torus(f"hoop{z}", outer_r + 0.01, minor, (0, 0, z), major_segments=192, minor_segments=8)
+    """Arena edge: the wall of a bamboo steamer. Woven bamboo inside and out, a rounded wood rim, bamboo hoops outside.
+
+    The base is sunk 1 m so it stays buried where the terrain rises toward the rim of the old floor mesh.
+    """
+    inner_r, outer_r = 23.0, 24.9
+    base = -1.0
+    circumference_in = inner_r * math.tau
+    circumference_out = outer_r * math.tau
+    tile = 3.2  # one weave tile = 3.2 m (16 strips)
+    inner = revolve("wall_in", [(inner_r, base), (inner_r, 2.0)], segments=192, uv_u=circumference_in / tile, uv_v=tile, facing="in")
+    outer = revolve("wall_out", [(outer_r, 2.0), (outer_r, base)], segments=192, uv_u=circumference_out / tile, uv_v=tile, facing="out")
+    rim_profile = [(inner_r, 2.0), (inner_r + 0.04, 2.2), (inner_r + 0.2, 2.38), (inner_r + 0.55, 2.48), ((inner_r + outer_r) / 2, 2.5),
+                   (outer_r - 0.55, 2.48), (outer_r - 0.2, 2.38), (outer_r - 0.04, 2.2), (outer_r, 2.0)]
+    rim = revolve("wall_rim", rim_profile, segments=192, uv_u=circumference_in / 3.0, uv_v=3.0, probe=lambda n: n.z > 0)
+    parts = [part(inner, "weave", lambda co: 0.6 + 0.4 * min(1.0, max(0.0, co.z / 2.0))), part(outer, "weave", lambda co: 0.7 + 0.3 * min(1.0, max(0.0, co.z / 2.0))),
+             part(rim, "steamwood", lambda co: 1.0)]
+    for z, minor in ((0.4, 0.11), (1.5, 0.1)):
+        band = ba.add_torus(f"hoop{z}", outer_r + 0.02, minor, (0, 0, z), major_segments=192, minor_segments=8)
         bp.uv_box(band, 2.0)
         parts.append(part(band, "bambooband"))
-    # Rope-wrapped bamboo ties where the steamer's rim ring is joined (a few knots round the outside).
     for k in range(16):
         a = k / 16 * math.tau
-        knot = sphere(f"knot{k}", 0.16, (math.cos(a) * (outer_r + 0.06), math.sin(a) * (outer_r + 0.06), 1.0), scale=(1, 1, 1.5), seg=10, rings=8)
+        knot = sphere(f"knot{k}", 0.16, (math.cos(a) * (outer_r + 0.08), math.sin(a) * (outer_r + 0.08), 0.95), scale=(1, 1, 1.5), seg=10, rings=8)
         parts.append(part(knot, "bambooband"))
     return bp.join(parts, "ENV_Dimsum_Wall")
 
@@ -514,7 +529,7 @@ def bamboo_leaves(name, seed):
 ASSETS = [
     # id, builder, preview distance, height, target z
     ("ENV_Dimsum_Floor", lambda: floor_disc(), 80.0, 60.0, 0.0),
-    ("ENV_Dimsum_Wall", lambda: steamer_wall(), 80.0, 62.0, 1.0),
+    ("ENV_Dimsum_Wall", lambda: steamer_wall(), 70.0, 50.0, 1.0),
     ("ENV_Dimsum_Table", lambda: table_ring(), 150.0, 110.0, 0.0),
     ("ENV_Dimsum_Lid", lambda: lid(), 22.0, 12.0, 3.2),
     ("ENV_Dimsum_Tier", lambda: tier(), 36.0, 18.0, 2.5),
@@ -536,8 +551,10 @@ ASSETS = [
 def main():
     ba.reset_file()
     studio = ba.hero_studio()
+    # Default: only the steamer wall (the arena keeps its old floor). `all` or explicit ids build the rest.
+    wanted = ONLY or {"ENV_Dimsum_Wall"}
     for asset_id, builder, distance, height, target_z in ASSETS:
-        if ONLY and asset_id not in ONLY:
+        if "all" not in wanted and asset_id not in wanted:
             continue
         obj = builder()
         bp.export(asset_id, ENV, obj, distance, height, target_z)

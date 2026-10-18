@@ -288,14 +288,6 @@
     "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
   },
   {
-    "id": "ENV_Dimsum_Wall",
-    "file": "Environment/Dimsum/ENV_Dimsum_Wall.fbx",
-    "kind": "static",
-    "triangles": 12224,
-    "vertices": 6336,
-    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
-  },
-  {
     "id": "ENV_Dimsum_Table",
     "file": "Environment/Dimsum/ENV_Dimsum_Table.fbx",
     "kind": "static",
@@ -413,6 +405,14 @@
     "kind": "static",
     "triangles": 10,
     "vertices": 20,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_Wall",
+    "file": "Environment/Dimsum/ENV_Dimsum_Wall.fbx",
+    "kind": "static",
+    "triangles": 12224,
+    "vertices": 6720,
     "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
   }
 ]

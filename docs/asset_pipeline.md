@@ -95,19 +95,18 @@ python3 asset_work/scripts/build_audio_hd.py all
 - Shader URP: `SlimeBreaker/Ground` (world-space, sampel kedua diputar 37° anti-tiling, noise makro, emisi berdenyut), `SlimeBreaker/Lit` (alpha clip, angin, translusensi daun, AO verteks, penutup bioma global `_SB_Cover*`), `SlimeBreaker/Jelly` (subsurface wrap, rim fresnel, inti padat, noise mengalir). Keyword global `SB_QUALITY_LOW` memilih jalur murah.
 - `PostFx` membuat Volume runtime (ACES, bloom, color adjustments, white balance, split toning, vignette) dengan grading per bioma/malam/cuaca; mati di preset Low.
 
-### Arena dimsum (putaran 25)
+### Dinding steamer dimsum (putaran 26)
 
-Arena kini di dalam wadah dimsum (steamer bambu) di atas meja glitter. Perintah:
+Lantai, properti, dan cuaca arena tetap seperti sebelumnya; hanya tepi arena yang kini berupa dinding wadah dimsum (steamer bambu). Perintah:
 
 ```bash
-python3 asset_work/scripts/build_pbr_textures.py asset_work/textures TEX_Bamboo_Weave TEX_Steamer_Wood TEX_Glitter_Table TEX_Bamboo_Leaf_Atlas
+python3 asset_work/scripts/build_pbr_textures.py asset_work/textures TEX_Bamboo_Weave TEX_Steamer_Wood
 blender --background --python asset_work/scripts/build_arena_dimsum.py -- asset_work/output asset_work/previews asset_work/textures
 ```
 
-- Tekstur: `TEX_Bamboo_Weave` (anyaman twill 16 strip, 2048), `TEX_Steamer_Wood` (kayu pucat), `TEX_Glitter_Table` (dasar netral + glitter multiwarna di peta emisi; ditint per rasa di Unity), `TEX_Bamboo_Leaf_Atlas` (ranting daun bambu), sprite FX `TEX_FX_Bokeh` dan `TEX_FX_Sparkle`.
-- Mesh (`Environment/Dimsum`): `Floor` (cakram r 25,4), `Wall` (cincin kayu r 24,5–26,4 tinggi 2,5 dengan gelang bambu dan simpul), `Table` (cincin r 25,9–140), dekor meja `Lid`, `Tier`, `ChopLying`, dan properti: `Dumpling_A/B` (jelly berwajah, lipatan atas), `Bamboo`, `BokChoy`, `Scallion`, `Chopsticks`, `Sauce`, `Teacup`, `Chili`, `Shiitake`, `BambooLeaves`.
-- Material `MAT_hd_<permukaan>`; `MAT_hd_jelly*` dipetakan `ProjectSetup` ke shader `SlimeBreaker/Jelly` (dumpling), lainnya ke `SlimeBreaker/Lit`.
-- Lantai dan meja memakai shader `SlimeBreaker/Ground` (dunia-ruang, tanpa anti-tiling untuk anyaman) dengan 10 material tint (satu per bioma/rasa).
+- Tanpa argumen id, skrip hanya membangun `ENV_Dimsum_Wall` (cincin r 23,0–24,9, tinggi 2,5 m, dasar ditanam 1 m ke tanah): sisi dalam dan luar dilapisi anyaman bambu (`TEX_Bamboo_Weave`, material `MAT_hd_weave`), bibir kayu pucat membulat (`TEX_Steamer_Wood`), dua gelang bambu dan 16 simpul di luar.
+- `build_arena_dimsum.py ... all` juga membangun set properti dimsum (dumpling mini jelly berwajah, bambu, pak choi, sumpit, dll.) dan dekor meja; set itu belum dipakai di game (disiapkan untuk tahap boss dumpling).
+- `ProjectSetup` memasang dinding di scene arena dan menu; terrain digandakan 1,6× agar tepinya tak terlihat dari balik dinding.
 
 ### Audio HD (putaran 16)
 

@@ -147,7 +147,7 @@ namespace SlimeBreaker.Tests
         public IEnumerator PropsStandUpright()
         {
             yield return null;
-            foreach (var name in new[] { "ENV_Dimsum_Bamboo", "ENV_Dimsum_Chopsticks", "ENV_Dimsum_Dumpling_A", "ENV_Dimsum_Dumpling_B" })
+            foreach (var name in new[] { "ENV_Forest_Tree_A", "ENV_Forest_Tree_B", "ENV_Forest_RuinPillar", "ENV_Forest_Mushroom" })
             {
                 int found = 0;
                 foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsSortMode.None))
@@ -1223,12 +1223,11 @@ namespace SlimeBreaker.Tests
             stage.ForceFloor(11);
             yield return null;
             Assert.AreEqual(Biome.Desert, stage.Theme.biome);
-            Assert.AreEqual(generator.floorMaterials[(int)Biome.Desert], generator.groundRenderer.sharedMaterial);
-            Assert.AreEqual(generator.tableMaterials[(int)Biome.Desert], generator.tableRenderer.sharedMaterial);
+            Assert.AreEqual(generator.sandGround, generator.groundRenderer.sharedMaterial);
             stage.ForceFloor(21);
             yield return null;
             Assert.AreEqual(Biome.Snow, stage.Theme.biome);
-            Assert.AreEqual(generator.floorMaterials[(int)Biome.Snow], generator.groundRenderer.sharedMaterial);
+            Assert.AreEqual(generator.snowGround, generator.groundRenderer.sharedMaterial);
             stage.ForceFloor(31);
             yield return null;
             Assert.AreEqual(Biome.Thunder, stage.Theme.biome);
@@ -1260,21 +1259,15 @@ namespace SlimeBreaker.Tests
                 seen.Add(biome);
                 Assert.AreEqual("SlimeBreaker/Ground", generator.groundRenderer.sharedMaterial.shader.name, biome + " ground is not on the HD shader");
                 int hd = 0;
-                int jelly = 0;
                 foreach (var renderer in generator.Root.GetComponentsInChildren<Renderer>())
                 {
                     foreach (var material in renderer.sharedMaterials)
                     {
                         if (material != null && material.shader.name == "SlimeBreaker/Lit")
                             hd++;
-                        if (material != null && material.shader.name == "SlimeBreaker/Jelly")
-                            jelly++;
                     }
                 }
                 Assert.Greater(hd, 0, biome + " has no HD props");
-                Assert.Greater(jelly, 0, biome + " has no jelly dumplings");
-                Assert.AreEqual("TEX_Bamboo_Weave", generator.groundRenderer.sharedMaterial.GetTexture("_BaseMap").name, biome + " floor is not the woven bamboo mat");
-                Assert.AreEqual("TEX_Glitter_Table", generator.tableRenderer.sharedMaterial.GetTexture("_BaseMap").name, biome + " table is not glitter");
                 var groundMat = generator.groundRenderer.sharedMaterial;
                 Debug.Log("PLAYTEST ground " + biome + " " + groundMat.name + " base " + (groundMat.GetTexture("_BaseMap") != null ? groundMat.GetTexture("_BaseMap").name : "null")
                     + " low " + Shader.IsKeywordEnabled("SB_QUALITY_LOW") + " sun " + (RenderSettings.sun != null ? RenderSettings.sun.intensity.ToString("0.00") : "-"));
@@ -1437,32 +1430,49 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
-        public IEnumerator SteamerWallAndTableShowAtTheEdge()
+        public IEnumerator SteamerWallEnclosesTheArenaAndEveryPropIsInside()
         {
             var stage = Object.FindAnyObjectByType<StageManager>();
             var generator = Object.FindAnyObjectByType<ArenaGenerator>();
+            var wall = GameObject.Find("ENV_Dimsum_Wall");
+            Assert.IsNotNull(wall, "arena has no steamer wall");
+            var wallRenderer = wall.GetComponentInChildren<Renderer>();
+            Assert.IsNotNull(wallRenderer);
+            foreach (var material in wallRenderer.sharedMaterials)
+                Assert.IsTrue(material != null && material.shader.name == "SlimeBreaker/Lit", "wall material is not on the HD shader");
+            const float wallInner = 23.0f;
+            foreach (int floor in new[] { 1, 21, 31, 91 })
+            {
+                stage.ForceFloor(floor);
+                yield return null;
+                yield return null;
+                int props = 0;
+                foreach (var t in generator.Root.GetComponentsInChildren<Transform>())
+                {
+                    if (t.parent != generator.Root || t.name.StartsWith("Scatter_"))
+                        continue;
+                    props++;
+                    Vector3 flat = t.position;
+                    flat.y = 0f;
+                    Assert.Less(flat.magnitude, wallInner - 0.3f, t.name + " stands outside the steamer wall on floor " + floor);
+                }
+                Assert.Greater(props, 20, "floor " + floor + " has too few props");
+            }
             stage.ForceFloor(1);
             yield return null;
             PlayerHealth.Instance.GiveInvulnerability(120f);
-            var steamer = GameObject.Find("ENV_Dimsum_Steamer");
-            Assert.IsNotNull(steamer, "arena has no steamer");
-            var wall = steamer.transform.Find("Wall").GetComponentInChildren<Renderer>();
-            var table = steamer.transform.Find("Table").GetComponentInChildren<Renderer>();
-            Assert.IsNotNull(wall);
-            Assert.IsNotNull(table);
-            foreach (var angle in new[] { 0f, 90f, 200f })
+            foreach (var angle in new[] { 0f, 120f, 240f })
             {
                 float a = angle * Mathf.Deg2Rad;
-                PlayerHealth.Instance.transform.position = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * (RunRules.ArenaRadius - 1.2f);
+                PlayerHealth.Instance.transform.position = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * (RunRules.ArenaRadius - 1f);
                 for (int i = 0; i < 10; i++)
                     yield return null;
                 var planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
-                Assert.IsTrue(GeometryUtility.TestPlanesAABB(planes, wall.bounds), "wall is not in view at angle " + angle);
+                Assert.IsTrue(GeometryUtility.TestPlanesAABB(planes, wallRenderer.bounds), "wall is not in view at angle " + angle);
                 if (angle == 0f)
-                    Capture("34_steamer_edge");
+                    Capture("34_steamer_wall");
             }
             PlayerHealth.Instance.transform.position = Vector3.zero;
-            Assert.Greater(generator.Root.Find("ENV_Dimsum_Tier(Clone)") != null || generator.Root.Find("ENV_Dimsum_Tier") != null ? 1 : 0, 0, "table decor missing");
         }
 
         [UnityTest]
@@ -1511,7 +1521,7 @@ namespace SlimeBreaker.Tests
                     foreach (var particleRenderer in rig.GetComponentsInChildren<ParticleSystemRenderer>())
                     {
                         if (particleRenderer.renderMode == ParticleSystemRenderMode.Billboard && particleRenderer.name != "Splashes" && !rig.name.Contains("Mist"))
-                            Assert.LessOrEqual(particleRenderer.maxParticleSize, rig.name.Contains("Bokeh") ? 0.14f : 0.05f, rig.name + " particles can blow up into screen-filling blobs near the camera");
+                            Assert.LessOrEqual(particleRenderer.maxParticleSize, 0.05f, rig.name + " particles can blow up into screen-filling blobs near the camera");
                     }
                     if (rig.ambienceId == null && main != null)
                         Assert.Less(rig.height, main.transform.position.y - 3f, rig.name + " drifts at camera height");
@@ -1794,25 +1804,17 @@ namespace SlimeBreaker.Tests
         void CollectGroundVertices()
         {
             groundColliders.Clear();
-            var ground = GameObject.Find("ENV_Dimsum_Steamer");
+            var ground = GameObject.Find("ENV_Forest_Ground");
             if (ground == null)
                 return;
             foreach (var filter in ground.GetComponentsInChildren<MeshFilter>())
             {
-                // Floor and table are walkable surfaces; the steamer wall is not.
-                if (filter.sharedMesh == null || NameUnder(ground.transform, filter.transform) == "Wall")
+                if (filter.sharedMesh == null)
                     continue;
                 var probe = filter.gameObject.AddComponent<MeshCollider>();
                 probe.sharedMesh = filter.sharedMesh;
                 groundColliders.Add(probe);
             }
-        }
-
-        static string NameUnder(Transform root, Transform node)
-        {
-            while (node != null && node.parent != root)
-                node = node.parent;
-            return node != null ? node.name : string.Empty;
         }
 
         float GroundSurface(Vector3 at)

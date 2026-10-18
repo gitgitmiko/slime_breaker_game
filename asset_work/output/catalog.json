@@ -96,14 +96,6 @@
     "notes": "no rig"
   },
   {
-    "id": "CHR_Hero_Main",
-    "file": "Characters/Hero/CHR_Hero_Main.fbx",
-    "kind": "character",
-    "triangles": 28578,
-    "vertices": 14595,
-    "notes": "generic rig, in-place clips"
-  },
-  {
     "id": "ENV_Forest_Tree_A",
     "file": "Environment/ForestArena/ENV_Forest_Tree_A.fbx",
     "kind": "static",
@@ -413,6 +405,14 @@
     "kind": "character",
     "triangles": 6780,
     "vertices": 3416,
+    "notes": "generic rig, in-place clips"
+  },
+  {
+    "id": "CHR_Hero_Main",
+    "file": "Characters/Hero/CHR_Hero_Main.fbx",
+    "kind": "character",
+    "triangles": 19670,
+    "vertices": 10375,
     "notes": "generic rig, in-place clips"
   }
 ]

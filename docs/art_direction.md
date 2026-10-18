@@ -1,6 +1,6 @@
 # Art Direction — Slime Breaker
 
-Gaya: anime 3D fantasy. Hero adalah **penyihir cat-boy chibi** yang mengikuti desain referensi *Cat-boy Ashuo* (l4oyu, itch.io): kepala sangat besar, rambut hitam tebal mengembang dengan ujung runcing bergerigi di sisi dan belakang, poni tebal dengan satu helai di tengah, kilau rambut oval kebiruan, telinga kucing hitam berbulu krem di dalam, mata anime besar amber/oranye bergradasi dengan bulu mata hitam tebal, alis hitam tebal, mulut ":3" dengan dua taring, pipi merona, kulit hangat, choker hitam dengan lonceng emas, kaos navy lengan pendek, celana pendek hitam, kaki telanjang. Tambahan gaya penyihir: topi penyihir ungu miring di antara telinga (pita ungu, bulan emas), jubah pendek navy berlapis ungu dengan kancing emas, dan tongkat bulan sabit + kristal. Proporsi diukur dari gambar depan referensi (lebar siluet per ketinggian, dinormalisasi ke tinggi badan): rambut ±0,27 H dengan tepi bergelombang, dagu 0,55 H, bahu 0,52 H, ujung kaos 0,32 H, celana sampai 0,25 H, kaki tebal (Ø ≈ 0,1 H) dan rapat, lengan pendek tebal dengan tangan bulat. Model dibangun ulang dari nol di `build_assets.py` (`build_hero`) berdasarkan gambar pratinjau; file FBX/tekstur asli (berbayar) tidak dipakai atau disalin.
+Gaya: anime 3D fantasy. Hero adalah **penyihir chibi** (tahap 3 konsep "Squishy Dumpling Co.", mengikuti gambar referensi dari pengguna): topi penyihir ungu raksasa berbahan felt dengan tepi bergerigi sobek berpita emas, dua jahitan X emas dan ujung yang menekuk ke samping; wajah krem bulat dengan dua mata oval hitam saja (tanpa hidung dan mulut); rambut bob pirang yang memudar ke merah muda di ujung dengan poni dan helai samping yang mencuat; capelet dua tingkat ungu bertepi emas-cokelat dengan kancing toggle di kerah; jaket lilac berlengan lonceng dengan tepi emas-cokelat dan kancing kodok; rok krem mengembang; stoking lilac dan sepatu bot cokelat berlipat; sarung tangan krem bulat. Tongkat bulan sabit + kristal tetap di tangan. Model dibangun dari nol di `build_assets.py` (`build_hero`, tekstur kain dilukis numpy: `TEX_Hero_Hat/Jacket/Capelet/Hair`); tulang dan klip animasi tidak berubah.
 
 Semua aset dibuat sendiri di mesin ini (Blender, Python/numpy/Pillow, FluidSynth). Tidak ada karakter, logo, atau desain berhak cipta yang disalin.
 
@@ -8,10 +8,10 @@ Semua aset dibuat sendiri di mesin ini (Blender, Python/numpy/Pillow, FluidSynth
 
 | Peran | Warna | Hex perkiraan |
 |---|---|---|
-| Kulit hero | peach hangat | `#FFDBC7` |
-| Rambut hero | hitam / kilau biru pucat | `#0B0B0F` / `#99A3DB` |
-| Baju hero | kaos navy / celana hitam / jubah navy-ungu | `#1A1C33` / `#09090B` / `#57309A` |
-| Topi hero | ungu + pita ungu terang | `#331C66` / `#7A47D1` |
+| Kulit hero | krem hangat | `#FFE6C2` |
+| Rambut hero | pirang krem → merah muda di ujung | `#FCE6AD` / `#F794A8` |
+| Baju hero | jaket lilac / capelet ungu / rok krem | `#A88ACC` / `#614788` / `#F2EBDB` |
+| Topi hero | ungu felt + tepi emas | `#4D3370` / `#FACC1A` |
 | Topi dan cape luar | indigo | `#29216B` |
 | Cape dalam | magenta lembut | `#DB529E` |
 | Emas (sabuk, cincin tongkat) | kuning hangat | `#F5C74D` |

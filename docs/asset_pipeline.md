@@ -123,7 +123,7 @@ blender --background --python asset_work/scripts/build_assets.py -- \
   asset_work/output asset_work/previews asset_work/textures hero
 ```
 
-Mode ini juga menulis `asset_work/textures/TEX_Hero_Eye.png` (mata anime dilukis dengan numpy di Blender) dan merender pratinjau hero dengan EEVEE (lampu key/fill/rim): `CHR_Hero_Main.png`, `_Face.png`, `_Back.png`, dan frame tiap klip. Set `HERO_DEBUG_VIEWS=1` untuk tambahan tampak depan/samping per frame di `asset_work/previews/debug/` (tidak di-commit). Rambut dibuat dari metaball (radius = radius permukaan; dikali `METABALL_REACH`) lalu di-decimate; mata adalah decal berbentuk mata yang diproyeksikan ke wajah dengan UV mengikuti outline. Pose lengan/tongkat yang miring memakai `aim()` (arah dunia) agar tidak menyilang badan.
+Mode ini membangun hero penyihir chibi (tekstur kain `TEX_Hero_Hat/Jacket/Capelet/Hair.png` dilukis numpy; mata = dua elipsoid hitam) lalu menyalin FBX ke `Assets/Art/Characters/Hero`, dan merender pratinjau hero dengan EEVEE (lampu key/fill/rim): `CHR_Hero_Main.png`, `_Face.png`, `_Back.png`, dan frame tiap klip. Set `HERO_DEBUG_VIEWS=1` untuk tambahan tampak depan/samping per frame di `asset_work/previews/debug/` (tidak di-commit). Rambut dibuat dari metaball (radius = radius permukaan; dikali `METABALL_REACH`) lalu di-decimate; mata adalah decal berbentuk mata yang diproyeksikan ke wajah dengan UV mengikuti outline. Pose lengan/tongkat yang miring memakai `aim()` (arah dunia) agar tidak menyilang badan.
 
 Hanya mesh biome baru (tanpa menimpa hero/slime):
 

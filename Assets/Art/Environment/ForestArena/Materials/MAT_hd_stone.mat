@@ -140,7 +140,7 @@ Material:
     - _TranslucencyColor: {r: 0.55, g: 0.8, b: 0.25, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &6276525985274628238
+--- !u!114 &8175409326809525338
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}

@@ -538,22 +538,31 @@ namespace SlimeBreaker.Tests
                     Assert.Greater(clip.length, Object.FindAnyObjectByType<AutoAttackController>().releaseDelay, "bolt should leave during the swing");
             }
 
-            // Painted anime eyes on the face decal.
+            // Two black oval eyes on a cream face, painted hair gradient and felt hat textures.
             bool eyes = false;
+            bool hair = false;
+            bool hat = false;
             foreach (var renderer in hero.GetComponentsInChildren<Renderer>())
             {
                 foreach (var material in renderer.sharedMaterials)
                 {
                     string materialName = material != null ? material.name.ToLowerInvariant() : string.Empty;
-                    if (!materialName.Contains("eye_decal") && !materialName.Contains("hero_eye"))
-                        continue;
-                    var texture = material.GetTexture("_BaseMap");
-                    Assert.IsNotNull(texture, "eye decal has no texture");
-                    Assert.AreEqual("TEX_Hero_Eye", texture.name);
-                    eyes = true;
+                    eyes |= materialName.Contains("hero_blackeye");
+                    if (materialName.Contains("hero_hair"))
+                    {
+                        Assert.IsNotNull(material.GetTexture("_BaseMap"), "hair gradient texture missing");
+                        hair = true;
+                    }
+                    if (materialName.Contains("hero_hat") && !materialName.Contains("trim"))
+                    {
+                        Assert.IsNotNull(material.GetTexture("_BaseMap"), "hat texture missing");
+                        hat = true;
+                    }
                 }
             }
-            Assert.IsTrue(eyes, "hero has no eye decal material");
+            Assert.IsTrue(eyes, "hero has no black eye material");
+            Assert.IsTrue(hair, "hero has no hair material");
+            Assert.IsTrue(hat, "hero has no hat material");
             Assert.IsNotNull(SkillController.FindDeep(hero.transform, "StaffTip"), "staff tip bone missing");
             Assert.IsNotNull(SkillController.FindDeep(hero.transform, "Hat"), "hat bone missing");
 

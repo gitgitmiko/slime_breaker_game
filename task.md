@@ -207,6 +207,7 @@
 - Jual item (1/3/6/10 emas per rarity), Auto pilih per rarity + level, kesulitan menjadi dropdown (bawaan Normal). APK 0.23.0.
 - Menu: Lanjutkan di atas Main, info kesulitan dan deskripsi dihapus; riwayat boss (lantai 10, 20, ...) yang sudah dilewati berdiri di belakang hero (`SaveData.bossesDefeated`, `MenuTrophies`). APK 0.24.0.
 - Arena di menu utama = arena (biome, cuaca, siang/malam) lantai terjauh yang pernah dicapai (`SaveData.highestFloor`, `MenuArena` memakai `ArenaGenerator`); kartu menu dirapatkan (tinggi mengikuti ada tidaknya Lanjutkan); frame inventori diperpanjang dan isinya ditengahkan. APK 0.25.0.
+- Tahap 3 redesign: hero penyihir chibi bertopi raksasa (rambut bob pirang-merah muda, capelet, jaket lengan lonceng, rok krem, bot cokelat) mengikuti gambar referensi; tulang dan animasi sama. APK 0.26.0.
 
 ## Berikutnya
 

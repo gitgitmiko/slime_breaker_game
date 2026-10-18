@@ -14,6 +14,8 @@ namespace SlimeBreaker
         public Button closeButton;
         public Button joystickButton;
         public Text joystickLabel;
+        public Button cameraButton;
+        public Text cameraLabel;
         public Text title;
         public Slider musicSlider;
         public Slider sfxSlider;
@@ -36,6 +38,8 @@ namespace SlimeBreaker
                 closeButton.onClick.AddListener(Hide);
             if (joystickButton != null)
                 joystickButton.onClick.AddListener(ToggleJoystick);
+            if (cameraButton != null)
+                cameraButton.onClick.AddListener(ToggleCamera);
             if (musicSlider != null)
                 musicSlider.onValueChanged.AddListener(value => AudioService.Instance?.SetMusicLevel(value));
             if (sfxSlider != null)
@@ -88,8 +92,19 @@ namespace SlimeBreaker
             Refresh();
         }
 
+        public void ToggleCamera()
+        {
+            AudioService.Instance?.Play("ui");
+            ControlSettings.InvertCamera = !ControlSettings.InvertCamera;
+            Refresh();
+        }
+
         void Refresh()
         {
+            bool inverted = ControlSettings.InvertCamera;
+            if (cameraLabel != null)
+                cameraLabel.text = "Kamera: " + (inverted ? "Inverted" : "Normal");
+            Mark(cameraButton, inverted);
             bool free = ControlSettings.FreeJoystick;
             if (joystickLabel != null)
                 joystickLabel.text = "Joystick: " + (free ? "Free" : "Fixed");

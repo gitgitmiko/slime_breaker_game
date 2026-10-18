@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6896645436674639232}
   - component: {fileID: 8883485452303216863}
-  - component: {fileID: 7128103729712937378}
+  - component: {fileID: 8868952169667416288}
   m_Layer: 8
   m_Name: OBS_Tree
   m_TagString: Untagged
@@ -57,7 +57,7 @@ CapsuleCollider:
   m_Height: 2.6
   m_Direction: 1
   m_Center: {x: 0, y: 1.3, z: 0}
---- !u!114 &7128103729712937378
+--- !u!114 &8868952169667416288
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

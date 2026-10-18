@@ -1776,10 +1776,35 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
+        public IEnumerator CameraRotationCanBeSwitchedBetweenNormalAndInverted()
+        {
+            Assert.IsFalse(new SaveData().invertCamera, "camera rotation defaults to Normal");
+            ControlSettings.InvertCamera = false;
+            var panel = Object.FindAnyObjectByType<SettingsPanel>(FindObjectsInactive.Include);
+            Assert.IsNotNull(panel.cameraButton, "settings need a camera rotation button");
+            panel.Show();
+            yield return null;
+            Assert.AreEqual("Kamera: Normal", panel.cameraLabel.text);
+            panel.cameraButton.onClick.Invoke();
+            yield return null;
+            Assert.IsTrue(ControlSettings.InvertCamera);
+            Assert.IsTrue(SaveService.Load().invertCamera, "choice is saved");
+            Assert.AreEqual("Kamera: Inverted", panel.cameraLabel.text);
+            Capture("42_settings_camera");
+            panel.cameraButton.onClick.Invoke();
+            yield return null;
+            Assert.IsFalse(ControlSettings.InvertCamera);
+            panel.Hide();
+        }
+
+        [UnityTest]
         public IEnumerator DraggingTheRightSideOrbitsTheCamera()
         {
             var zone = Object.FindAnyObjectByType<CameraDragZone>();
             Assert.IsNotNull(zone, "right half of the screen needs a camera drag zone");
+            // Normal is the default; the checks below describe the inverted mode (the world follows the finger).
+            Assert.IsFalse(ControlSettings.InvertCamera, "camera drag defaults to Normal");
+            ControlSettings.InvertCamera = true;
             var rig = Camera.main.GetComponent<FollowCamera>();
             var hero = PlayerHealth.Instance.transform;
             yield return new WaitForSeconds(0.3f);
@@ -1813,6 +1838,28 @@ namespace SlimeBreaker.Tests
             float elevation = Mathf.Atan2(low.y, new Vector2(low.x, low.z).magnitude) * Mathf.Rad2Deg;
             Assert.GreaterOrEqual(elevation, rig.minElevation - 1f, "camera never dips below the minimum elevation");
             Capture("41_camera_low");
+
+            // Normal mode flips both axes: drag right turns the view right, drag up lowers the camera.
+            ControlSettings.InvertCamera = false;
+            var raise = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current) { delta = new Vector2(0f, -300f) };
+            zone.OnPointerDown(raise);
+            zone.OnDrag(raise);
+            zone.OnPointerUp(raise);
+            yield return new WaitForSeconds(1.2f);
+            Assert.Greater(Camera.main.transform.position.y - hero.position.y, low.y + 0.3f, "normal: dragging down raises the camera");
+            float yawBefore = rig.TargetYaw;
+            float elevationBefore = Camera.main.transform.position.y - hero.position.y;
+            var normal = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current) { delta = new Vector2(100f, 0f) };
+            zone.OnPointerDown(normal);
+            zone.OnDrag(normal);
+            zone.OnPointerUp(normal);
+            Assert.Greater(rig.TargetYaw, yawBefore, "normal: dragging right increases the yaw");
+            var normalUp = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current) { delta = new Vector2(0f, 150f) };
+            zone.OnPointerDown(normalUp);
+            zone.OnDrag(normalUp);
+            zone.OnPointerUp(normalUp);
+            yield return new WaitForSeconds(1.2f);
+            Assert.Less(Camera.main.transform.position.y - hero.position.y, elevationBefore - 0.1f, "normal: dragging up lowers the camera (looks up)");
         }
 
         [UnityTest]

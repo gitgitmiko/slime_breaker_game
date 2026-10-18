@@ -25,10 +25,11 @@ namespace SlimeBreaker
             var rig = cameraRig != null ? cameraRig : (Camera.main != null ? Camera.main.GetComponent<FollowCamera>() : null);
             if (rig == null || rig.IsFocusing)
                 return;
-            // Dragging right turns the view left, so the world follows the finger.
-            rig.Rotate(-eventData.delta.x * degreesPerPixel);
-            // Dragging up lifts the camera toward a top-down view, dragging down lowers it (the world follows the finger).
-            rig.Tilt(eventData.delta.y * tiltDegreesPerPixel);
+            // Normal: drag right turns the view right, drag up looks up (camera drops toward the ground).
+            // Inverted (Settings): the world follows the finger, so both signs flip.
+            float sign = ControlSettings.InvertCamera ? -1f : 1f;
+            rig.Rotate(sign * eventData.delta.x * degreesPerPixel);
+            rig.Tilt(-sign * eventData.delta.y * tiltDegreesPerPixel);
         }
 
         public void OnPointerUp(PointerEventData eventData)

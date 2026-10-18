@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.28.0";
+        const string AppVersion = "0.29.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -2800,7 +2800,9 @@ namespace SlimeBreaker.EditorTools
             Place(controlLabel.gameObject, dim.transform, new Vector2(0.5f, 0.545f), new Vector2(860f, 30f));
             // Joystick mode toggle: Fixed (default) / Free.
             var joystickToggle = Button(dim.transform, "JoystickMode", "Joystick: Fixed", font, Color.white, ghostSprite);
-            Place(joystickToggle.gameObject, dim.transform, new Vector2(0.5f, 0.48f), new Vector2(860f, 80f));
+            Place(joystickToggle.gameObject, dim.transform, new Vector2(0.5f - 0.1146f, 0.48f), new Vector2(420f, 80f));
+            var cameraToggle = Button(dim.transform, "CameraMode", "Kamera: Normal", font, Color.white, ghostSprite);
+            Place(cameraToggle.gameObject, dim.transform, new Vector2(0.5f + 0.1146f, 0.48f), new Vector2(420f, 80f));
             // Sound: BGM and game-sound volume sliders.
             var soundLabel = Text(dim.transform, "SoundLabel", "SUARA", 20, TextAnchor.MiddleLeft, font);
             soundLabel.fontStyle = FontStyle.Bold;
@@ -2820,6 +2822,8 @@ namespace SlimeBreaker.EditorTools
             panel.closeButton = close;
             panel.joystickButton = joystickToggle;
             panel.joystickLabel = joystickToggle.GetComponentInChildren<Text>();
+            panel.cameraButton = cameraToggle;
+            panel.cameraLabel = cameraToggle.GetComponentInChildren<Text>();
             panel.title = title;
             panel.musicSlider = musicSlider;
             panel.sfxSlider = sfxSlider;
@@ -3368,7 +3372,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 38;
+            PlayerSettings.Android.bundleVersionCode = 39;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

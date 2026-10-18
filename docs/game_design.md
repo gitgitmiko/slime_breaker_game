@@ -154,4 +154,4 @@ Latar menu utama memakai generator arena yang sama dengan game: biome, cuaca, da
 
 ## Kamera
 
-Geser jari ke samping di separuh kanan layar (di luar tombol) memutar kamera mengelilingi hero (0,22° per piksel; geser kanan memutar pandangan ke kiri). Joystick bergerak relatif kamera, jadi arah jalan mengikuti sudut baru. Tidak aktif saat jeda atau cutscene boss.
+Geser jari di separuh kanan layar (di luar tombol) memutar kamera mengelilingi hero: ke samping = putar kiri/kanan (0,16° per piksel; geser kanan memutar pandangan ke kiri), ke atas/bawah = sudut kamera (geser atas menaikkan kamera ke pandangan atas-bawah, geser bawah menurunkannya; dibatasi 32°–78°). Sudut menuju target dengan peredaman, dan fokus kamera saja yang tertinggal dari hero, sehingga putaran tidak mengayun. Joystick bergerak relatif kamera, jadi arah jalan mengikuti sudut baru. Tidak aktif saat jeda atau cutscene boss.

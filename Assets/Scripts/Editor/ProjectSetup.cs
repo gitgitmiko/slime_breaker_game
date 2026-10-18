@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.27.0";
+        const string AppVersion = "0.28.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -686,6 +686,22 @@ namespace SlimeBreaker.EditorTools
                     mat.SetFloat("_Smoothness", 0.22f);
                 else if (name.Contains("robe") || name.Contains("hat") || name.Contains("cape"))
                     mat.SetFloat("_Smoothness", 0.32f);
+                // The witch is lit a little from within so she stays bright and colourful in shadow and at night.
+                if (name.Contains("hero_") && !name.Contains("blackeye"))
+                {
+                    float glow = name.Contains("boot") ? 0.12f : name.Contains("hat_trim") || name.Contains("hero_trim") ? 0.2f : 0.3f;
+                    mat.EnableKeyword("_EMISSION");
+                    var map = mat.HasProperty("_BaseMap") ? mat.GetTexture("_BaseMap") : null;
+                    if (map != null)
+                    {
+                        mat.SetTexture("_EmissionMap", map);
+                        mat.SetColor("_EmissionColor", Color.white * glow);
+                    }
+                    else
+                        mat.SetColor("_EmissionColor", color * glow);
+                    mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    mat.SetFloat("_Smoothness", 0.28f);
+                }
                 EditorUtility.SetDirty(mat);
             }
         }
@@ -3352,7 +3368,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 37;
+            PlayerSettings.Android.bundleVersionCode = 38;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

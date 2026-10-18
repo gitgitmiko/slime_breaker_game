@@ -1788,12 +1788,31 @@ namespace SlimeBreaker.Tests
             zone.OnPointerDown(data);
             zone.OnDrag(data);
             zone.OnPointerUp(data);
-            Assert.AreNotEqual(0f, rig.Yaw, "dragging should turn the camera");
+            Assert.AreNotEqual(0f, rig.TargetYaw, "dragging should turn the camera");
             yield return new WaitForSeconds(1.5f);
             Vector3 after = Camera.main.transform.position - hero.position;
             Assert.Greater(Vector3.Angle(Vector3.ProjectOnPlane(before, Vector3.up), Vector3.ProjectOnPlane(after, Vector3.up)), 30f, "camera should orbit around the hero");
-            Assert.AreEqual(before.y, after.y, 0.5f, "orbit keeps the camera height");
+            Assert.AreEqual(before.y, after.y, 0.5f, "a sideways drag keeps the camera height");
             Capture("40_camera_orbit");
+
+            // Dragging up tilts the camera toward top-down, dragging down lowers it; the angle is clamped.
+            float high = after.y;
+            var up = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current) { delta = new Vector2(0f, 100f) };
+            zone.OnPointerDown(up);
+            zone.OnDrag(up);
+            zone.OnPointerUp(up);
+            yield return new WaitForSeconds(1.2f);
+            Assert.Greater((Camera.main.transform.position - hero.position).y, high + 0.3f, "dragging up should raise the camera");
+            var down = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current) { delta = new Vector2(0f, -3000f) };
+            zone.OnPointerDown(down);
+            zone.OnDrag(down);
+            zone.OnPointerUp(down);
+            yield return new WaitForSeconds(1.2f);
+            var low = Camera.main.transform.position - hero.position;
+            Assert.Less(low.y, high - 1f, "dragging down should lower the camera");
+            float elevation = Mathf.Atan2(low.y, new Vector2(low.x, low.z).magnitude) * Mathf.Rad2Deg;
+            Assert.GreaterOrEqual(elevation, rig.minElevation - 1f, "camera never dips below the minimum elevation");
+            Capture("41_camera_low");
         }
 
         [UnityTest]

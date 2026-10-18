@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7888063010819902848}
   - component: {fileID: 5863597032668851468}
-  - component: {fileID: 5426831628520231807}
+  - component: {fileID: 918838373027794628}
   m_Layer: 8
   m_Name: OBS_SwampRoot
   m_TagString: Untagged
@@ -57,7 +57,7 @@ CapsuleCollider:
   m_Height: 1.1628053
   m_Direction: 1
   m_Center: {x: 0, y: 0.58140266, z: 0}
---- !u!114 &5426831628520231807
+--- !u!114 &918838373027794628
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

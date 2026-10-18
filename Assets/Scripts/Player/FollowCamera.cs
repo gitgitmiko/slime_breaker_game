@@ -13,6 +13,16 @@ namespace SlimeBreaker
         public Camera TargetCamera { get; private set; }
         /// <summary>Orbit around the hero, in degrees; set by dragging the right half of the screen (movement is camera-relative, so it follows).</summary>
         public float Yaw { get; private set; }
+        /// <summary>Extra tilt on top of the default camera elevation (positive = more top-down).</summary>
+        public float Pitch { get; private set; }
+        public float minElevation = 32f;
+        public float maxElevation = 78f;
+        /// <summary>Orbit angles ease toward the dragged target so touch jitter never shakes the view.</summary>
+        public float orbitSmoothing = 14f;
+        float targetYaw;
+        float targetPitch;
+        Vector3 smoothFocus;
+        bool hasFocus;
 
         Vector3 lead;
         Vector3 lastTargetPosition;
@@ -91,6 +101,9 @@ namespace SlimeBreaker
             velocity.y = 0f;
             Vector3 wantedLead = Vector3.ClampMagnitude(velocity * 0.22f, leadDistance);
             lead = Vector3.Lerp(lead, wantedLead, 1f - Mathf.Exp(-3f * dt));
+            float ease = 1f - Mathf.Exp(-orbitSmoothing * dt);
+            Yaw = Mathf.Lerp(Yaw, targetYaw, ease);
+            Pitch = Mathf.Lerp(Pitch, targetPitch, ease);
             Snap(1f - Mathf.Exp(-follow * dt));
             if (shake > 0f)
             {
@@ -99,9 +112,17 @@ namespace SlimeBreaker
             }
         }
 
+        public float TargetYaw => targetYaw;
+
         public void Rotate(float degrees)
         {
-            Yaw = Mathf.Repeat(Yaw + degrees, 360f);
+            targetYaw += degrees;
+        }
+
+        public void Tilt(float degrees)
+        {
+            float baseElevation = Mathf.Atan2(offset.y, new Vector2(offset.x, offset.z).magnitude) * Mathf.Rad2Deg;
+            targetPitch = Mathf.Clamp(targetPitch + degrees, minElevation - baseElevation, maxElevation - baseElevation);
         }
 
         public void Shake(float seconds)
@@ -113,14 +134,21 @@ namespace SlimeBreaker
         {
             if (target == null)
                 return;
-            var focus = target.position + lead;
-            var desired = focus + Quaternion.Euler(0f, Yaw, 0f) * offset;
-            transform.position = Vector3.Lerp(transform.position, desired, t);
+            // Only the focus point lags behind the hero; the camera is rigidly placed around it from the orbit angles,
+            // so turning never swings the view along a lagging arc.
+            var wanted = target.position + lead;
+            smoothFocus = hasFocus ? Vector3.Lerp(smoothFocus, wanted, t) : wanted;
+            hasFocus = true;
+            var focus = smoothFocus;
+            float distance = offset.magnitude;
+            float elevation = Mathf.Atan2(offset.y, new Vector2(offset.x, offset.z).magnitude) * Mathf.Rad2Deg;
+            elevation = Mathf.Clamp(elevation + Pitch, minElevation, maxElevation) * Mathf.Deg2Rad;
+            var flat = new Vector3(offset.x, 0f, offset.z);
+            flat = flat.sqrMagnitude < 1e-6 ? Vector3.back : flat.normalized;
+            flat = Quaternion.Euler(0f, Yaw, 0f) * flat;
+            transform.position = focus + (flat * Mathf.Cos(elevation) + Vector3.up * Mathf.Sin(elevation)) * distance;
             var look = focus + Vector3.up * lookHeight;
-            transform.rotation = Quaternion.Slerp(
-                transform.rotation,
-                Quaternion.LookRotation(look - transform.position, Vector3.up),
-                t);
+            transform.rotation = Quaternion.LookRotation(look - transform.position, Vector3.up);
         }
     }
 }

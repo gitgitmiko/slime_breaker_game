@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6852292301505490305}
   - component: {fileID: 7927999280199786457}
-  - component: {fileID: 3943920593784066537}
+  - component: {fileID: 2681631240477041207}
   m_Layer: 8
   m_Name: OBS_Obelisk
   m_TagString: Untagged
@@ -55,7 +55,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.5048742, y: 2.0500002, z: 0.50487447}
   m_Center: {x: 0, y: 1.0250001, z: 0}
---- !u!114 &3943920593784066537
+--- !u!114 &2681631240477041207
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

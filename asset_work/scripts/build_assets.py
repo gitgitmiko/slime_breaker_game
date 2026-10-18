@@ -762,26 +762,26 @@ def witch_textures():
     # Hat felt: deep violet with soft mottling and tiny lighter flecks.
     noise = periodic_noise(size, 8, 1) * 0.6 + periodic_noise(size, 32, 2) * 0.4
     fleck = (periodic_noise(size, 64, 3) > 0.86).astype(np.float32)
-    base = np.array((0.30, 0.20, 0.44), np.float32)
+    base = np.array((0.40, 0.24, 0.66), np.float32)
     hat = base[None, None, :] * (0.82 + 0.3 * noise[..., None]) + fleck[..., None] * np.array((0.10, 0.07, 0.12), np.float32)
     paths["hat"] = save_texture(os.path.join(TEX, "TEX_Hero_Hat.png"), np.clip(hat, 0, 1))
     # Jacket: lilac twill with a fine diamond weave.
     y, x = np.mgrid[0:size, 0:size].astype(np.float32)
     diamond = np.abs(((x + y) / 8.0) % 2.0 - 1.0) * np.abs(((x - y) / 8.0) % 2.0 - 1.0)
     weave = 0.88 + 0.16 * diamond
-    jacket = np.array((0.66, 0.54, 0.80), np.float32)[None, None, :] * weave[..., None] * (0.95 + 0.1 * noise[..., None])
+    jacket = np.array((0.80, 0.62, 1.0), np.float32)[None, None, :] * weave[..., None] * (0.95 + 0.1 * noise[..., None])
     paths["jacket"] = save_texture(os.path.join(TEX, "TEX_Hero_Jacket.png"), np.clip(jacket, 0, 1))
     # Capelet: darker violet wool with a gentle vertical rib.
     rib = 0.9 + 0.1 * np.sin(x / size * math.tau * 32)
-    cape = np.array((0.38, 0.28, 0.54), np.float32)[None, None, :] * rib[..., None] * (0.9 + 0.2 * noise[..., None])
+    cape = np.array((0.52, 0.36, 0.78), np.float32)[None, None, :] * rib[..., None] * (0.9 + 0.2 * noise[..., None])
     paths["capelet"] = save_texture(os.path.join(TEX, "TEX_Hero_Capelet.png"), np.clip(cape, 0, 1))
     # Hair: blonde crown fading through peach to pink tips (V = height).
     gradient = np.zeros((256, 8, 3), np.float32)
     for row in range(256):
         t = row / 255.0  # 0 = tips, 1 = crown
-        tips = np.array((0.97, 0.58, 0.66), np.float32)
-        mid = np.array((0.98, 0.78, 0.68), np.float32)
-        crown = np.array((0.99, 0.90, 0.68), np.float32)
+        tips = np.array((1.0, 0.56, 0.72), np.float32)
+        mid = np.array((1.0, 0.82, 0.76), np.float32)
+        crown = np.array((1.0, 0.94, 0.70), np.float32)
         color = tips * (1 - min(1, t * 2.0)) + mid * min(1, t * 2.0) if t < 0.5 else mid * (1 - (t - 0.5) * 2.0) + crown * ((t - 0.5) * 2.0)
         gradient[255 - row, :, :] = color
     paths["hair"] = save_texture(os.path.join(TEX, "TEX_Hero_Hair.png"), gradient)
@@ -820,11 +820,11 @@ def build_hero(mats):
         "jacket": material("MAT_hero_jacket", (1, 1, 1, 1), rough=0.8, image_path=tex["jacket"]),
         "capelet": material("MAT_hero_capelet", (1, 1, 1, 1), rough=0.85, image_path=tex["capelet"]),
         "hair": material("MAT_hero_hair", (1, 1, 1, 1), rough=0.5, image_path=tex["hair"]),
-        "skin": material("MAT_hero_skin", (1.0, 0.90, 0.76, 1), rough=0.55),
-        "glove": material("MAT_hero_glove", (1.0, 0.9, 0.78, 1), rough=0.6),
-        "skirt": material("MAT_hero_skirt", (0.95, 0.92, 0.86, 1), rough=0.75),
-        "legwear": material("MAT_hero_legwear", (0.80, 0.74, 0.88, 1), rough=0.8),
-        "boot": material("MAT_hero_boot", (0.32, 0.20, 0.13, 1), rough=0.6),
+        "skin": material("MAT_hero_skin", (1.0, 0.86, 0.76, 1), rough=0.55),
+        "glove": material("MAT_hero_glove", (1.0, 0.88, 0.80, 1), rough=0.6),
+        "skirt": material("MAT_hero_skirt", (1.0, 0.97, 0.92, 1), rough=0.75),
+        "legwear": material("MAT_hero_legwear", (0.86, 0.78, 0.98, 1), rough=0.8),
+        "boot": material("MAT_hero_boot", (0.46, 0.27, 0.16, 1), rough=0.6),
         "trim": material("MAT_hero_trim", (0.66, 0.42, 0.12, 1), rough=0.45),
         "hat_trim": material("MAT_hero_hat_trim", (0.98, 0.80, 0.10, 1), rough=0.45),
         "stitch": material("MAT_hero_stitch", (0.86, 0.60, 0.20, 1), rough=0.6),

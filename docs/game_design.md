@@ -73,7 +73,7 @@ Pengaturan memuat dua slider volume (disimpan di save meta, `musicLevel`/`sfxLev
 
 ## Kesulitan (Easy / Normal / Hard)
 
-Dipilih di menu utama (tombol KESULITAN, tersimpan di save meta) untuk run baru; run yang disimpan (Lanjutkan) tetap memakai kesulitan saat run dimulai. **Hard** adalah keseimbangan asli; Normal dan Easy mengubah angka berikut (semuanya di `Difficulty.For`):
+Dipilih di menu utama (dropdown KESULITAN, bawaan Normal, tersimpan di save meta) untuk run baru; run yang disimpan (Lanjutkan) tetap memakai kesulitan saat run dimulai. **Hard** adalah keseimbangan asli; Normal dan Easy mengubah angka berikut (semuanya di `Difficulty.For`):
 
 | | Easy | Normal | Hard |
 |---|---|---|---|
@@ -141,3 +141,7 @@ Emas membeli peringkat damage, nyawa, dan laju. Pilihan grafis ikut tersimpan. M
 ## Audio
 
 Orb EXP memakai bunyi "bloop" lembut bernada rendah; pemutaran beruntun pada id yang sama (pickup, kematian slime, hit) otomatis dilembutkan (`crowdFalloff`), jadi panen puluhan orb terdengar tenang. `AudioService` memutar musik per bioma (10 track + `MUS_Boss` saat boss, crossfade equal-power 1,6 s), ambience alam per bioma (`AMB_Night` untuk hutan/kerajaan malam) ditambah lapisan cuaca (hujan, angin), dan efek lewat pool 10 AudioSource dengan variasi pitch dan interval minimum per id supaya kerumunan tidak menumpuk jadi derau. Kamera utama membawa `AudioListener` (dipasang `ProjectSetup` dan dijaga `UrpSceneBootstrap`).
+
+## Jual item
+
+Di Inventori, tombol **Mode jual** membuat ketukan pada item menandainya (bukan memilihnya). Harga jual per rarity: Normal (hijau) 1 emas, Rare (biru) 3, Legend (ungu) 6, Ultra (oranye) 10. Tombol **rarity** dan **level** memilih filter, **Auto pilih** menandai semua item yang cocok (level "Semua" = semua level), **Jual** menjual semua yang ditandai dan emas langsung masuk ke save. Item yang sedang dipakai tidak pernah ikut terjual.

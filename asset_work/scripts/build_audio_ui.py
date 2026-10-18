@@ -558,6 +558,17 @@ def panels():
     draw.rounded_rectangle((s * 0.26, s * 0.2, s * 0.42, s * 0.8), radius=s * 0.05, fill=(255, 255, 255, 255))
     draw.rounded_rectangle((s * 0.58, s * 0.2, s * 0.74, s * 0.8), radius=s * 0.05, fill=(255, 255, 255, 255))
     finish(img, os.path.join(out, "UI_Icon_Pause.png"))
+    # Dropdown arrow (down-pointing, rounded) and a check mark for the chosen list entry.
+    img = canvas(96, 96)
+    draw = ImageDraw.Draw(img)
+    draw.line([(s * 0.24, s * 0.36), (s * 0.5, s * 0.64), (s * 0.76, s * 0.36)], fill=(255, 255, 255, 255), width=int(s * 0.11), joint="curve")
+    for x, y in ((0.24, 0.36), (0.76, 0.36)):
+        draw.ellipse((s * x - s * 0.055, s * y - s * 0.055, s * x + s * 0.055, s * y + s * 0.055), fill=(255, 255, 255, 255))
+    finish(img, os.path.join(out, "UI_Icon_Arrow.png"))
+    img = canvas(96, 96)
+    draw = ImageDraw.Draw(img)
+    draw.line([(s * 0.22, s * 0.54), (s * 0.42, s * 0.74), (s * 0.78, s * 0.3)], fill=(255, 255, 255, 255), width=int(s * 0.12), joint="curve")
+    finish(img, os.path.join(out, "UI_Icon_Check.png"))
 
 
 def modern_ui():

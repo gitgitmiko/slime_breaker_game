@@ -22,11 +22,9 @@ namespace SlimeBreaker
         public Button continueButton;
         public Text continueLabel;
         public SettingsPanel settings;
-        public Button[] difficultyButtons;
+        /// <summary>Easy / Normal / Hard picker for the next new run (index = DifficultyLevel).</summary>
+        public Dropdown difficultyDropdown;
         public Text difficultyHint;
-        /// <summary>Face of the chosen difficulty (solid) and of the others (glass).</summary>
-        public Sprite selectedSprite;
-        public Sprite normalSprite;
 
         SaveData save;
         Quaternion showcaseRest;
@@ -56,11 +54,8 @@ namespace SlimeBreaker
                 speedButton.onClick.AddListener(() => Buy(ref save.speedRank, speedLabel, "Laju"));
             if (continueButton != null)
                 continueButton.onClick.AddListener(Continue);
-            for (int i = 0; difficultyButtons != null && i < difficultyButtons.Length; i++)
-            {
-                int level = i;
-                difficultyButtons[i]?.onClick.AddListener(() => ChooseDifficulty((DifficultyLevel)level));
-            }
+            if (difficultyDropdown != null)
+                difficultyDropdown.onValueChanged.AddListener(value => ChooseDifficulty((DifficultyLevel)value));
             Refresh();
         }
 
@@ -122,18 +117,8 @@ namespace SlimeBreaker
             SetButton(healthLabel, healthButton, "Nyawa", save.healthRank);
             SetButton(speedLabel, speedButton, "Laju", save.speedRank);
             var current = (DifficultyLevel)Mathf.Clamp(save.difficulty, 0, 2);
-            for (int i = 0; difficultyButtons != null && i < difficultyButtons.Length; i++)
-            {
-                var button = difficultyButtons[i];
-                var image = button != null ? button.GetComponent<Image>() : null;
-                if (image == null)
-                    continue;
-                bool chosen = i == (int)current;
-                if (selectedSprite != null && normalSprite != null)
-                    image.sprite = chosen ? selectedSprite : normalSprite;
-                else
-                    image.color = chosen ? new Color(1f, 0.92f, 0.55f) : Color.white;
-            }
+            if (difficultyDropdown != null)
+                difficultyDropdown.SetValueWithoutNotify((int)current);
             if (difficultyHint != null)
                 difficultyHint.text = Difficulty.Summary(current);
             var run = RunSaveService.Exists() ? RunSaveService.Load() : null;

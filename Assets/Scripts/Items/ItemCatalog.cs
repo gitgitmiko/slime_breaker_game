@@ -32,6 +32,7 @@ namespace SlimeBreaker
         public UpgradeRarity Rarity => (UpgradeRarity)rarity;
         public string Name => ItemCatalog.Name(Slot, Rarity);
         public string Stats => ItemCatalog.Describe(this);
+        public int SellValue => ItemCatalog.SellPrice[Mathf.Clamp(rarity, 0, ItemCatalog.SellPrice.Length - 1)];
         /// <summary>Single number for "is this better than what I wear" (same slot only).</summary>
         public float Power => damage + health + defense * 10000f + speed * 10000f;
     }
@@ -44,6 +45,9 @@ namespace SlimeBreaker
     public static class ItemCatalog
     {
         public const int SlotCount = 5;
+        /// <summary>Gold for selling one item, by rarity: Normal 1, Rare 3, Legend 6, Ultra 10.</summary>
+        public static readonly int[] SellPrice = { 1, 3, 6, 10 };
+        public const int MaxLevel = 10;
         /// <summary>Hard-difficulty slime drop chance; see <see cref="DropChanceNow"/> for the current run.</summary>
         public const float DropChance = 0.05f;
         public static float DropChanceNow => Difficulty.Profile.dropChance;

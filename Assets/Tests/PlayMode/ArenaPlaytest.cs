@@ -1695,6 +1695,78 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
+        public IEnumerator MenuDifficultyDropdownDefaultsToNormal()
+        {
+            SaveService.Save(new SaveData());
+            SceneManager.LoadScene("MainMenu");
+            yield return null;
+            yield return null;
+            var menu = Object.FindAnyObjectByType<MainMenuController>();
+            Assert.AreEqual(1, menu.difficultyDropdown.value, "a fresh save starts on Normal");
+            Assert.AreEqual("Normal", menu.difficultyDropdown.captionText.text);
+        }
+
+        [UnityTest]
+        public IEnumerator ItemsCanBeSoldOneByOneOrByAutoSelect()
+        {
+            var inventory = Inventory.Instance;
+            Assert.IsNotNull(inventory);
+            inventory.Items.Clear();
+            var save = SaveService.Load();
+            save.gold = 0;
+            SaveService.Save(save);
+            // Two green L1, one green L2, one blue L1, one orange L1; only the first (staff) is worn.
+            var g1 = ItemCatalog.Create(ItemSlot.Staff, UpgradeRarity.Normal, 1);
+            var g2 = ItemCatalog.Create(ItemSlot.Hat, UpgradeRarity.Normal, 1);
+            var g3 = ItemCatalog.Create(ItemSlot.Armor, UpgradeRarity.Normal, 2);
+            var blue = ItemCatalog.Create(ItemSlot.Pants, UpgradeRarity.Rare, 1);
+            var orange = ItemCatalog.Create(ItemSlot.Boots, UpgradeRarity.Ultra, 1);
+            foreach (var item in new[] { g1, g2, g3, blue, orange })
+                Assert.IsTrue(inventory.Add(item));
+            for (int slot = 1; slot < ItemCatalog.SlotCount; slot++)
+                inventory.Unequip((ItemSlot)slot);
+            Assert.IsTrue(inventory.IsEquipped(g1));
+            var panel = Object.FindAnyObjectByType<InventoryPanel>(FindObjectsInactive.Include);
+            panel.Open();
+            yield return null;
+
+            // Auto select: green, every level. The worn staff is skipped, so the hat and armor are marked.
+            panel.AutoSelect();
+            Assert.IsTrue(panel.SellMode);
+            Assert.AreEqual(2, panel.MarkedCount);
+            Assert.AreEqual(2, panel.MarkedGold);
+            panel.CycleLevel(); // level 1 only
+            panel.AutoSelect();
+            Assert.AreEqual(1, panel.MarkedCount);
+            panel.CycleRarity();
+            panel.CycleRarity();
+            panel.CycleRarity();
+            panel.AutoSelect();
+            Assert.AreEqual(1, panel.MarkedCount);
+            Assert.AreEqual(10, panel.MarkedGold, "orange sells for 10");
+            panel.CycleRarity();
+            panel.AutoSelect(); // green again, level 1
+            yield return null;
+            Capture("36_inventory_sell");
+            panel.SellMarked();
+            yield return null;
+            Assert.AreEqual(1, SaveService.Load().gold);
+            Assert.IsNull(inventory.Find(g2.id));
+            Assert.IsNotNull(inventory.Find(g1.id), "worn items never sell");
+            Assert.IsNotNull(inventory.Find(g3.id), "level 2 stays when only level 1 was chosen");
+
+            // Mark blue + orange by hand: 3 + 10 gold.
+            panel.SelectCell(panel.CellOf(blue.id));
+            panel.SelectCell(panel.CellOf(orange.id));
+            Assert.AreEqual(2, panel.MarkedCount);
+            Assert.AreEqual(13, panel.MarkedGold);
+            panel.SellMarked();
+            Assert.AreEqual(14, SaveService.Load().gold);
+            Assert.AreEqual(2, inventory.Items.Count);
+            panel.Close();
+        }
+
+        [UnityTest]
         public IEnumerator MenuDifficultyButtonsDecideTheNextRun()
         {
             SceneManager.LoadScene("MainMenu");
@@ -1702,16 +1774,18 @@ namespace SlimeBreaker.Tests
             yield return null;
             var menu = Object.FindAnyObjectByType<MainMenuController>();
             Assert.IsNotNull(menu);
-            Assert.AreEqual(3, menu.difficultyButtons.Length, "menu needs Easy / Normal / Hard buttons");
-            Assert.AreEqual("Easy", menu.difficultyButtons[0].GetComponentInChildren<Text>().text);
-            Assert.AreEqual("Hard", menu.difficultyButtons[2].GetComponentInChildren<Text>().text);
-            // Hard is selected first (the tests saved it); picking Easy changes the save and the highlight.
-            Assert.AreEqual(menu.selectedSprite, menu.difficultyButtons[2].GetComponent<Image>().sprite);
-            menu.difficultyButtons[0].onClick.Invoke();
+            var dropdown = menu.difficultyDropdown;
+            Assert.IsNotNull(dropdown, "menu needs a difficulty dropdown");
+            Assert.AreEqual(3, dropdown.options.Count);
+            Assert.AreEqual("Easy", dropdown.options[0].text);
+            Assert.AreEqual("Normal", dropdown.options[1].text);
+            Assert.AreEqual("Hard", dropdown.options[2].text);
+            // Hard is selected first (the tests saved it); picking Easy through the dropdown changes the save and the caption.
+            Assert.AreEqual(2, dropdown.value);
+            dropdown.value = 0;
             yield return null;
             Assert.AreEqual((int)DifficultyLevel.Easy, SaveService.Load().difficulty);
-            Assert.AreEqual(menu.selectedSprite, menu.difficultyButtons[0].GetComponent<Image>().sprite);
-            Assert.AreEqual(menu.normalSprite, menu.difficultyButtons[2].GetComponent<Image>().sprite);
+            Assert.AreEqual("Easy", dropdown.captionText.text);
             StringAssert.Contains("50%", menu.difficultyHint.text);
             Capture("35_menu_difficulty");
 

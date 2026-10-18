@@ -130,6 +130,49 @@ namespace SlimeBreaker
             Changed?.Invoke();
         }
 
+        // ------------------------------------------------------------------ selling
+
+        /// <summary>
+        /// Sells the listed items (worn items are skipped) and adds their gold to the saved total. Returns the gold earned.
+        /// </summary>
+        public int Sell(IEnumerable<int> ids, out int sold)
+        {
+            int gold = 0;
+            sold = 0;
+            if (ids == null)
+                return 0;
+            foreach (int id in new List<int>(ids))
+            {
+                var item = Find(id);
+                if (item == null || IsEquipped(item))
+                    continue;
+                gold += item.SellValue;
+                Items.Remove(item);
+                sold++;
+            }
+            if (sold == 0)
+                return 0;
+            var save = SaveService.Load();
+            save.gold += gold;
+            SaveService.Save(save);
+            Recompute();
+            AudioService.Instance?.Play("ui");
+            GameFlowController.Instance?.PersistRun();
+            return gold;
+        }
+
+        /// <summary>Ids of unworn items of one rarity (and one level, or every level when level is 0): the "auto select" set.</summary>
+        public List<int> Matching(UpgradeRarity rarity, int level)
+        {
+            var ids = new List<int>();
+            foreach (var item in Items)
+            {
+                if (item.Rarity == rarity && (level <= 0 || item.band == level) && !IsEquipped(item))
+                    ids.Add(item.id);
+            }
+            return ids;
+        }
+
         // ------------------------------------------------------------------ save / resume
 
         public void Capture(RunSave data)

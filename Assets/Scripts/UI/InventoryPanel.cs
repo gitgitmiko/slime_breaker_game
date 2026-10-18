@@ -33,15 +33,57 @@ namespace SlimeBreaker
         public Text equipLabel;
         public Button discardButton;
 
+        // Selling: "Mode jual" toggles multi-select, the two cycle buttons pick a rarity / level, Auto selects every match.
+        public Button sellModeButton;
+        public Text sellModeLabel;
+        public Button rarityButton;
+        public Text rarityLabel;
+        public Image rarityChip;
+        public Button levelButton;
+        public Text levelLabel;
+        public Button autoButton;
+        public Button sellButton;
+        public Text sellLabel;
+        public Text goldText;
+
         static readonly Color EmptyFrame = new Color(1f, 1f, 1f, 0.12f);
 
         readonly List<ItemData> ordered = new List<ItemData>();
+        readonly HashSet<int> marked = new HashSet<int>();
         int selectedId = -1;
+        bool sellMode;
+        int filterRarity;
+        int filterLevel;
+        string message;
         bool wired;
 
         public bool IsOpen => panel != null && panel.activeSelf;
         public IReadOnlyList<ItemData> Ordered => ordered;
         public int SelectedId => selectedId;
+        public bool SellMode => sellMode;
+        /// <summary>Grid cell currently showing this item (-1 when it is not in the bag).</summary>
+        public int CellOf(int id) => ordered.FindIndex(item => item.id == id);
+        public int MarkedCount => marked.Count;
+        public int FilterRarity => filterRarity;
+        public int FilterLevel => filterLevel;
+        public string Message => message;
+
+        /// <summary>Gold the marked items would bring.</summary>
+        public int MarkedGold
+        {
+            get
+            {
+                int gold = 0;
+                var inventory = Inventory.Instance;
+                foreach (int id in marked)
+                {
+                    var item = inventory != null ? inventory.Find(id) : null;
+                    if (item != null)
+                        gold += item.SellValue;
+                }
+                return gold;
+            }
+        }
 
         void Start()
         {
@@ -76,6 +118,11 @@ namespace SlimeBreaker
             closeButton?.onClick.AddListener(Close);
             equipButton?.onClick.AddListener(ToggleEquip);
             discardButton?.onClick.AddListener(DiscardSelected);
+            sellModeButton?.onClick.AddListener(ToggleSellMode);
+            rarityButton?.onClick.AddListener(CycleRarity);
+            levelButton?.onClick.AddListener(CycleLevel);
+            autoButton?.onClick.AddListener(AutoSelect);
+            sellButton?.onClick.AddListener(SellMarked);
             for (int i = 0; slotButtons != null && i < slotButtons.Length; i++)
             {
                 int slot = i;
@@ -96,6 +143,9 @@ namespace SlimeBreaker
                 return;
             AudioService.Instance?.Play("ui");
             selectedId = -1;
+            sellMode = false;
+            marked.Clear();
+            message = null;
             panel.SetActive(true);
             Refresh();
         }
@@ -117,7 +167,73 @@ namespace SlimeBreaker
 
         public void SelectCell(int cell)
         {
-            selectedId = cell < ordered.Count ? ordered[cell].id : -1;
+            var item = cell < ordered.Count ? ordered[cell] : null;
+            message = null;
+            if (sellMode && item != null)
+            {
+                // Selling mode: tapping a cell marks / unmarks it (worn items cannot be sold).
+                if (Inventory.Instance != null && Inventory.Instance.IsEquipped(item))
+                    message = "Item yang dipakai tidak bisa dijual. Lepas dulu.";
+                else if (!marked.Remove(item.id))
+                    marked.Add(item.id);
+                selectedId = item.id;
+                Refresh();
+                return;
+            }
+            selectedId = item != null ? item.id : -1;
+            Refresh();
+        }
+
+        public void ToggleSellMode()
+        {
+            sellMode = !sellMode;
+            if (!sellMode)
+                marked.Clear();
+            message = null;
+            AudioService.Instance?.Play("ui");
+            Refresh();
+        }
+
+        public void CycleRarity()
+        {
+            filterRarity = (filterRarity + 1) % 4;
+            message = null;
+            AudioService.Instance?.Play("ui");
+            Refresh();
+        }
+
+        public void CycleLevel()
+        {
+            filterLevel = (filterLevel + 1) % (ItemCatalog.MaxLevel + 1);
+            message = null;
+            AudioService.Instance?.Play("ui");
+            Refresh();
+        }
+
+        /// <summary>Marks every unworn item of the chosen rarity and level (level "Semua" = any) and turns selling mode on.</summary>
+        public void AutoSelect()
+        {
+            var inventory = Inventory.Instance;
+            if (inventory == null)
+                return;
+            sellMode = true;
+            marked.Clear();
+            foreach (int id in inventory.Matching((UpgradeRarity)filterRarity, filterLevel))
+                marked.Add(id);
+            message = marked.Count == 0 ? "Tidak ada item " + UpgradeRarities.Name((UpgradeRarity)filterRarity) + " yang cocok." : null;
+            AudioService.Instance?.Play("ui");
+            Refresh();
+        }
+
+        public void SellMarked()
+        {
+            var inventory = Inventory.Instance;
+            if (inventory == null || marked.Count == 0)
+                return;
+            int gold = inventory.Sell(marked, out int sold);
+            marked.Clear();
+            selectedId = -1;
+            message = sold > 0 ? "Terjual " + sold + " item  +" + gold + " emas" : "Tidak ada yang terjual.";
             Refresh();
         }
 
@@ -139,6 +255,7 @@ namespace SlimeBreaker
             var inventory = Inventory.Instance;
             if (inventory == null || inventory.Find(selectedId) == null)
                 return;
+            marked.Remove(selectedId);
             inventory.Discard(selectedId);
             selectedId = -1;
             AudioService.Instance?.Play("ui");
@@ -180,9 +297,13 @@ namespace SlimeBreaker
                 cellIcons[i].enabled = filled;
                 if (filled)
                     cellIcons[i].sprite = inventory.IconFor(item.Slot);
-                cellMarks[i].text = filled ? (inventory.IsEquipped(item) ? "E " : string.Empty) + "L" + item.band : string.Empty;
+                bool isMarked = filled && marked.Contains(item.id);
+                cellMarks[i].text = filled ? (inventory.IsEquipped(item) ? "E " : string.Empty) + "L" + item.band + (isMarked ? "\n<color=#8dffa0>JUAL</color>" : string.Empty) : string.Empty;
                 cellButtons[i].interactable = filled;
-                cellButtons[i].transform.localScale = filled && item.id == selectedId ? Vector3.one * 1.12f : Vector3.one;
+                cellButtons[i].transform.localScale = filled && (item.id == selectedId || isMarked) ? Vector3.one * 1.12f : Vector3.one;
+                // While selling, unmarked cells dim a little so the marked ones stand out.
+                if (filled && sellMode && marked.Count > 0 && !isMarked)
+                    cellFrames[i].color = Color.Lerp(Rarity(item), new Color(0.1f, 0.1f, 0.12f), 0.55f);
             }
             if (capacityText != null)
                 capacityText.text = inventory.Items.Count + " / " + Inventory.Capacity;
@@ -195,15 +316,18 @@ namespace SlimeBreaker
                     + "%   MOVE +" + (stats.gearSpeed * 100f).ToString("0.0#", System.Globalization.CultureInfo.InvariantCulture) + "%</size>";
             }
 
+            RefreshSellControls(inventory);
             var selected = inventory.Find(selectedId);
             bool has = selected != null;
             equipButton.interactable = has;
             discardButton.interactable = has;
             if (!has)
             {
-                detailTitle.text = "Pilih item";
+                detailTitle.text = string.IsNullOrEmpty(message) ? "Pilih item" : message;
                 detailTitle.color = Color.white;
-                detailBody.text = "Ketuk item di tas untuk melihat dan memakainya.";
+                detailBody.text = sellMode
+                    ? "Ketuk item untuk menandai. Atau pilih rarity + level lalu tekan Auto."
+                    : "Ketuk item di tas untuk melihat dan memakainya.";
                 equipLabel.text = "Pakai";
                 return;
             }
@@ -214,6 +338,32 @@ namespace SlimeBreaker
             string compare = worn ? "Sedang dipakai" : current == null ? "Slot " + ItemCatalog.SlotLabels[selected.slot] + " kosong" : "Dipakai: " + current.Name + " (" + current.Stats + ")";
             detailBody.text = selected.Stats + "\n<size=22><color=#ffffffb0>" + compare + "</color></size>";
             equipLabel.text = worn ? "Lepas" : "Pakai";
+        }
+
+        void RefreshSellControls(Inventory inventory)
+        {
+            var rarity = (UpgradeRarity)filterRarity;
+            Color tint = UpgradeRarities.Color(rarity);
+            if (sellModeLabel != null)
+                sellModeLabel.text = sellMode ? "Mode jual: ON" : "Mode jual";
+            if (sellModeButton != null)
+            {
+                var face = sellModeButton.GetComponent<Image>();
+                if (face != null)
+                    face.color = sellMode ? new Color(1f, 0.85f, 0.4f) : Color.white;
+            }
+            if (rarityLabel != null)
+                rarityLabel.text = UpgradeRarities.Name(rarity) + " (" + ItemCatalog.SellPrice[filterRarity] + ")";
+            if (rarityChip != null)
+                rarityChip.color = tint;
+            if (levelLabel != null)
+                levelLabel.text = filterLevel == 0 ? "Level: Semua" : "Level: " + filterLevel;
+            if (sellLabel != null)
+                sellLabel.text = marked.Count > 0 ? "Jual " + marked.Count + " (+" + MarkedGold + ")" : "Jual";
+            if (sellButton != null)
+                sellButton.interactable = marked.Count > 0;
+            if (goldText != null)
+                goldText.text = "Emas " + SaveService.Load().gold;
         }
 
         static Color Rarity(ItemData item) => UpgradeRarities.Color(item.Rarity);

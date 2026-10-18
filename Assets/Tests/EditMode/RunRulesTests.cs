@@ -468,5 +468,14 @@ namespace SlimeBreaker.Tests
             Assert.AreEqual("100.000", UIController.Thousands(100000));
             Assert.AreEqual("1.234.567", UIController.Thousands(1234567));
         }
+
+        [Test]
+        public void ItemsSellForOneThreeSixAndTenGold()
+        {
+            Assert.AreEqual(1, ItemCatalog.Create(ItemSlot.Hat, UpgradeRarity.Normal, 1).SellValue);
+            Assert.AreEqual(3, ItemCatalog.Create(ItemSlot.Hat, UpgradeRarity.Rare, 4).SellValue);
+            Assert.AreEqual(6, ItemCatalog.Create(ItemSlot.Staff, UpgradeRarity.Legend, 2).SellValue);
+            Assert.AreEqual(10, ItemCatalog.Create(ItemSlot.Boots, UpgradeRarity.Ultra, 10).SellValue);
+        }
     }
 }

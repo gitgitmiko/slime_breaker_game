@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.22.0";
+        const string AppVersion = "0.23.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -59,6 +59,8 @@ namespace SlimeBreaker.EditorTools
         static Sprite ringSprite;
         static Sprite gearSprite;
         static Sprite pauseIconSprite;
+        static Sprite arrowSprite;
+        static Sprite checkSprite;
         static readonly Color AccentViolet = new Color(0.56f, 0.46f, 1f);
         static readonly Color AccentRed = new Color(0.86f, 0.22f, 0.3f);
         static readonly Color AccentGreen = new Color(0.36f, 0.86f, 0.46f);
@@ -2212,14 +2214,9 @@ namespace SlimeBreaker.EditorTools
             var difficultyHint = Text(menuCard.transform, "DifficultyHint", "", 18, TextAnchor.MiddleRight, font);
             difficultyHint.color = TextDim;
             AnchorBox(difficultyHint.rectTransform, new Vector2(0f, 1f), new Vector2(286f, -572f), new Vector2(536f, 30f));
-            var difficultyButtons = new Button[3];
-            string[] difficultyNames = { "Easy", "Normal", "Hard" };
-            for (int d = 0; d < 3; d++)
-            {
-                difficultyButtons[d] = Button(menuCard.transform, "Difficulty" + difficultyNames[d], difficultyNames[d], font, Color.white, ghostSprite);
-                AnchorBox((RectTransform)difficultyButtons[d].transform, new Vector2(0f, 1f), new Vector2(84f + d * 250f, -610f), new Vector2(236f, 84f));
-                difficultyButtons[d].GetComponentInChildren<Text>().fontSize = 30;
-            }
+            var difficultyDropdown = BuildDropdown(menuCard.transform, "DifficultyDropdown", new[] { "Easy", "Normal", "Hard" }, font);
+            AnchorBox((RectTransform)difficultyDropdown.transform, new Vector2(0f, 1f), new Vector2(84f, -610f), new Vector2(736f, 84f));
+            difficultyDropdown.SetValueWithoutNotify((int)DifficultyLevel.Normal);
             var upgradesLabel = Text(menuCard.transform, "UpgradesLabel", "PENINGKATAN PERMANEN", 20, TextAnchor.MiddleLeft, font);
             upgradesLabel.fontStyle = FontStyle.Bold;
             upgradesLabel.color = TextDim;
@@ -2251,10 +2248,8 @@ namespace SlimeBreaker.EditorTools
             menu.continueButton = cont;
             menu.continueLabel = cont.GetComponentInChildren<Text>();
             menu.settings = settings;
-            menu.difficultyButtons = difficultyButtons;
+            menu.difficultyDropdown = difficultyDropdown;
             menu.difficultyHint = difficultyHint;
-            menu.selectedSprite = buttonSprite;
-            menu.normalSprite = ghostSprite;
             AttachGraphics(new GameObject("Graphics"));
             UnityEventTools.AddPersistentListener(play.onClick, menu.Play);
             UnityEventTools.AddPersistentListener(cont.onClick, menu.Continue);
@@ -2591,7 +2586,40 @@ namespace SlimeBreaker.EditorTools
 
             // Detail strip under the grid.
             var strip = Graphic(panel.transform, "Detail", pillSprite, new Color(1f, 1f, 1f, 0.07f));
-            Place(strip.gameObject, panel.transform, new Vector2(0.58f, 0.2f), new Vector2(790f, 130f));
+            Place(strip.gameObject, panel.transform, new Vector2(0.58f, 0.15f), new Vector2(790f, 124f));
+
+            // Sell row above the detail strip: mode toggle, rarity / level filter, auto select, sell.
+            float left = 0.58f * 1920f - 395f;
+            float[] widths = { 130f, 150f, 130f, 130f, 210f };
+            var sellButtons = new Button[5];
+            string[] sellNames = { "SellMode", "Rarity", "Level", "Auto", "Sell" };
+            string[] sellTexts = { "Mode jual", "Normal (1)", "Level: Semua", "Auto pilih", "Jual" };
+            Sprite[] sellSprites = { ghostSprite, ghostSprite, ghostSprite, buttonSprite, goldSprite };
+            float cursor = left;
+            for (int i = 0; i < 5; i++)
+            {
+                sellButtons[i] = Button(panel.transform, sellNames[i], sellTexts[i], font, Color.white, sellSprites[i]);
+                Place(sellButtons[i].gameObject, panel.transform, new Vector2((cursor + widths[i] * 0.5f) / 1920f, 0.262f), new Vector2(widths[i], 64f));
+                sellButtons[i].GetComponentInChildren<Text>().fontSize = 22;
+                cursor += widths[i] + 10f;
+            }
+            inv.sellModeButton = sellButtons[0];
+            inv.sellModeLabel = sellButtons[0].GetComponentInChildren<Text>();
+            inv.rarityButton = sellButtons[1];
+            inv.rarityLabel = sellButtons[1].GetComponentInChildren<Text>();
+            var chip = Graphic(sellButtons[1].transform, "Chip", pillSprite, Color.white);
+            chip.raycastTarget = false;
+            Place(chip.gameObject, sellButtons[1].transform, new Vector2(0.5f, 0.1f), new Vector2(110f, 6f));
+            inv.rarityChip = chip;
+            inv.levelButton = sellButtons[2];
+            inv.levelLabel = sellButtons[2].GetComponentInChildren<Text>();
+            inv.autoButton = sellButtons[3];
+            inv.sellButton = sellButtons[4];
+            inv.sellLabel = sellButtons[4].GetComponentInChildren<Text>();
+            var gold = Text(panel.transform, "Gold", "Emas 0", 24, TextAnchor.MiddleLeft, font);
+            gold.color = new Color(1f, 0.85f, 0.4f);
+            Place(gold.gameObject, panel.transform, new Vector2(0.45f, 0.775f), new Vector2(240f, 34f));
+            inv.goldText = gold;
             var detailTitle = Text(strip.transform, "Title", "Pilih item", 28, TextAnchor.UpperLeft, font);
             detailTitle.fontStyle = FontStyle.Bold;
             Place(detailTitle.gameObject, strip.transform, new Vector2(0.33f, 0.72f), new Vector2(500f, 40f));
@@ -2608,6 +2636,71 @@ namespace SlimeBreaker.EditorTools
             inv.discardButton = discard;
             panel.SetActive(false);
             return inv;
+        }
+
+        /// <summary>Glass dropdown (caption + arrow, popup list with a check on the chosen row).</summary>
+        static Dropdown BuildDropdown(Transform parent, string name, string[] options, Font font)
+        {
+            var face = Graphic(parent, name, ghostSprite, Color.white);
+            var dropdown = face.gameObject.AddComponent<Dropdown>();
+            dropdown.targetGraphic = face;
+            var caption = Text(face.transform, "Label", options[0], 32, TextAnchor.MiddleLeft, font);
+            caption.fontStyle = FontStyle.Bold;
+            Stretch(caption.rectTransform);
+            caption.rectTransform.offsetMin = new Vector2(30f, 4f);
+            caption.rectTransform.offsetMax = new Vector2(-90f, -4f);
+            var arrow = Graphic(face.transform, "Arrow", arrowSprite, Color.white);
+            arrow.raycastTarget = false;
+            Place(arrow.gameObject, face.transform, new Vector2(0.94f, 0.5f), new Vector2(40f, 40f));
+
+            const float itemHeight = 76f;
+            var template = Graphic(face.transform, "Template", cardSprite, Color.white);
+            var templateRect = template.rectTransform;
+            templateRect.anchorMin = new Vector2(0f, 0f);
+            templateRect.anchorMax = new Vector2(1f, 0f);
+            templateRect.pivot = new Vector2(0.5f, 1f);
+            templateRect.anchoredPosition = new Vector2(0f, -4f);
+            templateRect.sizeDelta = new Vector2(0f, itemHeight * options.Length + 16f);
+            var scroll = template.gameObject.AddComponent<ScrollRect>();
+            scroll.horizontal = false;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            var viewport = Graphic(template.transform, "Viewport", whiteSprite, new Color(1f, 1f, 1f, 0.02f));
+            viewport.gameObject.AddComponent<Mask>().showMaskGraphic = false;
+            Stretch(viewport.rectTransform);
+            viewport.rectTransform.pivot = new Vector2(0f, 1f);
+            var content = new GameObject("Content", typeof(RectTransform)).GetComponent<RectTransform>();
+            content.SetParent(viewport.transform, false);
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.sizeDelta = new Vector2(0f, itemHeight);
+            var itemBack = Graphic(content, "Item", whiteSprite, new Color(1f, 1f, 1f, 0.06f));
+            var itemRect = itemBack.rectTransform;
+            itemRect.anchorMin = new Vector2(0f, 0.5f);
+            itemRect.anchorMax = new Vector2(1f, 0.5f);
+            itemRect.sizeDelta = new Vector2(0f, itemHeight);
+            var toggle = itemBack.gameObject.AddComponent<Toggle>();
+            toggle.targetGraphic = itemBack;
+            var tick = Graphic(itemBack.transform, "Checkmark", checkSprite, new Color(0.55f, 1f, 0.65f));
+            tick.raycastTarget = false;
+            Place(tick.gameObject, itemBack.transform, new Vector2(0.93f, 0.5f), new Vector2(40f, 40f));
+            toggle.graphic = tick;
+            var itemLabel = Text(itemBack.transform, "Item Label", options[0], 30, TextAnchor.MiddleLeft, font);
+            Stretch(itemLabel.rectTransform);
+            itemLabel.rectTransform.offsetMin = new Vector2(30f, 2f);
+            itemLabel.rectTransform.offsetMax = new Vector2(-90f, -2f);
+            scroll.viewport = viewport.rectTransform;
+            scroll.content = content;
+            template.gameObject.SetActive(false);
+
+            dropdown.template = templateRect;
+            dropdown.captionText = caption;
+            dropdown.itemText = itemLabel;
+            dropdown.options.Clear();
+            foreach (var option in options)
+                dropdown.options.Add(new Dropdown.OptionData(option));
+            dropdown.RefreshShownValue();
+            return dropdown;
         }
 
         static SettingsPanel BuildSettingsOverlay(RectTransform safe, Font font)
@@ -3190,7 +3283,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 32;
+            PlayerSettings.Android.bundleVersionCode = 33;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;
@@ -3487,6 +3580,8 @@ namespace SlimeBreaker.EditorTools
             ringSprite = UiSprite("UI_Ring", circleSprite);
             gearSprite = UiSprite("UI_Icon_Gear", whiteSprite);
             pauseIconSprite = UiSprite("UI_Icon_Pause", whiteSprite);
+            arrowSprite = UiSprite("UI_Icon_Arrow", whiteSprite);
+            checkSprite = UiSprite("UI_Icon_Check", whiteSprite);
             if (panelSprite == null || buttonSprite == null || whiteSprite == null)
                 throw new InvalidOperationException("Sprite UI tidak ter-load.");
         }

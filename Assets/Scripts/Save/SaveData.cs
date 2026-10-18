@@ -23,5 +23,7 @@ namespace SlimeBreaker
         public int difficulty = 1;
         /// <summary>Highest number of stage bosses (floors 10, 20, ...) beaten on any run; they stand behind the hero in the menu.</summary>
         public int bossesDefeated;
+        /// <summary>Furthest floor reached on any run; the menu arena shows that floor's biome.</summary>
+        public int highestFloor = 1;
     }
 }

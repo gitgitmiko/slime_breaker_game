@@ -149,3 +149,5 @@ Di Inventori, tombol **Mode jual** membuat ketukan pada item menandainya (bukan 
 ## Riwayat boss di menu
 
 Save menyimpan `bossesDefeated` (rekor terbanyak boss lantai 10, 20, ... yang sudah dilewati; berdiri di lantai 11 berarti boss 10 terlewati, menang = 10). Dicatat saat jeda, keluar ke menu, tutup aplikasi, dan akhir run. Di menu utama, tiap boss itu berdiri sebagai dumpling kecil berwarna bosnya di belakang hero (boss 100 pelangi).
+
+Latar menu utama memakai generator arena yang sama dengan game: biome, cuaca, dan siang/malam lantai terjauh yang pernah dicapai (`highestFloor`). Save baru menampilkan hutan siang (lantai 1). Area sekitar hero dan boss pajangan dikosongkan dari pohon/properti besar.

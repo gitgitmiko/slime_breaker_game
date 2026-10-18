@@ -70,6 +70,10 @@ namespace SlimeBreaker
         public int minObstacles = 10;
         public int maxObstacles = 16;
         public bool generateOnStart = true;
+        /// <summary>The main menu reuses the generator for its backdrop: no obstacles, and a clear stage around the hero showcase.</summary>
+        public bool placeObstacles = true;
+        public Vector3 keepClearCenter;
+        public float keepClearRadius;
 
         public ArenaTheme Current { get; private set; }
         public Transform Root { get; private set; }
@@ -118,7 +122,8 @@ namespace SlimeBreaker
             ApplyLighting(theme);
             ApplyCover(theme);
             PlaceProps(theme, rng);
-            PlaceObstacles(theme, rng);
+            if (placeObstacles)
+                PlaceObstacles(theme, rng);
             TintFoliage(theme);
             CombineScatter();
             SpawnWeather(theme);
@@ -627,7 +632,7 @@ namespace SlimeBreaker
                 float angle = (i + 0.5f) * Mathf.PI * 2f / count + (float)(rng.NextDouble() - 0.5) * jitter;
                 float r = radius + (float)(rng.NextDouble() - 0.5) * jitter * 2f;
                 var position = new Vector3(Mathf.Cos(angle) * r, 0f, Mathf.Sin(angle) * r);
-                bool blocked = false;
+                bool blocked = InKeepClear(position);
                 foreach (var taken in occupied)
                 {
                     if ((taken - position).sqrMagnitude < 1.5f * 1.5f)
@@ -822,8 +827,19 @@ namespace SlimeBreaker
             }
         }
 
+        bool InKeepClear(Vector3 position, float margin = 0f)
+        {
+            if (keepClearRadius <= 0f)
+                return false;
+            var offset = position - keepClearCenter;
+            offset.y = 0f;
+            return offset.magnitude < keepClearRadius + margin;
+        }
+
         bool Fits(Vector3 position, float footprint)
         {
+            if (InKeepClear(position, footprint))
+                return false;
             // Keep the hero's spawn and the centre lane free.
             if (new Vector2(position.x, position.z).magnitude < 3.2f + footprint)
                 return false;

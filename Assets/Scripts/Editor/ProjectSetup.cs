@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.24.0";
+        const string AppVersion = "0.25.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -357,7 +357,7 @@ namespace SlimeBreaker.EditorTools
             var portal = PortalPrefab("Assets/Prefabs/Environment/ENV_Exit_Portal.prefab", env["RuneRing"]);
 
             BuildBoot();
-            BuildMenu(hero, heroMenuController, bossController, env);
+            BuildMenu(hero, heroMenuController, bossController, env, rain, snowWx, fireflies, dust, ash, spores, sparks, mist);
             BuildArena(balance, upgrades, skills, hero, normal, fast, tank, ranged, boss, bossDefs, hostileBolt, lightning, env, vfx, powerUp, portal, obstacles, rain, snowWx, fireflies, dust, ash, spores, sparks, mist);
             ConfigurePlayerSettings();
             AssetDatabase.SaveAssets();
@@ -2113,7 +2113,8 @@ namespace SlimeBreaker.EditorTools
             EditorSceneManager.SaveScene(scene, "Assets/Scenes/Boot.unity");
         }
 
-        static void BuildMenu(GameObject hero, RuntimeAnimatorController heroController, RuntimeAnimatorController bossController, Dictionary<string, GameObject> env)
+        static void BuildMenu(GameObject hero, RuntimeAnimatorController heroController, RuntimeAnimatorController bossController, Dictionary<string, GameObject> env,
+            GameObject rain, GameObject snowWx, GameObject fireflies, GameObject dust, GameObject ash, GameObject spores, GameObject sparks, GameObject mist)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var camera = MakeCamera("Camera", new Color(0.09f, 0.12f, 0.2f));
@@ -2145,9 +2146,6 @@ namespace SlimeBreaker.EditorTools
             var menuWall = (GameObject)PrefabUtility.InstantiatePrefab(env["SteamerWall"]);
             menuWall.transform.position = new Vector3(0f, 0f, -9f);
             MarkStatic(menuWall);
-            var rune = (GameObject)PrefabUtility.InstantiatePrefab(env["RuneRing"]);
-            rune.transform.position = new Vector3(1.55f, 0.012f, 0f);
-            rune.transform.localScale = Vector3.one * 0.55f;
             var showcase = new GameObject("HeroShowcase");
             showcase.transform.position = new Vector3(1.55f, 0f, 0f);
             showcase.transform.rotation = Quaternion.Euler(0f, 195f, 0f);
@@ -2180,11 +2178,16 @@ namespace SlimeBreaker.EditorTools
                 trophyRoot.trophies[t] = trophy;
             }
             var rng = new System.Random(5);
-            Scatter(env["Grass"], 14, 0.8f, 3.2f, rng, new Vector3(1.55f, 0f, 0f));
-            Scatter(env["Flower"], 5, 1f, 3f, rng, new Vector3(1.55f, 0f, 0f));
-            Scatter(env["Tree_A"], 5, 6f, 11f, rng, new Vector3(1.55f, 0f, 2f));
-            Scatter(env["Tree_B"], 4, 6f, 12f, rng, new Vector3(1.55f, 0f, 2f));
-            Scatter(env["Bush"], 4, 3.5f, 6f, rng, new Vector3(1.55f, 0f, 1.5f));
+            // The backdrop is the real arena generator: it shows the biome of the furthest floor reached.
+            var menuGenerator = new GameObject("MenuArena").AddComponent<ArenaGenerator>();
+            ConfigureGenerator(menuGenerator, env, null, ground.GetComponentInChildren<Renderer>(), sun, camera, rain, snowWx, fireflies, dust, ash, spores, sparks, mist);
+            menuGenerator.generateOnStart = false;
+            menuGenerator.placeObstacles = false;
+            menuGenerator.keepClearCenter = new Vector3(1.9f, 0f, 0.5f);
+            menuGenerator.keepClearRadius = 7f;
+            var menuArena = menuGenerator.gameObject.AddComponent<MenuArena>();
+            menuArena.generator = menuGenerator;
+            menuArena.showcase = showcase.transform;
 
             var audio = new GameObject("Audio").AddComponent<AudioService>();
             audio.music = Clip("Assets/Audio/Music/MUS_Menu.ogg");
@@ -2200,7 +2203,7 @@ namespace SlimeBreaker.EditorTools
             var font = Font();
             // Left column on a glass card: title, tagline, gold/record pills, Play, Continue, upgrades.
             var menuCard = Graphic(safe, "MenuCard", cardSprite, Color.white);
-            Place(menuCard.gameObject, safe, new Vector2(0.27f, 0.5f), new Vector2(900f, 980f));
+            Place(menuCard.gameObject, safe, new Vector2(0.27f, 0.5f), new Vector2(900f, 900f));
             var accent = Graphic(menuCard.transform, "Accent", pillSprite, AccentViolet);
             AnchorBox(accent.rectTransform, new Vector2(0f, 1f), new Vector2(54f, -70f), new Vector2(8f, 96f));
             var title = Text(menuCard.transform, "Title", "Slime Breaker", 84, TextAnchor.MiddleLeft, font);
@@ -2209,45 +2212,49 @@ namespace SlimeBreaker.EditorTools
             Shade(title);
             AnchorBox(title.rectTransform, new Vector2(0f, 1f), new Vector2(84f, -58f), new Vector2(780f, 110f));
             var goldPill = Graphic(menuCard.transform, "GoldPill", pillSprite, new Color(1f, 0.78f, 0.3f, 0.18f));
-            AnchorBox(goldPill.rectTransform, new Vector2(0f, 1f), new Vector2(84f, -232f), new Vector2(360f, 56f));
+            AnchorBox(goldPill.rectTransform, new Vector2(0f, 1f), new Vector2(84f, -186f), new Vector2(360f, 56f));
             var gold = Text(goldPill.transform, "Gold", "Emas 0", 28, TextAnchor.MiddleCenter, font);
             gold.fontStyle = FontStyle.Bold;
             gold.color = new Color(1f, 0.85f, 0.45f);
             Stretch(gold.rectTransform);
             var bestPill = Graphic(menuCard.transform, "BestPill", pillSprite, new Color(1f, 1f, 1f, 0.08f));
-            AnchorBox(bestPill.rectTransform, new Vector2(0f, 1f), new Vector2(460f, -232f), new Vector2(360f, 56f));
+            AnchorBox(bestPill.rectTransform, new Vector2(0f, 1f), new Vector2(460f, -186f), new Vector2(360f, 56f));
             var best = Text(bestPill.transform, "Best", "Rekor 00:00", 26, TextAnchor.MiddleCenter, font);
             best.fontStyle = FontStyle.Bold;
             Stretch(best.rectTransform);
             // Continue sits above Play; MainMenuController moves Play up when there is no run to continue.
             var cont = Button(menuCard.transform, "Continue", "Lanjutkan", font, Color.white, ghostSprite);
-            AnchorBox((RectTransform)cont.transform, new Vector2(0f, 1f), new Vector2(84f, -322f), new Vector2(736f, 92f));
-            var play = Button(menuCard.transform, "Play", "Main", font, Color.white, goldSprite);
+            AnchorBox((RectTransform)cont.transform, new Vector2(0f, 1f), new Vector2(84f, -270f), new Vector2(736f, 92f));
+            // Everything from Play down lives in Body so it can slide up when there is no Continue button.
+            var body = new GameObject("Body", typeof(RectTransform)).GetComponent<RectTransform>();
+            body.SetParent(menuCard.transform, false);
+            AnchorBox(body, new Vector2(0f, 1f), Vector2.zero, new Vector2(900f, 900f));
+            var play = Button(body, "Play", "Main", font, Color.white, goldSprite);
             play.GetComponentInChildren<Text>().fontSize = 42;
-            AnchorBox((RectTransform)play.transform, new Vector2(0f, 1f), new Vector2(84f, -424f), new Vector2(736f, 112f));
+            AnchorBox((RectTransform)play.transform, new Vector2(0f, 1f), new Vector2(84f, -374f), new Vector2(736f, 112f));
             // Difficulty selector for the next new run (Easy / Normal / Hard) with a one-line summary.
-            var difficultyLabel = Text(menuCard.transform, "DifficultyLabel", "KESULITAN", 20, TextAnchor.MiddleLeft, font);
+            var difficultyLabel = Text(body, "DifficultyLabel", "KESULITAN", 20, TextAnchor.MiddleLeft, font);
             difficultyLabel.fontStyle = FontStyle.Bold;
             difficultyLabel.color = TextDim;
-            AnchorBox(difficultyLabel.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -572f), new Vector2(200f, 30f));
-            var difficultyDropdown = BuildDropdown(menuCard.transform, "DifficultyDropdown", new[] { "Easy", "Normal", "Hard" }, font);
-            AnchorBox((RectTransform)difficultyDropdown.transform, new Vector2(0f, 1f), new Vector2(84f, -610f), new Vector2(736f, 84f));
+            AnchorBox(difficultyLabel.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -518f), new Vector2(200f, 30f));
+            var difficultyDropdown = BuildDropdown(body, "DifficultyDropdown", new[] { "Easy", "Normal", "Hard" }, font);
+            AnchorBox((RectTransform)difficultyDropdown.transform, new Vector2(0f, 1f), new Vector2(84f, -548f), new Vector2(736f, 84f));
             difficultyDropdown.SetValueWithoutNotify((int)DifficultyLevel.Normal);
-            var upgradesLabel = Text(menuCard.transform, "UpgradesLabel", "PENINGKATAN PERMANEN", 20, TextAnchor.MiddleLeft, font);
+            var upgradesLabel = Text(body, "UpgradesLabel", "PENINGKATAN PERMANEN", 20, TextAnchor.MiddleLeft, font);
             upgradesLabel.fontStyle = FontStyle.Bold;
             upgradesLabel.color = TextDim;
-            AnchorBox(upgradesLabel.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -722f), new Vector2(736f, 30f));
-            var damage = Button(menuCard.transform, "Damage", "Damage", font, Color.white, ghostSprite);
-            AnchorBox((RectTransform)damage.transform, new Vector2(0f, 1f), new Vector2(84f, -764f), new Vector2(236f, 120f));
-            var health = Button(menuCard.transform, "Health", "Nyawa", font, Color.white, ghostSprite);
-            AnchorBox((RectTransform)health.transform, new Vector2(0f, 1f), new Vector2(334f, -764f), new Vector2(236f, 120f));
-            var speed = Button(menuCard.transform, "Speed", "Laju", font, Color.white, ghostSprite);
-            AnchorBox((RectTransform)speed.transform, new Vector2(0f, 1f), new Vector2(584f, -764f), new Vector2(236f, 120f));
+            AnchorBox(upgradesLabel.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -664f), new Vector2(736f, 30f));
+            var damage = Button(body, "Damage", "Damage", font, Color.white, ghostSprite);
+            AnchorBox((RectTransform)damage.transform, new Vector2(0f, 1f), new Vector2(84f, -702f), new Vector2(236f, 120f));
+            var health = Button(body, "Health", "Nyawa", font, Color.white, ghostSprite);
+            AnchorBox((RectTransform)health.transform, new Vector2(0f, 1f), new Vector2(334f, -702f), new Vector2(236f, 120f));
+            var speed = Button(body, "Speed", "Laju", font, Color.white, ghostSprite);
+            AnchorBox((RectTransform)speed.transform, new Vector2(0f, 1f), new Vector2(584f, -702f), new Vector2(236f, 120f));
             foreach (var upgradeButton in new[] { damage, health, speed })
                 upgradeButton.GetComponentInChildren<Text>().fontSize = 26;
-            var version = Text(menuCard.transform, "Version", "v" + AppVersion, 18, TextAnchor.MiddleLeft, font);
+            var version = Text(body, "Version", "v" + AppVersion, 18, TextAnchor.MiddleLeft, font);
             version.color = new Color(1f, 1f, 1f, 0.35f);
-            AnchorBox(version.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -910f), new Vector2(300f, 28f));
+            AnchorBox(version.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -846f), new Vector2(300f, 28f));
             var settingsButton = Button(safe, "Settings", "", font, Color.white, circleGlassSprite);
             Place(settingsButton.gameObject, safe, new Vector2(0.955f, 0.925f), new Vector2(84f, 84f));
             var gearIcon = Graphic(settingsButton.transform, "Icon", gearSprite, Color.white);
@@ -2265,12 +2272,84 @@ namespace SlimeBreaker.EditorTools
             menu.continueLabel = cont.GetComponentInChildren<Text>();
             menu.settings = settings;
             menu.difficultyDropdown = difficultyDropdown;
-            menu.playRect = (RectTransform)play.transform;
+            menu.card = menuCard.rectTransform;
+            menu.body = body;
             AttachGraphics(new GameObject("Graphics"));
             UnityEventTools.AddPersistentListener(play.onClick, menu.Play);
             UnityEventTools.AddPersistentListener(cont.onClick, menu.Continue);
             UnityEventTools.AddPersistentListener(settingsButton.onClick, menu.OpenSettings);
             EditorSceneManager.SaveScene(scene, "Assets/Scenes/MainMenu.unity");
+        }
+
+        /// <summary>Wires every prop, ground material, weather rig and light a generator needs (arena and menu backdrop share it).</summary>
+        static void ConfigureGenerator(
+            ArenaGenerator generator,
+            Dictionary<string, GameObject> env,
+            GameObject[] obstaclePrefabs,
+            Renderer groundRenderer,
+            Light sun,
+            Camera camera,
+            GameObject rain,
+            GameObject snowWx,
+            GameObject fireflies,
+            GameObject dust,
+            GameObject ash,
+            GameObject spores,
+            GameObject sparks,
+            GameObject mist)
+        {
+            generator.props = new ArenaGenerator.PropSet
+            {
+                treeA = env["Tree_A"],
+                treeB = env["Tree_B"],
+                rockA = env["Rock_A"],
+                rockB = env["Rock_B"],
+                mushroom = env["Mushroom"],
+                bush = env["Bush"],
+                pillar = env["RuinPillar"],
+                grass = env["Grass"],
+                flower = env["Flower"],
+                boundaryStone = env["BoundaryStone"],
+                runeRing = env["RuneRing"],
+                cactus = env["Cactus"],
+                iceSpike = env["IceSpike"],
+                thunderSpire = env["ThunderSpire"],
+                swampRoot = env["SwampRoot"],
+                swampReed = env["SwampReed"],
+                shadowObelisk = env["ShadowObelisk"],
+                volcanoRock = env["VolcanoRock"],
+                volcanoPillar = env["VolcanoPillar"],
+                stormArch = env["StormArch"],
+                crystalSpire = env["CrystalSpire"],
+                royalColumn = env["RoyalColumn"]
+            };
+            generator.obstaclePrefabs = obstaclePrefabs;
+            generator.groundRenderer = groundRenderer;
+            generator.forestGround = forestGroundMaterial;
+            generator.coverMoss = TextureNamed("TEX_Cover_Moss");
+            generator.coverSnow = TextureNamed("TEX_Cover_Snow");
+            generator.coverSand = TextureNamed("TEX_Cover_Sand");
+            generator.coverAsh = TextureNamed("TEX_Cover_Ash");
+            generator.snowGround = snowGroundMaterial;
+            generator.sandGround = sandGroundMaterial;
+            generator.thunderGround = thunderGroundMaterial;
+            generator.swampGround = swampGroundMaterial;
+            generator.shadowGround = shadowGroundMaterial;
+            generator.volcanoGround = volcanoGroundMaterial;
+            generator.stormGround = stormGroundMaterial;
+            generator.crystalGround = crystalGroundMaterial;
+            generator.royalGround = royalGroundMaterial;
+            generator.rainRig = rain;
+            generator.snowRig = snowWx;
+            generator.mistRig = mist;
+            generator.firefliesRig = fireflies;
+            generator.dustRig = dust;
+            generator.ashRig = ash;
+            generator.sporesRig = spores;
+            generator.sparksRig = sparks;
+            generator.sun = sun;
+            generator.arenaCamera = camera;
+            generator.arenaRadius = RunRules.ArenaRadius;
         }
 
         static void BuildArena(
@@ -2374,58 +2453,7 @@ namespace SlimeBreaker.EditorTools
             powerUps.skills = skills;
             powerUps.pickupPrefab = powerUpPrefab;
             powerUps.everyLevels = RunRules.PowerUpEvery;
-            generator.props = new ArenaGenerator.PropSet
-            {
-                treeA = env["Tree_A"],
-                treeB = env["Tree_B"],
-                rockA = env["Rock_A"],
-                rockB = env["Rock_B"],
-                mushroom = env["Mushroom"],
-                bush = env["Bush"],
-                pillar = env["RuinPillar"],
-                grass = env["Grass"],
-                flower = env["Flower"],
-                boundaryStone = env["BoundaryStone"],
-                runeRing = env["RuneRing"],
-                cactus = env["Cactus"],
-                iceSpike = env["IceSpike"],
-                thunderSpire = env["ThunderSpire"],
-                swampRoot = env["SwampRoot"],
-                swampReed = env["SwampReed"],
-                shadowObelisk = env["ShadowObelisk"],
-                volcanoRock = env["VolcanoRock"],
-                volcanoPillar = env["VolcanoPillar"],
-                stormArch = env["StormArch"],
-                crystalSpire = env["CrystalSpire"],
-                royalColumn = env["RoyalColumn"]
-            };
-            generator.obstaclePrefabs = obstaclePrefabs;
-            generator.groundRenderer = groundInstance.GetComponentInChildren<Renderer>();
-            generator.forestGround = forestGroundMaterial;
-            generator.coverMoss = TextureNamed("TEX_Cover_Moss");
-            generator.coverSnow = TextureNamed("TEX_Cover_Snow");
-            generator.coverSand = TextureNamed("TEX_Cover_Sand");
-            generator.coverAsh = TextureNamed("TEX_Cover_Ash");
-            generator.snowGround = snowGroundMaterial;
-            generator.sandGround = sandGroundMaterial;
-            generator.thunderGround = thunderGroundMaterial;
-            generator.swampGround = swampGroundMaterial;
-            generator.shadowGround = shadowGroundMaterial;
-            generator.volcanoGround = volcanoGroundMaterial;
-            generator.stormGround = stormGroundMaterial;
-            generator.crystalGround = crystalGroundMaterial;
-            generator.royalGround = royalGroundMaterial;
-            generator.rainRig = rain;
-            generator.snowRig = snowWx;
-            generator.mistRig = mist;
-            generator.firefliesRig = fireflies;
-            generator.dustRig = dust;
-            generator.ashRig = ash;
-            generator.sporesRig = spores;
-            generator.sparksRig = sparks;
-            generator.sun = sun;
-            generator.arenaCamera = camera;
-            generator.arenaRadius = RunRules.ArenaRadius;
+            ConfigureGenerator(generator, env, obstaclePrefabs, groundInstance.GetComponentInChildren<Renderer>(), sun, camera, rain, snowWx, fireflies, dust, ash, spores, sparks, mist);
             generator.minObstacles = 10;
             generator.maxObstacles = 16;
             generator.generateOnStart = false;
@@ -2602,7 +2630,7 @@ namespace SlimeBreaker.EditorTools
 
             // Detail strip under the grid.
             var strip = Graphic(panel.transform, "Detail", pillSprite, new Color(1f, 1f, 1f, 0.07f));
-            Place(strip.gameObject, panel.transform, new Vector2(0.58f, 0.15f), new Vector2(790f, 124f));
+            Place(strip.gameObject, panel.transform, new Vector2(0.58f, 0.168f), new Vector2(790f, 124f));
 
             // Sell row above the detail strip: mode toggle, rarity / level filter, auto select, sell.
             float left = 0.58f * 1920f - 395f;
@@ -2615,7 +2643,7 @@ namespace SlimeBreaker.EditorTools
             for (int i = 0; i < 5; i++)
             {
                 sellButtons[i] = Button(panel.transform, sellNames[i], sellTexts[i], font, Color.white, sellSprites[i]);
-                Place(sellButtons[i].gameObject, panel.transform, new Vector2((cursor + widths[i] * 0.5f) / 1920f, 0.262f), new Vector2(widths[i], 64f));
+                Place(sellButtons[i].gameObject, panel.transform, new Vector2((cursor + widths[i] * 0.5f) / 1920f, 0.272f), new Vector2(widths[i], 64f));
                 sellButtons[i].GetComponentInChildren<Text>().fontSize = 22;
                 cursor += widths[i] + 10f;
             }
@@ -2650,6 +2678,18 @@ namespace SlimeBreaker.EditorTools
             inv.equipButton = equip;
             inv.equipLabel = equip.GetComponentInChildren<Text>();
             inv.discardButton = discard;
+            // The frame reaches lower so the sell row and detail strip sit inside it, and the content is centred in it
+            // (it was hugging the left edge with a wide empty margin on the right).
+            var frameRect = (RectTransform)panel.transform.Find("Frame");
+            frameRect.anchorMin = new Vector2(0.14f, 0.06f);
+            for (int c = 0; c < panel.transform.childCount; c++)
+            {
+                var child = (RectTransform)panel.transform.GetChild(c);
+                if (child.name == "Frame" || child.name == "Title" || child.name == "TitleAccent" || child.name == "Close")
+                    continue;
+                child.anchorMin += new Vector2(0.02f, 0f);
+                child.anchorMax += new Vector2(0.02f, 0f);
+            }
             panel.SetActive(false);
             return inv;
         }
@@ -3299,7 +3339,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 34;
+            PlayerSettings.Android.bundleVersionCode = 35;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

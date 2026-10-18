@@ -271,6 +271,7 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 30/30; PlayMode 39/39; APK `SLIMEBREAKER_APK_OK` 0.22.0 (versionCode 32).
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 41/41; APK 0.23.0 (versionCode 33): jual item + auto pilih, dropdown kesulitan.
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 42/42; APK 0.24.0 (versionCode 34): menu (Lanjutkan di atas Main, tanpa deskripsi), boss yang sudah dikalahkan berdiri di belakang hero.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 43/43; APK 0.25.0 (versionCode 35): arena menu mengikuti lantai terjauh (`MenuArena`), kartu menu dan inventori dirapikan.
 
 ## Pasang di HP
 

@@ -1767,6 +1767,38 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
+        public IEnumerator MenuArenaFollowsTheFurthestFloorReached()
+        {
+            var save = SaveService.Load();
+            save.highestFloor = 1;
+            save.bossesDefeated = 0;
+            SaveService.Save(save);
+            SceneManager.LoadScene("MainMenu");
+            yield return null;
+            yield return null;
+            var arena = Object.FindAnyObjectByType<MenuArena>();
+            Assert.IsNotNull(arena);
+            Assert.AreEqual(Biome.Forest, arena.generator.Current.biome);
+
+            foreach (int floor in new[] { 25, 45, 75, 95 })
+            {
+                save.highestFloor = floor;
+                save.bossesDefeated = (floor - 1) / 10;
+                SaveService.Save(save);
+                SceneManager.LoadScene("MainMenu");
+                yield return null;
+                yield return null;
+                yield return null;
+                arena = Object.FindAnyObjectByType<MenuArena>();
+                Assert.AreEqual(ArenaTheme.BiomeAtFloor(floor), arena.generator.Current.biome, "menu arena for floor " + floor);
+                Capture("39_menu_arena_floor" + floor);
+            }
+            save.highestFloor = 1;
+            save.bossesDefeated = 0;
+            SaveService.Save(save);
+        }
+
+        [UnityTest]
         public IEnumerator MenuShowsBeatenBossesBehindTheHero()
         {
             Assert.AreEqual(0, GameFlowController.BossesDefeatedAt(10, false), "standing on the floor-10 boss means it is not beaten yet");

@@ -25,11 +25,13 @@ namespace SlimeBreaker
         /// <summary>Easy / Normal / Hard picker for the next new run (index = DifficultyLevel).</summary>
         public Dropdown difficultyDropdown;
         /// <summary>Continue sits above Play; Play moves up into its place when there is no run to continue.</summary>
-        public RectTransform playRect;
-        public float playOffsetWithContinue = -424f;
-        public float playOffsetAlone = -322f;
+        public RectTransform card;
+        /// <summary>Everything from Play down; it moves up (and the card shrinks) when there is no Continue button.</summary>
+        public RectTransform body;
+        public float continueSlot = 102f;
 
         SaveData save;
+        float fullCardHeight;
         Quaternion showcaseRest;
         bool hasRest;
 
@@ -126,8 +128,14 @@ namespace SlimeBreaker
             bool canContinue = run != null && run.level > 0;
             if (continueButton != null)
                 continueButton.gameObject.SetActive(canContinue);
-            if (playRect != null)
-                playRect.anchoredPosition = new Vector2(playRect.anchoredPosition.x, canContinue ? playOffsetWithContinue : playOffsetAlone);
+            if (body != null)
+                body.anchoredPosition = new Vector2(body.anchoredPosition.x, canContinue ? 0f : continueSlot);
+            if (card != null)
+            {
+                if (fullCardHeight <= 0f)
+                    fullCardHeight = card.sizeDelta.y;
+                card.sizeDelta = new Vector2(card.sizeDelta.x, canContinue ? fullCardHeight : fullCardHeight - continueSlot);
+            }
             if (continueLabel != null && canContinue)
                 continueLabel.text = "Lanjutkan (Lv " + run.level + " · Lantai " + Mathf.Max(1, run.floor > 0 ? run.floor : run.stage) + " · " + Difficulty.Label((DifficultyLevel)Mathf.Clamp(run.difficulty, 0, 2)) + ")";
         }

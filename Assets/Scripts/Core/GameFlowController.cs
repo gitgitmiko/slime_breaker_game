@@ -217,6 +217,7 @@ namespace SlimeBreaker
                 : (victory ? balance.victoryGold : balance.defeatGold) + floor * balance.goldPerLevel;
             save.gold += gold;
             save.bossesDefeated = Mathf.Max(save.bossesDefeated, BossesDefeatedAt(floor, victory));
+            save.highestFloor = Mathf.Max(save.highestFloor, floor);
             float elapsed = run != null ? run.Elapsed : 0f;
             if (elapsed > save.bestRunTime)
                 save.bestRunTime = elapsed;
@@ -264,9 +265,10 @@ namespace SlimeBreaker
             int floor = StageManager.Instance != null ? StageManager.Instance.Floor : 1;
             int defeated = BossesDefeatedAt(floor, false);
             var save = SaveService.Load();
-            if (defeated <= save.bossesDefeated)
+            if (defeated <= save.bossesDefeated && floor <= save.highestFloor)
                 return;
-            save.bossesDefeated = defeated;
+            save.bossesDefeated = Mathf.Max(save.bossesDefeated, defeated);
+            save.highestFloor = Mathf.Max(save.highestFloor, floor);
             SaveService.Save(save);
         }
 

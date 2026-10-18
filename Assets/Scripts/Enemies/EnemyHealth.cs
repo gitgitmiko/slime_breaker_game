@@ -376,11 +376,24 @@ namespace SlimeBreaker
                             block.SetColor("_Color", part);
                         }
                     }
-                    block.SetColor("_EmissionColor", emission);
+                    // Self-lit face details (forehead star, cheeks) must survive the emission override used for flashes.
+                    string partName = jellyNameOf(materials, m, renderer);
+                    Color selfLit = partName.Contains("star") ? BossCatalog.CrownColor * 0.9f : partName.Contains("blush") ? new Color(1f, 0.5f, 0.55f) * 0.3f : Color.black;
+                    block.SetColor("_EmissionColor", emission + selfLit);
+                    // The final (floor 100) boss is a rainbow dumpling: its jelly body swirls through every hue.
+                    var jellyMat = materials != null && m < materials.Length ? materials[m] : renderer.sharedMaterial;
+                    bool rainbow = bossKind == BossKind.Royal && jellyMat != null && jellyMat.HasProperty("_Rainbow");
+                    block.SetFloat("_Rainbow", rainbow ? 1f : 0f);
                     renderer.SetPropertyBlock(block, m);
                 }
             }
             tinted = wants;
+        }
+
+        static string jellyNameOf(Material[] materials, int index, Renderer renderer)
+        {
+            var mat = materials != null && index < materials.Length ? materials[index] : renderer.sharedMaterial;
+            return mat != null ? mat.name.ToLowerInvariant() : string.Empty;
         }
 
         static Color FaceSafeBody(string materialName, Color body)

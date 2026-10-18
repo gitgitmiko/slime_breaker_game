@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.20.3";
+        const string AppVersion = "0.21.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -217,7 +217,7 @@ namespace SlimeBreaker.EditorTools
             var tankDef = Enemy("Assets/ScriptableObjects/Enemies/ENM_Slime_Tank.asset", "Slime Tank", 64, 1.35f, 14, 1.4f, 0.9f, 8, false);
             var rangedDef = Enemy("Assets/ScriptableObjects/Enemies/ENM_Slime_Ranged.asset", "Slime Jarak", 18, 2.15f, 7, 6.4f, 1.35f, 4, false, ranged: true, tint: new Color(0.95f, 0.48f, 0.78f));
             int bossHit = RunRules.BossBasicDamage;
-            var bossDef = Enemy("Assets/ScriptableObjects/Enemies/BOSS_SlimeKing.asset", "Royal Slime", 100000, 2.1f, bossHit, 1.7f, 0.8f, 80, true, kind: BossKind.Royal);
+            var bossDef = Enemy("Assets/ScriptableObjects/Enemies/BOSS_SlimeKing.asset", "Royal Dumpling", 100000, 2.1f, bossHit, 1.7f, 0.8f, 80, true, kind: BossKind.Royal);
             var bossDefs = new[]
             {
                 Enemy("Assets/ScriptableObjects/Enemies/BOSS_RockSlime.asset", "Rock Slime", 10000, 1.8f, bossHit, 1.8f, 0.85f, 40, true, incoming: 0.65f, kind: BossKind.Rock, tint: BossCatalog.Tint(BossKind.Rock)),
@@ -635,6 +635,13 @@ namespace SlimeBreaker.EditorTools
                     mat.SetFloat("_Metallic", 0.75f);
                     mat.SetFloat("_Smoothness", 0.78f);
                 }
+                else if (name.Contains("star"))
+                {
+                    // Boss forehead star: self-lit gold so it still reads at night (metal would go black with no reflections).
+                    mat.SetFloat("_Metallic", 0f);
+                    mat.SetFloat("_Smoothness", 0.6f);
+                    Emissive(0.9f);
+                }
                 else if (name.Contains("skin"))
                     mat.SetFloat("_Smoothness", 0.38f);
                 else if (name.Contains("hair"))
@@ -811,6 +818,22 @@ namespace SlimeBreaker.EditorTools
             mat.SetFloat("_CoreDarken", n.Contains("tank") ? 0.7f : 0.6f);
             mat.SetFloat("_GlowStrength", n.Contains("king") ? 0.12f : 0.08f);
             mat.SetFloat("_NoiseScale", n.Contains("king") ? 0.9f : 1.6f);
+            if (n.Contains("king"))
+            {
+                // Squishy glitter dumpling boss: glossier, more see-through core, glitter flecks.
+                mat.SetFloat("_Smoothness", 0.95f);
+                mat.SetFloat("_Subsurface", 0.5f);
+                mat.SetFloat("_CoreDarken", 0.22f);
+                mat.SetFloat("_Wrap", 0.65f);
+                mat.SetFloat("_RimStrength", 0.6f);
+                mat.SetFloat("_Glitter", 1f);
+                mat.SetFloat("_GlitterScale", 22f);
+            }
+            else
+            {
+                mat.SetFloat("_Glitter", 0f);
+            }
+            mat.SetFloat("_Rainbow", 0f);
             mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
             mat.enableInstancing = true;
             EditorUtility.SetDirty(mat);
@@ -3147,7 +3170,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 28;
+            PlayerSettings.Android.bundleVersionCode = 29;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

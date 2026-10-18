@@ -1310,6 +1310,83 @@ def animate_hero(arm):
 # ---------------------------------------------------------------- slimes
 
 
+def dumpling_boss_parts(name, radius, center_z, top, mats):
+    """Boss body: a squishy glitter dumpling (pleated jelly bao, kawaii face, gold star on the forehead).
+
+    Same armature as the slimes (Root / Body / Top); the jelly body is MAT_king (tinted per boss kind in Unity).
+    """
+    size = radius * 2.2
+    rx = size * 0.5 * 1.12
+    rz = size * 0.5 * 0.86
+    cz = rz
+    body = add_sphere(name + "_body", 1.0, (0, 0, cz), scale=(rx, rx, rz), seg=64, rings=36)
+    pleats = 17
+    for v in body.data.vertices:
+        zn = v.co.z / (2 * rz)
+        r = math.hypot(v.co.x, v.co.y)
+        ang = math.atan2(v.co.y, v.co.x)
+        w = max(0.0, min(1.0, (zn - 0.38) / 0.35))
+        ridge = 1.0 + 0.085 * w * math.cos(ang * pleats + 0.3 * zn * 6.0)
+        pinch = 1.0 - 0.62 * max(0.0, (zn - 0.78) / 0.22) ** 1.5
+        k = ridge * pinch
+        v.co.x *= k
+        v.co.y *= k
+        if v.co.z < 0.02 * size:
+            v.co.z = 0.02 * size
+    body.data.update()
+    parts = [assign(body, ["Body", "Top"], mats["king"], sharpness=3.0)]
+    parts.append(assign(add_sphere(name + "_nub", 0.07 * size, (0, 0, 2 * rz + 0.005 * size), scale=(1, 1, 0.9), seg=16, rings=10), "Top", mats["king"]))
+
+    az0 = -math.pi / 2
+    elev = math.radians(14)
+
+    def on_body(az, el, push=0.0):
+        return ((rx + push) * math.cos(el) * math.cos(az), (rx + push) * math.cos(el) * math.sin(az), cz + (rz + push) * math.sin(el))
+
+    def facing(az):
+        return (0, 0, az + math.pi / 2)
+
+    eye_r = 0.058 * size
+    for side in (-1, 1):
+        az = az0 + side * math.radians(18)
+        parts.append(assign(add_sphere(f"{name}_eye{side}", eye_r, on_body(az, elev, -0.012 * size), scale=(1.0, 0.55, 1.18), seg=18, rings=12, rot=facing(az)), "Body", mats["pupil"]))
+        parts.append(assign(add_sphere(f"{name}_shine{side}", eye_r * 0.42, on_body(az - side * math.radians(2.3), elev + math.radians(4.0), 0.012 * size), scale=(1.0, 0.5, 1.0), seg=10, rings=8, rot=facing(az)), "Body", mats["eye_highlight"]))
+        parts.append(assign(add_sphere(f"{name}_shine2{side}", eye_r * 0.18, on_body(az + side * math.radians(2.4), elev - math.radians(3.6), 0.012 * size), scale=(1.0, 0.5, 1.0), seg=8, rings=6, rot=facing(az)), "Body", mats["eye_highlight"]))
+        cheek_az = az0 + side * math.radians(38)
+        parts.append(assign(add_sphere(f"{name}_blush{side}", 0.075 * size, on_body(cheek_az, math.radians(1), -0.012 * size), scale=(1.25, 0.3, 0.72), seg=14, rings=8, rot=facing(cheek_az)), "Body", mats["blush"]))
+    parts.append(assign(add_sphere(name + "_mouth", 0.04 * size, on_body(az0, math.radians(1), -0.012 * size), scale=(1.2, 0.4, 1.35), seg=14, rings=10, rot=facing(az0)), "Body", mats["mouth"]))
+    parts.append(assign(add_sphere(name + "_tongue", 0.022 * size, on_body(az0, math.radians(-1), -0.004 * size), scale=(1.4, 0.4, 0.8), seg=10, rings=6, rot=facing(az0)), "Body", mats["blush"]))
+    # Gold star on the forehead (like the toy's sparkle).
+    star_pts = []
+    for i in range(10):
+        a = -math.pi / 2 + i * math.pi / 5
+        rr = (0.085 if i % 2 == 0 else 0.038) * size
+        star_pts.append((math.cos(a) * rr, math.sin(a) * rr))
+    bm = bmesh.new()
+    top_ring = [bm.verts.new((x, 0.0, z)) for x, z in star_pts]
+    bottom_ring = [bm.verts.new((x, 0.02 * size, z)) for x, z in star_pts]
+    bm.faces.new(top_ring)
+    bm.faces.new(list(reversed(bottom_ring)))
+    for i in range(10):
+        j = (i + 1) % 10
+        bm.faces.new((top_ring[i], top_ring[j], bottom_ring[j], bottom_ring[i]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    mesh = bpy.data.meshes.new(name + "_star")
+    bm.to_mesh(mesh)
+    bm.free()
+    star = bpy.data.objects.new(name + "_star", mesh)
+    bpy.context.scene.collection.objects.link(star)
+    star_el = math.radians(44)
+    fx, fy, fz = on_body(az0, star_el, -0.012 * size)
+    # Lay the star on the dome: tilt its -Y face to the surface normal at that elevation.
+    star.rotation_euler = (-star_el, 0.0, 0.0)
+    star.location = (fx, fy, fz)
+    apply_xform(star)
+    smooth(star, math.radians(40))
+    parts.append(assign(star, "Body", mats["star"]))
+    return parts
+
+
 def build_slime(name, body_mat, radius, height_scale, kind, mats):
     center_z = radius * height_scale * 0.85
     top = center_z + radius * height_scale
@@ -1321,57 +1398,47 @@ def build_slime(name, body_mat, radius, height_scale, kind, mats):
             ("Top", (0, 0, top * 0.8), (0, 0, top + 0.1), "Body"),
         ],
     )
-    body = add_sphere(name + "_body", radius, (0, 0, center_z), scale=(1.05, 0.98, height_scale), seg=36, rings=20)
-    for vert in body.data.vertices:
-        # Flatten the base a little and bulge the sides for a gel-like silhouette.
-        if vert.co.z < center_z - radius * height_scale * 0.6:
-            vert.co.z = max(vert.co.z, 0.0) * 0.9 + 0.02
-    p = [assign(body, ["Body", "Top"], body_mat, sharpness=3.0)]
-    for index in range(3):
-        angle = index * 2.1 + 0.4
-        p.append(assign(add_sphere(f"{name}_blob{index}", radius * 0.22, (math.cos(angle) * radius * 0.5, math.sin(angle) * radius * 0.4 + 0.1, top - radius * 0.1), seg=14, rings=10), "Top", body_mat))
-    def surface_y(x, z):
-        """Front (-Y) surface of the scaled body sphere at (x, z)."""
-        inner = radius * radius - (x / 1.05) ** 2 - ((z - center_z) / height_scale) ** 2
-        return -0.98 * math.sqrt(max(0.0, inner))
+    if kind == "king":
+        p = dumpling_boss_parts(name, radius, center_z, top, mats)
+    else:
+        body = add_sphere(name + "_body", radius, (0, 0, center_z), scale=(1.05, 0.98, height_scale), seg=36, rings=20)
+        for vert in body.data.vertices:
+            # Flatten the base a little and bulge the sides for a gel-like silhouette.
+            if vert.co.z < center_z - radius * height_scale * 0.6:
+                vert.co.z = max(vert.co.z, 0.0) * 0.9 + 0.02
+        p = [assign(body, ["Body", "Top"], body_mat, sharpness=3.0)]
+        for index in range(3):
+            angle = index * 2.1 + 0.4
+            p.append(assign(add_sphere(f"{name}_blob{index}", radius * 0.22, (math.cos(angle) * radius * 0.5, math.sin(angle) * radius * 0.4 + 0.1, top - radius * 0.1), seg=14, rings=10), "Top", body_mat))
+        def surface_y(x, z):
+            """Front (-Y) surface of the scaled body sphere at (x, z)."""
+            inner = radius * radius - (x / 1.05) ** 2 - ((z - center_z) / height_scale) ** 2
+            return -0.98 * math.sqrt(max(0.0, inner))
 
-    eye_z = center_z + radius * 0.18
-    for side in (-1, 1):
-        x = radius * 0.3 * side
-        eye_y = surface_y(x, eye_z) + radius * 0.02
-        p.append(assign(add_sphere(f"{name}_eye{side}", radius * 0.17, (x, eye_y, eye_z), scale=(1, 0.4, 1.25), seg=18, rings=10, rot=(0, 0, 0.3 * side)), "Body", mats["eye_white"]))
-        p.append(assign(add_sphere(f"{name}_iris{side}", radius * 0.11, (x, eye_y - radius * 0.05, eye_z - radius * 0.01), scale=(1, 0.4, 1.2), seg=16, rings=10, rot=(0, 0, 0.3 * side)), "Body", mats["pupil"]))
-        p.append(assign(add_sphere(f"{name}_shine{side}", radius * 0.045, (x - radius * 0.03 * side, eye_y - radius * 0.09, eye_z + radius * 0.05), seg=10, rings=6), "Body", mats["eye_highlight"]))
-    mouth_z = eye_z - radius * 0.3
-    p.append(assign(add_sphere(f"{name}_mouth", radius * 0.09, (0, surface_y(0, mouth_z) + radius * 0.01, mouth_z), scale=(1.6, 0.4, 0.6), seg=12, rings=6), "Body", mats["pupil"]))
-    eye_y = surface_y(radius * 0.3, eye_z)
-    if kind == "fast":
+        eye_z = center_z + radius * 0.18
         for side in (-1, 1):
-            p.append(assign(add_cone(f"{name}_fin{side}", radius * 0.2, radius * 0.7, (radius * 0.95 * side, 0.08, center_z + radius * 0.1), rot=(0.3, 1.25 * side, 0.3 * side), vertices=10), "Body", mats["slime_fin"]))
-        p.append(assign(add_cone(f"{name}_crest", radius * 0.16, radius * 0.6, (0, 0.2, top - radius * 0.05), rot=(-1.1, 0, 0), vertices=10), "Top", mats["slime_fin"]))
-    elif kind == "tank":
-        helmet = add_ico(f"{name}_helmet", radius * 0.62, (0, 0.05, top - radius * 0.25), scale=(1.2, 1.0, 0.6), subdiv=2)
-        displace(helmet, radius * 0.1, seed=3)
-        p.append(assign(helmet, "Top", mats["rock"]))
-        for index, (x, y, z, s) in enumerate(((-0.7, 0.2, 0.3, 0.32), (0.75, 0.1, 0.2, 0.28), (0.2, 0.75, 0.35, 0.3), (-0.3, 0.7, 0.1, 0.25))):
-            plate = add_ico(f"{name}_plate{index}", radius * s, (x * radius, y * radius, center_z + z * radius), subdiv=1)
-            displace(plate, radius * 0.08, seed=index)
-            p.append(assign(plate, "Body", mats["rock"]))
-        for side in (-1, 1):
-            p.append(assign(add_cube(f"{name}_brow{side}", radius * 0.3, (radius * 0.3 * side, surface_y(radius * 0.3, eye_z + radius * 0.22) + radius * 0.02, eye_z + radius * 0.22), scale=(1.1, 0.3, 0.25), rot=(0, 0, 0.35 * side)), "Body", mats["rock"]))
-    elif kind == "king":
-        p.append(assign(add_torus(f"{name}_crown", radius * 0.5, radius * 0.07, (0, 0, top - radius * 0.02), major_segments=32, minor_segments=10), "Top", mats["gold"]))
-        for index in range(6):
-            angle = index / 6 * math.tau
-            p.append(assign(add_cone(f"{name}_spike{index}", radius * 0.1, radius * 0.38, (math.cos(angle) * radius * 0.48, math.sin(angle) * radius * 0.48, top + radius * 0.16), vertices=8), "Top", mats["gold"]))
-            if index % 2 == 0:
-                p.append(assign(add_ico(f"{name}_crowngem{index}", radius * 0.07, (math.cos(angle) * radius * 0.5, math.sin(angle) * radius * 0.5, top + radius * 0.02), subdiv=1), "Top", mats["gem"]))
-        p.append(assign(add_ico(f"{name}_gem", radius * 0.17, (0, surface_y(0, center_z + radius * 0.55) + radius * 0.02, center_z + radius * 0.55), scale=(1, 0.6, 1.3), subdiv=2), "Body", mats["gem"]))
-        cape = add_cylinder(f"{name}_cape", radius * 1.15, radius * 1.5, (0, radius * 0.35, center_z - radius * 0.05), vertices=28, radius2=radius * 0.6, rot=(0.25, 0, 0))
-        carve(cape, lambda co: co.y < radius * 0.15)
-        p.append(assign(cape, ["Body", "Top"], mats["king_cape"], sharpness=3.0))
-        for side in (-1, 1):
-            p.append(assign(add_cube(f"{name}_brow{side}", radius * 0.3, (radius * 0.3 * side, surface_y(radius * 0.3, eye_z + radius * 0.24) + radius * 0.02, eye_z + radius * 0.24), scale=(1.1, 0.3, 0.25), rot=(0, 0, 0.45 * side)), "Body", mats["king_cape"]))
+            x = radius * 0.3 * side
+            eye_y = surface_y(x, eye_z) + radius * 0.02
+            p.append(assign(add_sphere(f"{name}_eye{side}", radius * 0.17, (x, eye_y, eye_z), scale=(1, 0.4, 1.25), seg=18, rings=10, rot=(0, 0, 0.3 * side)), "Body", mats["eye_white"]))
+            p.append(assign(add_sphere(f"{name}_iris{side}", radius * 0.11, (x, eye_y - radius * 0.05, eye_z - radius * 0.01), scale=(1, 0.4, 1.2), seg=16, rings=10, rot=(0, 0, 0.3 * side)), "Body", mats["pupil"]))
+            p.append(assign(add_sphere(f"{name}_shine{side}", radius * 0.045, (x - radius * 0.03 * side, eye_y - radius * 0.09, eye_z + radius * 0.05), seg=10, rings=6), "Body", mats["eye_highlight"]))
+        mouth_z = eye_z - radius * 0.3
+        p.append(assign(add_sphere(f"{name}_mouth", radius * 0.09, (0, surface_y(0, mouth_z) + radius * 0.01, mouth_z), scale=(1.6, 0.4, 0.6), seg=12, rings=6), "Body", mats["pupil"]))
+        eye_y = surface_y(radius * 0.3, eye_z)
+        if kind == "fast":
+            for side in (-1, 1):
+                p.append(assign(add_cone(f"{name}_fin{side}", radius * 0.2, radius * 0.7, (radius * 0.95 * side, 0.08, center_z + radius * 0.1), rot=(0.3, 1.25 * side, 0.3 * side), vertices=10), "Body", mats["slime_fin"]))
+            p.append(assign(add_cone(f"{name}_crest", radius * 0.16, radius * 0.6, (0, 0.2, top - radius * 0.05), rot=(-1.1, 0, 0), vertices=10), "Top", mats["slime_fin"]))
+        elif kind == "tank":
+            helmet = add_ico(f"{name}_helmet", radius * 0.62, (0, 0.05, top - radius * 0.25), scale=(1.2, 1.0, 0.6), subdiv=2)
+            displace(helmet, radius * 0.1, seed=3)
+            p.append(assign(helmet, "Top", mats["rock"]))
+            for index, (x, y, z, s) in enumerate(((-0.7, 0.2, 0.3, 0.32), (0.75, 0.1, 0.2, 0.28), (0.2, 0.75, 0.35, 0.3), (-0.3, 0.7, 0.1, 0.25))):
+                plate = add_ico(f"{name}_plate{index}", radius * s, (x * radius, y * radius, center_z + z * radius), subdiv=1)
+                displace(plate, radius * 0.08, seed=index)
+                p.append(assign(plate, "Body", mats["rock"]))
+            for side in (-1, 1):
+                p.append(assign(add_cube(f"{name}_brow{side}", radius * 0.3, (radius * 0.3 * side, surface_y(radius * 0.3, eye_z + radius * 0.22) + radius * 0.02, eye_z + radius * 0.22), scale=(1.1, 0.3, 0.25), rot=(0, 0, 0.35 * side)), "Body", mats["rock"]))
     mesh = join(p, name)
     bind(mesh, arm)
 
@@ -1765,6 +1832,7 @@ def main():
     reset_file()
     mats = {key: material("MAT_" + key, color, emission=EMISSIVE.get(key, 0.0)) for key, color in PALETTE.items()}
     mats["gold"] = material("MAT_gold", PALETTE["gold"], rough=0.3, metallic=0.7)
+    mats["star"] = material("MAT_star", (0.98, 0.78, 0.22, 1), emission=1.0, rough=0.3)
     mats["crystal"] = material("MAT_crystal", PALETTE["crystal"], emission=1.0, rough=0.15)
     mats["gem"] = material("MAT_gem", PALETTE["gem"], emission=0.9, rough=0.2)
     mats["xp"] = material("MAT_xp", PALETTE["xp"], emission=0.9, rough=0.25)
@@ -1778,6 +1846,12 @@ def main():
 
     env_only = MODE == "env"
     hero_only = MODE == "hero"
+    if MODE == "boss":
+        studio = hero_studio()
+        produce_character("BOSS_SlimeKing", "Enemies/SlimeKing", lambda: build_slime("BOSS_SlimeKing", mats["king"], 0.95, 1.05, "king", mats), 5.5, 2.1, 0.9)
+        hero_studio_off(studio)
+        write_catalog(merge=True)
+        return
     if not env_only:
         studio = hero_studio()
         produce_character(

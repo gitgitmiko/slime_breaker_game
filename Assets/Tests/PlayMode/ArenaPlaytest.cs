@@ -579,6 +579,8 @@ namespace SlimeBreaker.Tests
             if (boss == null || boss.IsDead)
                 return;
             boss.transform.position = hero.transform.position + Vector3.forward * distance;
+            // Face the camera (which looks along +Z) so portraits show the face.
+            boss.transform.rotation = Quaternion.LookRotation(Vector3.back, Vector3.up);
         }
 
         [UnityTest]
@@ -1070,9 +1072,9 @@ namespace SlimeBreaker.Tests
             }
             Assert.AreEqual(10, stage.Floor);
             Assert.AreEqual(BossKind.Rock, stage.ActiveBoss);
-            Assert.AreEqual("Rock Slime", BossCatalog.DisplayName(stage.ActiveBoss));
+            Assert.AreEqual("Rock Dumpling", BossCatalog.DisplayName(stage.ActiveBoss));
             Assert.AreEqual(GameState.BossIntro, flow.State);
-            Assert.IsTrue(flow.ui.BossWarningVisible || flow.ui.BossWarningName == "Rock Slime" || flow.ui.bossWarningName.text == "Rock Slime",
+            Assert.IsTrue(flow.ui.BossWarningVisible || flow.ui.BossWarningName == "Rock Dumpling" || flow.ui.bossWarningName.text == "Rock Dumpling",
                 "boss warning did not appear");
             EnemyHealth boss = null;
             foreach (var enemy in EnemyHealth.Active)
@@ -1080,12 +1082,12 @@ namespace SlimeBreaker.Tests
                 if (enemy != null && enemy.IsBoss)
                     boss = enemy;
             }
-            Assert.IsNotNull(boss, "Rock Slime was not spawned");
+            Assert.IsNotNull(boss, "Rock Dumpling was not spawned");
             Assert.AreEqual(10000, boss.Max, "floor 10 boss HP should be 10.000");
             Assert.AreEqual(BossCatalog.ContactDamageForFloor(10), boss.ContactDamage, "boss basic attack should scale with the floor");
             yield return null;
             Assert.IsTrue(flow.ui.BossBarVisible, "boss HP bar did not appear");
-            Assert.AreEqual("ROCK SLIME", flow.ui.BossBarName);
+            Assert.AreEqual("ROCK DUMPLING", flow.ui.BossBarName);
             Assert.AreEqual("10.000 / 10.000", flow.ui.BossBarText);
             Assert.AreEqual(1f, flow.ui.BossBarFill01, 0.001f);
             Capture("13_boss_intro");
@@ -1114,7 +1116,7 @@ namespace SlimeBreaker.Tests
             Assert.IsNotNull(skyfall.transform.Find("Penumbra"), "skyfall has no soft penumbra shadow");
             Assert.IsNotNull(skyfall.transform.Find("Umbra"), "skyfall has no contact umbra shadow");
             Assert.IsNotNull(skyfall.transform.Find("Mark"), "skyfall has no impact mark");
-            AssertCapeAndCrown(boss);
+            AssertDumplingLook(boss);
             while (boss != null && !boss.IsDead && boss.Current > boss.Max * 0.3f)
                 boss.TakeDamage(800);
             Assert.IsNotNull(boss);
@@ -1630,7 +1632,32 @@ namespace SlimeBreaker.Tests
                         hidden.Add(canvas.gameObject);
                     }
                 }
-                Capture("boss_" + tier.ToString("00") + "_" + BossCatalog.DisplayName((BossKind)tier).Replace(' ', '_'));
+                string label = tier.ToString("00") + "_" + BossCatalog.DisplayName((BossKind)tier).Replace(' ', '_');
+                Capture("ingame_boss_" + label);
+                // Close-up portrait from the front and slightly above (the game camera looks down too steeply to see faces well).
+                var follow = Object.FindAnyObjectByType<FollowCamera>();
+                var cam = Camera.main;
+                if (follow != null && cam != null)
+                {
+                    follow.enabled = false;
+                    // Move the hero out of the frame, put the boss at a fixed spot and shoot it from the front.
+                    var heroBody = PlayerHealth.Instance.transform;
+                    heroBody.position = new Vector3(10f, 0f, -3f);
+                    boss.transform.position = new Vector3(0f, 0f, 4f);
+                    boss.transform.rotation = Quaternion.LookRotation(Vector3.back, Vector3.up);
+                    Vector3 centre = boss.transform.position + Vector3.up * 0.95f;
+                    cam.transform.position = centre + new Vector3(0.5f, 0.7f, -4.2f);
+                    cam.transform.rotation = Quaternion.LookRotation(centre - cam.transform.position, Vector3.up);
+                    for (int hold = 0; hold < 3; hold++)
+                    {
+                        boss.transform.position = new Vector3(0f, 0f, 4f);
+                        boss.transform.rotation = Quaternion.LookRotation(Vector3.back, Vector3.up);
+                        yield return null;
+                    }
+                    Capture("boss_" + label);
+                    heroBody.position = Vector3.zero;
+                    follow.enabled = true;
+                }
                 foreach (var canvasObject in hidden)
                     canvasObject.SetActive(true);
                 foreach (var enemy in new List<EnemyHealth>(EnemyHealth.Active))
@@ -1811,38 +1838,42 @@ namespace SlimeBreaker.Tests
             Assert.IsNotNull(QualitySettings.renderPipeline);
         }
 
-        static void AssertCapeAndCrown(EnemyHealth boss)
+        static void AssertDumplingLook(EnemyHealth boss)
         {
             Assert.IsNotNull(boss);
             var renderer = boss.GetComponentInChildren<SkinnedMeshRenderer>();
             Assert.IsNotNull(renderer, "boss has no skinned mesh");
             var materials = renderer.sharedMaterials;
-            Assert.IsNotNull(materials);
-            bool sawCape = false;
-            bool sawCrown = false;
+            bool sawJelly = false;
+            bool sawStar = false;
+            bool sawBlush = false;
             for (int i = 0; i < materials.Length; i++)
             {
                 if (materials[i] == null)
                     continue;
+                string name = materials[i].name.ToLowerInvariant();
                 var block = new MaterialPropertyBlock();
                 renderer.GetPropertyBlock(block, i);
-                Color color = block.GetColor("_BaseColor");
-                string name = materials[i].name.ToLowerInvariant();
-                if (name.Contains("cape"))
+                if (name.Contains("king"))
                 {
-                    sawCape = true;
-                    Assert.Greater(color.r, color.g + 0.3f, "boss cape should be red, got " + color);
-                    Assert.Greater(color.r, color.b + 0.3f, "boss cape should be red, got " + color);
+                    sawJelly = true;
+                    Assert.AreEqual("SlimeBreaker/Jelly", materials[i].shader.name, "boss body should be gel");
+                    Assert.Greater(materials[i].GetFloat("_Glitter"), 0.5f, "boss jelly should glitter");
+                    Assert.IsFalse(name.Contains("cape"), "the dumpling boss has no cape");
                 }
-                if (name.Contains("gold") || name.Contains("crown"))
+                if (name.Contains("star"))
                 {
-                    sawCrown = true;
-                    Assert.Greater(color.r, 0.85f, "boss crown should be gold, got " + color);
-                    Assert.Greater(color.g, 0.55f, "boss crown should be gold, got " + color);
+                    sawStar = true;
+                    Color color = block.GetColor("_BaseColor");
+                    Assert.Greater(color.r, 0.85f, "forehead star should be gold, got " + color);
+                    Assert.Greater(color.g, 0.55f, "forehead star should be gold, got " + color);
                 }
+                if (name.Contains("blush"))
+                    sawBlush = true;
             }
-            Assert.IsTrue(sawCape, "boss mesh has no cape material");
-            Assert.IsTrue(sawCrown, "boss mesh has no gold/crown material");
+            Assert.IsTrue(sawJelly, "boss mesh has no jelly body material");
+            Assert.IsTrue(sawStar, "boss mesh has no gold forehead star");
+            Assert.IsTrue(sawBlush, "boss mesh has no blush cheeks");
         }
 
         static void KillSlimes(EnemySpawner spawner, int count)

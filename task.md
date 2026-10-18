@@ -193,6 +193,10 @@
 
 - Cincin rune lantai dihapus; staff Normal/Rare/Legend/Ultra 100/250/500/1000 × level (level = 10 lantai). APK 0.20.3.
 
+### Putaran 29 — boss squishy dumpling (tahap 2 redesign)
+
+- 10 boss jadi dumpling jelly berglitter; boss lantai 100 pelangi. Berikutnya: hero baru. APK 0.21.0.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

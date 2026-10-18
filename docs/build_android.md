@@ -246,6 +246,13 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Tes: `ItemStatsFollowSlotRarityAndFloorBand` (tak ada item level 1 > +1000, lantai 15 = level 2) dan drop nyata di lantai 15 pada `ItemsDropEquipAndPersist`.
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 37/37; APK `SLIMEBREAKER_APK_OK` 0.20.3 (versionCode 28).
 
+## Hasil 18 Oktober 2026 (putaran 29 — boss squishy dumpling)
+
+- Boss jadi dumpling jelly berglitter berwajah kawaii + bintang emas; nama "X Dumpling"; jubah dan mahkota dihapus; Royal (lantai 100) pelangi.
+- Shader Jelly: `_Glitter`, `_GlitterScale`, `_Rainbow`; `EnemyHealth` mengirim `_Rainbow` untuk Royal dan menjaga cahaya sendiri bintang/pipi saat tint.
+- Tes: `EveryBossSpawnsWithItsOwnLookAndHp` (jenis, HP, potret) dan `AssertDumplingLook`.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 38/38; APK `SLIMEBREAKER_APK_OK` 0.21.0 (versionCode 29).
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

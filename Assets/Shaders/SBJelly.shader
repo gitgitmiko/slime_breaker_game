@@ -17,6 +17,9 @@ Shader "SlimeBreaker/Jelly"
         _NoiseMap ("Inner noise", 2D) = "gray" {}
         _NoiseScale ("Noise scale", Float) = 1.6
         _NoiseSpeed ("Noise drift", Float) = 0.12
+        _Glitter ("Glitter flecks", Range(0, 2)) = 0
+        _GlitterScale ("Glitter density (cells per metre)", Float) = 30
+        _Rainbow ("Rainbow swirl", Range(0, 1)) = 0
     }
 
     SubShader
@@ -39,6 +42,9 @@ Shader "SlimeBreaker/Jelly"
             half _GlowStrength;
             float _NoiseScale;
             float _NoiseSpeed;
+            half _Glitter;
+            float _GlitterScale;
+            half _Rainbow;
         CBUFFER_END
         ENDHLSL
 
@@ -62,6 +68,20 @@ Shader "SlimeBreaker/Jelly"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             TEXTURE2D(_NoiseMap); SAMPLER(sampler_NoiseMap);
+
+            float SBHash31(float3 p)
+            {
+                p = frac(p * 0.1031);
+                p += dot(p, p.yzx + 33.33);
+                return frac((p.x + p.y) * p.z);
+            }
+
+            half3 SBHue(float h, float s, float v)
+            {
+                float3 k = float3(1.0, 2.0 / 3.0, 1.0 / 3.0);
+                float3 p = abs(frac(h + k) * 6.0 - 3.0);
+                return v * lerp(float3(1, 1, 1), saturate(p - 1.0), s);
+            }
 
             struct Attributes
             {
@@ -109,6 +129,12 @@ Shader "SlimeBreaker/Jelly"
                 half gel = saturate(n1 * 0.6 + n2 * 0.6 - 0.1);
 
                 half3 base = _BaseColor.rgb;
+                if (_Rainbow > 0.001)
+                {
+                    // Slow rainbow swirl through the jelly (floor-100 boss): hue follows the body and drifts with time.
+                    float hue = frac(dot(input.positionOS, float3(0.34, 0.34, 0.5)) * 0.95 + _Time.y * 0.12 + gel * 0.15);
+                    base = lerp(base, SBHue(hue, 0.78, 1.0), _Rainbow);
+                }
                 half3 core = base * lerp(1.0, 0.45, _CoreDarken);
                 half3 albedo = lerp(core, base, saturate(1.0 - ndv * 0.8 + fresnel)) * lerp(0.85, 1.15, gel);
 
@@ -138,7 +164,18 @@ Shader "SlimeBreaker/Jelly"
                 half shadow = lerp(0.35, 1.0, mainLight.shadowAttenuation);
                 half3 sss = base * mainLight.color * (wrap * 0.35 + through) * _Subsurface * shadow;
                 half3 rim = lerp(base, half3(1, 1, 1), 0.35) * fresnel * _RimStrength * (SampleSH(N) + mainLight.color * 0.3);
-                surfaceData.emission = sss + rim + base * _GlowStrength * (0.6 + 0.8 * gel) + _EmissionColor.rgb;
+                half3 glitter = 0;
+                if (_Glitter > 0.001)
+                {
+                    // Round multi-colour flecks in object space (they ride on the body), each twinkling on its own clock.
+                    float3 cellPos = input.positionOS * _GlitterScale;
+                    float3 cell = floor(cellPos);
+                    float h = SBHash31(cell);
+                    float fleck = step(0.8, h) * saturate(1.0 - length(frac(cellPos) - 0.5) * 3.4);
+                    float twinkle = 0.3 + 0.7 * pow(saturate(sin(_Time.y * (1.4 + h * 3.0) + h * 60.0) * 0.5 + 0.5), 3.0);
+                    glitter = SBHue(frac(h * 7.3), 0.45, 1.0) * fleck * twinkle * (0.4 + 0.6 * ndv) * _Glitter * 1.5;
+                }
+                surfaceData.emission = sss + rim + base * _GlowStrength * (0.6 + 0.8 * gel) + _EmissionColor.rgb + min(glitter, 1.8);
 
                 half4 color = UniversalFragmentPBR(inputData, surfaceData);
                 color.rgb = MixFog(color.rgb, inputData.fogCoord);

@@ -32,6 +32,10 @@ Semua aset dibuat sendiri di mesin ini (Blender, Python/numpy/Pillow, FluidSynth
 - Kamera gameplay: offset (0, 8.3, -6.9) dari hero, FOV 50, sedikit mengarah ke arah gerak (`FollowCamera.leadDistance`), goyang pendek saat hero terkena damage.
 - Arena bermain r = 11,2 m dibatasi cincin rune emisif dan 18 batu batas; di luar itu tanah naik menjadi bukit berpohon sampai 40 m supaya tepi mesh tidak pernah terlihat.
 
+## Boss: squishy dumpling
+
+Kesepuluh boss adalah dumpling jelly berglitter (mesh `BOSS_SlimeKing.fbx`, armature dan klip lama): bao bening berlipatan dengan pucuk berpilin, wajah kawaii (mata besar mengilap bertitik pantul, pipi merona, mulut terbuka dengan lidah) dan bintang emas swa-cahaya di dahi. Warna tubuh tiap boss tetap berbeda (tint per jenis); shader `SlimeBreaker/Jelly` kini punya serpihan glitter yang berkelip (`_Glitter`) dan pusaran pelangi (`_Rainbow`). Boss lantai 100 (Royal Dumpling) pelangi: warna jelly berputar melalui semua hue.
+
 ## Arena: dinding wadah dimsum
 
 Konsep "Squishy Dumpling Co.": arena berada di dalam steamer dimsum. Lantai (rumput, pasir, salju, …), properti, dan pencahayaan per bioma tetap; yang berubah adalah tepinya: dinding setinggi 2,5 m berlapis anyaman bambu (twill) dengan bibir kayu pucat membulat, gelang bambu dan simpul di luar. Semua properti yang dulu berdiri di luar batas (pohon di bukit) kini berdiri di dalam, dalam sabuk 2–4 m di sepanjang dinding. Dinding rendah supaya kamera tinggi tidak menutupi hero di tepi. Tahap berikutnya: boss jadi squishy dumpling (lantai 100 pelangi), lalu hero.

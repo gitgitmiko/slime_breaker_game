@@ -24,14 +24,6 @@
     "notes": "generic rig, in-place clips"
   },
   {
-    "id": "BOSS_SlimeKing",
-    "file": "Enemies/SlimeKing/BOSS_SlimeKing.fbx",
-    "kind": "character",
-    "triangles": 4584,
-    "vertices": 2356,
-    "notes": "generic rig, in-place clips"
-  },
-  {
     "id": "ENV_Forest_Ground",
     "file": "Environment/ForestArena/ENV_Forest_Ground.fbx",
     "kind": "static",
@@ -414,5 +406,13 @@
     "triangles": 12224,
     "vertices": 6720,
     "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "BOSS_SlimeKing",
+    "file": "Enemies/SlimeKing/BOSS_SlimeKing.fbx",
+    "kind": "character",
+    "triangles": 6780,
+    "vertices": 3416,
+    "notes": "generic rig, in-place clips"
   }
 ]

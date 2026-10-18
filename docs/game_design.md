@@ -58,16 +58,16 @@ Masuk pintu meregenerasi arena (fade). Cuaca dan siang/malam berganti setiap lan
 
 | Lantai | Nama | HP | Skill enrage | Keunikan |
 |---|---|---|---|---|
-| 10 | Rock Slime | 10.000 | 1 | Kulit batu, lempar batu ke atas lalu jatuh ke bayangan di tanah, slam lebih lebar |
-| 20 | Flame Slime | 20.000 | 2 | Tembakan api (`HostileProjectile`) + genangan bakar |
-| 30 | Frost Slime | 30.000 | 3 | Hujan es + aura dingin yang memperlambat hero |
-| 40 | Volt Slime | 40.000 | 4 | Sambaran petir + jatuhan kilat |
-| 50 | Toxic Slime | 50.000 | 5 | Hujan racun dan genangan |
-| 60 | Shadow Slime | 60.000 | 6 | Blink, hujan bayangan, selubung gelap |
-| 70 | Magma Slime | 70.000 | 7 | Hujan magma + jejak lava saat charge |
-| 80 | Storm Slime | 80.000 | 8 | Dorongan angin + jatuhan petir |
-| 90 | Crystal Slime | 90.000 | 9 | Cincin duri + perisai yang menahan bolt |
-| 100 | Royal Slime | 100.000 | 10 | Campuran tembakan api, hujan, dan zap. Kalahkan untuk **Tamat!** |
+| 10 | Rock Dumpling | 10.000 | 1 | Kulit batu, lempar batu ke atas lalu jatuh ke bayangan di tanah, slam lebih lebar |
+| 20 | Flame Dumpling | 20.000 | 2 | Tembakan api (`HostileProjectile`) + genangan bakar |
+| 30 | Frost Dumpling | 30.000 | 3 | Hujan es + aura dingin yang memperlambat hero |
+| 40 | Volt Dumpling | 40.000 | 4 | Sambaran petir + jatuhan kilat |
+| 50 | Toxic Dumpling | 50.000 | 5 | Hujan racun dan genangan |
+| 60 | Shadow Dumpling | 60.000 | 6 | Blink, hujan bayangan, selubung gelap |
+| 70 | Magma Dumpling | 70.000 | 7 | Hujan magma + jejak lava saat charge |
+| 80 | Storm Dumpling | 80.000 | 8 | Dorongan angin + jatuhan petir |
+| 90 | Crystal Dumpling | 90.000 | 9 | Cincin duri + perisai yang menahan bolt |
+| 100 | Royal Dumpling | 100.000 | 10 | Campuran tembakan api, hujan, dan zap. Kalahkan untuk **Tamat!** |
 
 Pengaturan memuat dua slider volume (disimpan di save meta, `musicLevel`/`sfxLevel`): **Musik (BGM)** mengatur musik, **Suara game** mengatur efek suara dan ambience (hujan, angin, bed biome). Peluru musuh (slime ranged dan boss) tidak punya suara saat mengenai hero; yang terdengar hanya bunyi hit milik hero (`playerhit`).
 

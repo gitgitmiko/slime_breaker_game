@@ -64,7 +64,7 @@ def surface(key):
         tex = nodes.new("ShaderNodeTexImage")
         tex.image = bpy.data.images.load(path, check_existing=True)
         mat.node_tree.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
-        if key in ("leaf", "grass"):
+        if key in ("leaf", "grass", "bamboo_leaf"):
             mat.node_tree.links.new(tex.outputs["Alpha"], bsdf.inputs["Alpha"])
             mat.blend_method = "CLIP" if hasattr(mat, "blend_method") else mat.blend_method
             if hasattr(mat, "surface_render_method"):

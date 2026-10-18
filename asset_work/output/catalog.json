@@ -278,5 +278,141 @@
     "triangles": 2144,
     "vertices": 1080,
     "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_Floor",
+    "file": "Environment/Dimsum/ENV_Dimsum_Floor.fbx",
+    "kind": "static",
+    "triangles": 128,
+    "vertices": 129,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_Wall",
+    "file": "Environment/Dimsum/ENV_Dimsum_Wall.fbx",
+    "kind": "static",
+    "triangles": 12224,
+    "vertices": 6336,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_Table",
+    "file": "Environment/Dimsum/ENV_Dimsum_Table.fbx",
+    "kind": "static",
+    "triangles": 640,
+    "vertices": 480,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_Lid",
+    "file": "Environment/Dimsum/ENV_Dimsum_Lid.fbx",
+    "kind": "static",
+    "triangles": 1656,
+    "vertices": 927,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_Tier",
+    "file": "Environment/Dimsum/ENV_Dimsum_Tier.fbx",
+    "kind": "static",
+    "triangles": 7968,
+    "vertices": 4037,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_ChopLying",
+    "file": "Environment/Dimsum/ENV_Dimsum_ChopLying.fbx",
+    "kind": "static",
+    "triangles": 544,
+    "vertices": 280,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_Scallion",
+    "file": "Environment/Dimsum/ENV_Dimsum_Scallion.fbx",
+    "kind": "static",
+    "triangles": 828,
+    "vertices": 504,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_Chopsticks",
+    "file": "Environment/Dimsum/ENV_Dimsum_Chopsticks.fbx",
+    "kind": "static",
+    "triangles": 1048,
+    "vertices": 546,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_Sauce",
+    "file": "Environment/Dimsum/ENV_Dimsum_Sauce.fbx",
+    "kind": "static",
+    "triangles": 2352,
+    "vertices": 1194,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_Teacup",
+    "file": "Environment/Dimsum/ENV_Dimsum_Teacup.fbx",
+    "kind": "static",
+    "triangles": 3544,
+    "vertices": 1790,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_Chili",
+    "file": "Environment/Dimsum/ENV_Dimsum_Chili.fbx",
+    "kind": "static",
+    "triangles": 964,
+    "vertices": 504,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_Shiitake",
+    "file": "Environment/Dimsum/ENV_Dimsum_Shiitake.fbx",
+    "kind": "static",
+    "triangles": 984,
+    "vertices": 600,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_Dumpling_A",
+    "file": "Environment/Dimsum/ENV_Dimsum_Dumpling_A.fbx",
+    "kind": "static",
+    "triangles": 4780,
+    "vertices": 2408,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_Dumpling_B",
+    "file": "Environment/Dimsum/ENV_Dimsum_Dumpling_B.fbx",
+    "kind": "static",
+    "triangles": 4780,
+    "vertices": 2408,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_Bamboo",
+    "file": "Environment/Dimsum/ENV_Dimsum_Bamboo.fbx",
+    "kind": "static",
+    "triangles": 3606,
+    "vertices": 1884,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_BokChoy",
+    "file": "Environment/Dimsum/ENV_Dimsum_BokChoy.fbx",
+    "kind": "static",
+    "triangles": 5698,
+    "vertices": 2926,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_BambooLeaves",
+    "file": "Environment/Dimsum/ENV_Dimsum_BambooLeaves.fbx",
+    "kind": "static",
+    "triangles": 10,
+    "vertices": 20,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
   }
 ]

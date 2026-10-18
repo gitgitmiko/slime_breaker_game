@@ -95,6 +95,20 @@ python3 asset_work/scripts/build_audio_hd.py all
 - Shader URP: `SlimeBreaker/Ground` (world-space, sampel kedua diputar 37° anti-tiling, noise makro, emisi berdenyut), `SlimeBreaker/Lit` (alpha clip, angin, translusensi daun, AO verteks, penutup bioma global `_SB_Cover*`), `SlimeBreaker/Jelly` (subsurface wrap, rim fresnel, inti padat, noise mengalir). Keyword global `SB_QUALITY_LOW` memilih jalur murah.
 - `PostFx` membuat Volume runtime (ACES, bloom, color adjustments, white balance, split toning, vignette) dengan grading per bioma/malam/cuaca; mati di preset Low.
 
+### Arena dimsum (putaran 25)
+
+Arena kini di dalam wadah dimsum (steamer bambu) di atas meja glitter. Perintah:
+
+```bash
+python3 asset_work/scripts/build_pbr_textures.py asset_work/textures TEX_Bamboo_Weave TEX_Steamer_Wood TEX_Glitter_Table TEX_Bamboo_Leaf_Atlas
+blender --background --python asset_work/scripts/build_arena_dimsum.py -- asset_work/output asset_work/previews asset_work/textures
+```
+
+- Tekstur: `TEX_Bamboo_Weave` (anyaman twill 16 strip, 2048), `TEX_Steamer_Wood` (kayu pucat), `TEX_Glitter_Table` (dasar netral + glitter multiwarna di peta emisi; ditint per rasa di Unity), `TEX_Bamboo_Leaf_Atlas` (ranting daun bambu), sprite FX `TEX_FX_Bokeh` dan `TEX_FX_Sparkle`.
+- Mesh (`Environment/Dimsum`): `Floor` (cakram r 25,4), `Wall` (cincin kayu r 24,5–26,4 tinggi 2,5 dengan gelang bambu dan simpul), `Table` (cincin r 25,9–140), dekor meja `Lid`, `Tier`, `ChopLying`, dan properti: `Dumpling_A/B` (jelly berwajah, lipatan atas), `Bamboo`, `BokChoy`, `Scallion`, `Chopsticks`, `Sauce`, `Teacup`, `Chili`, `Shiitake`, `BambooLeaves`.
+- Material `MAT_hd_<permukaan>`; `MAT_hd_jelly*` dipetakan `ProjectSetup` ke shader `SlimeBreaker/Jelly` (dumpling), lainnya ke `SlimeBreaker/Lit`.
+- Lantai dan meja memakai shader `SlimeBreaker/Ground` (dunia-ruang, tanpa anti-tiling untuk anyaman) dengan 10 material tint (satu per bioma/rasa).
+
 ### Audio HD (putaran 16)
 
 `build_audio_hd.py [music|ambience|sfx|all] [nama…]`: komposer prosedural (pretty_midi, progresi akor, voice leading, melodi di-snap ke nada akor) → FluidSynth kering (`-R 0 -C 0`) dengan soundfont GeneralUser GS (`~/game-toolchain/soundfonts/GeneralUser-GS.sf2`) → pedalboard (HP, shelf, kompresor, reverb, tail di-wrap agar loop mulus) → pyloudnorm → soft-knee peak (tanpa make-up gain, puncak ≤ 0,97) → `oggenc`. Hasil: 12 musik (`MUS_Menu`, 10 bioma, `MUS_Boss`, −15 s.d. −19 LUFS), 11 ambience loop 34 s (`AMB_<Bioma>`, `AMB_Night`, sekitar −25 LUFS), 23 SFX/jingle. Tidak ada sampel yang clipping.

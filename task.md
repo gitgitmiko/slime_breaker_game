@@ -181,6 +181,10 @@
 
 - Hit peluru musuh dibisukan; slider volume BGM dan suara game di Pengaturan. APK 0.19.1.
 
+### Putaran 25 — arena wadah dimsum (tahap 1 redesign)
+
+- Arena + menu di dalam steamer dimsum; boss squishy dumpling (lantai 100 pelangi) dan hero baru menyusul di tahap berikutnya. APK 0.20.0.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

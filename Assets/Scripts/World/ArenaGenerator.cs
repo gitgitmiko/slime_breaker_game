@@ -14,43 +14,36 @@ namespace SlimeBreaker
         [Serializable]
         public class PropSet
         {
-            public GameObject treeA;
-            public GameObject treeB;
-            public GameObject rockA;
-            public GameObject rockB;
-            public GameObject mushroom;
-            public GameObject bush;
-            public GameObject pillar;
-            public GameObject grass;
-            public GameObject flower;
-            public GameObject boundaryStone;
-            public GameObject runeRing;
-            public GameObject cactus;
-            public GameObject iceSpike;
-            public GameObject thunderSpire;
-            public GameObject swampRoot;
-            public GameObject swampReed;
-            public GameObject shadowObelisk;
-            public GameObject volcanoRock;
-            public GameObject volcanoPillar;
-            public GameObject stormArch;
-            public GameObject crystalSpire;
-            public GameObject royalColumn;
+            // Solid obstacles / rings
+            public GameObject bamboo;
+            public GameObject dumplingA;
+            public GameObject dumplingB;
+            public GameObject chopsticks;
+            public GameObject sauce;
+            public GameObject teacup;
+            public GameObject chili;
+            public GameObject rockCandy;
+            public GameObject crystalCandy;
+            // Garnish (not solid)
+            public GameObject bokChoy;
+            public GameObject scallion;
+            public GameObject shiitake;
+            public GameObject bambooLeaves;
+            public GameObject garnish;
+            // Table decor outside the steamer wall
+            public GameObject lid;
+            public GameObject tier;
+            public GameObject chopLying;
         }
 
         public PropSet props = new PropSet();
         public GameObject[] obstaclePrefabs;
         public Renderer groundRenderer;
-        public Material forestGround;
-        public Material snowGround;
-        public Material sandGround;
-        public Material thunderGround;
-        public Material swampGround;
-        public Material shadowGround;
-        public Material volcanoGround;
-        public Material stormGround;
-        public Material crystalGround;
-        public Material royalGround;
+        public Renderer tableRenderer;
+        /// <summary>Steamer floor (woven bamboo mat) per biome, indexed by <see cref="Biome"/>.</summary>
+        public Material[] floorMaterials = new Material[ArenaTheme.BiomeCount];
+        /// <summary>Glitter tabletop outside the steamer per biome.</summary>
+        public Material[] tableMaterials = new Material[ArenaTheme.BiomeCount];
         public GameObject rainRig;
         public GameObject snowRig;
         public GameObject firefliesRig;
@@ -59,6 +52,8 @@ namespace SlimeBreaker
         public GameObject sporesRig;
         public GameObject sparksRig;
         public GameObject mistRig;
+        public GameObject sparkleRig;
+        public GameObject bokehRig;
         [Header("Biome cover (moss / snow / sand / ash on upward prop faces)")]
         public Texture2D coverMoss;
         public Texture2D coverSnow;
@@ -76,13 +71,34 @@ namespace SlimeBreaker
         public int Generations { get; private set; }
         public IReadOnlyList<Obstacle> PlacedObstacles => obstacles;
 
-        static readonly Color SnowLeaf = new Color(0.86f, 0.93f, 1f);
-        static readonly Color SnowGrass = new Color(0.8f, 0.88f, 0.95f);
-        static readonly Color DesertLeaf = new Color(0.6f, 0.56f, 0.28f);
-        static readonly Color DesertGrass = new Color(0.72f, 0.6f, 0.34f);
-        static readonly Color SwampLeaf = new Color(0.28f, 0.45f, 0.18f);
-        static readonly Color ThunderLeaf = new Color(0.32f, 0.38f, 0.22f);
-        static readonly Color RoyalLeaf = new Color(0.45f, 0.62f, 0.28f);
+        /// <summary>Each biome is a dumpling flavour: jelly tint of the mini dumplings, leaf tint for the greens.</summary>
+        static readonly Color[] JellyTints =
+        {
+            new Color(0.70f, 1.00f, 0.78f), // Forest: jasmine / jade
+            new Color(1.00f, 0.86f, 0.46f), // Desert: golden custard
+            new Color(0.90f, 0.96f, 1.00f), // Snow: coconut
+            new Color(0.80f, 0.64f, 1.00f), // Thunder: taro
+            new Color(0.62f, 0.86f, 0.46f), // Swamp: matcha
+            new Color(0.58f, 0.52f, 0.78f), // Shadow: black sesame
+            new Color(1.00f, 0.52f, 0.42f), // Volcano: chili
+            new Color(0.58f, 0.68f, 1.00f), // Storm: blueberry
+            new Color(1.00f, 0.74f, 0.96f), // Crystal: rock candy
+            new Color(1.00f, 0.90f, 0.56f), // Royal: egg yolk
+        };
+
+        static readonly Color[] LeafTints =
+        {
+            Color.white,
+            new Color(1.0f, 0.92f, 0.62f),
+            new Color(0.84f, 0.96f, 1.0f),
+            new Color(0.82f, 0.86f, 0.66f),
+            new Color(0.78f, 1.0f, 0.62f),
+            new Color(0.66f, 0.62f, 0.86f),
+            new Color(1.0f, 0.78f, 0.58f),
+            new Color(0.76f, 0.88f, 0.96f),
+            new Color(1.0f, 0.86f, 1.0f),
+            new Color(0.96f, 1.0f, 0.7f),
+        };
 
         /// <summary>Sun and ambient multipliers for the HDR + ACES pipeline (tuned from screenshots).</summary>
         public const float HdrSunBoost = 1.3f;
@@ -119,6 +135,7 @@ namespace SlimeBreaker
             ApplyCover(theme);
             PlaceProps(theme, rng);
             PlaceObstacles(theme, rng);
+            PlaceTableDecor(theme, rng);
             TintFoliage(theme);
             CombineScatter();
             SpawnWeather(theme);
@@ -256,23 +273,11 @@ namespace SlimeBreaker
 
         void ApplyGround(ArenaTheme theme)
         {
-            if (groundRenderer == null)
-                return;
-            var material = theme.biome switch
-            {
-                Biome.Snow => snowGround,
-                Biome.Desert => sandGround,
-                Biome.Thunder => thunderGround,
-                Biome.Swamp => swampGround,
-                Biome.Shadow => shadowGround,
-                Biome.Volcano => volcanoGround,
-                Biome.Storm => stormGround,
-                Biome.Crystal => crystalGround,
-                Biome.Royal => royalGround,
-                _ => forestGround
-            };
-            if (material != null)
-                groundRenderer.sharedMaterial = material;
+            int index = Mathf.Clamp((int)theme.biome, 0, ArenaTheme.BiomeCount - 1);
+            if (groundRenderer != null && floorMaterials != null && index < floorMaterials.Length && floorMaterials[index] != null)
+                groundRenderer.sharedMaterial = floorMaterials[index];
+            if (tableRenderer != null && tableMaterials != null && index < tableMaterials.Length && tableMaterials[index] != null)
+                tableRenderer.sharedMaterial = tableMaterials[index];
         }
 
         void ApplyLighting(ArenaTheme theme)
@@ -331,8 +336,8 @@ namespace SlimeBreaker
                     break;
                 default:
                     sunColor = new Color(1f, 0.95f, 0.86f); intensity = 1.25f; euler = new Vector3(52f, -30f, 0f);
-                    sky = new Color(0.58f, 0.7f, 0.78f); equator = new Color(0.4f, 0.5f, 0.38f); groundAmbient = new Color(0.16f, 0.18f, 0.12f);
-                    fog = new Color(0.52f, 0.68f, 0.76f); fogStart = 26f; fogEnd = 60f; background = new Color(0.36f, 0.56f, 0.7f);
+                    sky = new Color(0.74f, 0.72f, 0.72f); equator = new Color(0.6f, 0.52f, 0.44f); groundAmbient = new Color(0.3f, 0.22f, 0.17f);
+                    fog = new Color(0.72f, 0.5f, 0.52f); fogStart = 40f; fogEnd = 95f; background = new Color(0.4f, 0.15f, 0.2f);
                     break;
             }
 
@@ -366,7 +371,7 @@ namespace SlimeBreaker
             if (theme.IsNight)
             {
                 sunColor = new Color(0.45f, 0.55f, 0.95f); intensity = 0.42f; euler = new Vector3(38f, 150f, 0f);
-                sky = new Color(0.12f, 0.16f, 0.3f); equator = new Color(0.08f, 0.1f, 0.2f); groundAmbient = new Color(0.03f, 0.03f, 0.06f);
+                sky = new Color(0.22f, 0.25f, 0.44f); equator = new Color(0.16f, 0.18f, 0.32f); groundAmbient = new Color(0.07f, 0.07f, 0.12f);
                 fog = new Color(0.05f, 0.07f, 0.14f); fogStart = 12f; fogEnd = 38f; background = new Color(0.04f, 0.06f, 0.12f);
                 if (theme.biome == Biome.Volcano)
                 {
@@ -442,37 +447,14 @@ namespace SlimeBreaker
 
         void ApplyCover(ArenaTheme theme)
         {
-            Texture2D map = coverMoss;
-            Color tint = new Color(0.27f, 0.35f, 0.13f, 0.18f);
-            float amount = 0.36f;
-            switch (theme.biome)
+            // Props are glossy toys, not mossy rocks: only the snow flavour (and snowfall) dusts them with powdered sugar.
+            Texture2D map = null;
+            Color tint = new Color(0.96f, 0.98f, 1f, 0.55f);
+            float amount = 0f;
+            if (theme.biome == Biome.Snow || theme.weather == Weather.Snowfall)
             {
-                case Biome.Snow:
-                    map = coverSnow; tint = new Color(0.96f, 0.98f, 1f, 0.55f); amount = 0.75f; break;
-                case Biome.Desert:
-                    map = coverSand; tint = new Color(0.86f, 0.72f, 0.5f, 0.12f); amount = 0.42f; break;
-                case Biome.Thunder:
-                    tint = new Color(0.22f, 0.26f, 0.14f, 0.25f); amount = 0.28f; break;
-                case Biome.Swamp:
-                    tint = new Color(0.22f, 0.3f, 0.1f, 0.35f); amount = 0.55f; break;
-                case Biome.Shadow:
-                    amount = 0f; break;
-                case Biome.Volcano:
-                    map = coverAsh; tint = new Color(0.46f, 0.44f, 0.42f, 0.1f); amount = 0.45f; break;
-                case Biome.Storm:
-                    tint = new Color(0.24f, 0.31f, 0.15f, 0.5f); amount = 0.28f; break;
-                case Biome.Crystal:
-                    map = coverSand; tint = new Color(0.62f, 0.52f, 0.86f, 0.3f); amount = 0.2f; break;
-                case Biome.Royal:
-                    amount = 0.2f; break;
-            }
-            if (theme.weather == Weather.Snowfall)
-            {
-                map = coverSnow; tint = new Color(0.96f, 0.98f, 1f, 0.55f); amount = Mathf.Max(amount, 0.85f);
-            }
-            else if (theme.weather == Weather.Ash)
-            {
-                map = coverAsh; tint = new Color(0.46f, 0.44f, 0.42f, 0.1f); amount = Mathf.Max(amount, 0.5f);
+                map = coverSnow;
+                amount = theme.weather == Weather.Snowfall ? 0.7f : 0.45f;
             }
             CoverAmount = map != null ? amount : 0f;
             SetCover(map, tint, amount);
@@ -499,95 +481,126 @@ namespace SlimeBreaker
         void PlaceProps(ArenaTheme theme, System.Random rng)
         {
             float r = arenaRadius;
-            Place(props.runeRing, Vector3.zero, 0f, r / 11.2f, false);
-            Ring(props.boundaryStone, 24, r + 1.2f, true, rng);
+            // Every floor is the inside of the same bamboo steamer; the biome (flavour) decides what is on the tray.
+            Scatter(props.bambooLeaves, theme.biome == Biome.Snow ? 70 : 120, 1.6f, r * 0.96f, rng);
             switch (theme.biome)
             {
-                case Biome.Snow:
-                    Ring(props.treeA, 10, r + 2.6f, false, rng);
-                    Ring(props.treeB, 9, r + 4.2f, false, rng, 0.5f);
-                    Ring(props.treeA, 12, r + 8f, false, rng, 0.25f, 1.2f);
-                    Ring(props.treeB, 10, r + 11f, false, rng, 0.1f, 1.35f);
-                    Ring(props.iceSpike, 10, r * 0.58f, false, rng, 0.25f, 1.15f);
-                    Ring(props.rockA, 8, r * 0.44f, false, rng, 0.4f);
-                    Ring(props.pillar, 5, r * 0.7f, true, rng);
-                    Scatter(props.grass, 90, 2.0f, r * 0.9f, rng);
+                case Biome.Snow: // coconut + powdered sugar
+                    Ring(props.teacup, 8, r * 0.62f, true, rng, 0.25f);
+                    Ring(props.rockCandy, 10, r * 0.58f, false, rng, 0.3f, 1.1f);
+                    Ring(props.dumplingA, 6, r * 0.44f, true, rng, 0.4f);
+                    Ring(props.dumplingB, 10, r * 0.8f, true, rng, 0.2f);
+                    Ring(props.chopsticks, 5, r * 0.7f, true, rng, 0.15f);
+                    Ring(props.scallion, 8, r * 0.34f, false, rng, 0.4f);
                     break;
-                case Biome.Desert:
-                    Ring(props.cactus, 12, r * 0.72f, false, rng, 0.3f, 1.1f);
-                    Ring(props.cactus, 8, r * 0.4f, false, rng, 0.45f, 0.85f);
-                    Ring(props.rockA, 14, r * 0.62f, false, rng, 0.25f, 1.15f);
-                    Ring(props.rockB, 10, r * 0.45f, false, rng, 0.45f);
-                    Ring(props.rockA, 10, r * 0.82f, false, rng, 0.3f, 1.6f);
-                    Ring(props.pillar, 8, r * 0.7f, true, rng, 0.1f);
-                    Ring(props.pillar, 5, r * 0.42f, true, rng, 0.2f, 0.8f);
-                    Scatter(props.grass, 60, 2.4f, r * 0.9f, rng);
+                case Biome.Desert: // golden custard + chili
+                    Ring(props.chili, 12, r * 0.66f, false, rng, 0.35f);
+                    Ring(props.chili, 7, r * 0.38f, false, rng, 0.5f, 0.85f);
+                    Ring(props.sauce, 8, r * 0.52f, false, rng, 0.3f);
+                    Ring(props.dumplingA, 8, r * 0.78f, true, rng, 0.2f);
+                    Ring(props.chopsticks, 8, r * 0.7f, true, rng, 0.12f);
+                    Ring(props.bamboo, 7, r * 0.97f, false, rng, 0.15f);
+                    Ring(props.scallion, 6, r * 0.3f, false, rng, 0.4f);
                     break;
-                case Biome.Thunder:
-                    Ring(props.treeA, 8, r + 3f, false, rng, 0.4f, 1.1f);
-                    Ring(props.treeB, 7, r + 7f, false, rng, 0.35f, 1.2f);
-                    Ring(props.thunderSpire, 8, r * 0.68f, true, rng, 0.15f);
-                    Ring(props.rockA, 10, r * 0.5f, false, rng, 0.3f);
-                    Ring(props.pillar, 5, r * 0.38f, true, rng);
-                    Scatter(props.grass, 220, 1.8f, r * 0.92f, rng);
+                case Biome.Thunder: // taro
+                    Ring(props.chopsticks, 9, r * 0.68f, true, rng, 0.12f);
+                    Ring(props.bamboo, 9, r * 0.95f, false, rng, 0.12f);
+                    Ring(props.dumplingA, 6, r * 0.5f, true, rng, 0.3f);
+                    Ring(props.dumplingB, 10, r * 0.82f, true, rng, 0.2f);
+                    Ring(props.teacup, 6, r * 0.36f, true, rng, 0.4f);
+                    Ring(props.bokChoy, 8, r * 0.28f, false, rng, 0.4f);
                     break;
-                case Biome.Swamp:
-                    Ring(props.swampRoot, 10, r * 0.7f, false, rng, 0.25f, 1.1f);
-                    Ring(props.swampRoot, 7, r * 0.42f, false, rng, 0.4f, 0.9f);
-                    Ring(props.mushroom, 12, r * 0.3f, false, rng, 0.3f);
-                    Ring(props.rockB, 8, r * 0.55f, false, rng, 0.35f);
-                    Scatter(props.swampReed, 90, 2.0f, r * 0.92f, rng);
-                    Scatter(props.grass, 140, 2.0f, r * 0.9f, rng);
+                case Biome.Swamp: // matcha
+                    Ring(props.bokChoy, 14, r * 0.66f, false, rng, 0.3f);
+                    Ring(props.bokChoy, 8, r * 0.34f, false, rng, 0.4f, 0.9f);
+                    Ring(props.scallion, 12, r * 0.5f, false, rng, 0.4f);
+                    Ring(props.bamboo, 10, r * 0.95f, false, rng, 0.12f);
+                    Ring(props.dumplingA, 6, r * 0.78f, true, rng, 0.25f);
+                    Ring(props.scallion, 8, r * 0.42f, false, rng, 0.4f);
+                    Ring(props.sauce, 5, r * 0.58f, false, rng, 0.3f);
                     break;
-                case Biome.Shadow:
-                    Ring(props.shadowObelisk, 10, r * 0.72f, true, rng, 0.12f);
-                    Ring(props.shadowObelisk, 6, r * 0.4f, true, rng, 0.2f, 0.85f);
-                    Ring(props.rockA, 8, r * 0.55f, false, rng, 0.3f);
-                    Ring(props.pillar, 4, r * 0.28f, true, rng);
+                case Biome.Shadow: // black sesame
+                    Ring(props.chopsticks, 10, r * 0.72f, true, rng, 0.12f);
+                    Ring(props.dumplingA, 8, r * 0.56f, true, rng, 0.25f);
+                    Ring(props.sauce, 8, r * 0.44f, false, rng, 0.3f);
+                    Ring(props.teacup, 5, r * 0.82f, true, rng, 0.2f);
+                    Ring(props.scallion, 6, r * 0.3f, false, rng, 0.4f);
                     break;
-                case Biome.Volcano:
-                    Ring(props.volcanoPillar, 8, r * 0.7f, true, rng, 0.15f);
-                    Ring(props.volcanoRock, 12, r * 0.52f, false, rng, 0.3f, 1.15f);
-                    Ring(props.volcanoRock, 8, r * 0.34f, false, rng, 0.4f, 0.9f);
-                    Ring(props.rockA, 8, r * 0.82f, false, rng, 0.25f, 1.4f);
+                case Biome.Volcano: // chili oil
+                    Ring(props.chili, 14, r * 0.62f, false, rng, 0.3f);
+                    Ring(props.sauce, 10, r * 0.46f, false, rng, 0.3f);
+                    Ring(props.dumplingA, 8, r * 0.78f, true, rng, 0.2f);
+                    Ring(props.chopsticks, 6, r * 0.7f, true, rng, 0.15f);
+                    Ring(props.dumplingB, 8, r * 0.3f, true, rng, 0.4f);
                     break;
-                case Biome.Storm:
-                    Ring(props.stormArch, 6, r * 0.68f, true, rng, 0.2f);
-                    Ring(props.pillar, 8, r * 0.5f, true, rng, 0.25f);
-                    Ring(props.rockA, 10, r * 0.4f, false, rng, 0.35f);
-                    Ring(props.rockB, 8, r * 0.78f, false, rng, 0.3f, 1.2f);
-                    Scatter(props.grass, 110, 2.0f, r * 0.9f, rng);
+                case Biome.Storm: // blueberry
+                    Ring(props.teacup, 8, r * 0.6f, true, rng, 0.25f);
+                    Ring(props.chopsticks, 8, r * 0.7f, true, rng, 0.12f);
+                    Ring(props.bamboo, 8, r * 0.95f, false, rng, 0.12f);
+                    Ring(props.dumplingA, 6, r * 0.4f, true, rng, 0.35f);
+                    Ring(props.dumplingB, 8, r * 0.8f, true, rng, 0.2f);
+                    Ring(props.scallion, 6, r * 0.3f, false, rng, 0.4f);
                     break;
-                case Biome.Crystal:
-                    Ring(props.crystalSpire, 10, r * 0.7f, false, rng, 0.2f, 1.1f);
-                    Ring(props.crystalSpire, 7, r * 0.42f, false, rng, 0.35f, 0.8f);
-                    Ring(props.iceSpike, 8, r * 0.55f, false, rng, 0.3f);
-                    Ring(props.rockB, 6, r * 0.3f, false, rng, 0.4f);
+                case Biome.Crystal: // rock candy
+                    Ring(props.rockCandy, 10, r * 0.7f, false, rng, 0.2f, 1.1f);
+                    Ring(props.crystalCandy, 9, r * 0.5f, false, rng, 0.3f);
+                    Ring(props.dumplingA, 6, r * 0.8f, true, rng, 0.2f);
+                    Ring(props.dumplingB, 8, r * 0.3f, true, rng, 0.4f);
+                    Ring(props.teacup, 5, r * 0.58f, true, rng, 0.3f);
                     break;
-                case Biome.Royal:
-                    Ring(props.royalColumn, 10, r * 0.72f, true, rng, 0.08f);
-                    Ring(props.royalColumn, 6, r * 0.42f, true, rng, 0.15f, 0.9f);
-                    Ring(props.treeA, 8, r + 3f, false, rng, 0.3f);
-                    Ring(props.treeB, 6, r + 8f, false, rng, 0.25f, 1.15f);
-                    Ring(props.bush, 8, r * 0.28f, false, rng, 0.3f);
-                    Scatter(props.flower, 80, 2.2f, r * 0.9f, rng);
-                    Scatter(props.grass, 200, 1.8f, r * 0.92f, rng);
+                case Biome.Royal: // golden egg yolk
+                    Ring(props.chopsticks, 10, r * 0.72f, true, rng, 0.08f);
+                    Ring(props.chopsticks, 6, r * 0.42f, true, rng, 0.15f);
+                    Ring(props.teacup, 8, r * 0.58f, true, rng, 0.2f);
+                    Ring(props.dumplingA, 7, r * 0.82f, true, rng, 0.15f);
+                    Ring(props.bamboo, 10, r * 0.96f, false, rng, 0.1f);
+                    Ring(props.bokChoy, 8, r * 0.28f, false, rng, 0.3f);
+                    Ring(props.sauce, 5, r * 0.5f, false, rng, 0.3f);
+                    Scatter(props.garnish, 50, 2.2f, r * 0.9f, rng);
                     break;
-                default:
-                    Ring(props.treeA, 10, r + 2.6f, false, rng);
-                    Ring(props.treeB, 9, r + 4.2f, false, rng, 0.5f);
-                    Ring(props.treeA, 12, r + 8f, false, rng, 0.25f, 1.2f);
-                    Ring(props.treeB, 10, r + 11f, false, rng, 0.1f, 1.35f);
-                    Ring(props.rockA, 10, r * 0.62f, false, rng, 0.2f);
-                    Ring(props.rockB, 7, r * 0.44f, false, rng, 0.4f);
-                    Ring(props.pillar, 6, r * 0.7f, true, rng);
-                    Ring(props.mushroom, 9, r * 0.32f, false, rng, 0.3f);
-                    Ring(props.bush, 10, r * 0.22f, false, rng, 0.35f);
-                    Ring(props.bush, 12, r * 0.64f, false, rng, 0.3f);
-                    Scatter(props.grass, 380, 1.6f, r * 0.95f, rng);
-                    Scatter(props.flower, 70, 2.2f, r * 0.9f, rng);
+                default: // Forest: jasmine tea
+                    Ring(props.bamboo, 12, r * 0.96f, false, rng, 0.12f);
+                    Ring(props.dumplingA, 7, r * 0.6f, true, rng, 0.2f);
+                    Ring(props.dumplingB, 8, r * 0.42f, true, rng, 0.4f);
+                    Ring(props.chopsticks, 5, r * 0.7f, true, rng, 0.15f);
+                    Ring(props.bokChoy, 10, r * 0.66f, false, rng, 0.3f);
+                    Ring(props.bokChoy, 8, r * 0.24f, false, rng, 0.4f, 0.85f);
+                    Ring(props.dumplingB, 5, r * 0.3f, true, rng, 0.4f);
+                    Ring(props.scallion, 9, r * 0.5f, false, rng, 0.4f);
+                    Scatter(props.garnish, 40, 2.2f, r * 0.9f, rng);
                     break;
             }
+        }
+
+        /// <summary>Giant table decor beyond the steamer wall: a leaning lid, a second steamer, chopsticks and oversized tableware.</summary>
+        void PlaceTableDecor(ArenaTheme theme, System.Random rng)
+        {
+            float wall = arenaRadius + 3.6f;
+            void Spot(GameObject prefab, float angleDeg, float radius, float scale, float yaw, bool solid = false)
+            {
+                if (prefab == null)
+                    return;
+                float a = angleDeg * Mathf.Deg2Rad;
+                var instance = Instantiate(prefab, Root);
+                instance.name = prefab.name;
+                instance.transform.position = new Vector3(Mathf.Cos(a) * radius, 0f, Mathf.Sin(a) * radius);
+                instance.transform.rotation = Quaternion.Euler(0f, yaw, 0f) * prefab.transform.rotation;
+                instance.transform.localScale = prefab.transform.localScale * scale;
+            }
+            float baseAngle = (float)rng.NextDouble() * 360f;
+            Spot(props.tier, baseAngle, wall + 12f, 1f, baseAngle + 90f);
+            Spot(props.lid, baseAngle + 70f, wall + 12f, 1f, baseAngle + 70f + 180f);
+            Spot(props.lid, baseAngle + 215f, wall + 16f, 0.8f, baseAngle + 215f + 180f);
+            Spot(props.chopLying, baseAngle + 130f, wall + 8f, 1f, baseAngle + 130f + 90f);
+            Spot(props.chopLying, baseAngle + 300f, wall + 11f, 0.8f, baseAngle + 300f + 80f);
+            for (int i = 0; i < 6; i++)
+                Spot(i % 2 == 0 ? props.dumplingA : props.dumplingB, baseAngle + 20f + i * 58f, wall + 6f + (float)rng.NextDouble() * 22f, 4.2f + (float)rng.NextDouble() * 2.4f, (float)rng.NextDouble() * 360f);
+            Spot(props.teacup, baseAngle + 95f, wall + 7f, 4.5f, (float)rng.NextDouble() * 360f);
+            Spot(props.teacup, baseAngle + 250f, wall + 13f, 4f, (float)rng.NextDouble() * 360f);
+            Spot(props.sauce, baseAngle + 170f, wall + 6f, 4.2f, (float)rng.NextDouble() * 360f);
+            Spot(props.sauce, baseAngle + 340f, wall + 9f, 3.6f, (float)rng.NextDouble() * 360f);
+            Spot(props.bamboo, baseAngle + 40f, wall + 4f, 2.2f, (float)rng.NextDouble() * 360f);
+            Spot(props.bamboo, baseAngle + 195f, wall + 5f, 2.6f, (float)rng.NextDouble() * 360f);
         }
 
         void Ring(GameObject prefab, int count, float radius, bool faceCenter, System.Random rng, float jitter = 0f, float scale = 1f)
@@ -640,17 +653,18 @@ namespace SlimeBreaker
             if (string.IsNullOrEmpty(name))
                 return false;
             string n = name.ToLowerInvariant();
-            return n.Contains("tree") || n.Contains("rock") || n.Contains("pillar") || n.Contains("boulder")
-                || n.Contains("boundary") || n.Contains("cactus") || n.Contains("icespike") || n.Contains("spire")
-                || n.Contains("obelisk") || n.Contains("arch") || n.Contains("column") || n.Contains("root");
+            if (n.Contains("leaves") || n.Contains("garnish") || n.Contains("flower"))
+                return false;
+            return n.Contains("dumpling") || n.Contains("bamboo") || n.Contains("chopsticks") || n.Contains("teacup") || n.Contains("sauce")
+                || n.Contains("chili") || n.Contains("icespike") || n.Contains("spire");
         }
 
         static Obstacle.Kind KindFromName(string name)
         {
             string n = (name ?? "").ToLowerInvariant();
-            if (n.Contains("tree") || n.Contains("cactus") || n.Contains("root"))
+            if (n.Contains("bamboo") || n.Contains("chili"))
                 return Obstacle.Kind.Tree;
-            if (n.Contains("pillar") || n.Contains("ruin") || n.Contains("arch") || n.Contains("column") || n.Contains("obelisk") || n.Contains("spire"))
+            if (n.Contains("chopsticks") || n.Contains("spire"))
                 return Obstacle.Kind.Ruin;
             return Obstacle.Kind.Rock;
         }
@@ -840,27 +854,14 @@ namespace SlimeBreaker
             return material;
         }
 
+        /// <summary>Flavour tint: jelly dumplings take the biome's colour, greens get a matching cast.</summary>
         void TintFoliage(ArenaTheme theme)
         {
-            if (theme.biome == Biome.Forest || Root == null)
+            if (Root == null)
                 return;
-            Color leaf;
-            Color grass;
-            switch (theme.biome)
-            {
-                case Biome.Snow:
-                    leaf = SnowLeaf; grass = SnowGrass; break;
-                case Biome.Desert:
-                    leaf = DesertLeaf; grass = DesertGrass; break;
-                case Biome.Swamp:
-                    leaf = SwampLeaf; grass = SwampLeaf; break;
-                case Biome.Thunder:
-                    leaf = ThunderLeaf; grass = ThunderLeaf; break;
-                case Biome.Royal:
-                    leaf = RoyalLeaf; grass = RoyalLeaf; break;
-                default:
-                    leaf = DesertLeaf; grass = DesertGrass; break;
-            }
+            int index = Mathf.Clamp((int)theme.biome, 0, ArenaTheme.BiomeCount - 1);
+            Color jelly = JellyTints[index];
+            Color leaf = LeafTints[index];
             foreach (var renderer in Root.GetComponentsInChildren<Renderer>())
             {
                 if (renderer is ParticleSystemRenderer)
@@ -874,10 +875,10 @@ namespace SlimeBreaker
                         continue;
                     string name = material.name.ToLowerInvariant();
                     Color? tint = null;
-                    if (name.Contains("leaf") || name.Contains("petal"))
+                    if (name.Contains("jelly"))
+                        tint = jelly;
+                    else if ((name.Contains("leaf") || name.Contains("jade") || name.Contains("bamboogreen")) && index != 0)
                         tint = leaf;
-                    else if (name.Contains("grass") || name.Contains("stem") || name.Contains("moss") || name.Contains("bush"))
-                        tint = grass;
                     if (tint == null)
                         continue;
                     materials[i] = Tinted(material, tint.Value);
@@ -912,6 +913,22 @@ namespace SlimeBreaker
                     instance.AddComponent<WeatherRig>();
             }
             SpawnMist(theme);
+            SpawnAmbientGlitter();
+        }
+
+        /// <summary>Floating glitter glints and soft bokeh lights follow the hero (skipped on the Low preset).</summary>
+        void SpawnAmbientGlitter()
+        {
+            var graphics = GraphicsService.Instance;
+            if (graphics != null && graphics.Level == GraphicsService.Low)
+                return;
+            foreach (var rig in new[] { sparkleRig, bokehRig })
+            {
+                if (rig == null)
+                    continue;
+                var instance = Instantiate(rig, Root);
+                instance.name = rig.name;
+            }
         }
 
         public bool HasMist { get; private set; }
@@ -922,18 +939,15 @@ namespace SlimeBreaker
             HasMist = false;
             if (mistRig == null)
                 return;
-            bool damp = theme.biome == Biome.Swamp || theme.biome == Biome.Storm || theme.biome == Biome.Shadow
-                || theme.weather == Weather.Rain || (theme.IsNight && theme.biome == Biome.Forest);
-            if (!damp)
-                return;
             var mist = Instantiate(mistRig, Root);
             mist.name = mistRig.name;
             var particles = mist.GetComponent<ParticleSystem>();
             if (particles != null)
             {
                 var main = particles.main;
-                Color tint = Color.Lerp(RenderSettings.fogColor, Color.white, 0.35f);
-                tint.a = theme.biome == Biome.Swamp ? 0.13f : 0.09f;
+                // Steam rising from the tray: warm white, a little denser in damp flavours.
+                Color tint = Color.Lerp(RenderSettings.fogColor, new Color(1f, 0.97f, 0.9f), 0.6f);
+                tint.a = theme.biome == Biome.Swamp || theme.weather == Weather.Rain ? 0.12f : 0.07f;
                 main.startColor = tint;
             }
             HasMist = true;

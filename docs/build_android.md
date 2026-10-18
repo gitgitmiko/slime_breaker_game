@@ -225,6 +225,12 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Pengaturan: slider Musik (BGM) dan Suara game, persen tampil di sisi kanan, tersimpan ke save meta (ditulis ±0,4 dtk setelah digeser).
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 34/34; APK `SLIMEBREAKER_APK_OK` 0.19.1 (versionCode 24).
 
+## Hasil 18 Oktober 2026 (putaran 25 — arena wadah dimsum)
+
+- Arena baru: lantai anyaman bambu, dinding steamer, meja glitter, dekor raksasa di luar, properti jelly/dimsum, 10 rasa bioma, kilau glitter + bokeh + uap. Menu utama memakai pemandangan yang sama.
+- Aset: `build_arena_dimsum.py` (17 FBX), tekstur baru di `build_pbr_textures.py`; tes baru `SteamerWallAndTableShowAtTheEdge`.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 35/35; APK `SLIMEBREAKER_APK_OK` 0.20.0 (versionCode 25, 67 MB).
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

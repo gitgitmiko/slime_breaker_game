@@ -761,7 +761,110 @@ def save_atlas(out, name, rgb, a, h, smooth=0.32):
     Image.fromarray((mask * 255 + 0.5).astype(np.uint8), "RGB").save(os.path.join(out, name + "_Mask.png"), optimize=True)
 
 
+# ---------------------------------------------------------------- dim sum steamer set
+
+
+def _streaks(n, seed, along_x, sigma=1.4, slow=6):
+    """Fibre streaks: random per-line values blurred across the strip, drifting slowly along it. Values in [0, 1]."""
+    rng = np.random.default_rng(seed)
+    lines = ndi.gaussian_filter1d(rng.random(n).astype(F), sigma, mode="wrap")
+    lines = (lines - lines.min()) / max(float(lines.max() - lines.min()), 1e-6)
+    drift = fbm(n, seed + 7, freq=slow, octaves=3)
+    # along_x False: streaks run along y (the value depends on x); True: they run along x (depends on y).
+    field = lines[:, None] if along_x else lines[None, :]
+    field = np.broadcast_to(field, (n, n)).astype(F)
+    return np.clip(field * 0.8 + (drift - 0.5) * 0.35 + 0.1, 0, 1)
+
+
+def bamboo_weave():
+    """Twill-woven bamboo mat (the steamer floor): 16 strips per tile, 2-over-2-under, glossy varnish, gaps in shadow."""
+    n = N
+    strips = 16
+    w = n // strips
+    y, x = np.mgrid[0:n, 0:n]
+    i = x // w
+    j = y // w
+    lx = ((x % w) + 0.5) / w
+    ly = ((y % w) + 0.5) / w
+    phase = (i + j) % 4
+    vert_over = phase < 2
+    across = np.where(vert_over, lx, ly)
+    along = np.where(vert_over, ly, lx)
+    run_t = (np.where(vert_over, phase, phase - 2) + along) / 2.0
+    # Strip profile: rounded across the width, dipping where it goes under the crossing strip.
+    profile = np.sin(np.pi * np.clip(across, 0, 1)) ** 0.55
+    lift = 0.55 + 0.45 * np.sin(np.pi * np.clip(run_t, 0, 1)) ** 0.6
+    height = profile * lift
+    gap = smoothstep(0.07, 0.0, np.minimum(across, 1 - across))
+    height = height * (1 - 0.7 * gap)
+    # Fibres follow each visible strip's own direction.
+    fib_v = _streaks(n, 6101, along_x=False)
+    fib_h = _streaks(n, 6102, along_x=True)
+    fibres = np.where(vert_over, fib_v, fib_h)
+    rng = np.random.default_rng(6103)
+    tone_v = rng.uniform(0.9, 1.08, strips)
+    tone_h = rng.uniform(0.9, 1.08, strips)
+    tone = np.where(vert_over, tone_v[np.clip(i, 0, strips - 1)], tone_h[np.clip(j, 0, strips - 1)])
+    macro = fbm(n, 6104, freq=3, octaves=4)
+    base = ramp(np.clip(fibres * 0.7 + macro * 0.3, 0, 1), [(0.0, (0.64, 0.48, 0.26)), (0.5, (0.79, 0.63, 0.38)), (1.0, (0.90, 0.78, 0.54))])
+    albedo = base * tone[..., None] * (0.97 + 0.06 * macro[..., None])
+    dive = 1.0 - 0.22 * (1.0 - np.sin(np.pi * np.clip(run_t, 0, 1)) ** 0.6)
+    albedo = albedo * dive[..., None] * (1.0 - 0.62 * gap)[..., None]
+    smooth = 0.38 + 0.18 * (1 - fibres) * (1 - gap)
+    height = np.clip(height + (fibres - 0.5) * 0.04, 0, 1)
+    surf = Surface(albedo, height, smooth, normal_strength=5.0)
+    surf.albedo = shade_ao(surf.albedo, surf.ao, 0.55)
+    return surf
+
+
+def steamer_wood():
+    """Pale steamer-wall wood: long straight grain, soft growth rings, lightly varnished."""
+    n = P
+    u, v = pbr.grid(n)
+    warp = fbm(n, 6201, freq=3, octaves=4)
+    rings = (v * 9.0 + warp * 2.2) % 1.0
+    rings = np.abs(rings * 2 - 1)
+    pores = _streaks(n, 6202, along_x=True, sigma=0.9, slow=10)
+    fine = fbm(n, 6203, freq=14, octaves=3, stretch=(4, 1))
+    t = np.clip(rings * 0.45 + pores * 0.3 + fine * 0.25, 0, 1)
+    albedo = ramp(t, [(0.0, (0.80, 0.62, 0.38)), (0.5, (0.90, 0.76, 0.52)), (1.0, (0.97, 0.88, 0.68))])
+    height = pores * 0.5 + fine * 0.5
+    smooth = 0.42 + pores * 0.12
+    surf = Surface(albedo, height, smooth, normal_strength=1.4)
+    surf.albedo = shade_ao(surf.albedo, surf.ao, 0.2)
+    return surf
+
+
+def glitter_table():
+    """Neutral sparkly base (tinted per flavour in Unity) + multi-colour glitter flecks in the emission map."""
+    n = P
+    rng = np.random.default_rng(6301)
+    base = fbm(n, 6302, freq=5, octaves=5)
+    albedo = np.dstack([np.full((n, n), 0.62, F)] * 3) * (0.82 + 0.3 * base[..., None])
+    palette = np.array([(1.0, 0.92, 0.7), (1.0, 0.45, 0.62), (0.4, 0.9, 1.0), (0.75, 0.55, 1.0), (0.55, 1.0, 0.6), (1.0, 0.8, 0.3), (1.0, 1.0, 1.0)], F)
+    emit = np.zeros((n, n, 3), F)
+    for count, gain in ((26000, 0.45), (3000, 0.7)):
+        xs = rng.integers(0, n, count)
+        ys = rng.integers(0, n, count)
+        colours = palette[rng.integers(0, len(palette), count)] * rng.uniform(gain, 1.0, count)[:, None].astype(F)
+        np.add.at(emit, (ys, xs), colours)
+    for c in range(3):
+        emit[..., c] = ndi.gaussian_filter(emit[..., c], 0.75, mode="wrap")
+    emit = np.clip(emit * 3.2, 0, 1.0)
+    fleck = np.clip(emit.max(axis=2) * 2.0, 0, 1)
+    height = fbm(n, 6303, freq=60, octaves=3) * 0.4 + fleck * 0.6
+    smooth = np.clip(0.3 + fleck * 0.65, 0, 1)
+    metal = np.clip(fleck * 1.2, 0, 1)
+    return Surface(albedo, height, smooth, metal=metal, emit=emit, normal_strength=3.0)
+
+
+GROUNDS.update({
+    "TEX_Bamboo_Weave": (bamboo_weave, 2048),
+    "TEX_Glitter_Table": (glitter_table, 1024),
+})
+
 PROPS = {
+    "TEX_Steamer_Wood": (steamer_wood, 1024),
     "TEX_Bark_HD": (bark_hd, 1024),
     "TEX_Rock_HD": (rock_hd, 1024),
     "TEX_Stone_Ruin": (stone_ruin, 1024),
@@ -776,9 +879,35 @@ PROPS = {
     "TEX_Cover_Ash": (lambda: cover("Ash"), 512),
 }
 
+def bamboo_leaf_atlas():
+    """One sprig of long lanceolate bamboo leaves on a thin twig (single cell, base at the bottom centre)."""
+    n = 512
+    sprite = Sprite(n, n)
+    rng = np.random.default_rng(3201)
+    greens = [(0.26, 0.50, 0.14), (0.32, 0.58, 0.18), (0.38, 0.64, 0.22), (0.30, 0.54, 0.16)]
+    x0, y0, y1 = n * 0.5, n * 0.98, n * 0.2
+    sprite.line((x0, y0), (x0, y1), (0.35, 0.42, 0.16), 4)
+    for k in range(8):
+        t = 0.1 + k * 0.105
+        px, py = x0, y0 + (y1 - y0) * t
+        for side in (-1, 1):
+            length = rng.uniform(150, 215) * (1.0 - 0.18 * t)
+            angle = -math.pi / 2 + side * rng.uniform(0.5, 0.9)
+            dx, dy = math.cos(angle), math.sin(angle)
+            c = greens[rng.integers(len(greens))]
+            pts = leaf_polygon(px + dx * length * 0.5, py + dy * length * 0.5, length, length * 0.19, angle)
+            sprite.poly(pts, c, 190)
+            sprite.line((px, py), (px + dx * length * 0.92, py + dy * length * 0.92), tuple(min(1, ch * 1.25) for ch in c), 2, 230)
+    pts = leaf_polygon(x0, y1 - 70, 190, 34, -math.pi / 2)
+    sprite.poly(pts, greens[1], 200)
+    rgb, a, h = sprite.result()
+    return bleed(rgb, a), a, h
+
+
 ATLASES = {
     "TEX_Leaf_Atlas": leaf_atlas,
     "TEX_Grass_Atlas": grass_atlas,
+    "TEX_Bamboo_Leaf_Atlas": bamboo_leaf_atlas,
 }
 
 
@@ -811,6 +940,13 @@ def fx_textures(out):
     save("TEX_FX_Mist", puff, (128, 128))
     # Glow: smooth gaussian (embers, fireflies, spores).
     save("TEX_FX_Glow", np.exp(-(r / 0.42) ** 2), (64, 64))
+    # Bokeh: out-of-focus lamp disc, flat inside with a brighter rim and a soft edge.
+    disc = np.clip((0.94 - r) / 0.1, 0, 1)
+    rim = np.exp(-((r - 0.84) / 0.07) ** 2)
+    save("TEX_FX_Bokeh", disc * (0.42 + 0.58 * rim), (128, 128))
+    # Sparkle: four-point glint (soft core + thin cross) for floating glitter.
+    cross = np.exp(-(np.abs(u) / 0.035) ** 2) * np.clip(1 - np.abs(v), 0, 1) ** 2 + np.exp(-(np.abs(v) / 0.035) ** 2) * np.clip(1 - np.abs(u), 0, 1) ** 2
+    save("TEX_FX_Sparkle", np.clip(cross + np.exp(-(r / 0.16) ** 2), 0, 1), (64, 64))
 
 
 def macro_noise(out):

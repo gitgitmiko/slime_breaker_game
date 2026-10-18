@@ -239,6 +239,13 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Tes baru: `ObstacleCollidersHugTheirVisibleShape` (collider tidak lebih lebar dari bentuk yang terlihat, tidak rebah, tidak keluar dari bentuk visual di 10 bioma) dan `BigTreesAreScatteredAcrossTheArenaIncludingTheMiddle`.
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 37/37; APK `SLIMEBREAKER_APK_OK` 0.20.2 (versionCode 27).
 
+## Hasil 18 Oktober 2026 (putaran 28 — garis biru, level item)
+
+- Cincin rune biru bercahaya di lantai dekat dinding dihapus (dinding steamer sudah jadi batas arena; cincin hanya tersisa di pintu portal dan di bawah hero di menu).
+- Level item mengikuti lantai: 1–10 = level 1, 11–20 = level 2, dst. Staff terbaik (Ultra) level 1 = +1000, level 2 = +2000, level 3 = +3000. Staff: Normal 100, Rare 250, Legend 500, Ultra 1000 × level. Level tampil di notifikasi ambil item, slot, dan kotak tas ("L2").
+- Tes: `ItemStatsFollowSlotRarityAndFloorBand` (tak ada item level 1 > +1000, lantai 15 = level 2) dan drop nyata di lantai 15 pada `ItemsDropEquipAndPersist`.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 37/37; APK `SLIMEBREAKER_APK_OK` 0.20.3 (versionCode 28).
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

@@ -1304,8 +1304,9 @@ namespace SlimeBreaker.Tests
             Assert.IsTrue(pickup == null, "item pickup was not collected");
             Assert.AreEqual(1, inventory.Items.Count);
             Assert.IsTrue(inventory.IsEquipped(staff));
-            Assert.AreEqual(baseDamage + 1000, stats.TotalDamage, "Legend staff should add +1000 ATK");
-            Assert.AreEqual((baseDamage + 1000).ToString(), flow.ui.StatValue("DMG"));
+            Assert.AreEqual(500, staff.damage);
+            Assert.AreEqual(baseDamage + 500, stats.TotalDamage, "Legend staff (level 1) should add +500 ATK");
+            Assert.AreEqual((baseDamage + 500).ToString(), flow.ui.StatValue("DMG"));
 
             // Armor gives HP + DEF; a second staff goes to the bag without replacing the worn one.
             var armor = ItemCatalog.Create(ItemSlot.Armor, UpgradeRarity.Ultra, 1);
@@ -1354,6 +1355,32 @@ namespace SlimeBreaker.Tests
             Assert.AreEqual(baseDamage, stats.TotalDamage);
             inventory.Restore(save);
             Assert.AreEqual(baseDamage + better.damage, stats.TotalDamage, "resume lost the equipped staff");
+
+            // A drop on floor 15 is a level-2 item: the best staff there is +2000.
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            stage.ForceFloor(15);
+            yield return null;
+            float waited = 0f;
+            while (EnemyHealth.Active.Count == 0 && waited < 8f)
+            {
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+            Assert.Greater(EnemyHealth.Active.Count, 0, "no enemy to drop loot from");
+            EnemyHealth victim = null;
+            foreach (var candidate in EnemyHealth.Active)
+            {
+                if (candidate != null && !candidate.IsBoss)
+                    victim = candidate;
+            }
+            Assert.IsNotNull(victim, "no slime to drop loot from");
+            int pickupsBefore = ItemPickup.Active.Count;
+            inventory.DropLoot(victim, 1f);
+            Assert.AreEqual(pickupsBefore + 1, ItemPickup.Active.Count, "a guaranteed drop should spawn one item");
+            var dropped = ItemPickup.Active[ItemPickup.Active.Count - 1].Item;
+            Assert.AreEqual(2, dropped.band, "floors 11-20 drop level-2 items");
+            Assert.AreEqual(2000, ItemCatalog.Create(ItemSlot.Staff, UpgradeRarity.Ultra, dropped.band).damage);
+            Object.DestroyImmediate(ItemPickup.Active[ItemPickup.Active.Count - 1].gameObject);
 
             // Boss loot: four pickups, one Ultra.
             int before = ItemPickup.Active.Count;

@@ -77,13 +77,13 @@ Monster menjatuhkan perlengkapan (5% per slime; boss menjatuhkan **4 item, salah
 
 | Slot | Stat | Normal | Rare | Legend | Ultra |
 |---|---|---|---|---|---|
-| Staff | ATK serangan dasar | +100 | +300 | +1000 | +2000 |
+| Staff | ATK serangan dasar | +100 | +250 | +500 | +1000 |
 | Topi | HP | +20 | +50 | +120 | +250 |
 | Baju | HP + DEF | +30, 1% | +75, 2% | +180, 3,5% | +360, 5% |
 | Celana | HP | +15 | +40 | +100 | +200 |
 | Sepatu | Move speed | +2% | +4% | +6% | +9% |
 
-(Nilai di atas untuk band 1. ATK dan HP dikali band; DEF +0,25% dan move +0,3% per band. Total DEF dibatasi 75%.)
+(Nilai di atas untuk level item 1 = lantai 1–10 (band 1); level 2 = lantai 11–20 dst. Staff terbaik level 1 = +1000, level 2 = +2000, level 3 = +3000. ATK dan HP dikali band; DEF +0,25% dan move +0,3% per band. Total DEF dibatasi 75%.)
 
 Item diambil dengan berjalan ke permata berwarna rarity (ikon item melayang di atasnya; makin langka makin tinggi pilar cahayanya). Slot kosong langsung terpakai; item lain masuk tas (40 slot). Tombol tas di HUD membuka **Inventori** (game dijeda): kolom perlengkapan kiri, grid tas kanan, panel detail dengan perbandingan dan tombol **Pakai/Lepas** dan **Buang**. Item yang tertinggal saat masuk pintu/naik lantai otomatis diambil. Tas dan perlengkapan ikut tersimpan di save run (Lanjutkan).
 

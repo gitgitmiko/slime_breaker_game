@@ -39,7 +39,7 @@ namespace SlimeBreaker
     /// <summary>
     /// Equipment rules. Staff = basic-attack damage, Hat = HP, Armor = HP + DEF, Pants = HP, Boots = move speed.
     /// Rarity chances match the level-up cards (65 / 20 / 10 / 5%). Stats scale with the floor band the item dropped
-    /// in: a Legend staff gives +1000 ATK on floors 1–10, +2000 on 11–20, and so on.
+    /// in (item level = band): the best staff (Ultra) gives +1000 ATK on floors 1-10 (level 1), +2000 on floors 11-20 (level 2), and so on.
     /// </summary>
     public static class ItemCatalog
     {
@@ -48,7 +48,7 @@ namespace SlimeBreaker
         public const int BossDrops = 4;
 
         //                                          Normal  Rare  Legend  Ultra   (per floor band)
-        static readonly int[] StaffDamage = { 100, 300, 1000, 2000 };
+        static readonly int[] StaffDamage = { 100, 250, 500, 1000 };
         static readonly int[] HatHealth = { 20, 50, 120, 250 };
         static readonly int[] ArmorHealth = { 30, 75, 180, 360 };
         static readonly int[] PantsHealth = { 15, 40, 100, 200 };

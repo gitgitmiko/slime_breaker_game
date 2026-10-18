@@ -189,6 +189,10 @@
 
 - Collider ring/scatter rebah dan bergeser (rotasi FBX) → diperbaiki dengan `PropShape` + collider anak tegak; pohon tersebar acak. APK 0.20.2.
 
+### Putaran 28 — garis biru, level item
+
+- Cincin rune lantai dihapus; staff Normal/Rare/Legend/Ultra 100/250/500/1000 × level (level = 10 lantai). APK 0.20.3.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

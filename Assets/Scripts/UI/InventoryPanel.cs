@@ -158,7 +158,7 @@ namespace SlimeBreaker
                 slotIcons[slot].sprite = inventory.IconFor((ItemSlot)slot);
                 slotIcons[slot].color = item != null ? Color.white : new Color(1f, 1f, 1f, 0.25f);
                 slotTexts[slot].text = item != null
-                    ? "<b>" + item.Name + "</b>\n<size=20>" + item.Stats + "</size>"
+                    ? "<b>" + item.Name + "</b> <size=20>Lv " + item.band + "</size>\n<size=20>" + item.Stats + "</size>"
                     : "<b>" + ItemCatalog.SlotLabels[slot] + "</b>\n<size=20><color=#ffffff80>kosong</color></size>";
             }
 
@@ -180,7 +180,7 @@ namespace SlimeBreaker
                 cellIcons[i].enabled = filled;
                 if (filled)
                     cellIcons[i].sprite = inventory.IconFor(item.Slot);
-                cellMarks[i].text = filled && inventory.IsEquipped(item) ? "E" : string.Empty;
+                cellMarks[i].text = filled ? (inventory.IsEquipped(item) ? "E " : string.Empty) + "L" + item.band : string.Empty;
                 cellButtons[i].interactable = filled;
                 cellButtons[i].transform.localScale = filled && item.id == selectedId ? Vector3.one * 1.12f : Vector3.one;
             }

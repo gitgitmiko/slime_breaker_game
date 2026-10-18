@@ -501,7 +501,7 @@ namespace SlimeBreaker
             float r = arenaRadius;
             int treesA = 0;
             int treesB = 0;
-            Place(props.runeRing, Vector3.zero, 0f, r / 11.2f, false);
+            // (No glowing rune ring on the floor any more: it read as a stray blue line next to the steamer wall.)
             // The dim sum steamer wall (a scene object) is the arena edge now; every prop that used to stand beyond the
             // boundary lives inside it, in a belt hugging the wall.
             switch (theme.biome)

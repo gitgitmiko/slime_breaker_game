@@ -105,7 +105,7 @@ namespace SlimeBreaker
             }
             Color tint = UpgradeRarities.Color(Item.Rarity);
             string equippedNote = inventory.IsEquipped(Item) ? " · dipakai" : string.Empty;
-            ui?.ShowToast(UpgradeRarities.Name(Item.Rarity) + " " + Item.Name + "  " + Item.Stats + equippedNote, tint);
+            ui?.ShowToast(UpgradeRarities.Name(Item.Rarity) + " " + Item.Name + "  Lv " + Item.band + "  " + Item.Stats + equippedNote, tint);
             AudioService.Instance?.Play(Item.rarity >= (int)UpgradeRarity.Legend ? "powerup" : "pickup");
             VfxPlayer.Instance?.Play("powerup", transform.position + Vector3.up * 0.6f, tint);
             GameFlowController.Instance?.PersistRun();

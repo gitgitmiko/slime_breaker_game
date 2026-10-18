@@ -161,9 +161,17 @@ namespace SlimeBreaker.Tests
             Assert.AreEqual(2, ItemCatalog.Band(11));
             Assert.AreEqual(10, ItemCatalog.Band(100));
             Assert.AreEqual(100, ItemCatalog.Create(ItemSlot.Staff, UpgradeRarity.Normal, 1).damage);
-            Assert.AreEqual(1000, ItemCatalog.Create(ItemSlot.Staff, UpgradeRarity.Legend, 1).damage, "Legend staff on floors 1-10 = +1000");
-            Assert.AreEqual(2000, ItemCatalog.Create(ItemSlot.Staff, UpgradeRarity.Legend, 2).damage, "Legend staff on floors 11-20 = +2000");
-            Assert.Greater(ItemCatalog.Create(ItemSlot.Staff, UpgradeRarity.Ultra, 1).damage, 1000);
+            Assert.AreEqual(500, ItemCatalog.Create(ItemSlot.Staff, UpgradeRarity.Legend, 1).damage);
+            Assert.AreEqual(1000, ItemCatalog.Create(ItemSlot.Staff, UpgradeRarity.Ultra, 1).damage, "best staff on floors 1-10 (level 1) = +1000");
+            Assert.AreEqual(2000, ItemCatalog.Create(ItemSlot.Staff, UpgradeRarity.Ultra, ItemCatalog.Band(11)).damage, "best staff on floors 11-20 (level 2) = +2000");
+            Assert.AreEqual(2, ItemCatalog.Roll(() => 0.99f, 15).band, "an item dropped on floor 15 is level 2");
+            Assert.AreEqual(1, ItemCatalog.Roll(() => 0.5f, 10).band, "an item dropped on floor 10 is level 1");
+            var rng1 = new System.Random(3);
+            for (int i = 0; i < 2000; i++)
+            {
+                var item = ItemCatalog.Roll(() => (float)rng1.NextDouble(), 1 + i % 10);
+                Assert.LessOrEqual(item.damage, 1000, "level 1 item damage must not exceed 1000");
+            }
             var hat = ItemCatalog.Create(ItemSlot.Hat, UpgradeRarity.Rare, 3);
             Assert.Greater(hat.health, 0);
             Assert.AreEqual(0, hat.damage);

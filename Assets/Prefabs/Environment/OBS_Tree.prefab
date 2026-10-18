@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6896645436674639232}
   - component: {fileID: 8883485452303216863}
-  - component: {fileID: 7770766216116253347}
+  - component: {fileID: 2366078071461844883}
   m_Layer: 8
   m_Name: OBS_Tree
   m_TagString: Untagged
@@ -53,11 +53,11 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.62
-  m_Height: 2.4
+  m_Radius: 0.42
+  m_Height: 2.6
   m_Direction: 1
-  m_Center: {x: 0, y: 1.15, z: 0}
---- !u!114 &7770766216116253347
+  m_Center: {x: 0, y: 1.3, z: 0}
+--- !u!114 &2366078071461844883
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

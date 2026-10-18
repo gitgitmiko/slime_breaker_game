@@ -231,6 +231,14 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Tes baru `SteamerWallEnclosesTheArenaAndEveryPropIsInside` (dinding terlihat di tepi, tak ada properti di luar dinding di 4 lantai/bioma).
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 35/35; APK `SLIMEBREAKER_APK_OK` 0.20.1 (versionCode 26).
 
+## Hasil 18 Oktober 2026 (putaran 27 — collider tak terlihat, pohon acak)
+
+- Akar masalah hero "terhalang sesuatu": properti ring/scatter (pohon, batu, tiang, kaktus, dll.) memasang collider langsung pada akar model FBX yang membawa rotasi sumbu (-90° X). Capsule/box-nya jadi **rebah ke samping** dan **bergeser 1–3,6 m** dari propnya (capsule pohon selebar 5–6,6 m, tinggi 1,4 m). Setelah pohon dipindah ke dalam arena, collider itu mulai menghalangi.
+- Perbaikan: collider kini dipasang di anak `SolidCollider` yang tegak dan terkompensasi skala, ukurannya dari `PropShape` (ukuran bebas-yaw, diukur saat prefab dibuat): pohon = batang saja (r 0,3–0,5), batu = bola ±0,85× setengah lebar, tiang/lengkungan = kotak tipis mengikuti bentuk. Prefab `OBS_*` juga diketatkan (sebelumnya bola ES 2,0 m untuk paku es setinggi 0,9 m, kotak persegi untuk lengkungan tipis, dst.).
+- Pohon besar kini tersebar acak di seluruh arena (termasuk tengah), ditempatkan terakhir menghindari properti lain, jalur kardinal, dan titik spawn.
+- Tes baru: `ObstacleCollidersHugTheirVisibleShape` (collider tidak lebih lebar dari bentuk yang terlihat, tidak rebah, tidak keluar dari bentuk visual di 10 bioma) dan `BigTreesAreScatteredAcrossTheArenaIncludingTheMiddle`.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 37/37; APK `SLIMEBREAKER_APK_OK` 0.20.2 (versionCode 27).
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

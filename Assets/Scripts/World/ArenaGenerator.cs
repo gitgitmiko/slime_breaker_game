@@ -499,16 +499,15 @@ namespace SlimeBreaker
         void PlaceProps(ArenaTheme theme, System.Random rng)
         {
             float r = arenaRadius;
+            int treesA = 0;
+            int treesB = 0;
             Place(props.runeRing, Vector3.zero, 0f, r / 11.2f, false);
             // The dim sum steamer wall (a scene object) is the arena edge now; every prop that used to stand beyond the
             // boundary lives inside it, in a belt hugging the wall.
             switch (theme.biome)
             {
                 case Biome.Snow:
-                    Ring(props.treeA, 10, r * 0.97f, false, rng);
-                    Ring(props.treeB, 9, r * 0.9f, false, rng, 0.5f);
-                    Ring(props.treeA, 12, r * 0.935f, false, rng, 0.25f, 1.2f);
-                    Ring(props.treeB, 10, r * 0.865f, false, rng, 0.1f, 1.35f);
+                    treesA = 22; treesB = 19;
                     Ring(props.iceSpike, 10, r * 0.58f, false, rng, 0.25f, 1.15f);
                     Ring(props.rockA, 8, r * 0.44f, false, rng, 0.4f);
                     Ring(props.pillar, 5, r * 0.7f, true, rng);
@@ -525,8 +524,7 @@ namespace SlimeBreaker
                     Scatter(props.grass, 60, 2.4f, r * 0.9f, rng);
                     break;
                 case Biome.Thunder:
-                    Ring(props.treeA, 8, r * 0.96f, false, rng, 0.4f, 1.1f);
-                    Ring(props.treeB, 7, r * 0.9f, false, rng, 0.35f, 1.2f);
+                    treesA = 8; treesB = 7;
                     Ring(props.thunderSpire, 8, r * 0.68f, true, rng, 0.15f);
                     Ring(props.rockA, 10, r * 0.5f, false, rng, 0.3f);
                     Ring(props.pillar, 5, r * 0.38f, true, rng);
@@ -568,17 +566,13 @@ namespace SlimeBreaker
                 case Biome.Royal:
                     Ring(props.royalColumn, 10, r * 0.72f, true, rng, 0.08f);
                     Ring(props.royalColumn, 6, r * 0.42f, true, rng, 0.15f, 0.9f);
-                    Ring(props.treeA, 8, r * 0.96f, false, rng, 0.3f);
-                    Ring(props.treeB, 6, r * 0.9f, false, rng, 0.25f, 1.15f);
+                    treesA = 8; treesB = 6;
                     Ring(props.bush, 8, r * 0.28f, false, rng, 0.3f);
                     Scatter(props.flower, 80, 2.2f, r * 0.9f, rng);
                     Scatter(props.grass, 200, 1.8f, r * 0.92f, rng);
                     break;
                 default:
-                    Ring(props.treeA, 10, r * 0.97f, false, rng);
-                    Ring(props.treeB, 9, r * 0.9f, false, rng, 0.5f);
-                    Ring(props.treeA, 12, r * 0.935f, false, rng, 0.25f, 1.2f);
-                    Ring(props.treeB, 10, r * 0.865f, false, rng, 0.1f, 1.35f);
+                    treesA = 22; treesB = 19;
                     Ring(props.rockA, 10, r * 0.62f, false, rng, 0.2f);
                     Ring(props.rockB, 7, r * 0.44f, false, rng, 0.4f);
                     Ring(props.pillar, 6, r * 0.7f, true, rng);
@@ -588,6 +582,32 @@ namespace SlimeBreaker
                     Scatter(props.grass, 380, 1.6f, r * 0.95f, rng);
                     Scatter(props.flower, 70, 2.2f, r * 0.9f, rng);
                     break;
+            }
+
+            // Big trees go in last, anywhere in the arena (centre included), around everything already placed.
+            Trees(props.treeA, treesA, 1.0f, 1.3f, rng);
+            Trees(props.treeB, treesB, 1.0f, 1.4f, rng);
+        }
+
+        /// <summary>Scatters big trees at random spots (they keep clear of the spawn point, the four lanes and other props).</summary>
+        void Trees(GameObject prefab, int count, float minScale, float maxScale, System.Random rng)
+        {
+            if (prefab == null || count <= 0)
+                return;
+            int placed = 0;
+            for (int attempt = 0; attempt < count * 40 && placed < count; attempt++)
+            {
+                float angle = (float)rng.NextDouble() * Mathf.PI * 2f;
+                float radius = Mathf.Lerp(4.2f, arenaRadius * 0.95f, Mathf.Sqrt((float)rng.NextDouble()));
+                var position = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
+                float scale = Mathf.Lerp(minScale, maxScale, (float)rng.NextDouble());
+                if (!Fits(position, 0.9f * scale))
+                    continue;
+                var instance = Place(prefab, position, (float)rng.NextDouble() * 360f, scale, true);
+                var marker = instance.GetComponent<Obstacle>();
+                if (marker != null)
+                    marker.footprint = 0.9f * scale;
+                placed++;
             }
         }
 
@@ -696,38 +716,47 @@ namespace SlimeBreaker
             return Mathf.Clamp(Mathf.Max(bounds.extents.x, bounds.extents.z), 0.4f, 1.6f);
         }
 
+        /// <summary>
+        /// Tight, upright collider for a generated prop. The model roots carry the FBX axis rotation (local Z = world up), so
+        /// a collider added to the root itself lies on its side and sits metres away from the prop; the collider lives on an
+        /// unrotated, scale-compensated child instead and is sized from the prop's visible bounds (the trunk, not the canopy).
+        /// </summary>
         static void FitCollider(GameObject instance, Obstacle.Kind kind)
         {
-            var renderers = instance.GetComponentsInChildren<Renderer>();
-            if (renderers.Length == 0)
+            var shape = instance.GetComponent<PropShape>();
+            if (shape == null)
                 return;
-            var bounds = renderers[0].bounds;
-            for (int i = 1; i < renderers.Length; i++)
-            {
-                if (renderers[i] is ParticleSystemRenderer)
-                    continue;
-                bounds.Encapsulate(renderers[i].bounds);
-            }
-            float radius = Mathf.Clamp(Mathf.Max(bounds.extents.x, bounds.extents.z) * 0.7f, 0.38f, 1.15f);
-            float height = Mathf.Max(0.9f, bounds.size.y);
+            float uniform = Mathf.Max(0.0001f, instance.transform.lossyScale.x);
+            float half = shape.halfWidth * uniform;
+            float height = Mathf.Max(0.6f, shape.height * uniform);
+
+            var holder = new GameObject("SolidCollider");
+            holder.transform.SetParent(instance.transform, false);
+            // Follow only the prop's yaw (not the FBX axis rotation), so boxes keep their thin/wide proportions.
+            holder.transform.rotation = Quaternion.Euler(0f, instance.transform.eulerAngles.y, 0f);
+            holder.transform.position = instance.transform.position;
+            holder.transform.localScale = Vector3.one / uniform;
+            holder.layer = instance.layer;
             if (kind == Obstacle.Kind.Tree)
             {
-                var capsule = instance.AddComponent<CapsuleCollider>();
-                capsule.center = new Vector3(0f, height * 0.48f, 0f);
-                capsule.radius = Mathf.Clamp(radius * 0.55f, 0.38f, 0.85f);
-                capsule.height = height;
+                var capsule = holder.AddComponent<CapsuleCollider>();
+                capsule.radius = Mathf.Clamp(half * 0.14f, 0.3f, 0.5f);
+                capsule.height = Mathf.Min(height, 3.2f);
+                capsule.center = new Vector3(0f, capsule.height * 0.5f, 0f);
             }
             else if (kind == Obstacle.Kind.Ruin)
             {
-                var box = instance.AddComponent<BoxCollider>();
+                var box = holder.AddComponent<BoxCollider>();
+                float width = Mathf.Clamp(shape.halfX * uniform * 2f * 0.85f, 0.45f, 1.5f);
+                float depth = Mathf.Clamp(shape.halfZ * uniform * 2f * 0.85f, 0.45f, 1.5f);
+                box.size = new Vector3(width, height, depth);
                 box.center = new Vector3(0f, height * 0.5f, 0f);
-                box.size = new Vector3(radius * 1.5f, height, radius * 1.5f);
             }
             else
             {
-                var sphere = instance.AddComponent<SphereCollider>();
-                sphere.center = new Vector3(0f, Mathf.Min(0.75f, height * 0.45f), 0f);
-                sphere.radius = radius;
+                var sphere = holder.AddComponent<SphereCollider>();
+                sphere.radius = Mathf.Clamp(half * 0.85f, 0.38f, 1.15f);
+                sphere.center = new Vector3(0f, Mathf.Clamp(height * 0.5f, 0.3f, 0.6f), 0f);
             }
         }
 

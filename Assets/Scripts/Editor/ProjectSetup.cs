@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.20.1";
+        const string AppVersion = "0.20.2";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -1470,24 +1470,46 @@ namespace SlimeBreaker.EditorTools
                     visual.transform.localScale = parts[i].transform.localScale * 0.72f;
             }
 
+            // Colliders hug the visible shape (an invisible, wider collider reads as "something is blocking me").
+            Bounds solid = default;
+            bool firstRenderer = true;
+            foreach (var renderer in root.GetComponentsInChildren<Renderer>())
+            {
+                if (renderer is ParticleSystemRenderer)
+                    continue;
+                if (firstRenderer)
+                {
+                    solid = renderer.bounds;
+                    firstRenderer = false;
+                }
+                else
+                {
+                    solid.Encapsulate(renderer.bounds);
+                }
+            }
+            float half = Mathf.Max(solid.extents.x, solid.extents.z);
+            float height = Mathf.Max(0.6f, solid.max.y);
             if (kind == Obstacle.Kind.Tree)
             {
+                // Trunk only: the canopy stays walkable-under visually, the trunk is what stops you.
                 var capsule = root.AddComponent<CapsuleCollider>();
-                capsule.center = new Vector3(0f, 1.15f, 0f);
-                capsule.radius = 0.62f;
-                capsule.height = 2.4f;
+                capsule.radius = path.Contains("OBS_Tree") ? 0.42f : Mathf.Clamp(half * 0.7f, 0.35f, 0.7f);
+                capsule.height = Mathf.Min(height, 2.6f);
+                capsule.center = new Vector3(0f, capsule.height * 0.5f, 0f);
             }
             else if (kind == Obstacle.Kind.Ruin)
             {
                 var box = root.AddComponent<BoxCollider>();
-                box.center = new Vector3(0f, 0.9f, 0f);
-                box.size = new Vector3(0.95f, 1.85f, 0.95f);
+                float width = Mathf.Clamp(solid.extents.x * 2f * 0.85f, 0.45f, 1.4f);
+                float depth = Mathf.Clamp(solid.extents.z * 2f * 0.85f, 0.45f, 1.4f);
+                box.size = new Vector3(width, height, depth);
+                box.center = new Vector3(0f, height * 0.5f, 0f);
             }
             else
             {
                 var sphere = root.AddComponent<SphereCollider>();
-                sphere.center = new Vector3(0f, 0.55f, 0f);
-                sphere.radius = path.Contains("Boulder") ? 1.05f : 0.92f;
+                sphere.radius = Mathf.Clamp(half * 0.85f, 0.38f, 1.3f);
+                sphere.center = new Vector3(0f, Mathf.Clamp(solid.size.y * 0.5f, 0.3f, 0.6f), 0f);
             }
 
             var marker = root.AddComponent<Obstacle>();
@@ -2003,6 +2025,24 @@ namespace SlimeBreaker.EditorTools
                 bool small = path.Contains("Grass") || path.Contains("Flower") || path.Contains("Mushroom") || path.Contains("RuneRing");
                 foreach (var renderer in instance.GetComponentsInChildren<Renderer>())
                     renderer.shadowCastingMode = small ? ShadowCastingMode.Off : ShadowCastingMode.On;
+                // Yaw-free size for runtime collider fitting (measured here, in the prefab's own unrotated pose).
+                Bounds shape = default;
+                bool firstShape = true;
+                foreach (var renderer in instance.GetComponentsInChildren<Renderer>())
+                {
+                    if (renderer is ParticleSystemRenderer)
+                        continue;
+                    if (firstShape) { shape = renderer.bounds; firstShape = false; }
+                    else shape.Encapsulate(renderer.bounds);
+                }
+                if (!firstShape)
+                {
+                    var propShape = instance.AddComponent<PropShape>();
+                    propShape.halfWidth = Mathf.Max(shape.extents.x, shape.extents.z);
+                    propShape.halfX = shape.extents.x;
+                    propShape.halfZ = shape.extents.z;
+                    propShape.height = shape.max.y;
+                }
                 return SavePrefab(instance, path);
             }
 
@@ -3107,7 +3147,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 26;
+            PlayerSettings.Android.bundleVersionCode = 27;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

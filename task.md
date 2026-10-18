@@ -185,6 +185,10 @@
 
 - Lantai/properti tetap; dinding arena = steamer bambu anyaman; properti luar dipindah ke dalam. Boss squishy dumpling (lantai 100 pelangi) dan hero baru menyusul. APK 0.20.1.
 
+### Putaran 27 — collider tak terlihat dan pohon acak
+
+- Collider ring/scatter rebah dan bergeser (rotasi FBX) → diperbaiki dengan `PropShape` + collider anak tegak; pohon tersebar acak. APK 0.20.2.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

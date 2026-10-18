@@ -1476,6 +1476,85 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
+        public IEnumerator ObstacleCollidersHugTheirVisibleShape()
+        {
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            var generator = Object.FindAnyObjectByType<ArenaGenerator>();
+            int checkedColliders = 0;
+            foreach (int floor in new[] { 1, 11, 21, 31, 41, 51, 61, 71, 81, 91 })
+            {
+                stage.ForceFloor(floor);
+                yield return null;
+                yield return null;
+                foreach (var obstacle in generator.PlacedObstacles)
+                {
+                    if (obstacle == null)
+                        continue;
+                    Bounds visual = default;
+                    bool first = true;
+                    foreach (var r in obstacle.GetComponentsInChildren<Renderer>())
+                    {
+                        if (r is ParticleSystemRenderer)
+                            continue;
+                        if (first) { visual = r.bounds; first = false; }
+                        else visual.Encapsulate(r.bounds);
+                    }
+                    foreach (var c in obstacle.GetComponentsInChildren<Collider>())
+                    {
+                        if (c.isTrigger)
+                            continue;
+                        checkedColliders++;
+                        var cb = c.bounds;
+                        if (c is BoxCollider box)
+                            cb = new Bounds(cb.center, Vector3.Scale(box.size, c.transform.lossyScale)); // unrotated size
+                        float colliderH = Mathf.Max(cb.size.x, cb.size.z);
+                        float visualH = Mathf.Max(visual.size.x, visual.size.z);
+                        string label = obstacle.name + " (" + obstacle.kind + ", floor " + floor + ")";
+
+                        Assert.LessOrEqual(colliderH, obstacle.kind == Obstacle.Kind.Tree ? 1.5f : Mathf.Max(visualH * 1.12f, 0.9f), label + " collider is wider than what you can see: " + colliderH.ToString("F2") + " vs " + visualH.ToString("F2"));
+                        // The collider must sit inside what is drawn (plus a hand's width): nothing invisible may block the hero.
+                        var solidBox = c.bounds;
+                        const float margin = 0.35f;
+                        Assert.GreaterOrEqual(solidBox.min.x, visual.min.x - margin, label + " collider sticks out to the side of the prop");
+                        Assert.LessOrEqual(solidBox.max.x, visual.max.x + margin, label + " collider sticks out to the side of the prop");
+                        Assert.GreaterOrEqual(solidBox.min.z, visual.min.z - margin, label + " collider sticks out to the side of the prop");
+                        Assert.LessOrEqual(solidBox.max.z, visual.max.z + margin, label + " collider sticks out to the side of the prop");
+                        if (obstacle.kind != Obstacle.Kind.Rock)
+                            Assert.GreaterOrEqual(cb.size.y, Mathf.Min(visual.size.y, 2.4f) * 0.7f, label + " collider lies on its side (too short for its height)");
+                    }
+                }
+            }
+            Assert.Greater(checkedColliders, 100, "too few colliders were inspected");
+        }
+
+        [UnityTest]
+        public IEnumerator BigTreesAreScatteredAcrossTheArenaIncludingTheMiddle()
+        {
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            var generator = Object.FindAnyObjectByType<ArenaGenerator>();
+            int middle = 0;
+            int total = 0;
+            foreach (int floor in new[] { 1, 2, 3, 4, 5 })
+            {
+                stage.ForceFloor(floor);
+                yield return null;
+                yield return null;
+                foreach (var t in generator.Root.GetComponentsInChildren<Transform>())
+                {
+                    if (t.parent != generator.Root || !t.name.StartsWith("ENV_Forest_Tree"))
+                        continue;
+                    total++;
+                    var flat = t.position;
+                    flat.y = 0f;
+                    if (flat.magnitude < 13f)
+                        middle++;
+                }
+            }
+            Assert.Greater(total, 120, "too few big trees on the forest floors");
+            Assert.Greater(middle, 20, "big trees should also stand in the middle of the arena, not only along the wall");
+        }
+
+        [UnityTest]
         public IEnumerator RenderBudgetPerBiome()
         {
             var stage = Object.FindAnyObjectByType<StageManager>();

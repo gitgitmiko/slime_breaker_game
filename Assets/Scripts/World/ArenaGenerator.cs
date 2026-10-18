@@ -499,15 +499,27 @@ namespace SlimeBreaker
         void PlaceProps(ArenaTheme theme, System.Random rng)
         {
             float r = arenaRadius;
+            // Big trees first, anywhere in the arena (centre included); the smaller props then skip spots they would overlap.
             int treesA = 0;
             int treesB = 0;
+            switch (theme.biome)
+            {
+                case Biome.Snow:
+                case Biome.Forest:
+                    treesA = 22; treesB = 19; break;
+                case Biome.Thunder:
+                    treesA = 8; treesB = 7; break;
+                case Biome.Royal:
+                    treesA = 8; treesB = 6; break;
+            }
             // (No glowing rune ring on the floor any more: it read as a stray blue line next to the steamer wall.)
+            Trees(props.treeA, treesA, 0.85f, 1.1f, rng);
+            Trees(props.treeB, treesB, 0.85f, 1.15f, rng);
             // The dim sum steamer wall (a scene object) is the arena edge now; every prop that used to stand beyond the
             // boundary lives inside it, in a belt hugging the wall.
             switch (theme.biome)
             {
                 case Biome.Snow:
-                    treesA = 22; treesB = 19;
                     Ring(props.iceSpike, 10, r * 0.58f, false, rng, 0.25f, 1.15f);
                     Ring(props.rockA, 8, r * 0.44f, false, rng, 0.4f);
                     Ring(props.pillar, 5, r * 0.7f, true, rng);
@@ -524,7 +536,6 @@ namespace SlimeBreaker
                     Scatter(props.grass, 60, 2.4f, r * 0.9f, rng);
                     break;
                 case Biome.Thunder:
-                    treesA = 8; treesB = 7;
                     Ring(props.thunderSpire, 8, r * 0.68f, true, rng, 0.15f);
                     Ring(props.rockA, 10, r * 0.5f, false, rng, 0.3f);
                     Ring(props.pillar, 5, r * 0.38f, true, rng);
@@ -566,13 +577,11 @@ namespace SlimeBreaker
                 case Biome.Royal:
                     Ring(props.royalColumn, 10, r * 0.72f, true, rng, 0.08f);
                     Ring(props.royalColumn, 6, r * 0.42f, true, rng, 0.15f, 0.9f);
-                    treesA = 8; treesB = 6;
                     Ring(props.bush, 8, r * 0.28f, false, rng, 0.3f);
                     Scatter(props.flower, 80, 2.2f, r * 0.9f, rng);
                     Scatter(props.grass, 200, 1.8f, r * 0.92f, rng);
                     break;
                 default:
-                    treesA = 22; treesB = 19;
                     Ring(props.rockA, 10, r * 0.62f, false, rng, 0.2f);
                     Ring(props.rockB, 7, r * 0.44f, false, rng, 0.4f);
                     Ring(props.pillar, 6, r * 0.7f, true, rng);
@@ -584,9 +593,6 @@ namespace SlimeBreaker
                     break;
             }
 
-            // Big trees go in last, anywhere in the arena (centre included), around everything already placed.
-            Trees(props.treeA, treesA, 1.0f, 1.3f, rng);
-            Trees(props.treeB, treesB, 1.0f, 1.4f, rng);
         }
 
         /// <summary>Scatters big trees at random spots (they keep clear of the spawn point, the four lanes and other props).</summary>
@@ -598,7 +604,8 @@ namespace SlimeBreaker
             for (int attempt = 0; attempt < count * 40 && placed < count; attempt++)
             {
                 float angle = (float)rng.NextDouble() * Mathf.PI * 2f;
-                float radius = Mathf.Lerp(4.2f, arenaRadius * 0.95f, Mathf.Sqrt((float)rng.NextDouble()));
+                // Uniform in radius (not in area) on purpose: it puts more trees toward the middle instead of crowding the wall.
+                float radius = Mathf.Lerp(4.2f, arenaRadius * 0.95f, (float)rng.NextDouble());
                 var position = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
                 float scale = Mathf.Lerp(minScale, maxScale, (float)rng.NextDouble());
                 if (!Fits(position, 0.9f * scale))
@@ -620,6 +627,17 @@ namespace SlimeBreaker
                 float angle = (i + 0.5f) * Mathf.PI * 2f / count + (float)(rng.NextDouble() - 0.5) * jitter;
                 float r = radius + (float)(rng.NextDouble() - 0.5) * jitter * 2f;
                 var position = new Vector3(Mathf.Cos(angle) * r, 0f, Mathf.Sin(angle) * r);
+                bool blocked = false;
+                foreach (var taken in occupied)
+                {
+                    if ((taken - position).sqrMagnitude < 1.5f * 1.5f)
+                    {
+                        blocked = true;
+                        break;
+                    }
+                }
+                if (blocked)
+                    continue;
                 float yaw = faceCenter ? -angle * Mathf.Rad2Deg - 90f : (float)rng.NextDouble() * 360f;
                 float s = scale * (1f + (float)(rng.NextDouble() - 0.5) * 0.2f);
                 Place(prefab, position, yaw, s, radius < arenaRadius);

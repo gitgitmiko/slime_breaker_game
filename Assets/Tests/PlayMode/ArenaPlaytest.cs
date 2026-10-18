@@ -1579,8 +1579,9 @@ namespace SlimeBreaker.Tests
                         middle++;
                 }
             }
+            Debug.Log("PLAYTEST trees total=" + total + " middle=" + middle);
             Assert.Greater(total, 120, "too few big trees on the forest floors");
-            Assert.Greater(middle, 20, "big trees should also stand in the middle of the arena, not only along the wall");
+            Assert.Greater(middle, 35, "big trees should also stand in the middle of the arena, not only along the wall");
         }
 
         [UnityTest]

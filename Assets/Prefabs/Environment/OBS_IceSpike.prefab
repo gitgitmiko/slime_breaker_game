@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7997941224266257253}
   - component: {fileID: 8069389197279578828}
-  - component: {fileID: 6852443493522621317}
+  - component: {fileID: 1292024847498446732}
   m_Layer: 8
   m_Name: OBS_IceSpike
   m_TagString: Untagged
@@ -55,7 +55,7 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.38
   m_Center: {x: 0, y: 0.6, z: 0}
---- !u!114 &6852443493522621317
+--- !u!114 &1292024847498446732
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

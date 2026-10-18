@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5375037620175331871}
   - component: {fileID: 139909894127915944}
-  - component: {fileID: 3285018251139263459}
+  - component: {fileID: 6670138156949358240}
   m_Layer: 8
   m_Name: OBS_VolcanoRock
   m_TagString: Untagged
@@ -55,7 +55,7 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.56408095
   m_Center: {x: 0, y: 0.3163721, z: 0}
---- !u!114 &3285018251139263459
+--- !u!114 &6670138156949358240
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -258,6 +258,11 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Saat lantai malam, tiap boss membawa lampu titik 2,9 m di atas kepalanya (range 9, intensitas 2,6), berwarna versi terang dari warna boss (Royal pelangi: putih hangat), seperti lampu hero. Siang tanpa lampu. Tes `EveryBossSpawnsWithItsOwnLookAndHp` memeriksa keduanya.
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 38/38; APK `SLIMEBREAKER_APK_OK` 0.21.1 (versionCode 30).
 
+## Hasil 18 Oktober 2026 (putaran 31 — tata letak pohon)
+
+- Pohon besar kini ditempatkan lebih dulu (sebelum properti ring), jadi benar-benar tersebar acak termasuk tengah arena (±37% berada <13 m dari pusat; sebelumnya ±15%); properti ring melewati titik yang sudah terisi. Skala pohon 0,85–1,15. Tes `BigTreesAreScatteredAcrossTheArenaIncludingTheMiddle` dikencangkan (stabil di 3 run).
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 38/38; APK `SLIMEBREAKER_APK_OK` 0.21.2 (versionCode 31).
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

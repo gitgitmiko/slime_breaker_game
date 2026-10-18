@@ -208,6 +208,7 @@
 - Menu: Lanjutkan di atas Main, info kesulitan dan deskripsi dihapus; riwayat boss (lantai 10, 20, ...) yang sudah dilewati berdiri di belakang hero (`SaveData.bossesDefeated`, `MenuTrophies`). APK 0.24.0.
 - Arena di menu utama = arena (biome, cuaca, siang/malam) lantai terjauh yang pernah dicapai (`SaveData.highestFloor`, `MenuArena` memakai `ArenaGenerator`); kartu menu dirapatkan (tinggi mengikuti ada tidaknya Lanjutkan); frame inventori diperpanjang dan isinya ditengahkan. APK 0.25.0.
 - Tahap 3 redesign: hero penyihir chibi bertopi raksasa (rambut bob pirang-merah muda, capelet, jaket lengan lonceng, rok krem, bot cokelat) mengikuti gambar referensi; tulang dan animasi sama. APK 0.26.0.
+- Separuh kanan layar: geser ke samping memutar kamera mengelilingi hero (`CameraDragZone`, `FollowCamera.Yaw`); gerak joystick relatif kamera jadi ikut berputar; tombol HUD tetap di atas zona. APK 0.27.0.
 
 ## Berikutnya
 

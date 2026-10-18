@@ -273,6 +273,7 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 42/42; APK 0.24.0 (versionCode 34): menu (Lanjutkan di atas Main, tanpa deskripsi), boss yang sudah dikalahkan berdiri di belakang hero.
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 43/43; APK 0.25.0 (versionCode 35): arena menu mengikuti lantai terjauh (`MenuArena`), kartu menu dan inventori dirapikan.
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 43/43; APK 0.26.0 (versionCode 36): hero baru penyihir chibi (tahap 3 redesign).
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 44/44; APK 0.27.0 (versionCode 37): geser di separuh kanan layar memutar kamera.
 
 ## Pasang di HP
 

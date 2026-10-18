@@ -11,6 +11,8 @@ namespace SlimeBreaker
         /// <summary>How far the camera leans toward the hero's travel direction so there is more room to see ahead.</summary>
         public float leadDistance = 1.1f;
         public Camera TargetCamera { get; private set; }
+        /// <summary>Orbit around the hero, in degrees; set by dragging the right half of the screen (movement is camera-relative, so it follows).</summary>
+        public float Yaw { get; private set; }
 
         Vector3 lead;
         Vector3 lastTargetPosition;
@@ -97,6 +99,11 @@ namespace SlimeBreaker
             }
         }
 
+        public void Rotate(float degrees)
+        {
+            Yaw = Mathf.Repeat(Yaw + degrees, 360f);
+        }
+
         public void Shake(float seconds)
         {
             shake = Mathf.Max(shake, seconds);
@@ -107,7 +114,7 @@ namespace SlimeBreaker
             if (target == null)
                 return;
             var focus = target.position + lead;
-            var desired = focus + offset;
+            var desired = focus + Quaternion.Euler(0f, Yaw, 0f) * offset;
             transform.position = Vector3.Lerp(transform.position, desired, t);
             var look = focus + Vector3.up * lookHeight;
             transform.rotation = Quaternion.Slerp(

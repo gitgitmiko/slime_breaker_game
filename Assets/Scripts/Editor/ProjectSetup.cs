@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.26.0";
+        const string AppVersion = "0.27.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -3036,6 +3036,19 @@ namespace SlimeBreaker.EditorTools
             Place(breaker.gameObject, safe, new Vector2(0.86f, 0.735f), new Vector2(420f, 36f));
             breaker.gameObject.SetActive(false);
 
+            // Right half of the screen: drag sideways to orbit the camera. Bottom sibling so every HUD button stays on top.
+            var dragZone = new GameObject("CameraDragZone", typeof(RectTransform), typeof(Image), typeof(CameraDragZone));
+            dragZone.transform.SetParent(safe, false);
+            dragZone.transform.SetAsFirstSibling();
+            var dragRect = dragZone.GetComponent<RectTransform>();
+            dragRect.anchorMin = new Vector2(0.5f, 0f);
+            dragRect.anchorMax = Vector2.one;
+            dragRect.offsetMin = Vector2.zero;
+            dragRect.offsetMax = Vector2.zero;
+            dragRect.localScale = Vector3.one;
+            ApplyImage(dragZone.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(1f, 1f, 1f, 0f));
+            dragZone.GetComponent<Image>().raycastTarget = true;
+
             // Bottom-left: joystick. Fixed by default (only the base steers); Settings can switch it to
             // free, where the whole lower-left zone takes input and the base jumps to the thumb.
             var stick = new GameObject("Joystick", typeof(RectTransform), typeof(Image), typeof(VirtualJoystick));
@@ -3339,7 +3352,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 36;
+            PlayerSettings.Android.bundleVersionCode = 37;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

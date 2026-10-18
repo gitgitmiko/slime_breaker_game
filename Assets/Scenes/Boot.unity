@@ -119,7 +119,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &64711582
+--- !u!1 &717616032
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -127,53 +127,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 64711584}
-  - component: {fileID: 64711583}
-  m_Layer: 0
-  m_Name: UrpBootstrap
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &64711583
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 64711582}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7038d78f85c8843b09bc75d2dac38292, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.UrpSceneBootstrap
-  targetFrameRate: 60
---- !u!4 &64711584
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 64711582}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &627243247
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 627243249}
-  - component: {fileID: 627243248}
+  - component: {fileID: 717616034}
+  - component: {fileID: 717616033}
   m_Layer: 0
   m_Name: Boot
   m_TagString: Untagged
@@ -181,25 +136,25 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &627243248
+--- !u!114 &717616033
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 627243247}
+  m_GameObject: {fileID: 717616032}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 46e93b1788f14bd65a046cb7cbd702f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.BootLoader
---- !u!4 &627243249
+--- !u!4 &717616034
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 627243247}
+  m_GameObject: {fileID: 717616032}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -208,7 +163,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1445031031
+--- !u!1 &821276256
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -216,11 +171,56 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1445031036}
-  - component: {fileID: 1445031035}
-  - component: {fileID: 1445031034}
-  - component: {fileID: 1445031033}
-  - component: {fileID: 1445031032}
+  - component: {fileID: 821276258}
+  - component: {fileID: 821276257}
+  m_Layer: 0
+  m_Name: UrpBootstrap
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &821276257
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 821276256}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7038d78f85c8843b09bc75d2dac38292, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.UrpSceneBootstrap
+  targetFrameRate: 60
+--- !u!4 &821276258
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 821276256}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1570734632
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1570734637}
+  - component: {fileID: 1570734636}
+  - component: {fileID: 1570734635}
+  - component: {fileID: 1570734634}
+  - component: {fileID: 1570734633}
   m_Layer: 0
   m_Name: Camera
   m_TagString: MainCamera
@@ -228,33 +228,33 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &1445031032
+--- !u!81 &1570734633
 AudioListener:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1445031031}
+  m_GameObject: {fileID: 1570734632}
   m_Enabled: 1
---- !u!114 &1445031033
+--- !u!114 &1570734634
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1445031031}
+  m_GameObject: {fileID: 1570734632}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f081d4f2e3e9f8731b8564cae9977bfb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.UrpCameraRig
---- !u!114 &1445031034
+--- !u!114 &1570734635
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1445031031}
+  m_GameObject: {fileID: 1570734632}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
@@ -292,13 +292,13 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
---- !u!20 &1445031035
+--- !u!20 &1570734636
 Camera:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1445031031}
+  m_GameObject: {fileID: 1570734632}
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
@@ -343,13 +343,13 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!4 &1445031036
+--- !u!4 &1570734637
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1445031031}
+  m_GameObject: {fileID: 1570734632}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -358,7 +358,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1684146491
+--- !u!1 &2091426060
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -366,10 +366,10 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1684146495}
-  - component: {fileID: 1684146494}
-  - component: {fileID: 1684146493}
-  - component: {fileID: 1684146492}
+  - component: {fileID: 2091426064}
+  - component: {fileID: 2091426063}
+  - component: {fileID: 2091426062}
+  - component: {fileID: 2091426061}
   m_Layer: 0
   m_Name: Graphics
   m_TagString: Untagged
@@ -377,26 +377,26 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1684146492
+--- !u!114 &2091426061
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1684146491}
+  m_GameObject: {fileID: 2091426060}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f794ca5476753276926c58e5ae201ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.PostFx
   menuCover: {fileID: 2800000, guid: 45195c31537245f149b4ddda3fcc8618, type: 3}
---- !u!114 &1684146493
+--- !u!114 &2091426062
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1684146491}
+  m_GameObject: {fileID: 2091426060}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 58c6090a3e22eb8bfacae8380a2f2e94, type: 3}
@@ -406,13 +406,13 @@ MonoBehaviour:
   maxRenderHeight: 1080
   targetFps: 60
   runInEditor: 0
---- !u!114 &1684146494
+--- !u!114 &2091426063
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1684146491}
+  m_GameObject: {fileID: 2091426060}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 497fc16624402de108e1105edb5e612f, type: 3}
@@ -422,13 +422,13 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 48cc62ae52e0d1a4eab50c78de9ab61b, type: 2}
   - {fileID: 11400000, guid: c0d31e165c69698f8a68e70c135e04e7, type: 2}
   - {fileID: 11400000, guid: 9f34ced4a9cc5983f82817a67b7fa5bf, type: 2}
---- !u!4 &1684146495
+--- !u!4 &2091426064
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1684146491}
+  m_GameObject: {fileID: 2091426060}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -441,7 +441,7 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1445031036}
-  - {fileID: 64711584}
-  - {fileID: 627243249}
-  - {fileID: 1684146495}
+  - {fileID: 1570734637}
+  - {fileID: 821276258}
+  - {fileID: 717616034}
+  - {fileID: 2091426064}

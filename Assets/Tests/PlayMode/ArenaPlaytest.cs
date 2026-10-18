@@ -1776,6 +1776,27 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
+        public IEnumerator DraggingTheRightSideOrbitsTheCamera()
+        {
+            var zone = Object.FindAnyObjectByType<CameraDragZone>();
+            Assert.IsNotNull(zone, "right half of the screen needs a camera drag zone");
+            var rig = Camera.main.GetComponent<FollowCamera>();
+            var hero = PlayerHealth.Instance.transform;
+            yield return new WaitForSeconds(0.3f);
+            Vector3 before = Camera.main.transform.position - hero.position;
+            var data = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current) { delta = new Vector2(-300f, 0f) };
+            zone.OnPointerDown(data);
+            zone.OnDrag(data);
+            zone.OnPointerUp(data);
+            Assert.AreNotEqual(0f, rig.Yaw, "dragging should turn the camera");
+            yield return new WaitForSeconds(1.5f);
+            Vector3 after = Camera.main.transform.position - hero.position;
+            Assert.Greater(Vector3.Angle(Vector3.ProjectOnPlane(before, Vector3.up), Vector3.ProjectOnPlane(after, Vector3.up)), 30f, "camera should orbit around the hero");
+            Assert.AreEqual(before.y, after.y, 0.5f, "orbit keeps the camera height");
+            Capture("40_camera_orbit");
+        }
+
+        [UnityTest]
         public IEnumerator MenuArenaFollowsTheFurthestFloorReached()
         {
             var save = SaveService.Load();

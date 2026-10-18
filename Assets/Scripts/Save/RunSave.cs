@@ -27,6 +27,8 @@ namespace SlimeBreaker
         /// <summary>Equipped item id per <see cref="ItemSlot"/> (-1 = empty).</summary>
         public int[] equippedItems = { -1, -1, -1, -1, -1 };
         public int nextItemId = 1;
+        /// <summary>Difficulty the run was started on (runs saved before difficulties existed were Hard).</summary>
+        public int difficulty = 2;
 
         public ArenaTheme ToTheme()
         {

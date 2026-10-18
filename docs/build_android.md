@@ -263,6 +263,13 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Pohon besar kini ditempatkan lebih dulu (sebelum properti ring), jadi benar-benar tersebar acak termasuk tengah arena (±37% berada <13 m dari pusat; sebelumnya ±15%); properti ring melewati titik yang sudah terisi. Skala pohon 0,85–1,15. Tes `BigTreesAreScatteredAcrossTheArenaIncludingTheMiddle` dikencangkan (stabil di 3 run).
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 38/38; APK `SLIMEBREAKER_APK_OK` 0.21.2 (versionCode 31).
 
+## Hasil 18 Oktober 2026 (putaran 32 — mode kesulitan)
+
+- `Difficulty` (Easy/Normal/Hard) dengan profil pengali; dipilih di menu utama, disimpan di `SaveData.difficulty` (baru: Normal) dan `RunSave.difficulty` (lama: Hard). Diterapkan ke HP/damage monster, jeda spawn, HP/damage boss, HP awal hero, bonus kartu, peluang drop item, dan EXP.
+- Perbaikan sampingan: bar HP hero kini memakai HP awal sebenarnya (rank HP permanen dan kesulitan) — sebelumnya `PlayerHealth` bisa terbangun sebelum stat run dan tertahan di 100. Menu juga membaca ulang save sebelum membeli upgrade/memilih kesulitan supaya slider suara tak tertimpa.
+- Tes: `DifficultyLevelsScaleMonstersBossesUpgradesAndDrops`, `DifficultyIsSavedWithTheRunAndOldSavesStayHard`, `MenuDifficultyButtonsDecideTheNextRun`; semua tes arena memakai Hard.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 30/30; PlayMode 39/39; APK `SLIMEBREAKER_APK_OK` 0.22.0 (versionCode 32).
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

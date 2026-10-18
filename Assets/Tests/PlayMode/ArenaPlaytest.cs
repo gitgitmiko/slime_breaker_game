@@ -20,9 +20,16 @@ namespace SlimeBreaker.Tests
         float dashTimer = 0.3f;
         readonly List<MeshCollider> groundColliders = new List<MeshCollider>();
 
+        int originalDifficulty;
+
         [UnitySetUp]
         public IEnumerator LoadArena()
         {
+            // Every arena test measures the original (Hard) numbers; the player's own choice is restored afterwards.
+            var saved = SaveService.Load();
+            originalDifficulty = saved.difficulty;
+            saved.difficulty = (int)DifficultyLevel.Hard;
+            SaveService.Save(saved);
             SceneManager.LoadScene("GameArena");
             yield return null;
             yield return null;
@@ -44,6 +51,10 @@ namespace SlimeBreaker.Tests
             if (previousSettings != null)
                 InputSystem.settings = previousSettings;
             Time.timeScale = 1f;
+            var restored = SaveService.Load();
+            restored.difficulty = originalDifficulty;
+            SaveService.Save(restored);
+            Difficulty.Set(DifficultyLevel.Hard);
             yield return null;
         }
 
@@ -1681,6 +1692,80 @@ namespace SlimeBreaker.Tests
                 }
                 yield return null;
             }
+        }
+
+        [UnityTest]
+        public IEnumerator MenuDifficultyButtonsDecideTheNextRun()
+        {
+            SceneManager.LoadScene("MainMenu");
+            yield return null;
+            yield return null;
+            var menu = Object.FindAnyObjectByType<MainMenuController>();
+            Assert.IsNotNull(menu);
+            Assert.AreEqual(3, menu.difficultyButtons.Length, "menu needs Easy / Normal / Hard buttons");
+            Assert.AreEqual("Easy", menu.difficultyButtons[0].GetComponentInChildren<Text>().text);
+            Assert.AreEqual("Hard", menu.difficultyButtons[2].GetComponentInChildren<Text>().text);
+            // Hard is selected first (the tests saved it); picking Easy changes the save and the highlight.
+            Assert.AreEqual(menu.selectedSprite, menu.difficultyButtons[2].GetComponent<Image>().sprite);
+            menu.difficultyButtons[0].onClick.Invoke();
+            yield return null;
+            Assert.AreEqual((int)DifficultyLevel.Easy, SaveService.Load().difficulty);
+            Assert.AreEqual(menu.selectedSprite, menu.difficultyButtons[0].GetComponent<Image>().sprite);
+            Assert.AreEqual(menu.normalSprite, menu.difficultyButtons[2].GetComponent<Image>().sprite);
+            StringAssert.Contains("50%", menu.difficultyHint.text);
+            Capture("35_menu_difficulty");
+
+            // A new run on Easy: +50% hero HP, half boss HP, three times the card bonus.
+            menu.Play();
+            yield return null;
+            yield return null;
+            var flow = GameFlowController.Instance;
+            Assert.AreEqual(DifficultyLevel.Easy, Difficulty.Level);
+            Assert.AreEqual(150, flow.Stats.maxHealth, "Easy hero starts with 150 HP");
+            Assert.AreEqual(150, PlayerHealth.Instance.Max);
+            Assert.AreEqual(5000, BossCatalog.HealthForFloor(10));
+            Assert.AreEqual("3.0%", UpgradeRarities.Percent(UpgradeRarity.Ultra));
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            stage.ForceFloor(10);
+            EnemyHealth boss = null;
+            float waited = 0f;
+            while (boss == null && waited < 10f)
+            {
+                yield return null;
+                waited += Time.unscaledDeltaTime;
+                foreach (var candidate in EnemyHealth.Active)
+                {
+                    if (candidate != null && candidate.IsBoss)
+                        boss = candidate;
+                }
+            }
+            Assert.IsNotNull(boss);
+            Assert.AreEqual(5000, boss.Max, "Easy floor-10 boss has half the HP");
+            // Slimes: 30% less HP, half the damage.
+            stage.ForceFloor(1);
+            EnemyHealth slime = null;
+            waited = 0f;
+            while (slime == null && waited < 10f)
+            {
+                yield return null;
+                waited += Time.unscaledDeltaTime;
+                foreach (var candidate in EnemyHealth.Active)
+                {
+                    if (candidate != null && !candidate.IsBoss && candidate.definition != null && candidate.definition.maxHealth == 24)
+                        slime = candidate;
+                }
+            }
+            Assert.IsNotNull(slime, "no normal slime appeared");
+            Assert.AreEqual(Mathf.RoundToInt(24 * 0.7f), slime.Max);
+            Assert.AreEqual(4, slime.ContactDamage, "Easy slimes hit for half of 8");
+
+            // Continue keeps the difficulty the run started on, whatever the menu says now.
+            flow.PersistRun();
+            var saved = SaveService.Load();
+            saved.difficulty = (int)DifficultyLevel.Hard;
+            SaveService.Save(saved);
+            var data = flow.CaptureRun();
+            Assert.AreEqual((int)DifficultyLevel.Easy, data.difficulty);
         }
 
         [UnityTest]

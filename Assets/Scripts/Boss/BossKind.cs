@@ -28,7 +28,7 @@ namespace SlimeBreaker
         public static int HealthForFloor(int floor)
         {
             int tier = Mathf.Max(1, RunRules.BossTier(floor));
-            return tier * RunRules.BossHealthPerTier;
+            return Difficulty.Scale(tier * RunRules.BossHealthPerTier, Difficulty.Profile.bossHealth);
         }
 
         public static int EnrageSkillCount(int floor)
@@ -38,7 +38,7 @@ namespace SlimeBreaker
 
         public static int ContactDamageForFloor(int floor)
         {
-            return RunRules.BossContactDamage(floor);
+            return Difficulty.Scale(RunRules.BossContactDamage(floor), Difficulty.Profile.bossDamage);
         }
 
         public static int SkillDamage(bool enraged)
@@ -48,7 +48,7 @@ namespace SlimeBreaker
 
         public static int SkillDamage(int floor, bool enraged)
         {
-            return RunRules.BossSkillDamageAt(floor, enraged);
+            return Difficulty.Scale(RunRules.BossSkillDamageAt(floor, enraged), Difficulty.Profile.bossDamage);
         }
 
         public static string DisplayName(BossKind kind)

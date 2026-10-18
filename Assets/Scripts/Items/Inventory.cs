@@ -164,7 +164,7 @@ namespace SlimeBreaker
 
         void OnEnemyDied(EnemyHealth enemy) => DropLoot(enemy, -1f);
 
-        /// <summary>Roll loot for a dead enemy (slime chance ItemCatalog.DropChance unless overridden; bosses always drop 4).</summary>
+        /// <summary>Roll loot for a dead enemy (slime chance ItemCatalog.DropChanceNow unless overridden; bosses always drop 4).</summary>
         public void DropLoot(EnemyHealth enemy, float chanceOverride)
         {
             if (enemy == null || pickupPrefab == null)
@@ -181,7 +181,7 @@ namespace SlimeBreaker
                 }
                 return;
             }
-            if (UnityEngine.Random.value < (chanceOverride >= 0f ? chanceOverride : ItemCatalog.DropChance))
+            if (UnityEngine.Random.value < (chanceOverride >= 0f ? chanceOverride : ItemCatalog.DropChanceNow))
                 Spawn(ItemCatalog.Roll(() => UnityEngine.Random.value, floor), origin);
         }
 

@@ -19,5 +19,7 @@ namespace SlimeBreaker
         public float musicLevel = 1f;
         /// <summary>Game sound volume 0..1 (effects and ambience).</summary>
         public float sfxLevel = 1f;
+        /// <summary>Difficulty for the next new run: 0 Easy, 1 Normal (default), 2 Hard.</summary>
+        public int difficulty = 1;
     }
 }

@@ -29,17 +29,19 @@ namespace SlimeBreaker
             var resume = RunSaveService.PeekResume();
             if (resume != null && resume.stats != null)
             {
+                Difficulty.Set(resume.difficulty);
                 Stats = resume.stats;
                 Stats.level = Mathf.Max(1, resume.level);
             }
             else
             {
+                Difficulty.Set(save.difficulty);
                 Stats = new RunStats();
                 if (balance != null)
                 {
                     Stats.damage = balance.baseDamage + save.damageRank * 2;
                     Stats.moveSpeed = balance.baseMoveSpeed * (1f + 0.05f * save.speedRank);
-                    Stats.maxHealth = balance.baseHealth + save.healthRank * 15;
+                    Stats.maxHealth = Mathf.RoundToInt((balance.baseHealth + save.healthRank * 15) * Difficulty.Profile.heroHealth);
                     Stats.attackCooldown = balance.baseAttackCooldown;
                     Stats.attackRange = balance.baseAttackRange;
                     Stats.dashCooldown = balance.baseDashCooldown;
@@ -54,6 +56,12 @@ namespace SlimeBreaker
             var resume = RunSaveService.PeekResume();
             if (resume != null)
                 ApplyResume(resume);
+            else
+            {
+                // PlayerHealth may have woken before the run stats existed; start at the real max (permanent HP rank, difficulty).
+                int max = Stats != null ? Stats.TotalMaxHealth : 100;
+                PlayerHealth.Instance?.SetMaxHealth(max, max);
+            }
             yield return null;
             RunSaveService.FinishResume();
             PersistRun();
@@ -246,6 +254,7 @@ namespace SlimeBreaker
         {
             var data = new RunSave
             {
+                difficulty = (int)Difficulty.Level,
                 level = Stats != null ? Stats.level : 1,
                 stats = Stats ?? new RunStats(),
                 elapsed = run != null ? run.Elapsed : 0f,

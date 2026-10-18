@@ -37,7 +37,7 @@ namespace SlimeBreaker
         };
 
         /// <summary>Bonus as a fraction (0.001 for +0.1%).</summary>
-        public static float Fraction(UpgradeRarity rarity) => BonusPercent[(int)rarity] / 100f;
+        public static float Fraction(UpgradeRarity rarity) => BonusPercent[(int)rarity] * Difficulty.Profile.upgradeBonus / 100f;
 
         /// <summary>Roll a rarity from a 0..1 value (UnityEngine.Random.value in play).</summary>
         public static UpgradeRarity FromRoll(float roll01)
@@ -53,7 +53,7 @@ namespace SlimeBreaker
             return UpgradeRarity.Normal;
         }
 
-        public static string Percent(UpgradeRarity rarity) => BonusPercent[(int)rarity].ToString("0.0", CultureInfo.InvariantCulture) + "%";
+        public static string Percent(UpgradeRarity rarity) => (BonusPercent[(int)rarity] * Difficulty.Profile.upgradeBonus).ToString("0.0", CultureInfo.InvariantCulture) + "%";
 
         public static string Describe(UpgradeKind kind, UpgradeRarity rarity)
         {

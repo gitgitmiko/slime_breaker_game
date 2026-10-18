@@ -53,6 +53,7 @@ namespace SlimeBreaker
             data.graphicsLevel = Mathf.Clamp(data.graphicsLevel, 0, 2);
             data.musicLevel = Mathf.Clamp01(data.musicLevel);
             data.sfxLevel = Mathf.Clamp01(data.sfxLevel);
+            data.difficulty = Mathf.Clamp(data.difficulty, 0, 2);
             return data;
         }
 

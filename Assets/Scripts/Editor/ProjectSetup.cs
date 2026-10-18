@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.21.2";
+        const string AppVersion = "0.22.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -2177,7 +2177,7 @@ namespace SlimeBreaker.EditorTools
             var font = Font();
             // Left column on a glass card: title, tagline, gold/record pills, Play, Continue, upgrades.
             var menuCard = Graphic(safe, "MenuCard", cardSprite, Color.white);
-            Place(menuCard.gameObject, safe, new Vector2(0.27f, 0.5f), new Vector2(900f, 900f));
+            Place(menuCard.gameObject, safe, new Vector2(0.27f, 0.5f), new Vector2(900f, 980f));
             var accent = Graphic(menuCard.transform, "Accent", pillSprite, AccentViolet);
             AnchorBox(accent.rectTransform, new Vector2(0f, 1f), new Vector2(54f, -70f), new Vector2(8f, 96f));
             var title = Text(menuCard.transform, "Title", "Slime Breaker", 84, TextAnchor.MiddleLeft, font);
@@ -2204,21 +2204,37 @@ namespace SlimeBreaker.EditorTools
             AnchorBox((RectTransform)play.transform, new Vector2(0f, 1f), new Vector2(84f, -322f), new Vector2(736f, 112f));
             var cont = Button(menuCard.transform, "Continue", "Lanjutkan", font, Color.white, ghostSprite);
             AnchorBox((RectTransform)cont.transform, new Vector2(0f, 1f), new Vector2(84f, -452f), new Vector2(736f, 92f));
+            // Difficulty selector for the next new run (Easy / Normal / Hard) with a one-line summary.
+            var difficultyLabel = Text(menuCard.transform, "DifficultyLabel", "KESULITAN", 20, TextAnchor.MiddleLeft, font);
+            difficultyLabel.fontStyle = FontStyle.Bold;
+            difficultyLabel.color = TextDim;
+            AnchorBox(difficultyLabel.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -572f), new Vector2(200f, 30f));
+            var difficultyHint = Text(menuCard.transform, "DifficultyHint", "", 18, TextAnchor.MiddleRight, font);
+            difficultyHint.color = TextDim;
+            AnchorBox(difficultyHint.rectTransform, new Vector2(0f, 1f), new Vector2(286f, -572f), new Vector2(536f, 30f));
+            var difficultyButtons = new Button[3];
+            string[] difficultyNames = { "Easy", "Normal", "Hard" };
+            for (int d = 0; d < 3; d++)
+            {
+                difficultyButtons[d] = Button(menuCard.transform, "Difficulty" + difficultyNames[d], difficultyNames[d], font, Color.white, ghostSprite);
+                AnchorBox((RectTransform)difficultyButtons[d].transform, new Vector2(0f, 1f), new Vector2(84f + d * 250f, -610f), new Vector2(236f, 84f));
+                difficultyButtons[d].GetComponentInChildren<Text>().fontSize = 30;
+            }
             var upgradesLabel = Text(menuCard.transform, "UpgradesLabel", "PENINGKATAN PERMANEN", 20, TextAnchor.MiddleLeft, font);
             upgradesLabel.fontStyle = FontStyle.Bold;
             upgradesLabel.color = TextDim;
-            AnchorBox(upgradesLabel.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -580f), new Vector2(736f, 30f));
+            AnchorBox(upgradesLabel.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -722f), new Vector2(736f, 30f));
             var damage = Button(menuCard.transform, "Damage", "Damage", font, Color.white, ghostSprite);
-            AnchorBox((RectTransform)damage.transform, new Vector2(0f, 1f), new Vector2(84f, -624f), new Vector2(236f, 120f));
+            AnchorBox((RectTransform)damage.transform, new Vector2(0f, 1f), new Vector2(84f, -764f), new Vector2(236f, 120f));
             var health = Button(menuCard.transform, "Health", "Nyawa", font, Color.white, ghostSprite);
-            AnchorBox((RectTransform)health.transform, new Vector2(0f, 1f), new Vector2(334f, -624f), new Vector2(236f, 120f));
+            AnchorBox((RectTransform)health.transform, new Vector2(0f, 1f), new Vector2(334f, -764f), new Vector2(236f, 120f));
             var speed = Button(menuCard.transform, "Speed", "Laju", font, Color.white, ghostSprite);
-            AnchorBox((RectTransform)speed.transform, new Vector2(0f, 1f), new Vector2(584f, -624f), new Vector2(236f, 120f));
+            AnchorBox((RectTransform)speed.transform, new Vector2(0f, 1f), new Vector2(584f, -764f), new Vector2(236f, 120f));
             foreach (var upgradeButton in new[] { damage, health, speed })
                 upgradeButton.GetComponentInChildren<Text>().fontSize = 26;
             var version = Text(menuCard.transform, "Version", "v" + AppVersion, 18, TextAnchor.MiddleLeft, font);
             version.color = new Color(1f, 1f, 1f, 0.35f);
-            AnchorBox(version.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -800f), new Vector2(300f, 28f));
+            AnchorBox(version.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -910f), new Vector2(300f, 28f));
             var settingsButton = Button(safe, "Settings", "", font, Color.white, circleGlassSprite);
             Place(settingsButton.gameObject, safe, new Vector2(0.955f, 0.925f), new Vector2(84f, 84f));
             var gearIcon = Graphic(settingsButton.transform, "Icon", gearSprite, Color.white);
@@ -2235,6 +2251,10 @@ namespace SlimeBreaker.EditorTools
             menu.continueButton = cont;
             menu.continueLabel = cont.GetComponentInChildren<Text>();
             menu.settings = settings;
+            menu.difficultyButtons = difficultyButtons;
+            menu.difficultyHint = difficultyHint;
+            menu.selectedSprite = buttonSprite;
+            menu.normalSprite = ghostSprite;
             AttachGraphics(new GameObject("Graphics"));
             UnityEventTools.AddPersistentListener(play.onClick, menu.Play);
             UnityEventTools.AddPersistentListener(cont.onClick, menu.Continue);
@@ -3170,7 +3190,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 31;
+            PlayerSettings.Android.bundleVersionCode = 32;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

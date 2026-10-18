@@ -71,6 +71,24 @@ Masuk pintu meregenerasi arena (fade). Cuaca dan siang/malam berganti setiap lan
 
 Pengaturan memuat dua slider volume (disimpan di save meta, `musicLevel`/`sfxLevel`): **Musik (BGM)** mengatur musik, **Suara game** mengatur efek suara dan ambience (hujan, angin, bed biome). Peluru musuh (slime ranged dan boss) tidak punya suara saat mengenai hero; yang terdengar hanya bunyi hit milik hero (`playerhit`).
 
+## Kesulitan (Easy / Normal / Hard)
+
+Dipilih di menu utama (tombol KESULITAN, tersimpan di save meta) untuk run baru; run yang disimpan (Lanjutkan) tetap memakai kesulitan saat run dimulai. **Hard** adalah keseimbangan asli; Normal dan Easy mengubah angka berikut (semuanya di `Difficulty.For`):
+
+| | Easy | Normal | Hard |
+|---|---|---|---|
+| Damage monster (slime, peluru ranged) | ×0,5 | ×0,75 | ×1 |
+| HP monster | ×0,7 | ×0,85 | ×1 |
+| Jeda spawn monster | ×1,35 (lebih jarang) | ×1,15 | ×1 |
+| HP boss | ×0,5 (lantai 10 = 5.000) | ×0,75 (7.500) | ×1 (10.000) |
+| Damage boss (kontak + skill) | ×0,5 | ×0,75 | ×1 |
+| HP awal hero | ×1,5 (150) | ×1,25 (125) | ×1 (100) |
+| Bonus kartu level-up | ×3 (Ultra 3,0%) | ×2 (2,0%) | ×1 (1,0%) |
+| Peluang slime menjatuhkan item | 15% | 8% | 5% |
+| EXP | ×1,5 | ×1,25 | ×1 |
+
+Alasan: kematian utama berasal dari damage kontak ke hero 100 HP, jadi damage monster dan HP hero yang paling menurunkan kesulitan; kartu level-up dan drop item hanya menambah kekuatan pelan-pelan (kartu hanya 0,1–1%), jadi dipakai sebagai pelengkap. Peluang rarity kartu dan item (65/20/10/5%) dan stat item per level tidak berubah di semua kesulitan. Install baru mulai di Normal; save lama tanpa pilihan juga Normal, run lama yang tersimpan dianggap Hard.
+
 ## Item dan inventori
 
 Monster menjatuhkan perlengkapan (5% per slime; boss menjatuhkan **4 item, salah satunya pasti Ultra**). Rarity memakai chance yang sama dengan kartu upgrade (Normal 65%, Rare 20%, Legend 10%, Ultra 5%). Stat dikali **band lantai** tempat item jatuh (lantai 1–10 = ×1, 11–20 = ×2, … 91–100 = ×10).

@@ -195,10 +195,11 @@ namespace SlimeBreaker
             if (definition == null)
                 return;
             floor = Mathf.Max(1, floor);
-            Current = RunRules.SlimeMaxHealth(definition.maxHealth, floor);
+            var profile = Difficulty.Profile;
+            Current = Difficulty.Scale(RunRules.SlimeMaxHealth(definition.maxHealth, floor), profile.monsterHealth);
             Max = Current;
             extraDamage = Mathf.Max(0, floor - 1) * RunRules.SlimeDamagePerFloor;
-            ContactDamage = RunRules.SlimeContactDamage(definition.contactDamage, floor);
+            ContactDamage = Difficulty.Scale(RunRules.SlimeContactDamage(definition.contactDamage, floor), profile.monsterDamage);
         }
 
         public void TintBody(Color color)

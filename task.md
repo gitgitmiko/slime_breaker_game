@@ -201,6 +201,10 @@
 
 - Boss memiliki lampu di atas kepala saat malam. APK 0.21.1.
 
+### Putaran 32 — mode kesulitan
+
+- Easy/Normal/Hard di menu utama; Hard = angka asli. APK 0.22.0.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

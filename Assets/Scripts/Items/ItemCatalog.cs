@@ -44,7 +44,9 @@ namespace SlimeBreaker
     public static class ItemCatalog
     {
         public const int SlotCount = 5;
+        /// <summary>Hard-difficulty slime drop chance; see <see cref="DropChanceNow"/> for the current run.</summary>
         public const float DropChance = 0.05f;
+        public static float DropChanceNow => Difficulty.Profile.dropChance;
         public const int BossDrops = 4;
 
         //                                          Normal  Rare  Legend  Ultra   (per floor band)

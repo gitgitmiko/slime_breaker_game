@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using UnityEngine;
 using SlimeBreaker;
 
 namespace SlimeBreaker.Tests
@@ -220,6 +221,61 @@ namespace SlimeBreaker.Tests
             var quiet = SaveService.ParseOrDefault("{\"schemaVersion\":2,\"musicLevel\":0.3,\"sfxLevel\":0.6}");
             Assert.AreEqual(0.3f, quiet.musicLevel, 0.0001f);
             Assert.AreEqual(0.6f, quiet.sfxLevel, 0.0001f);
+        }
+
+        [Test]
+        public void DifficultyLevelsScaleMonstersBossesUpgradesAndDrops()
+        {
+            try
+            {
+                Difficulty.Set(DifficultyLevel.Hard);
+                Assert.AreEqual(10000, BossCatalog.HealthForFloor(10), "Hard keeps the original boss HP");
+                Assert.AreEqual(50, BossCatalog.ContactDamageForFloor(1));
+                Assert.AreEqual("1.0%", UpgradeRarities.Percent(UpgradeRarity.Ultra));
+                Assert.AreEqual(0.05f, ItemCatalog.DropChanceNow, 1e-6f);
+
+                Difficulty.Set(DifficultyLevel.Normal);
+                Assert.AreEqual(7500, BossCatalog.HealthForFloor(10));
+                Assert.AreEqual(38, BossCatalog.ContactDamageForFloor(1));
+                Assert.AreEqual("2.0%", UpgradeRarities.Percent(UpgradeRarity.Ultra));
+                Assert.AreEqual(0.02f, UpgradeRarities.Fraction(UpgradeRarity.Ultra), 1e-6f);
+                Assert.AreEqual(0.08f, ItemCatalog.DropChanceNow, 1e-6f);
+
+                Difficulty.Set(DifficultyLevel.Easy);
+                Assert.AreEqual(5000, BossCatalog.HealthForFloor(10));
+                Assert.AreEqual(25, BossCatalog.ContactDamageForFloor(1));
+                Assert.AreEqual("3.0%", UpgradeRarities.Percent(UpgradeRarity.Ultra));
+                Assert.AreEqual(0.15f, ItemCatalog.DropChanceNow, 1e-6f);
+
+                var easy = Difficulty.For(DifficultyLevel.Easy);
+                var normal = Difficulty.For(DifficultyLevel.Normal);
+                var hard = Difficulty.For(DifficultyLevel.Hard);
+                Assert.Less(easy.monsterDamage, normal.monsterDamage);
+                Assert.Less(normal.monsterDamage, hard.monsterDamage);
+                Assert.Less(easy.monsterHealth, normal.monsterHealth);
+                Assert.Greater(easy.heroHealth, normal.heroHealth);
+                Assert.Greater(normal.heroHealth, hard.heroHealth);
+                Assert.Greater(easy.upgradeBonus, normal.upgradeBonus);
+                Assert.Greater(easy.dropChance, normal.dropChance);
+                Assert.Greater(easy.xp, normal.xp);
+                Assert.Greater(easy.spawnInterval, normal.spawnInterval);
+                Assert.AreEqual(1, Difficulty.Scale(1, 0.1f), "scaled values never drop below 1");
+            }
+            finally
+            {
+                Difficulty.Set(DifficultyLevel.Hard);
+            }
+        }
+
+        [Test]
+        public void DifficultyIsSavedWithTheRunAndOldSavesStayHard()
+        {
+            var fresh = SaveService.ParseOrDefault("{\"schemaVersion\":2,\"gold\":5}");
+            Assert.AreEqual((int)DifficultyLevel.Normal, fresh.difficulty, "new installs start on Normal");
+            var wild = SaveService.ParseOrDefault("{\"schemaVersion\":2,\"difficulty\":9}");
+            Assert.AreEqual(2, wild.difficulty);
+            var run = JsonUtility.FromJson<RunSave>("{\"level\":3}");
+            Assert.AreEqual((int)DifficultyLevel.Hard, run.difficulty, "runs saved before difficulties existed were Hard");
         }
 
         [Test]

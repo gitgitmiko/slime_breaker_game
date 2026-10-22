@@ -12,9 +12,10 @@
 | Ikon aplikasi | Adaptive (background + foreground), round, legacy dari `asset_work/output/UI/AppIcon/` |
 | Tanpa izin sensitif | Tidak ada izin lokasi/kamera/mikrofon/kontak; Unity Analytics/Cloud mati. SDK AdMob menambah `INTERNET`, `ACCESS_NETWORK_STATE`, dan `AD_ID` |
 | Ikon 512, feature graphic, screenshot | `asset_work/store/icon_512.png`, `feature_graphic_1024x500.png`, `screenshots/*.png` (1280×720) |
-| Kebijakan privasi | `docs/store/privacy-policy.html` (ID + EN) — harus di-host di URL publik |
+| Situs developer | **https://gitgitdev.my.id** (repo `~/github-repos/gitgitdev-site`). Halaman game: `https://gitgitdev.my.id/dumpling-witch/` |
+| Kebijakan privasi | **https://gitgitdev.my.id/dumpling-witch/privacy/** (ID + EN; sumber di repo situs, `docs/store/privacy-policy.html` hanya salinan lama) |
 | AdMob | Google Mobile Ads 11.5.0 (OpenUPM) + UMP consent. App ID `ca-app-pub-6808667639334235~3733831999`, unit Rewarded `ca-app-pub-6808667639334235/8407574176` (`Continue_Revive`). AAB memakai unit asli; APK sideload dibangun dengan `SB_ADMOB_TEST` dan hanya meminta iklan uji Google. |
-| app-ads.txt | `docs/store/app-ads.txt` — taruh di root domain situs developer (mis. `https://gitgitmiko.my.id/app-ads.txt`) dan isi domain itu sebagai *Website* di Play Console |
+| app-ads.txt | **https://gitgitdev.my.id/app-ads.txt** (aktif). Isi `https://gitgitdev.my.id` sebagai *Website* di Play Console |
 
 Bangun ulang aset store:
 
@@ -41,7 +42,7 @@ Simpan cadangan `~/.slimebreaker/upload.keystore` **dan** `upload-keystore.prope
 
 1. **Akun developer** di play.google.com/console — biaya sekali USD 25, verifikasi identitas (KTP) dan nomor HP.
 2. **Create app**: nama *Dumpling Witch*, bahasa default Indonesia, *Game*, *Free*, centang deklarasi.
-3. **Host kebijakan privasi** di URL publik (mis. `https://gitgitmiko.my.id/slimebreaker/privacy`, GitHub Pages, atau Google Sites), lalu isi di *App content → Privacy policy*.
+3. **Kebijakan privasi**: isi `https://gitgitdev.my.id/dumpling-witch/privacy/` di *App content → Privacy policy*; *Store settings → Website*: `https://gitgitdev.my.id`.
 4. **App content**:
    - *Ads*: **Ya, berisi iklan** (iklan reward AdMob saat pemain memilih Lanjutkan).
    - *Advertising ID*: **Ya**, dipakai untuk *Advertising or marketing*.

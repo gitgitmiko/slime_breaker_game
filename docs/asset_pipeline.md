@@ -140,6 +140,10 @@ Efek suara disintesis numpy 44,1 kHz (osilator, noise berfilter, envelope) ke WA
 
 `ProjectSetup.BuildAll` menyalin `asset_work/output` dan `asset_work/textures` ke `Assets/` (mirror: file lama yang tidak ada lagi di output dihapus), jadi jangan menyunting file di `Assets/Art` atau `Assets/Audio` langsung.
 
+## Aset Google Play
+
+`render_store_art.py` (Blender, hanya mengimpor FBX final) merender hero/boss/slime transparan ke `asset_work/store/renders`; `build_store_art.py` (Pillow, font DejaVu Sans Bold) menyusun ikon peluncur `asset_work/output/UI/AppIcon/APP_Icon*.png` (dipasang `ProjectSetup.ConfigureAppIcons`), `asset_work/store/icon_512.png`, dan `feature_graphic_1024x500.png`. Lihat `docs/play_store.md`.
+
 ## Konvensi ekspor
 
 - Satuan meter. Karakter menghadap -Y di Blender.

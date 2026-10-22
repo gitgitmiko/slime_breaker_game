@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.30.0";
+        const string AppVersion = "0.30.1";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -84,43 +84,77 @@ namespace SlimeBreaker.EditorTools
         [MenuItem("Slime Breaker/Build Android APK")]
         public static void BuildAndroidApk()
         {
+            BuildAndroid(false);
+        }
+
+        /// <summary>
+        /// Google Play upload: an Android App Bundle signed with the upload key from
+        /// ~/.slimebreaker/upload-keystore.properties (outside the repository; see docs/play_store.md).
+        /// </summary>
+        [MenuItem("Slime Breaker/Build Android App Bundle (Play Store)")]
+        public static void BuildAndroidAab()
+        {
+            BuildAndroid(true);
+        }
+
+        static void BuildAndroid(bool bundle)
+        {
+            string marker = bundle ? "SLIMEBREAKER_AAB" : "SLIMEBREAKER_APK";
             try
             {
                 ConfigurePlayerSettings();
-                PlayerSettings.Android.useCustomKeystore = false;
-                EditorUserBuildSettings.buildAppBundle = false;
+                EditorUserBuildSettings.buildAppBundle = bundle;
+                if (bundle)
+                    UseUploadKeystore();
+                else
+                    PlayerSettings.Android.useCustomKeystore = false;
 
-                var output = AndroidOutputPath();
+                var output = AndroidOutputPath(bundle ? "Builds/SlimeBreaker.aab" : "Builds/SlimeBreaker.apk");
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output)) ?? "Builds");
 
-                var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+                BuildReport report;
+                try
                 {
-                    scenes = new[]
+                    report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
                     {
-                        "Assets/Scenes/Boot.unity",
-                        "Assets/Scenes/MainMenu.unity",
-                        "Assets/Scenes/GameArena.unity"
-                    },
-                    locationPathName = output,
-                    target = BuildTarget.Android,
-                    options = BuildOptions.CompressWithLz4
-                });
+                        scenes = new[]
+                        {
+                            "Assets/Scenes/Boot.unity",
+                            "Assets/Scenes/MainMenu.unity",
+                            "Assets/Scenes/GameArena.unity"
+                        },
+                        locationPathName = output,
+                        target = BuildTarget.Android,
+                        options = BuildOptions.CompressWithLz4
+                    });
+                }
+                finally
+                {
+                    // Never leave signing secrets in ProjectSettings.asset.
+                    PlayerSettings.Android.useCustomKeystore = false;
+                    PlayerSettings.Android.keystorePass = string.Empty;
+                    PlayerSettings.Android.keyaliasPass = string.Empty;
+                    PlayerSettings.Android.keystoreName = string.Empty;
+                    PlayerSettings.Android.keyaliasName = string.Empty;
+                    EditorUserBuildSettings.buildAppBundle = false;
+                    AssetDatabase.SaveAssets();
+                }
 
                 if (report.summary.result != BuildResult.Succeeded)
                 {
-                    Debug.LogError("SLIMEBREAKER_APK_FAIL " + report.summary.result);
+                    Debug.LogError(marker + "_FAIL " + report.summary.result);
                     if (Application.isBatchMode)
                         EditorApplication.Exit(1);
                     return;
                 }
 
-                Debug.Log("SLIMEBREAKER_APK_OK " + Path.GetFullPath(output));
+                Debug.Log(marker + "_OK " + Path.GetFullPath(output));
                 if (Application.isBatchMode)
                     EditorApplication.Exit(0);
             }
             catch (Exception error)
             {
-                Debug.LogError("SLIMEBREAKER_APK_FAIL\n" + error);
+                Debug.LogError(marker + "_FAIL\n" + error);
                 if (Application.isBatchMode)
                     EditorApplication.Exit(1);
                 else
@@ -128,7 +162,29 @@ namespace SlimeBreaker.EditorTools
             }
         }
 
-        static string AndroidOutputPath()
+        static void UseUploadKeystore()
+        {
+            string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            string file = Environment.GetEnvironmentVariable("SLIMEBREAKER_KEYSTORE_PROPERTIES");
+            if (string.IsNullOrEmpty(file))
+                file = Path.Combine(home, ".slimebreaker", "upload-keystore.properties");
+            if (!File.Exists(file))
+                throw new InvalidOperationException("Upload keystore tidak ditemukan: " + file + " (lihat docs/play_store.md).");
+            var values = new Dictionary<string, string>();
+            foreach (var line in File.ReadAllLines(file))
+            {
+                int split = line.IndexOf('=');
+                if (split > 0)
+                    values[line.Substring(0, split).Trim()] = line.Substring(split + 1).Trim();
+            }
+            PlayerSettings.Android.useCustomKeystore = true;
+            PlayerSettings.Android.keystoreName = values["keystore"];
+            PlayerSettings.Android.keystorePass = values["storePass"];
+            PlayerSettings.Android.keyaliasName = values["alias"];
+            PlayerSettings.Android.keyaliasPass = values["keyPass"];
+        }
+
+        static string AndroidOutputPath(string fallback)
         {
             var args = Environment.GetCommandLineArgs();
             for (var i = 0; i < args.Length - 1; i++)
@@ -136,7 +192,7 @@ namespace SlimeBreaker.EditorTools
                 if (args[i] == "-buildOutput")
                     return args[i + 1];
             }
-            return "Builds/SlimeBreaker.apk";
+            return fallback;
         }
 
         [MenuItem("Slime Breaker/Build Project")]
@@ -434,6 +490,13 @@ namespace SlimeBreaker.EditorTools
                     importer.alphaIsTransparency = true;
                     importer.mipmapEnabled = false;
                     importer.maxTextureSize = 1024;
+                    if (path.Contains("/AppIcon/"))
+                    {
+                        importer.textureType = TextureImporterType.Default;
+                        importer.textureCompression = TextureImporterCompression.Uncompressed;
+                        importer.SaveAndReimport();
+                        continue;
+                    }
                     if (path.Contains("UI_Panel"))
                         importer.spriteBorder = new Vector4(48f, 48f, 48f, 48f);
                     else if (path.Contains("UI_Button"))
@@ -3493,7 +3556,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 40;
+            PlayerSettings.Android.bundleVersionCode = 41;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;
@@ -3501,12 +3564,43 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.allowedAutorotateToLandscapeLeft = true;
             PlayerSettings.allowedAutorotateToLandscapeRight = true;
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
+            // Google Play requires new apps and updates to target a recent API level (Android 16 = API 36).
+            PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel36;
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
             PlayerSettings.Android.androidTVCompatibility = false;
             PlayerSettings.Android.optimizedFramePacing = true;
             PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.Vulkan, GraphicsDeviceType.OpenGLES3 });
             PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
+            ConfigureAppIcons();
+        }
+
+        /// <summary>Launcher icons from build_store_art.py: adaptive (background + foreground), round and legacy.</summary>
+        static void ConfigureAppIcons()
+        {
+            const string folder = "Assets/Art/UI/AppIcon/";
+            var full = AssetDatabase.LoadAssetAtPath<Texture2D>(folder + "APP_Icon.png");
+            var background = AssetDatabase.LoadAssetAtPath<Texture2D>(folder + "APP_Icon_Background.png");
+            var foreground = AssetDatabase.LoadAssetAtPath<Texture2D>(folder + "APP_Icon_Foreground.png");
+            if (full == null || background == null || foreground == null)
+            {
+                Debug.LogWarning("Ikon aplikasi belum ada di " + folder + " (jalankan build_store_art.py).");
+                return;
+            }
+            PlayerSettings.SetIcons(NamedBuildTarget.Unknown, new[] { full }, IconKind.Application);
+            var target = NamedBuildTarget.Android;
+            foreach (var kind in PlayerSettings.GetSupportedIconKinds(target))
+            {
+                var icons = PlayerSettings.GetPlatformIcons(target, kind);
+                foreach (var icon in icons)
+                {
+                    if (icon.maxLayerCount >= 2)
+                        icon.SetTextures(background, foreground);
+                    else
+                        icon.SetTexture(full);
+                }
+                PlayerSettings.SetPlatformIcons(target, kind, icons);
+            }
         }
 
         static readonly string[] BiomeAudioNames = { "Forest", "Snow", "Desert", "Thunder", "Swamp", "Shadow", "Volcano", "Storm", "Crystal", "Royal" };

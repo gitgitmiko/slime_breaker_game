@@ -212,6 +212,7 @@
 - Orbit kamera dihaluskan (hanya titik fokus yang tertinggal; sudut diredam) dan ditambah sudut atas/bawah (32°–78°); hero dicerahkan (warna lebih jenuh, emisi lembut pada material hero). APK 0.28.0.
 - Pengaturan > Kamera: Normal (bawaan) / Inverted untuk geser rotasi kamera; arah sebelumnya (dunia mengikuti jari) kini bernama Inverted. APK 0.29.0.
 - 3 nyawa per run (hati di HUD); nyawa habis → hitung mundur 5 detik: Game Baru atau Lanjutkan setelah iklan layar penuh (house ad `AdService`, belum ada SDK iklan). APK 0.30.0.
+- Persiapan Google Play: ikon aplikasi, target API 36, AAB bertanda tangan upload key, aset store (ikon 512, feature graphic, 8 screenshot), kebijakan privasi, panduan `docs/play_store.md`. APK/AAB 0.30.1.
 - Berikutnya untuk iklan sungguhan: pasang SDK (mis. Google Mobile Ads) + ID unit iklan dari akun AdMob, daftarkan sebagai `AdService.Provider`.
 
 ## Berikutnya

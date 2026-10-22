@@ -213,7 +213,7 @@
 - Pengaturan > Kamera: Normal (bawaan) / Inverted untuk geser rotasi kamera; arah sebelumnya (dunia mengikuti jari) kini bernama Inverted. APK 0.29.0.
 - 3 nyawa per run (hati di HUD); nyawa habis → hitung mundur 5 detik: Game Baru atau Lanjutkan setelah iklan layar penuh (house ad `AdService`, belum ada SDK iklan). APK 0.30.0.
 - Persiapan Google Play: ikon aplikasi, target API 36, AAB bertanda tangan upload key, aset store (ikon 512, feature graphic, 8 screenshot), kebijakan privasi, panduan `docs/play_store.md`. APK/AAB 0.30.1.
-- Berikutnya untuk iklan sungguhan: pasang SDK (mis. Google Mobile Ads) + ID unit iklan dari akun AdMob, daftarkan sebagai `AdService.Provider`.
+- AdMob Rewarded di tombol Lanjutkan (`AdMobProvider`, consent UMP, house ad sebagai cadangan); APK sideload = iklan uji, AAB Play = iklan asli. APK/AAB 0.31.0.
 
 ## Berikutnya
 

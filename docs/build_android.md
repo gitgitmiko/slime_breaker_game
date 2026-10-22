@@ -278,6 +278,7 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 45/45; APK 0.29.0 (versionCode 39): pengaturan arah rotasi kamera Normal (bawaan) / Inverted.
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 32/32; PlayMode 48/48; APK `SLIMEBREAKER_APK_OK` 0.30.0 (versionCode 40): 3 nyawa per run, panel Nyawa Habis (hitung mundur 5 detik, Game Baru / Lanjutkan), iklan layar penuh (house ad `AdService`) sebelum lanjut. Screenshot `30_life_lost`, `31_continue_countdown`, `32_ad_fullscreen`, `33_ad_close`.
 - Persiapan Google Play, 0.30.1 (versionCode 41): ikon aplikasi (adaptive + legacy), target API 36, `BuildAndroidAab` → `Builds/SlimeBreaker.aab` 104 MB ditandatangani upload key (`jarsigner -verify` lolos), semua `.so` arm64 rata 16 KB (`0x4000`). Panduan lengkap: `docs/play_store.md`.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 32/32; PlayMode 49/49; APK + AAB 0.31.0 (versionCode 42): AdMob Rewarded (Google Mobile Ads 11.5.0 + UMP). Manifest berisi App ID AdMob + izin `AD_ID`; APK memakai unit uji Google (`SB_ADMOB_TEST`), AAB memakai unit asli `…/8407574176`; iklan ditutup sebelum reward → kembali ke panel Nyawa Habis.
 
 ## Pasang di HP
 

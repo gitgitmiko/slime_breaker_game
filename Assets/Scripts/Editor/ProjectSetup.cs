@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.30.1";
+        const string AppVersion = "0.31.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -125,7 +125,9 @@ namespace SlimeBreaker.EditorTools
                         },
                         locationPathName = output,
                         target = BuildTarget.Android,
-                        options = BuildOptions.CompressWithLz4
+                        options = BuildOptions.CompressWithLz4,
+                        // Sideload APKs only ever request AdMob test ads; the Play bundle uses the real unit.
+                        extraScriptingDefines = bundle ? Array.Empty<string>() : new[] { "SB_ADMOB_TEST" }
                     });
                 }
                 finally
@@ -3556,7 +3558,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 41;
+            PlayerSettings.Android.bundleVersionCode = 42;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;
@@ -3573,6 +3575,28 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.Vulkan, GraphicsDeviceType.OpenGLES3 });
             PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
             ConfigureAppIcons();
+            ConfigureAdMob();
+        }
+
+        const string AdMobAndroidAppId = "ca-app-pub-6808667639334235~3733831999";
+
+        /// <summary>Writes the AdMob app id into the Google Mobile Ads settings asset (its build step refuses to build without it).</summary>
+        static void ConfigureAdMob()
+        {
+            var type = Type.GetType("GoogleMobileAds.Editor.GoogleMobileAdsSettings, GoogleMobileAds.Editor");
+            var load = type?.GetMethod("LoadInstance", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+            if (load == null)
+            {
+                Debug.LogWarning("Google Mobile Ads belum terpasang; iklan memakai house ad.");
+                return;
+            }
+            var settings = load.Invoke(null, null) as ScriptableObject;
+            var serialized = new SerializedObject(settings);
+            serialized.FindProperty("adMobAndroidAppId").stringValue = AdMobAndroidAppId;
+            serialized.FindProperty("userLanguage").stringValue = "en";
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(settings);
+            AssetDatabase.SaveAssets();
         }
 
         /// <summary>Launcher icons from build_store_art.py: adaptive (background + foreground), round and legacy.</summary>

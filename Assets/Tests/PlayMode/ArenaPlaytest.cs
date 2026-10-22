@@ -2285,6 +2285,60 @@ namespace SlimeBreaker.Tests
             Assert.Greater(ui.lifeIcons[2].color.r, 0.9f);
         }
 
+        class FakeAdProvider : AdService.IProvider
+        {
+            public bool reward;
+            public int shown;
+            public bool IsReady => true;
+
+            public void Show(System.Action<bool> closed)
+            {
+                shown++;
+                closed(reward);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator ClosingTheAdBeforeTheRewardReturnsToTheChoice()
+        {
+            yield return null;
+            QuietArena();
+            var flow = GameFlowController.Instance;
+            var hero = PlayerHealth.Instance;
+            var fake = new FakeAdProvider { reward = false };
+            var previous = AdService.Provider;
+            AdService.Provider = fake;
+            try
+            {
+                yield return SpendAllLives(hero);
+                Assert.AreEqual(GameState.OutOfLives, flow.State);
+                yield return new WaitForSecondsRealtime(1.2f);
+                float left = flow.ContinueTimeLeft;
+                flow.ContinueWithAd();
+                yield return null;
+                Assert.AreEqual(1, fake.shown, "the network ad was not used");
+                Assert.IsFalse(AdService.Instance.IsShowing, "house ad should not show when the network ad played");
+                Assert.AreEqual(GameState.OutOfLives, flow.State, "no reward earned, so the run must not continue");
+                Assert.IsTrue(hero.IsDead);
+                Assert.IsFalse(flow.WatchingAd);
+                Assert.IsTrue(flow.ui.ContinueVisible, "choice panel should come back after an unrewarded ad");
+                Assert.LessOrEqual(flow.ContinueTimeLeft, left, "countdown should resume, not restart");
+                Assert.Greater(flow.ContinueTimeLeft, 0.5f);
+
+                fake.reward = true;
+                flow.ContinueWithAd();
+                yield return null;
+                Assert.AreEqual(2, fake.shown);
+                Assert.AreEqual(GameState.Playing, flow.State, "earned reward should continue the run");
+                Assert.AreEqual(RunRules.HeroLives, hero.Lives);
+                Assert.AreEqual(hero.Max, hero.Current);
+            }
+            finally
+            {
+                AdService.Provider = previous;
+            }
+        }
+
         [UnityTest]
         public IEnumerator OutOfLivesCountdownEndsTheRunWhenNothingIsChosen()
         {

@@ -9,9 +9,11 @@
 | Target API terbaru | `targetSdkVersion` = API 36 (Android 16), `minSdk` 25 |
 | 64-bit | ARM64 saja (IL2CPP) |
 | Ikon aplikasi | Adaptive (background + foreground), round, legacy dari `asset_work/output/UI/AppIcon/` |
-| Tanpa izin sensitif | Tidak ada izin lokasi/kamera/mikrofon/kontak; tanpa INTERNET wajib; Unity Analytics/Cloud mati |
+| Tanpa izin sensitif | Tidak ada izin lokasi/kamera/mikrofon/kontak; Unity Analytics/Cloud mati. SDK AdMob menambah `INTERNET`, `ACCESS_NETWORK_STATE`, dan `AD_ID` |
 | Ikon 512, feature graphic, screenshot | `asset_work/store/icon_512.png`, `feature_graphic_1024x500.png`, `screenshots/*.png` (1280×720) |
 | Kebijakan privasi | `docs/store/privacy-policy.html` (ID + EN) — harus di-host di URL publik |
+| AdMob | Google Mobile Ads 11.5.0 (OpenUPM) + UMP consent. App ID `ca-app-pub-6808667639334235~3733831999`, unit Rewarded `ca-app-pub-6808667639334235/8407574176` (`Continue_Revive`). AAB memakai unit asli; APK sideload dibangun dengan `SB_ADMOB_TEST` dan hanya meminta iklan uji Google. |
+| app-ads.txt | `docs/store/app-ads.txt` — taruh di root domain situs developer (mis. `https://gitgitmiko.my.id/app-ads.txt`) dan isi domain itu sebagai *Website* di Play Console |
 
 Bangun ulang aset store:
 
@@ -40,11 +42,12 @@ Simpan cadangan `~/.slimebreaker/upload.keystore` **dan** `upload-keystore.prope
 2. **Create app**: nama *Slime Breaker*, bahasa default Indonesia, *Game*, *Free*, centang deklarasi.
 3. **Host kebijakan privasi** di URL publik (mis. `https://gitgitmiko.my.id/slimebreaker/privacy`, GitHub Pages, atau Google Sites), lalu isi di *App content → Privacy policy*.
 4. **App content**:
-   - *Ads*: **Ya, berisi iklan** (iklan layar penuh sebelum Lanjutkan; AdMob menyusul).
+   - *Ads*: **Ya, berisi iklan** (iklan reward AdMob saat pemain memilih Lanjutkan).
+   - *Advertising ID*: **Ya**, dipakai untuk *Advertising or marketing*.
    - *App access*: semua fitur bisa dipakai tanpa login.
    - *Content rating* (kuesioner IARC): kategori Game; kekerasan fantasi/kartun ringan terhadap makhluk fantasi (slime), tanpa darah, tanpa interaksi pengguna, tanpa pembelian, tanpa judi. Hasil biasanya PEGI 7 / ESRB Everyone 10+ / IARC 7+.
    - *Target audience*: **13+** (13–15, 16–17, 18+). Jangan pilih di bawah 13 kecuali siap memenuhi *Families Policy* (SDK iklan bersertifikat keluarga, tanpa iklan personal).
-   - *Data safety* (versi sekarang tanpa SDK iklan): tidak mengumpulkan/membagikan data. **Setelah AdMob dipasang** ubah menjadi: mengumpulkan *Device or other IDs* (advertising ID), *App info and performance* (crash/diagnostik) dan *App interactions*, dibagikan ke Google untuk *Advertising or marketing* dan *Fraud prevention*; data dienkripsi saat transit; pengguna tidak bisa meminta penghapusan lewat aplikasi (tidak ada akun).
+   - *Data safety* (AdMob sudah terpasang sejak 0.31.0): mengumpulkan *Device or other IDs* (advertising ID), *App info and performance* (crash/diagnostik) dan *App interactions*, dibagikan ke Google untuk *Advertising or marketing* dan *Fraud prevention*; data dienkripsi saat transit; pengguna tidak bisa meminta penghapusan lewat aplikasi (tidak ada akun).
    - *Government app*, *Financial features*, *Health*: Tidak.
 5. **Store listing**: teks di bawah, ikon 512, feature graphic, minimal 2 screenshot ponsel (sudah ada 8). Kategori *Action* atau *Role Playing*; email kontak.
 6. **Testing → Closed testing** (wajib untuk akun pribadi yang dibuat setelah November 2023): buat track, upload `SlimeBreaker.aab`, undang **minimal 12 penguji** (email Google) yang tetap ikut **14 hari berturut-turut**. Setelah itu ajukan *Production access*.
@@ -52,7 +55,7 @@ Simpan cadangan `~/.slimebreaker/upload.keystore` **dan** `upload-keystore.prope
 
 ## Menghubungkan AdMob
 
-Di AdMob boleh pilih **"Tidak"** (aplikasi belum ada di store) untuk mendapat App ID dan unit iklan sekarang. Setelah game tayang di Play, buka aplikasi di AdMob → *App settings* → tautkan ke Play Store, lalu tunggu review aplikasi AdMob. Sebelum itu iklan nyata terbatas; selama pengembangan pakai iklan uji. Pasang `app-ads.txt` di domain situs developer yang diisi di Play Console.
+Aplikasi AdMob *Dumpling Witch* sudah dibuat tanpa tautan store. Alur di game: Lanjutkan → iklan reward AdMob; reward didapat → hero bangkit; iklan ditutup sebelum reward → kembali ke panel Nyawa Habis dengan sisa hitung mundur; iklan belum termuat/offline → house ad. Formulir persetujuan UMP muncul saat start untuk pengguna EEA/UK — buat pesan GDPR di AdMob → *Privacy & messaging*. Setelah game tayang di Play, buka aplikasi di AdMob → *App settings* → tautkan ke Play Store, lalu tunggu review aplikasi AdMob. Sebelum itu iklan nyata terbatas; selama pengembangan pakai iklan uji. Pasang `app-ads.txt` di domain situs developer yang diisi di Play Console.
 
 ## Teks store listing
 

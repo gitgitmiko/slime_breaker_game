@@ -148,16 +148,22 @@ namespace SlimeBreaker
             ui?.HideContinue();
             audioService?.Play("ui");
             if (ads != null)
-                ads.ShowInterstitial(FinishContinue);
+                ads.ShowRewarded(FinishContinue);
             else
-                FinishContinue();
+                FinishContinue(true);
         }
 
-        void FinishContinue()
+        void FinishContinue(bool rewarded)
         {
             WatchingAd = false;
             if (State != GameState.OutOfLives)
                 return;
+            if (!rewarded)
+            {
+                // Closed before the reward: back to the choice with the time that was left.
+                ui?.ShowContinue(ContinueTimeLeft, RunRules.ContinueSeconds);
+                return;
+            }
             PlayerHealth.Instance?.Revive();
             State = GameState.Playing;
             Time.timeScale = 1f;

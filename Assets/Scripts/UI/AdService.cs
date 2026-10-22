@@ -5,16 +5,17 @@ using UnityEngine.UI;
 namespace SlimeBreaker
 {
     /// <summary>
-    /// Full-screen interstitial played before a continue. The project has no ad network SDK yet, so a built-in
-    /// house ad covers the whole screen (audio paused) and can be closed after <see cref="adSeconds"/>.
-    /// An SDK can take over later by assigning <see cref="Provider"/>.
+    /// Full-screen rewarded ad played before a continue. On Android AdMobProvider serves AdMob;
+    /// when no ad is loaded (offline, no fill, editor) a built-in house ad covers the whole screen (audio paused)
+    /// and can be closed after <see cref="adSeconds"/>.
     /// </summary>
     public class AdService : MonoBehaviour
     {
         public interface IProvider
         {
             bool IsReady { get; }
-            void ShowInterstitial(Action closed);
+            /// <summary>Shows the ad; <c>closed(true)</c> only when the reward was earned.</summary>
+            void Show(Action<bool> closed);
         }
 
         public static AdService Instance { get; private set; }
@@ -33,7 +34,7 @@ namespace SlimeBreaker
         public bool CanClose => IsShowing && Remaining <= 0f;
         public int Shown { get; private set; }
 
-        Action closed;
+        Action<bool> closed;
 
         void Awake()
         {
@@ -51,12 +52,13 @@ namespace SlimeBreaker
                 Instance = null;
         }
 
-        public void ShowInterstitial(Action onClosed)
+        /// <summary>Plays an ad; <paramref name="onClosed"/> gets true when the player earned the reward.</summary>
+        public void ShowRewarded(Action<bool> onClosed)
         {
             Shown++;
             if (Provider != null && Provider.IsReady)
             {
-                Provider.ShowInterstitial(onClosed);
+                Provider.Show(onClosed);
                 return;
             }
             closed = onClosed;
@@ -99,7 +101,7 @@ namespace SlimeBreaker
             SetVisible(false);
             var callback = closed;
             closed = null;
-            callback?.Invoke();
+            callback?.Invoke(true);
         }
 
         void SetVisible(bool visible)

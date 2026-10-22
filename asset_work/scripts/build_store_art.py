@@ -123,7 +123,7 @@ def main():
     place(feature, render("boss"), 250, (900, 360))
     place(feature, render("slime"), 110, (690, 420))
     place(feature, render("hero_full"), 430, (150, 275))
-    text(draw, (600, 110), "SLIME BREAKER", 70, fill=(255, 226, 120))
+    text(draw, (600, 110), "DUMPLING WITCH", 70, fill=(255, 226, 120))
     text(draw, (600, 185), "100 lantai  •  10 boss  •  skill sihir", 30)
     feature.convert("RGB").save(os.path.join(STORE, "feature_graphic_1024x500.png"))
     print("STORE_ART_OK", flush=True)

@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.31.0";
+        const string AppVersion = "0.32.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -2288,7 +2288,7 @@ namespace SlimeBreaker.EditorTools
             Place(menuCard.gameObject, safe, new Vector2(0.27f, 0.5f), new Vector2(900f, 900f));
             var accent = Graphic(menuCard.transform, "Accent", pillSprite, AccentViolet);
             AnchorBox(accent.rectTransform, new Vector2(0f, 1f), new Vector2(54f, -70f), new Vector2(8f, 96f));
-            var title = Text(menuCard.transform, "Title", "Slime Breaker", 84, TextAnchor.MiddleLeft, font);
+            var title = Text(menuCard.transform, "Title", "Dumpling Witch", 84, TextAnchor.MiddleLeft, font);
             title.color = new Color(1f, 0.93f, 0.74f);
             title.fontStyle = FontStyle.Bold;
             Shade(title);
@@ -3447,7 +3447,7 @@ namespace SlimeBreaker.EditorTools
                 icon.preserveAspect = true;
                 Place(icon.gameObject, art.transform, new Vector2(0.2f + i * 0.2f, 0.1f), new Vector2(96f, 96f));
             }
-            var title = Text(safe, "Title", "SLIME BREAKER", 88, TextAnchor.MiddleCenter, font);
+            var title = Text(safe, "Title", "DUMPLING WITCH", 88, TextAnchor.MiddleCenter, font);
             title.fontStyle = FontStyle.Bold;
             title.color = new Color(1f, 0.84f, 0.36f);
             Shade(title);
@@ -3556,10 +3556,10 @@ namespace SlimeBreaker.EditorTools
         static void ConfigurePlayerSettings()
         {
             PlayerSettings.companyName = "Gitgitmiko";
-            PlayerSettings.productName = "Slime Breaker";
+            PlayerSettings.productName = "Dumpling Witch";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 42;
-            PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
+            PlayerSettings.Android.bundleVersionCode = 43;
+            PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.dumplingwitch");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;
             PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;

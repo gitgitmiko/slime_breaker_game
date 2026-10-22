@@ -4,6 +4,7 @@
 
 | Syarat Play | Status |
 |---|---|
+| Nama dan paket | **Dumpling Witch**, paket `com.gitgitmiko.dumplingwitch` (sejak 0.32.0; paket tidak bisa diganti setelah upload pertama). Nama kode proyek/repo tetap Slime Breaker. |
 | Format Android App Bundle (`.aab`) | `ProjectSetup.BuildAndroidAab` → `Builds/SlimeBreaker.aab` (log `SLIMEBREAKER_AAB_OK`) |
 | Ditandatangani upload key | `~/.slimebreaker/upload.keystore` (alias `upload`, RSA 4096, PKCS12), kata sandi di `~/.slimebreaker/upload-keystore.properties` (chmod 600). **Di luar repo, jangan di-commit.** Path lain lewat env `SLIMEBREAKER_KEYSTORE_PROPERTIES`. Setelah build, password dikosongkan lagi dari `ProjectSettings.asset`. |
 | Target API terbaru | `targetSdkVersion` = API 36 (Android 16), `minSdk` 25 |
@@ -39,7 +40,7 @@ Simpan cadangan `~/.slimebreaker/upload.keystore` **dan** `upload-keystore.prope
 ## Langkah di Play Console (dikerjakan pemilik akun)
 
 1. **Akun developer** di play.google.com/console — biaya sekali USD 25, verifikasi identitas (KTP) dan nomor HP.
-2. **Create app**: nama *Slime Breaker*, bahasa default Indonesia, *Game*, *Free*, centang deklarasi.
+2. **Create app**: nama *Dumpling Witch*, bahasa default Indonesia, *Game*, *Free*, centang deklarasi.
 3. **Host kebijakan privasi** di URL publik (mis. `https://gitgitmiko.my.id/slimebreaker/privacy`, GitHub Pages, atau Google Sites), lalu isi di *App content → Privacy policy*.
 4. **App content**:
    - *Ads*: **Ya, berisi iklan** (iklan reward AdMob saat pemain memilih Lanjutkan).
@@ -59,7 +60,7 @@ Aplikasi AdMob *Dumpling Witch* sudah dibuat tanpa tautan store. Alur di game: L
 
 ## Teks store listing
 
-**Nama aplikasi** (≤30): `Slime Breaker`
+**Nama aplikasi** (≤30): `Dumpling Witch`
 
 **Deskripsi singkat** (≤80): `Penyihir chibi vs ribuan slime! Tembus 100 lantai dan kalahkan 10 boss dumpling.`
 

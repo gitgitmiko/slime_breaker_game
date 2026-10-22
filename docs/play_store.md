@@ -51,7 +51,7 @@ Simpan cadangan `~/.slimebreaker/upload.keystore` **dan** `upload-keystore.prope
    - *Target audience*: **13+** (13–15, 16–17, 18+). Jangan pilih di bawah 13 kecuali siap memenuhi *Families Policy* (SDK iklan bersertifikat keluarga, tanpa iklan personal).
    - *Data safety* (AdMob sudah terpasang sejak 0.31.0): mengumpulkan *Device or other IDs* (advertising ID), *App info and performance* (crash/diagnostik) dan *App interactions*, dibagikan ke Google untuk *Advertising or marketing* dan *Fraud prevention*; data dienkripsi saat transit; pengguna tidak bisa meminta penghapusan lewat aplikasi (tidak ada akun).
    - *Government app*, *Financial features*, *Health*: Tidak.
-5. **Store listing**: teks di bawah, ikon 512, feature graphic, minimal 2 screenshot ponsel (sudah ada 8). Kategori *Action* atau *Role Playing*; email kontak.
+5. **Store listing**: teks di bawah, ikon 512, feature graphic, minimal 2 screenshot ponsel (sudah ada 8). Kategori *Action* atau *Role Playing*; email kontak `support@gitgitdev.my.id` (Cloudflare Email Routing → Gmail).
 6. **Testing → Closed testing** (wajib untuk akun pribadi yang dibuat setelah November 2023): buat track, upload `SlimeBreaker.aab`, undang **minimal 12 penguji** (email Google) yang tetap ikut **14 hari berturut-turut**. Setelah itu ajukan *Production access*.
 7. **Production**: buat rilis dari AAB yang sama atau yang lebih baru, isi catatan rilis, kirim untuk review (biasanya beberapa hari).
 

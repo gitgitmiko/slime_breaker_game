@@ -150,6 +150,7 @@ namespace SlimeBreaker
             flow?.ui?.ShowBossWarning(BossCatalog.DisplayName(ActiveBoss), BossCatalog.Tint(ActiveBoss), Floor);
             flow?.ui?.ShowToast("BOSS LANTAI " + Floor + " — " + BossCatalog.DisplayName(ActiveBoss), BossCatalog.Tint(ActiveBoss));
             AudioService.Instance?.Play("bosswarn");
+            AudioService.Instance?.SetBossMusic(true);
 
             var boss = SpawnBoss(ActiveBoss);
             if (boss != null && cameraRig != null)
@@ -181,7 +182,8 @@ namespace SlimeBreaker
             health?.SetMaxHealth(BossCatalog.HealthForFloor(Floor));
             health?.SetContactDamage(BossCatalog.ContactDamageForFloor(Floor));
             health?.TintBody(BossCatalog.Tint(kind));
-            // Cape/crown colours are applied inside EnemyHealth from the boss kind.
+            if (Theme.IsNight)
+                AddNightLight(instance.transform, kind);
             var boss = instance.GetComponent<BossController>();
             if (boss == null)
                 boss = instance.AddComponent<BossController>();
@@ -189,6 +191,21 @@ namespace SlimeBreaker
             boss.breakerPickupPrefab = powerUps != null ? powerUps.pickupPrefab : null;
             boss.arenaRadius = RunRules.ArenaRadius;
             return instance;
+        }
+
+        /// <summary>At night every boss carries a light above its head, like the hero, tinted to its colour.</summary>
+        static void AddNightLight(Transform boss, BossKind kind)
+        {
+            var lightObject = new GameObject("BossLight");
+            lightObject.transform.SetParent(boss, false);
+            lightObject.transform.localPosition = new Vector3(0f, 2.9f, 0f);
+            var bossLight = lightObject.AddComponent<Light>();
+            bossLight.type = LightType.Point;
+            bossLight.range = 9f;
+            bossLight.intensity = 2.6f;
+            // The rainbow boss glows warm white; the others take a lightened version of their own colour.
+            bossLight.color = kind == BossKind.Royal ? new Color(1f, 0.92f, 0.8f) : Color.Lerp(BossCatalog.Tint(kind), Color.white, 0.55f);
+            bossLight.shadows = LightShadows.None;
         }
 
         EnemyDefinition DefinitionFor(BossKind kind)
@@ -207,6 +224,7 @@ namespace SlimeBreaker
             {
                 var kind = ActiveBoss;
                 ActiveBoss = BossKind.None;
+                AudioService.Instance?.SetBossMusic(false);
                 PlayerHealth.Instance?.Emote("Victory");
                 Intermission = false;
                 VanishMinions();
@@ -278,6 +296,8 @@ namespace SlimeBreaker
             introducing = false;
             transitioning = false;
             ActiveBoss = BossKind.None;
+            AudioService.Instance?.SetBossMusic(false);
+            ItemPickup.CollectAll();
             VanishMinions();
             if (ExitPortal.Active != null)
                 Destroy(ExitPortal.Active.gameObject);
@@ -308,6 +328,7 @@ namespace SlimeBreaker
                 Destroy(ExitPortal.Active.gameObject);
             if (spawner != null)
                 spawner.Paused = true;
+            ItemPickup.CollectAll();
             if (fader != null)
                 yield return fader.FadeOut(0.32f);
 

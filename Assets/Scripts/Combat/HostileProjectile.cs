@@ -69,7 +69,8 @@ namespace SlimeBreaker
             {
                 player.TakeDamage(damage);
                 VfxPlayer.Instance?.Play(hitVfx, transform.position);
-                AudioService.Instance?.Play(hitSfx);
+                // Enemy bolts are silent on impact: a crowd of ranged slimes drowned out the music. The hero's own
+                // "playerhit" (played by PlayerHealth.TakeDamage) is the only hit sound the player hears.
                 Destroy(gameObject);
             }
         }

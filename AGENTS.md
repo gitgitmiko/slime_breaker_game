@@ -6,3 +6,4 @@
 - Jangan mengklaim APK atau compile editor berhasil sebelum log Unity memuat `SLIMEBREAKER_SETUP_OK` dan, untuk APK, file keluarannya ada.
 - Lisensi Unity Personal butuh `unity auth login` sebelum batch mode.
 - `Library/`, `Logs/`, `Temp/`, dan `UserSettings/` tidak di-commit.
+- Upload key Play ada di `~/.slimebreaker/` (di luar repo). Jangan commit keystore/kata sandi; `BuildAndroidAab` mengosongkannya lagi dari `ProjectSettings.asset`.

@@ -55,5 +55,30 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: eb74886bf03cb4313b802fc867cab899, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7738331837093346872}
   m_SourcePrefab: {fileID: 100100000, guid: eb74886bf03cb4313b802fc867cab899, type: 3}
+--- !u!1 &5573762587193270160 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: eb74886bf03cb4313b802fc867cab899, type: 3}
+  m_PrefabInstance: {fileID: 4726688729069609665}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7738331837093346872
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5573762587193270160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e9e16389057d301f9214faca28991cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.PropShape
+  halfWidth: 0.8440885
+  halfX: 0.8440885
+  halfZ: 0.7059941
+  height: 1.1628053
+  centreHeight: 0

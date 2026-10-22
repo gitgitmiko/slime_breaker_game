@@ -44,7 +44,7 @@ namespace SlimeBreaker
             int floor = StageManager.Instance != null ? StageManager.Instance.Floor : Mathf.Max(1, Stage);
             Stage = floor;
             int band = Mathf.Max(1, (floor - 1) / RunRules.BossEvery + 1);
-            float interval = phase.interval * Mathf.Pow(0.93f, Mathf.Max(0, band - 1));
+            float interval = phase.interval * Mathf.Pow(0.93f, Mathf.Max(0, band - 1)) * Difficulty.Profile.spawnInterval;
             timer = Mathf.Max(0.28f, interval);
             Spawn(Pick(phase));
         }

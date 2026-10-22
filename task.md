@@ -135,6 +135,86 @@
 - Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 22/22. PlayMode 30/30. APK `SLIMEBREAKER_APK_OK` 0.15.0.
 - Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
 
+### Putaran 16 — lingkungan, material, dan audio HD
+
+- Tekstur PBR prosedural (albedo/normal/mask) untuk 10 tanah bioma, properti, atlas daun/rumput, penutup bioma.
+- 21 properti dibangun ulang HD (pohon berkartu daun, batu displacement, reruntuhan, kaktus, kristal…).
+- Shader URP sendiri: Ground (anti-tiling), Lit (angin, translusensi, penutup lumut/salju/pasir/abu), Jelly (slime gel).
+- Post-processing ACES + grading per bioma/malam; cuaca dengan sprite hujan/salju, percikan hujan, kabut.
+- Audio: 12 musik orkestra (per bioma + boss + menu, crossfade), 11 ambience alam, SFX dan jingle baru; tanpa clipping.
+- Setup: `SLIMEBREAKER_SETUP_OK`. EditMode 22/22. PlayMode 31/31. APK `SLIMEBREAKER_APK_OK` 0.16.0.
+- Unduhan: https://testimony-entire-journalism-residents.trycloudflare.com/
+
+### Putaran 17 — performa 60 fps dan perbaikan kaktus
+
+- Penyebab drop fps: ratusan kartu rumput = ratusan draw call + pass bayangan, property block mematikan SRP batching, mesh tidak readable sehingga static batching gagal diam-diam, MSAA 4× + shadow map 4096 + PCF high.
+- Perbaikan: gabung rumput per sektor, material tint ber-cache, mesh lingkungan readable, preset High lebih ringan, bloom murah, resolusi adaptif FSR.
+- Kaktus: ujung kubah tertutup, kuncup merah.
+- Setup OK. EditMode 22/22. PlayMode 32/32. APK 0.16.1.
+
+### Putaran 18 — hero cat-boy penyihir, HP boss jutaan, audio tenang, kaktus
+
+- Hero mengikuti referensi cat-boy + gaya penyihir; HP boss 10 juta per 10 lantai; orb EXP lebih tenang; kilau kaktus hilang.
+- Setup OK. EditMode 22/22. PlayMode 32/32. APK 0.17.0.
+
+### Putaran 19 — proporsi hero disamakan dengan chibi cat-boy
+
+- Rambut, kepala, badan, lengan, kaki diukur dari referensi dan disamakan. Setup OK. EditMode 22/22. PlayMode 32/32. APK 0.17.1.
+
+### Putaran 20 — bola cahaya putih saat bergerak
+
+- Partikel cuaca melayang di depan kamera; diturunkan ke dekat tanah dan ukurannya dibatasi. APK 0.17.2.
+
+### Putaran 21 — glitch kaktus (NaN) dan cuaca acak
+
+- UV runtuh di ujung kaktus → NaN → bloom; diperbaiki di mesh, shader, kamera, bloom. Hujan bisa siang atau malam. APK 0.17.3.
+
+### Putaran 22 — rarity upgrade, HP boss 10.000
+
+- Normal/Rare/Legend/Ultra (65/20/10/5%, +0,1/0,3/0,5/1%) di semua upgrade; HP boss 10.000 per 10 lantai. APK 0.18.0.
+
+### Putaran 23 — item drop dan inventori
+
+- 5 slot perlengkapan ber-rarity, drop monster/boss, layar inventori, save run. APK 0.19.0.
+
+### Putaran 24 — suara
+
+- Hit peluru musuh dibisukan; slider volume BGM dan suara game di Pengaturan. APK 0.19.1.
+
+### Putaran 26 — dinding steamer dimsum (tahap 1 redesign)
+
+- Lantai/properti tetap; dinding arena = steamer bambu anyaman; properti luar dipindah ke dalam. Boss squishy dumpling (lantai 100 pelangi) dan hero baru menyusul. APK 0.20.1.
+
+### Putaran 27 — collider tak terlihat dan pohon acak
+
+- Collider ring/scatter rebah dan bergeser (rotasi FBX) → diperbaiki dengan `PropShape` + collider anak tegak; pohon tersebar acak. APK 0.20.2.
+
+### Putaran 28 — garis biru, level item
+
+- Cincin rune lantai dihapus; staff Normal/Rare/Legend/Ultra 100/250/500/1000 × level (level = 10 lantai). APK 0.20.3.
+
+### Putaran 29 — boss squishy dumpling (tahap 2 redesign)
+
+- 10 boss jadi dumpling jelly berglitter; boss lantai 100 pelangi. Berikutnya: hero baru. APK 0.21.0.
+
+### Putaran 30 — lampu boss malam hari
+
+- Boss memiliki lampu di atas kepala saat malam. APK 0.21.1.
+
+### Putaran 32 — mode kesulitan
+
+- Easy/Normal/Hard di menu utama; Hard = angka asli. APK 0.22.0.
+- Jual item (1/3/6/10 emas per rarity), Auto pilih per rarity + level, kesulitan menjadi dropdown (bawaan Normal). APK 0.23.0.
+- Menu: Lanjutkan di atas Main, info kesulitan dan deskripsi dihapus; riwayat boss (lantai 10, 20, ...) yang sudah dilewati berdiri di belakang hero (`SaveData.bossesDefeated`, `MenuTrophies`). APK 0.24.0.
+- Arena di menu utama = arena (biome, cuaca, siang/malam) lantai terjauh yang pernah dicapai (`SaveData.highestFloor`, `MenuArena` memakai `ArenaGenerator`); kartu menu dirapatkan (tinggi mengikuti ada tidaknya Lanjutkan); frame inventori diperpanjang dan isinya ditengahkan. APK 0.25.0.
+- Tahap 3 redesign: hero penyihir chibi bertopi raksasa (rambut bob pirang-merah muda, capelet, jaket lengan lonceng, rok krem, bot cokelat) mengikuti gambar referensi; tulang dan animasi sama. APK 0.26.0.
+- Separuh kanan layar: geser ke samping memutar kamera mengelilingi hero (`CameraDragZone`, `FollowCamera.Yaw`); gerak joystick relatif kamera jadi ikut berputar; tombol HUD tetap di atas zona. APK 0.27.0.
+- Orbit kamera dihaluskan (hanya titik fokus yang tertinggal; sudut diredam) dan ditambah sudut atas/bawah (32°–78°); hero dicerahkan (warna lebih jenuh, emisi lembut pada material hero). APK 0.28.0.
+- Pengaturan > Kamera: Normal (bawaan) / Inverted untuk geser rotasi kamera; arah sebelumnya (dunia mengikuti jari) kini bernama Inverted. APK 0.29.0.
+- 3 nyawa per run (hati di HUD); nyawa habis → hitung mundur 5 detik: Game Baru atau Lanjutkan setelah iklan layar penuh (house ad `AdService`, belum ada SDK iklan). APK 0.30.0.
+- Persiapan Google Play: ikon aplikasi, target API 36, AAB bertanda tangan upload key, aset store (ikon 512, feature graphic, 8 screenshot), kebijakan privasi, panduan `docs/play_store.md`. APK/AAB 0.30.1.
+- AdMob Rewarded di tombol Lanjutkan (`AdMobProvider`, consent UMP, house ad sebagai cadangan); APK sideload = iklan uji, AAB Play = iklan asli. APK/AAB 0.31.0.
+
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.

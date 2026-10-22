@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ca360d419cae0a79892751982acf383, type: 3}
   m_Name: BOSS_SlimeKing
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.EnemyDefinition
-  displayName: Royal Slime
+  displayName: Royal Dumpling
   maxHealth: 100000
   moveSpeed: 2.1
   contactDamage: 50

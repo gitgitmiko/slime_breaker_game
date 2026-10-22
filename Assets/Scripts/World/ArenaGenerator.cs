@@ -58,12 +58,22 @@ namespace SlimeBreaker
         public GameObject ashRig;
         public GameObject sporesRig;
         public GameObject sparksRig;
+        public GameObject mistRig;
+        [Header("Biome cover (moss / snow / sand / ash on upward prop faces)")]
+        public Texture2D coverMoss;
+        public Texture2D coverSnow;
+        public Texture2D coverSand;
+        public Texture2D coverAsh;
         public Light sun;
         public Camera arenaCamera;
         public float arenaRadius = RunRules.ArenaRadius;
         public int minObstacles = 10;
         public int maxObstacles = 16;
         public bool generateOnStart = true;
+        /// <summary>The main menu reuses the generator for its backdrop: no obstacles, and a clear stage around the hero showcase.</summary>
+        public bool placeObstacles = true;
+        public Vector3 keepClearCenter;
+        public float keepClearRadius;
 
         public ArenaTheme Current { get; private set; }
         public Transform Root { get; private set; }
@@ -78,10 +88,20 @@ namespace SlimeBreaker
         static readonly Color ThunderLeaf = new Color(0.32f, 0.38f, 0.22f);
         static readonly Color RoyalLeaf = new Color(0.45f, 0.62f, 0.28f);
 
+        /// <summary>Sun and ambient multipliers for the HDR + ACES pipeline (tuned from screenshots).</summary>
+        public const float HdrSunBoost = 1.3f;
+        public const float HdrAmbientBoost = 1.3f;
+        public const float MinDaySun = 1.2f;
+
         readonly List<Obstacle> obstacles = new List<Obstacle>();
         readonly List<Vector3> occupied = new List<Vector3>();
+        /// <summary>Ground cover instances (grass, flowers, reeds) merged into a few meshes after placement.</summary>
+        readonly List<GameObject> scatterInstances = new List<GameObject>();
+        /// <summary>Biome-tinted copies of shared foliage materials (a material per tint keeps SRP batching intact).</summary>
+        readonly Dictionary<(Material, Color), Material> tintedMaterials = new Dictionary<(Material, Color), Material>();
+        readonly List<Mesh> combinedMeshes = new List<Mesh>();
+        const int ScatterSectors = 8;
         Light heroLight;
-        MaterialPropertyBlock block;
 
         void Start()
         {
@@ -100,19 +120,130 @@ namespace SlimeBreaker
 
             ApplyGround(theme);
             ApplyLighting(theme);
+            ApplyCover(theme);
             PlaceProps(theme, rng);
-            PlaceObstacles(theme, rng);
+            if (placeObstacles)
+                PlaceObstacles(theme, rng);
             TintFoliage(theme);
+            CombineScatter();
             SpawnWeather(theme);
             if (theme.IsNight)
                 EnsureHeroLight();
             StaticBatchingUtility.Combine(rootObject);
         }
 
+        void OnDestroy()
+        {
+            foreach (var material in tintedMaterials.Values)
+            {
+                if (material != null)
+                    Destroy(material);
+            }
+            tintedMaterials.Clear();
+            foreach (var mesh in combinedMeshes)
+            {
+                if (mesh != null)
+                    Destroy(mesh);
+            }
+            combinedMeshes.Clear();
+        }
+
+        /// <summary>
+        /// Hundreds of grass/flower cards would each be a draw call (plus shadow passes). Merge them per material
+        /// into angular sectors (so frustum culling still drops the off-screen ones); the cards cast no shadows.
+        /// </summary>
+        void CombineScatter()
+        {
+            if (scatterInstances.Count == 0 || Root == null)
+                return;
+            var groups = new Dictionary<(Material, int), List<CombineInstance>>();
+            var toDestroy = new List<GameObject>();
+            Matrix4x4 rootInverse = Root.worldToLocalMatrix;
+            foreach (var instance in scatterInstances)
+            {
+                if (instance == null)
+                    continue;
+                bool merged = false;
+                foreach (var filter in instance.GetComponentsInChildren<MeshFilter>())
+                {
+                    var renderer = filter.GetComponent<MeshRenderer>();
+                    var mesh = filter.sharedMesh;
+                    if (renderer == null || mesh == null || !mesh.isReadable)
+                        continue;
+                    Vector3 p = filter.transform.position;
+                    int sector = Mathf.Clamp(Mathf.FloorToInt((Mathf.Atan2(p.z, p.x) / (Mathf.PI * 2f) + 0.5f) * ScatterSectors), 0, ScatterSectors - 1);
+                    var materials = renderer.sharedMaterials;
+                    for (int sub = 0; sub < mesh.subMeshCount && sub < materials.Length; sub++)
+                    {
+                        if (materials[sub] == null)
+                            continue;
+                        var key = (materials[sub], sector);
+                        if (!groups.TryGetValue(key, out var list))
+                            groups[key] = list = new List<CombineInstance>();
+                        list.Add(new CombineInstance { mesh = mesh, subMeshIndex = sub, transform = rootInverse * filter.transform.localToWorldMatrix });
+                    }
+                    merged = true;
+                }
+                if (merged)
+                    toDestroy.Add(instance);
+                else
+                    DisableScatterShadows(instance);
+            }
+            foreach (var pair in groups)
+            {
+                var mesh = new Mesh { name = "Scatter_" + pair.Key.Item1.name + "_" + pair.Key.Item2 };
+                mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+                mesh.CombineMeshes(pair.Value.ToArray(), true, true);
+                mesh.RecalculateBounds();
+                combinedMeshes.Add(mesh);
+                var go = new GameObject(mesh.name);
+                go.transform.SetParent(Root, false);
+                go.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var renderer = go.AddComponent<MeshRenderer>();
+                renderer.sharedMaterial = pair.Key.Item1;
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+                renderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+            }
+            foreach (var instance in toDestroy)
+            {
+                instance.SetActive(false);
+                Destroy(instance);
+            }
+            scatterInstances.Clear();
+        }
+
+        static void DisableScatterShadows(GameObject instance)
+        {
+            foreach (var renderer in instance.GetComponentsInChildren<Renderer>())
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        }
+
+        /// <summary>Number of merged ground-cover meshes in the current arena (playtests).</summary>
+        public int CombinedScatterMeshes => Root == null ? 0 : CountCombined();
+
+        int CountCombined()
+        {
+            int count = 0;
+            foreach (Transform child in Root)
+            {
+                if (child.name.StartsWith("Scatter_"))
+                    count++;
+            }
+            return count;
+        }
+
         void Clear()
         {
             obstacles.Clear();
             occupied.Clear();
+            scatterInstances.Clear();
+            foreach (var mesh in combinedMeshes)
+            {
+                if (mesh != null)
+                    Destroy(mesh);
+            }
+            combinedMeshes.Clear();
             if (Root != null)
             {
                 Root.gameObject.SetActive(false);
@@ -263,6 +394,21 @@ namespace SlimeBreaker
                 }
             }
 
+            // Values above were authored for LDR; ACES tonemapping (PostFx) compresses highlights, so drive the sun harder.
+            intensity *= HdrSunBoost;
+            // Gloomy daytime weather (rain, spores, storm) still has to read clearly: floor the sun, lift the sky fill.
+            float ambientBoost = HdrAmbientBoost;
+            if (!theme.IsNight && intensity < MinDaySun)
+            {
+                ambientBoost *= 1.0f + (MinDaySun - intensity) * 0.6f;
+                intensity = MinDaySun;
+            }
+            sky *= ambientBoost;
+            equator *= ambientBoost;
+            groundAmbient *= ambientBoost;
+            PostFx.Instance?.ApplyTheme(theme);
+            AudioService.Instance?.SetTheme(theme);
+
             if (sun != null)
             {
                 sun.color = sunColor;
@@ -282,6 +428,59 @@ namespace SlimeBreaker
             var camera = arenaCamera != null ? arenaCamera : Camera.main;
             if (camera != null)
                 camera.backgroundColor = background;
+        }
+
+        static readonly int CoverMapId = Shader.PropertyToID("_SB_CoverMap");
+        static readonly int CoverColorId = Shader.PropertyToID("_SB_CoverColor");
+        static readonly int CoverAmountId = Shader.PropertyToID("_SB_CoverAmount");
+
+        /// <summary>Sets the global cover read by SlimeBreaker/Lit (RGB tint, A = smoothness).</summary>
+        public static void SetCover(Texture map, Color tint, float amount)
+        {
+            if (map != null)
+                Shader.SetGlobalTexture(CoverMapId, map);
+            Shader.SetGlobalColor(CoverColorId, tint);
+            Shader.SetGlobalFloat(CoverAmountId, map != null ? amount : 0f);
+        }
+
+        public float CoverAmount { get; private set; }
+
+        void ApplyCover(ArenaTheme theme)
+        {
+            Texture2D map = coverMoss;
+            Color tint = new Color(0.27f, 0.35f, 0.13f, 0.18f);
+            float amount = 0.36f;
+            switch (theme.biome)
+            {
+                case Biome.Snow:
+                    map = coverSnow; tint = new Color(0.96f, 0.98f, 1f, 0.55f); amount = 0.75f; break;
+                case Biome.Desert:
+                    map = coverSand; tint = new Color(0.86f, 0.72f, 0.5f, 0.12f); amount = 0.42f; break;
+                case Biome.Thunder:
+                    tint = new Color(0.22f, 0.26f, 0.14f, 0.25f); amount = 0.28f; break;
+                case Biome.Swamp:
+                    tint = new Color(0.22f, 0.3f, 0.1f, 0.35f); amount = 0.55f; break;
+                case Biome.Shadow:
+                    amount = 0f; break;
+                case Biome.Volcano:
+                    map = coverAsh; tint = new Color(0.46f, 0.44f, 0.42f, 0.1f); amount = 0.45f; break;
+                case Biome.Storm:
+                    tint = new Color(0.24f, 0.31f, 0.15f, 0.5f); amount = 0.28f; break;
+                case Biome.Crystal:
+                    map = coverSand; tint = new Color(0.62f, 0.52f, 0.86f, 0.3f); amount = 0.2f; break;
+                case Biome.Royal:
+                    amount = 0.2f; break;
+            }
+            if (theme.weather == Weather.Snowfall)
+            {
+                map = coverSnow; tint = new Color(0.96f, 0.98f, 1f, 0.55f); amount = Mathf.Max(amount, 0.85f);
+            }
+            else if (theme.weather == Weather.Ash)
+            {
+                map = coverAsh; tint = new Color(0.46f, 0.44f, 0.42f, 0.1f); amount = Mathf.Max(amount, 0.5f);
+            }
+            CoverAmount = map != null ? amount : 0f;
+            SetCover(map, tint, amount);
         }
 
         void EnsureHeroLight()
@@ -305,19 +504,31 @@ namespace SlimeBreaker
         void PlaceProps(ArenaTheme theme, System.Random rng)
         {
             float r = arenaRadius;
-            Place(props.runeRing, Vector3.zero, 0f, r / 11.2f, false);
-            Ring(props.boundaryStone, 24, r + 1.2f, true, rng);
+            // Big trees first, anywhere in the arena (centre included); the smaller props then skip spots they would overlap.
+            int treesA = 0;
+            int treesB = 0;
             switch (theme.biome)
             {
                 case Biome.Snow:
-                    Ring(props.treeA, 10, r + 2.6f, false, rng);
-                    Ring(props.treeB, 9, r + 4.2f, false, rng, 0.5f);
-                    Ring(props.treeA, 12, r + 8f, false, rng, 0.25f, 1.2f);
-                    Ring(props.treeB, 10, r + 11f, false, rng, 0.1f, 1.35f);
+                case Biome.Forest:
+                    treesA = 22; treesB = 19; break;
+                case Biome.Thunder:
+                    treesA = 8; treesB = 7; break;
+                case Biome.Royal:
+                    treesA = 8; treesB = 6; break;
+            }
+            // (No glowing rune ring on the floor any more: it read as a stray blue line next to the steamer wall.)
+            Trees(props.treeA, treesA, 0.85f, 1.1f, rng);
+            Trees(props.treeB, treesB, 0.85f, 1.15f, rng);
+            // The dim sum steamer wall (a scene object) is the arena edge now; every prop that used to stand beyond the
+            // boundary lives inside it, in a belt hugging the wall.
+            switch (theme.biome)
+            {
+                case Biome.Snow:
                     Ring(props.iceSpike, 10, r * 0.58f, false, rng, 0.25f, 1.15f);
                     Ring(props.rockA, 8, r * 0.44f, false, rng, 0.4f);
                     Ring(props.pillar, 5, r * 0.7f, true, rng);
-                    Scatter(props.grass, 22, 2.4f, r * 0.85f, rng);
+                    Scatter(props.grass, 90, 2.0f, r * 0.9f, rng);
                     break;
                 case Biome.Desert:
                     Ring(props.cactus, 12, r * 0.72f, false, rng, 0.3f, 1.1f);
@@ -327,23 +538,21 @@ namespace SlimeBreaker
                     Ring(props.rockA, 10, r * 0.82f, false, rng, 0.3f, 1.6f);
                     Ring(props.pillar, 8, r * 0.7f, true, rng, 0.1f);
                     Ring(props.pillar, 5, r * 0.42f, true, rng, 0.2f, 0.8f);
-                    Scatter(props.grass, 10, 3f, r * 0.8f, rng);
+                    Scatter(props.grass, 60, 2.4f, r * 0.9f, rng);
                     break;
                 case Biome.Thunder:
-                    Ring(props.treeA, 8, r + 3f, false, rng, 0.4f, 1.1f);
-                    Ring(props.treeB, 7, r + 7f, false, rng, 0.35f, 1.2f);
                     Ring(props.thunderSpire, 8, r * 0.68f, true, rng, 0.15f);
                     Ring(props.rockA, 10, r * 0.5f, false, rng, 0.3f);
                     Ring(props.pillar, 5, r * 0.38f, true, rng);
-                    Scatter(props.grass, 36, 2.4f, r * 0.85f, rng);
+                    Scatter(props.grass, 220, 1.8f, r * 0.92f, rng);
                     break;
                 case Biome.Swamp:
                     Ring(props.swampRoot, 10, r * 0.7f, false, rng, 0.25f, 1.1f);
                     Ring(props.swampRoot, 7, r * 0.42f, false, rng, 0.4f, 0.9f);
                     Ring(props.mushroom, 12, r * 0.3f, false, rng, 0.3f);
                     Ring(props.rockB, 8, r * 0.55f, false, rng, 0.35f);
-                    Scatter(props.swampReed, 48, 2.2f, r * 0.88f, rng);
-                    Scatter(props.grass, 20, 2.6f, r * 0.8f, rng);
+                    Scatter(props.swampReed, 90, 2.0f, r * 0.92f, rng);
+                    Scatter(props.grass, 140, 2.0f, r * 0.9f, rng);
                     break;
                 case Biome.Shadow:
                     Ring(props.shadowObelisk, 10, r * 0.72f, true, rng, 0.12f);
@@ -362,7 +571,7 @@ namespace SlimeBreaker
                     Ring(props.pillar, 8, r * 0.5f, true, rng, 0.25f);
                     Ring(props.rockA, 10, r * 0.4f, false, rng, 0.35f);
                     Ring(props.rockB, 8, r * 0.78f, false, rng, 0.3f, 1.2f);
-                    Scatter(props.grass, 16, 3f, r * 0.8f, rng);
+                    Scatter(props.grass, 110, 2.0f, r * 0.9f, rng);
                     break;
                 case Biome.Crystal:
                     Ring(props.crystalSpire, 10, r * 0.7f, false, rng, 0.2f, 1.1f);
@@ -373,26 +582,44 @@ namespace SlimeBreaker
                 case Biome.Royal:
                     Ring(props.royalColumn, 10, r * 0.72f, true, rng, 0.08f);
                     Ring(props.royalColumn, 6, r * 0.42f, true, rng, 0.15f, 0.9f);
-                    Ring(props.treeA, 8, r + 3f, false, rng, 0.3f);
-                    Ring(props.treeB, 6, r + 8f, false, rng, 0.25f, 1.15f);
                     Ring(props.bush, 8, r * 0.28f, false, rng, 0.3f);
-                    Scatter(props.flower, 36, 2.4f, r * 0.85f, rng);
-                    Scatter(props.grass, 40, 2.2f, r * 0.88f, rng);
+                    Scatter(props.flower, 80, 2.2f, r * 0.9f, rng);
+                    Scatter(props.grass, 200, 1.8f, r * 0.92f, rng);
                     break;
                 default:
-                    Ring(props.treeA, 10, r + 2.6f, false, rng);
-                    Ring(props.treeB, 9, r + 4.2f, false, rng, 0.5f);
-                    Ring(props.treeA, 12, r + 8f, false, rng, 0.25f, 1.2f);
-                    Ring(props.treeB, 10, r + 11f, false, rng, 0.1f, 1.35f);
                     Ring(props.rockA, 10, r * 0.62f, false, rng, 0.2f);
                     Ring(props.rockB, 7, r * 0.44f, false, rng, 0.4f);
                     Ring(props.pillar, 6, r * 0.7f, true, rng);
                     Ring(props.mushroom, 9, r * 0.32f, false, rng, 0.3f);
                     Ring(props.bush, 10, r * 0.22f, false, rng, 0.35f);
                     Ring(props.bush, 12, r * 0.64f, false, rng, 0.3f);
-                    Scatter(props.grass, 80, 2.2f, r * 0.9f, rng);
-                    Scatter(props.flower, 28, 2.6f, r * 0.85f, rng);
+                    Scatter(props.grass, 380, 1.6f, r * 0.95f, rng);
+                    Scatter(props.flower, 70, 2.2f, r * 0.9f, rng);
                     break;
+            }
+
+        }
+
+        /// <summary>Scatters big trees at random spots (they keep clear of the spawn point, the four lanes and other props).</summary>
+        void Trees(GameObject prefab, int count, float minScale, float maxScale, System.Random rng)
+        {
+            if (prefab == null || count <= 0)
+                return;
+            int placed = 0;
+            for (int attempt = 0; attempt < count * 40 && placed < count; attempt++)
+            {
+                float angle = (float)rng.NextDouble() * Mathf.PI * 2f;
+                // Uniform in radius (not in area) on purpose: it puts more trees toward the middle instead of crowding the wall.
+                float radius = Mathf.Lerp(4.2f, arenaRadius * 0.95f, (float)rng.NextDouble());
+                var position = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
+                float scale = Mathf.Lerp(minScale, maxScale, (float)rng.NextDouble());
+                if (!Fits(position, 0.9f * scale))
+                    continue;
+                var instance = Place(prefab, position, (float)rng.NextDouble() * 360f, scale, true);
+                var marker = instance.GetComponent<Obstacle>();
+                if (marker != null)
+                    marker.footprint = 0.9f * scale;
+                placed++;
             }
         }
 
@@ -405,6 +632,17 @@ namespace SlimeBreaker
                 float angle = (i + 0.5f) * Mathf.PI * 2f / count + (float)(rng.NextDouble() - 0.5) * jitter;
                 float r = radius + (float)(rng.NextDouble() - 0.5) * jitter * 2f;
                 var position = new Vector3(Mathf.Cos(angle) * r, 0f, Mathf.Sin(angle) * r);
+                bool blocked = InKeepClear(position);
+                foreach (var taken in occupied)
+                {
+                    if ((taken - position).sqrMagnitude < 1.5f * 1.5f)
+                    {
+                        blocked = true;
+                        break;
+                    }
+                }
+                if (blocked)
+                    continue;
                 float yaw = faceCenter ? -angle * Mathf.Rad2Deg - 90f : (float)rng.NextDouble() * 360f;
                 float s = scale * (1f + (float)(rng.NextDouble() - 0.5) * 0.2f);
                 Place(prefab, position, yaw, s, radius < arenaRadius);
@@ -420,7 +658,9 @@ namespace SlimeBreaker
                 float angle = (float)rng.NextDouble() * Mathf.PI * 2f;
                 float radius = Mathf.Lerp(minRadius, maxRadius, Mathf.Sqrt((float)rng.NextDouble()));
                 var position = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
-                Place(prefab, position, (float)rng.NextDouble() * 360f, 0.8f + (float)rng.NextDouble() * 0.5f, false);
+                var instance = Place(prefab, position, (float)rng.NextDouble() * 360f, 0.8f + (float)rng.NextDouble() * 0.5f, false);
+                if (!IsSolidProp(prefab.name))
+                    scatterInstances.Add(instance);
             }
         }
 
@@ -499,38 +739,47 @@ namespace SlimeBreaker
             return Mathf.Clamp(Mathf.Max(bounds.extents.x, bounds.extents.z), 0.4f, 1.6f);
         }
 
+        /// <summary>
+        /// Tight, upright collider for a generated prop. The model roots carry the FBX axis rotation (local Z = world up), so
+        /// a collider added to the root itself lies on its side and sits metres away from the prop; the collider lives on an
+        /// unrotated, scale-compensated child instead and is sized from the prop's visible bounds (the trunk, not the canopy).
+        /// </summary>
         static void FitCollider(GameObject instance, Obstacle.Kind kind)
         {
-            var renderers = instance.GetComponentsInChildren<Renderer>();
-            if (renderers.Length == 0)
+            var shape = instance.GetComponent<PropShape>();
+            if (shape == null)
                 return;
-            var bounds = renderers[0].bounds;
-            for (int i = 1; i < renderers.Length; i++)
-            {
-                if (renderers[i] is ParticleSystemRenderer)
-                    continue;
-                bounds.Encapsulate(renderers[i].bounds);
-            }
-            float radius = Mathf.Clamp(Mathf.Max(bounds.extents.x, bounds.extents.z) * 0.7f, 0.38f, 1.15f);
-            float height = Mathf.Max(0.9f, bounds.size.y);
+            float uniform = Mathf.Max(0.0001f, instance.transform.lossyScale.x);
+            float half = shape.halfWidth * uniform;
+            float height = Mathf.Max(0.6f, shape.height * uniform);
+
+            var holder = new GameObject("SolidCollider");
+            holder.transform.SetParent(instance.transform, false);
+            // Follow only the prop's yaw (not the FBX axis rotation), so boxes keep their thin/wide proportions.
+            holder.transform.rotation = Quaternion.Euler(0f, instance.transform.eulerAngles.y, 0f);
+            holder.transform.position = instance.transform.position;
+            holder.transform.localScale = Vector3.one / uniform;
+            holder.layer = instance.layer;
             if (kind == Obstacle.Kind.Tree)
             {
-                var capsule = instance.AddComponent<CapsuleCollider>();
-                capsule.center = new Vector3(0f, height * 0.48f, 0f);
-                capsule.radius = Mathf.Clamp(radius * 0.55f, 0.38f, 0.85f);
-                capsule.height = height;
+                var capsule = holder.AddComponent<CapsuleCollider>();
+                capsule.radius = Mathf.Clamp(half * 0.14f, 0.3f, 0.5f);
+                capsule.height = Mathf.Min(height, 3.2f);
+                capsule.center = new Vector3(0f, capsule.height * 0.5f, 0f);
             }
             else if (kind == Obstacle.Kind.Ruin)
             {
-                var box = instance.AddComponent<BoxCollider>();
+                var box = holder.AddComponent<BoxCollider>();
+                float width = Mathf.Clamp(shape.halfX * uniform * 2f * 0.85f, 0.45f, 1.5f);
+                float depth = Mathf.Clamp(shape.halfZ * uniform * 2f * 0.85f, 0.45f, 1.5f);
+                box.size = new Vector3(width, height, depth);
                 box.center = new Vector3(0f, height * 0.5f, 0f);
-                box.size = new Vector3(radius * 1.5f, height, radius * 1.5f);
             }
             else
             {
-                var sphere = instance.AddComponent<SphereCollider>();
-                sphere.center = new Vector3(0f, Mathf.Min(0.75f, height * 0.45f), 0f);
-                sphere.radius = radius;
+                var sphere = holder.AddComponent<SphereCollider>();
+                sphere.radius = Mathf.Clamp(half * 0.85f, 0.38f, 1.15f);
+                sphere.center = new Vector3(0f, Mathf.Clamp(height * 0.5f, 0.3f, 0.6f), 0f);
             }
         }
 
@@ -578,8 +827,19 @@ namespace SlimeBreaker
             }
         }
 
+        bool InKeepClear(Vector3 position, float margin = 0f)
+        {
+            if (keepClearRadius <= 0f)
+                return false;
+            var offset = position - keepClearCenter;
+            offset.y = 0f;
+            return offset.magnitude < keepClearRadius + margin;
+        }
+
         bool Fits(Vector3 position, float footprint)
         {
+            if (InKeepClear(position, footprint))
+                return false;
             // Keep the hero's spawn and the centre lane free.
             if (new Vector2(position.x, position.z).magnitude < 3.2f + footprint)
                 return false;
@@ -626,6 +886,24 @@ namespace SlimeBreaker
 
         // ------------------------------------------------------------------ biome tint & weather
 
+        Material Tinted(Material source, Color tint)
+        {
+            var key = (source, tint);
+            if (tintedMaterials.TryGetValue(key, out var material) && material != null)
+                return material;
+            material = new Material(source) { name = source.name + "_tint" };
+            Color value = tint;
+            if (source.HasProperty("_BaseColor"))
+                value *= Color.Lerp(source.GetColor("_BaseColor"), Color.white, 0.6f);
+            value.a = source.HasProperty("_BaseColor") ? source.GetColor("_BaseColor").a : 1f;
+            if (material.HasProperty("_BaseColor"))
+                material.SetColor("_BaseColor", value);
+            if (material.HasProperty("_Color"))
+                material.SetColor("_Color", value);
+            tintedMaterials[key] = material;
+            return material;
+        }
+
         void TintFoliage(ArenaTheme theme)
         {
             if (theme.biome == Biome.Forest || Root == null)
@@ -647,13 +925,12 @@ namespace SlimeBreaker
                 default:
                     leaf = DesertLeaf; grass = DesertGrass; break;
             }
-            if (block == null)
-                block = new MaterialPropertyBlock();
             foreach (var renderer in Root.GetComponentsInChildren<Renderer>())
             {
                 if (renderer is ParticleSystemRenderer)
                     continue;
                 var materials = renderer.sharedMaterials;
+                bool changed = false;
                 for (int i = 0; i < materials.Length; i++)
                 {
                     var material = materials[i];
@@ -667,14 +944,11 @@ namespace SlimeBreaker
                         tint = grass;
                     if (tint == null)
                         continue;
-                    Color value = tint.Value;
-                    if (material.HasProperty("_BaseColor"))
-                        value *= Color.Lerp(material.GetColor("_BaseColor"), Color.white, 0.6f);
-                    renderer.GetPropertyBlock(block, i);
-                    block.SetColor("_BaseColor", value);
-                    block.SetColor("_Color", value);
-                    renderer.SetPropertyBlock(block, i);
+                    materials[i] = Tinted(material, tint.Value);
+                    changed = true;
                 }
+                if (changed)
+                    renderer.sharedMaterials = materials;
             }
         }
 
@@ -694,12 +968,39 @@ namespace SlimeBreaker
                         rig = firefliesRig;
                     break;
             }
-            if (rig == null)
+            if (rig != null)
+            {
+                var instance = Instantiate(rig, Root);
+                instance.name = rig.name;
+                if (instance.GetComponent<WeatherRig>() == null)
+                    instance.AddComponent<WeatherRig>();
+            }
+            SpawnMist(theme);
+        }
+
+        public bool HasMist { get; private set; }
+
+        /// <summary>Ground mist for damp or dark scenes, tinted to the fog so it melts into the distance.</summary>
+        void SpawnMist(ArenaTheme theme)
+        {
+            HasMist = false;
+            if (mistRig == null)
                 return;
-            var instance = Instantiate(rig, Root);
-            instance.name = rig.name;
-            if (instance.GetComponent<WeatherRig>() == null)
-                instance.AddComponent<WeatherRig>();
+            bool damp = theme.biome == Biome.Swamp || theme.biome == Biome.Storm || theme.biome == Biome.Shadow
+                || theme.weather == Weather.Rain || (theme.IsNight && theme.biome == Biome.Forest);
+            if (!damp)
+                return;
+            var mist = Instantiate(mistRig, Root);
+            mist.name = mistRig.name;
+            var particles = mist.GetComponent<ParticleSystem>();
+            if (particles != null)
+            {
+                var main = particles.main;
+                Color tint = Color.Lerp(RenderSettings.fogColor, Color.white, 0.35f);
+                tint.a = theme.biome == Biome.Swamp ? 0.13f : 0.09f;
+                main.startColor = tint;
+            }
+            HasMist = true;
         }
     }
 }

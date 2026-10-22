@@ -6,9 +6,19 @@ Satu run berlangsung di arena radius 22 m selama **100 lantai**. Level hero terp
 
 ## Loop
 
-Menu → arena lantai 1 (hutan siang cerah) → gerak dan dash → penyihir otomatis menembakkan bolt sihir pelacak **hanya saat diam** ke musuh terdekat yang terlihat (jangkauan 4,4 m; batu/pohon memblokir tembakan) → orb EXP → setiap naik **level hero**, serangan dasar **+10**, lalu permainan jeda dan menawarkan 3 upgrade (hero max Lv 999) → setiap kelipatan 5 **level hero** satu kristal power-up muncul di map yang sama → lantai N butuh **N×10** slime (lantai 1 = 10, lantai 2 = 20, …) sebelum **pintu** muncul; hero masuk dulu baru naik lantai → setiap kelipatan 10 **lantai** slime biasa lenyap, peringatan **BOSS LANTAI N**, kamera zoom ke bos, lalu pertarungan (boss memanggil 10 slime kecil tiap 20 detik) → Royal Slime di lantai 100 = tamat → emas disimpan → upgrade permanen di menu. Keluar di tengah run menyimpan progres ke `slimebreaker-run.json`; tombol **Lanjutkan** di menu memulihkan lantai, level, skill, HP, dan EXP.
+Menu → arena lantai 1 (hutan siang cerah) → gerak dan dash → penyihir otomatis menembakkan bolt sihir pelacak **hanya saat diam** ke musuh terdekat yang terlihat (jangkauan 4,4 m; batu/pohon memblokir tembakan) → orb EXP → setiap naik **level hero**, serangan dasar **+10**, lalu permainan jeda dan menawarkan 3 upgrade (hero max Lv 999) → setiap kelipatan 5 **level hero** satu kristal power-up muncul di map yang sama → lantai N butuh **N×10** slime (lantai 1 = 10, lantai 2 = 20, …) sebelum **pintu** muncul; hero masuk dulu baru naik lantai → setiap kelipatan 10 **lantai** slime biasa lenyap, peringatan **BOSS LANTAI N**, kamera zoom ke bos, lalu pertarungan (boss memanggil 10 slime kecil tiap 20 detik) → Royal Slime di lantai 100 = tamat → emas disimpan → upgrade permanen di menu.
 
-Hero adalah penyihir ungu chibi (lihat `docs/art_direction.md`). Serangan dasar dianimasikan sebagai pukulan tongkat; bolt sihir lepas tepat saat tongkat menghantam. Mengambil power-up atau Boss Breaker memutar animasi Cast; mengalahkan boss memutar Victory. Menu utama menampilkan hero dengan animasi Menu (melambai, memutar tongkat) yang berayun pelan menghadap kamera.
+### Nyawa dan lanjutkan
+
+Hero punya **3 nyawa** per run (hati merah di bawah pil Lv; nyawa terpakai jadi abu-abu). HP habis memakai satu nyawa: hero langsung bangkit dengan HP penuh, kebal 2,5 detik, dan toast **Nyawa berkurang!**. Saat nyawa terakhir habis, arena beku dan panel **Nyawa Habis** muncul dengan hitung mundur **5 detik** (cincin emas):
+
+- **Game Baru** — run berakhir sebagai kekalahan (emas tetap masuk), arena dimuat ulang dari lantai 1.
+- **Lanjutkan** — iklan layar penuh tampil (audio game dijeda, hitung mundur panel berhenti). Tombol tutup (X) baru muncul setelah 5 detik; setelah ditutup hero bangkit dengan HP penuh dan 3 nyawa lagi, lantai/level/item tetap.
+- Hitung mundur habis tanpa pilihan → layar hasil **Kalah** seperti biasa.
+
+Nyawa ikut tersimpan di run-save (`RunSave.lives`; save lama = 3). Belum ada SDK jaringan iklan di proyek, jadi `AdService` menampilkan iklan internal (house ad) layar penuh; SDK seperti AdMob bisa dipasang lewat `AdService.Provider` tanpa mengubah alur. Keluar di tengah run menyimpan progres ke `slimebreaker-run.json`; tombol **Lanjutkan** di menu memulihkan lantai, level, skill, HP, dan EXP.
+
+Hero adalah penyihir chibi bertopi raksasa dengan rambut bob pirang-merah muda (lihat `docs/art_direction.md`). Serangan dasar dianimasikan sebagai pukulan tongkat; bolt sihir lepas tepat saat tongkat menghantam. Mengambil power-up atau Boss Breaker memutar animasi Cast; mengalahkan boss memutar Victory. Menu utama menampilkan hero dengan animasi Menu (melambai, memutar tongkat) yang berayun pelan menghadap kamera.
 
 Seluruh HUD dan menu memakai gaya yang sama dengan bar HP boss: kaca gelap, garis tepi tipis, pil berwarna untuk label (HP merah, EXP hijau, LANTAI biru, Lv ungu), track gelap dengan isi berkilap, dan teks tebal berbayang. Tombol utama berwarna solid (emas = aksi utama, ungu = pilihan aktif, merah = keluar/tutup), tombol lain kaca transparan; tombol bulat (jeda, pengaturan, dash) berupa cakram kaca dengan ikon. Dash menampilkan cincin cyan yang berputar saat cooldown terisi. HUD menampilkan **Lantai**, progres bunuh slime lantai itu (misalnya `3 / 10`), **Lv**, timer, HP, **EXP**, dan **kartu status** modern di kiri atas di bawah bar HP (panel kaca gelap, header STATUS, grid 2×5 sel label redup + nilai tebal; LS hijau, DEF/TAKEN biru, CRIT emas saat aktif, nilai 0 diredupkan): **DMG**, **CRIT**, **CRIT RATE**, **ATK SPD**, **RANGE**, **MOVE**, **EXP** (bonus), **LS**, dan **DEF** (pengurangan damage dari Defender) + **TAKEN** (persen damage yang masih masuk). Panah wayfinder menunjuk pintu dan power-up yang aktif. Angka damage mengambang di atas musuh (krem), critical (**CRIT** emas lebih besar), damage yang diterima hero (merah), dan heal lifesteal (**+N hijau** di atas kepala hero, digabung tiap 0,25 s). Bolt sihir dasar hanya tembak saat hero diam; jalan atau dash menahan serangan dasar. Skill power-up tetap jalan sambil bergerak.
 
@@ -58,18 +68,66 @@ Masuk pintu meregenerasi arena (fade). Cuaca dan siang/malam berganti setiap lan
 
 | Lantai | Nama | HP | Skill enrage | Keunikan |
 |---|---|---|---|---|
-| 10 | Rock Slime | 10.000 | 1 | Kulit batu, lempar batu ke atas lalu jatuh ke bayangan di tanah, slam lebih lebar |
-| 20 | Flame Slime | 20.000 | 2 | Tembakan api (`HostileProjectile`) + genangan bakar |
-| 30 | Frost Slime | 30.000 | 3 | Hujan es + aura dingin yang memperlambat hero |
-| 40 | Volt Slime | 40.000 | 4 | Sambaran petir + jatuhan kilat |
-| 50 | Toxic Slime | 50.000 | 5 | Hujan racun dan genangan |
-| 60 | Shadow Slime | 60.000 | 6 | Blink, hujan bayangan, selubung gelap |
-| 70 | Magma Slime | 70.000 | 7 | Hujan magma + jejak lava saat charge |
-| 80 | Storm Slime | 80.000 | 8 | Dorongan angin + jatuhan petir |
-| 90 | Crystal Slime | 90.000 | 9 | Cincin duri + perisai yang menahan bolt |
-| 100 | Royal Slime | 100.000 | 10 | Campuran tembakan api, hujan, dan zap. Kalahkan untuk **Tamat!** |
+| 10 | Rock Dumpling | 10.000 | 1 | Kulit batu, lempar batu ke atas lalu jatuh ke bayangan di tanah, slam lebih lebar |
+| 20 | Flame Dumpling | 20.000 | 2 | Tembakan api (`HostileProjectile`) + genangan bakar |
+| 30 | Frost Dumpling | 30.000 | 3 | Hujan es + aura dingin yang memperlambat hero |
+| 40 | Volt Dumpling | 40.000 | 4 | Sambaran petir + jatuhan kilat |
+| 50 | Toxic Dumpling | 50.000 | 5 | Hujan racun dan genangan |
+| 60 | Shadow Dumpling | 60.000 | 6 | Blink, hujan bayangan, selubung gelap |
+| 70 | Magma Dumpling | 70.000 | 7 | Hujan magma + jejak lava saat charge |
+| 80 | Storm Dumpling | 80.000 | 8 | Dorongan angin + jatuhan petir |
+| 90 | Crystal Dumpling | 90.000 | 9 | Cincin duri + perisai yang menahan bolt |
+| 100 | Royal Dumpling | 100.000 | 10 | Campuran tembakan api, hujan, dan zap. Kalahkan untuk **Tamat!** |
+
+Pengaturan memuat dua slider volume (disimpan di save meta, `musicLevel`/`sfxLevel`): **Musik (BGM)** mengatur musik, **Suara game** mengatur efek suara dan ambience (hujan, angin, bed biome). Peluru musuh (slime ranged dan boss) tidak punya suara saat mengenai hero; yang terdengar hanya bunyi hit milik hero (`playerhit`).
+
+## Kesulitan (Easy / Normal / Hard)
+
+Dipilih di menu utama (dropdown KESULITAN, bawaan Normal, tersimpan di save meta) untuk run baru; run yang disimpan (Lanjutkan) tetap memakai kesulitan saat run dimulai. **Hard** adalah keseimbangan asli; Normal dan Easy mengubah angka berikut (semuanya di `Difficulty.For`):
+
+| | Easy | Normal | Hard |
+|---|---|---|---|
+| Damage monster (slime, peluru ranged) | ×0,5 | ×0,75 | ×1 |
+| HP monster | ×0,7 | ×0,85 | ×1 |
+| Jeda spawn monster | ×1,35 (lebih jarang) | ×1,15 | ×1 |
+| HP boss | ×0,5 (lantai 10 = 5.000) | ×0,75 (7.500) | ×1 (10.000) |
+| Damage boss (kontak + skill) | ×0,5 | ×0,75 | ×1 |
+| HP awal hero | ×1,5 (150) | ×1,25 (125) | ×1 (100) |
+| Bonus kartu level-up | ×3 (Ultra 3,0%) | ×2 (2,0%) | ×1 (1,0%) |
+| Peluang slime menjatuhkan item | 15% | 8% | 5% |
+| EXP | ×1,5 | ×1,25 | ×1 |
+
+Alasan: kematian utama berasal dari damage kontak ke hero 100 HP, jadi damage monster dan HP hero yang paling menurunkan kesulitan; kartu level-up dan drop item hanya menambah kekuatan pelan-pelan (kartu hanya 0,1–1%), jadi dipakai sebagai pelengkap. Peluang rarity kartu dan item (65/20/10/5%) dan stat item per level tidak berubah di semua kesulitan. Install baru mulai di Normal; save lama tanpa pilihan juga Normal, run lama yang tersimpan dianggap Hard.
+
+## Item dan inventori
+
+Monster menjatuhkan perlengkapan (5% per slime; boss menjatuhkan **4 item, salah satunya pasti Ultra**). Rarity memakai chance yang sama dengan kartu upgrade (Normal 65%, Rare 20%, Legend 10%, Ultra 5%). Stat dikali **band lantai** tempat item jatuh (lantai 1–10 = ×1, 11–20 = ×2, … 91–100 = ×10).
+
+| Slot | Stat | Normal | Rare | Legend | Ultra |
+|---|---|---|---|---|---|
+| Staff | ATK serangan dasar | +100 | +250 | +500 | +1000 |
+| Topi | HP | +20 | +50 | +120 | +250 |
+| Baju | HP + DEF | +30, 1% | +75, 2% | +180, 3,5% | +360, 5% |
+| Celana | HP | +15 | +40 | +100 | +200 |
+| Sepatu | Move speed | +2% | +4% | +6% | +9% |
+
+(Nilai di atas untuk level item 1 = lantai 1–10 (band 1); level 2 = lantai 11–20 dst. Staff terbaik level 1 = +1000, level 2 = +2000, level 3 = +3000. ATK dan HP dikali band; DEF +0,25% dan move +0,3% per band. Total DEF dibatasi 75%.)
+
+Item diambil dengan berjalan ke permata berwarna rarity (ikon item melayang di atasnya; makin langka makin tinggi pilar cahayanya). Slot kosong langsung terpakai; item lain masuk tas (40 slot). Tombol tas di HUD membuka **Inventori** (game dijeda): kolom perlengkapan kiri, grid tas kanan, panel detail dengan perbandingan dan tombol **Pakai/Lepas** dan **Buang**. Item yang tertinggal saat masuk pintu/naik lantai otomatis diambil. Tas dan perlengkapan ikut tersimpan di save run (Lanjutkan).
 
 ## Upgrade run (level-up)
+
+Setiap kartu level-up mendapat **rarity** acak (berlaku untuk semua jenis upgrade):
+
+| Rarity | Warna | Chance | Kenaikan |
+|---|---|---|---|
+| Normal | hijau | 65% | +0,1% |
+| Rare | biru | 20% | +0,3% |
+| Legend | ungu | 10% | +0,5% |
+| Ultra | oranye | 5% | +1% |
+
+Kenaikan berlaku sebagai persen stat: DMG, HP, MOVE, RANGE dikali (1 + p); cooldown serangan/dash dikali (1 − p); EXP, DEF, LS, CRIT RATE, CRIT ditambah p poin persen. DMG dan HP menyimpan pecahan (`damageCarry`/`healthCarry`) agar kartu kecil tetap terakumulasi. Status HUD menampilkan persen dengan 0,1% presisi.
+
 
 Setiap naik level, serangan dasar otomatis **+10**, lalu pilihan 3 upgrade (nama berbahasa Inggris): **Power** (+20% damage), **Swiftness** (+12% gerak), **Vitality** (+25 HP), **Attack Speed**, **Dash**, **Reach** (+20% jangkauan), **EXP**, **Defender** (-8% damage masuk, cap 60%), **Lifesteal**, **Crit Rate** (+8% peluang, cap 70%), dan **Critical** (+30% pengali crit, cap 3,5×). Hero mulai hanya dengan damage dasar — **tidak ada critical** sampai mengambil Crit Rate atau Critical. Crit Rate membuka peluang 8% dengan pengali 1,5×; Critical sendiri membuka crit (peluang 8%) dan menaikkan pengali. Serangan yang crit menampilkan angka **CRIT** emas.
 
@@ -92,4 +150,18 @@ Emas membeli peringkat damage, nyawa, dan laju. Pilihan grafis ikut tersimpan. M
 
 ## Audio
 
-`AudioService` memutar musik loop dan efek lewat pool 10 AudioSource dengan variasi pitch dan interval minimum per id supaya kerumunan tidak menumpuk jadi derau. Kamera utama membawa `AudioListener` (dipasang `ProjectSetup` dan dijaga `UrpSceneBootstrap`).
+Orb EXP memakai bunyi "bloop" lembut bernada rendah; pemutaran beruntun pada id yang sama (pickup, kematian slime, hit) otomatis dilembutkan (`crowdFalloff`), jadi panen puluhan orb terdengar tenang. `AudioService` memutar musik per bioma (10 track + `MUS_Boss` saat boss, crossfade equal-power 1,6 s), ambience alam per bioma (`AMB_Night` untuk hutan/kerajaan malam) ditambah lapisan cuaca (hujan, angin), dan efek lewat pool 10 AudioSource dengan variasi pitch dan interval minimum per id supaya kerumunan tidak menumpuk jadi derau. Kamera utama membawa `AudioListener` (dipasang `ProjectSetup` dan dijaga `UrpSceneBootstrap`).
+
+## Jual item
+
+Di Inventori, tombol **Mode jual** membuat ketukan pada item menandainya (bukan memilihnya). Harga jual per rarity: Normal (hijau) 1 emas, Rare (biru) 3, Legend (ungu) 6, Ultra (oranye) 10. Tombol **rarity** dan **level** memilih filter, **Auto pilih** menandai semua item yang cocok (level "Semua" = semua level), **Jual** menjual semua yang ditandai dan emas langsung masuk ke save. Item yang sedang dipakai tidak pernah ikut terjual.
+
+## Riwayat boss di menu
+
+Save menyimpan `bossesDefeated` (rekor terbanyak boss lantai 10, 20, ... yang sudah dilewati; berdiri di lantai 11 berarti boss 10 terlewati, menang = 10). Dicatat saat jeda, keluar ke menu, tutup aplikasi, dan akhir run. Di menu utama, tiap boss itu berdiri sebagai dumpling kecil berwarna bosnya di belakang hero (boss 100 pelangi).
+
+Latar menu utama memakai generator arena yang sama dengan game: biome, cuaca, dan siang/malam lantai terjauh yang pernah dicapai (`highestFloor`). Save baru menampilkan hutan siang (lantai 1). Area sekitar hero dan boss pajangan dikosongkan dari pohon/properti besar.
+
+## Kamera
+
+Geser jari di separuh kanan layar (di luar tombol) memutar kamera mengelilingi hero: ke samping = putar kiri/kanan (0,16° per piksel), ke atas/bawah = sudut kamera (dibatasi 32°–78°). Pengaturan > Kamera: **Normal** (bawaan; geser kanan memutar pandangan ke kanan, geser atas menurunkan kamera = melihat ke atas) atau **Inverted** (dunia mengikuti jari: kedua arah dibalik). Pilihan tersimpan di save (`invertCamera`). Sudut menuju target dengan peredaman, dan fokus kamera saja yang tertinggal dari hero, sehingga putaran tidak mengayun. Joystick bergerak relatif kamera, jadi arah jalan mengikuti sudut baru. Tidak aktif saat jeda atau cutscene boss.

@@ -28,7 +28,7 @@ namespace SlimeBreaker
         public static int HealthForFloor(int floor)
         {
             int tier = Mathf.Max(1, RunRules.BossTier(floor));
-            return tier * RunRules.BossHealthPerTier;
+            return Difficulty.Scale(tier * RunRules.BossHealthPerTier, Difficulty.Profile.bossHealth);
         }
 
         public static int EnrageSkillCount(int floor)
@@ -38,7 +38,7 @@ namespace SlimeBreaker
 
         public static int ContactDamageForFloor(int floor)
         {
-            return RunRules.BossContactDamage(floor);
+            return Difficulty.Scale(RunRules.BossContactDamage(floor), Difficulty.Profile.bossDamage);
         }
 
         public static int SkillDamage(bool enraged)
@@ -48,23 +48,23 @@ namespace SlimeBreaker
 
         public static int SkillDamage(int floor, bool enraged)
         {
-            return RunRules.BossSkillDamageAt(floor, enraged);
+            return Difficulty.Scale(RunRules.BossSkillDamageAt(floor, enraged), Difficulty.Profile.bossDamage);
         }
 
         public static string DisplayName(BossKind kind)
         {
             return kind switch
             {
-                BossKind.Rock => "Rock Slime",
-                BossKind.Flame => "Flame Slime",
-                BossKind.Frost => "Frost Slime",
-                BossKind.Volt => "Volt Slime",
-                BossKind.Toxic => "Toxic Slime",
-                BossKind.Shadow => "Shadow Slime",
-                BossKind.Magma => "Magma Slime",
-                BossKind.Storm => "Storm Slime",
-                BossKind.Crystal => "Crystal Slime",
-                BossKind.Royal => "Royal Slime",
+                BossKind.Rock => "Rock Dumpling",
+                BossKind.Flame => "Flame Dumpling",
+                BossKind.Frost => "Frost Dumpling",
+                BossKind.Volt => "Volt Dumpling",
+                BossKind.Toxic => "Toxic Dumpling",
+                BossKind.Shadow => "Shadow Dumpling",
+                BossKind.Magma => "Magma Dumpling",
+                BossKind.Storm => "Storm Dumpling",
+                BossKind.Crystal => "Crystal Dumpling",
+                BossKind.Royal => "Royal Dumpling",
                 _ => "Slime"
             };
         }
@@ -136,7 +136,7 @@ namespace SlimeBreaker
             string n = materialName != null ? materialName.ToLowerInvariant() : "";
             if (n.Contains("cape") || n.Contains("cloak") || n.Contains("robe") || n.Contains("jubah"))
                 return CapeColor(kind);
-            if (n.Contains("gold") || n.Contains("crown"))
+            if (n.Contains("gold") || n.Contains("crown") || n.Contains("star"))
                 return CrownColor;
             if (n.Contains("gem") || n.Contains("crystal"))
                 return GemColor(kind);
@@ -149,7 +149,7 @@ namespace SlimeBreaker
         {
             string n = materialName != null ? materialName.ToLowerInvariant() : "";
             return n.Contains("eye") || n.Contains("pupil") || n.Contains("iris")
-                || n.Contains("highlight") || n.Contains("mouth");
+                || n.Contains("highlight") || n.Contains("mouth") || n.Contains("blush");
         }
 
         public static bool IsFinal(BossKind kind) => kind == BossKind.Royal;

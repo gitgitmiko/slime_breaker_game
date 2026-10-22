@@ -31,5 +31,14 @@ namespace SlimeBreaker.Tests
             Assert.AreEqual(1, data.speedRank);
             Assert.AreEqual(12.5f, data.bestRunTime, 0.01f);
         }
+
+        [Test]
+        public void RunSavesWithoutLivesStartWithEveryLife()
+        {
+            var old = UnityEngine.JsonUtility.FromJson<RunSave>("{\"schemaVersion\":1,\"level\":7,\"hp\":40}");
+            Assert.AreEqual(RunRules.HeroLives, old.lives);
+            var saved = UnityEngine.JsonUtility.FromJson<RunSave>(UnityEngine.JsonUtility.ToJson(new RunSave { lives = 1 }));
+            Assert.AreEqual(1, saved.lives);
+        }
     }
 }

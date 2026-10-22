@@ -6,7 +6,8 @@ MIT-licensed FluidR3 GM soundfont.
 
 Run from the repository root:
   python3 asset_work/scripts/build_audio_ui.py
-  python3 asset_work/scripts/build_audio_ui.py ui   # UI sprites and icons only
+  python3 asset_work/scripts/build_audio_ui.py ui   # UI sprites and icons only (default)
+  python3 asset_work/scripts/build_audio_ui.py legacy-audio   # old synth SFX + MIDI music (superseded by build_audio_hd.py)
 """
 
 import math
@@ -557,6 +558,25 @@ def panels():
     draw.rounded_rectangle((s * 0.26, s * 0.2, s * 0.42, s * 0.8), radius=s * 0.05, fill=(255, 255, 255, 255))
     draw.rounded_rectangle((s * 0.58, s * 0.2, s * 0.74, s * 0.8), radius=s * 0.05, fill=(255, 255, 255, 255))
     finish(img, os.path.join(out, "UI_Icon_Pause.png"))
+    # Dropdown arrow (down-pointing, rounded) and a check mark for the chosen list entry.
+    img = canvas(96, 96)
+    draw = ImageDraw.Draw(img)
+    draw.line([(s * 0.24, s * 0.36), (s * 0.5, s * 0.64), (s * 0.76, s * 0.36)], fill=(255, 255, 255, 255), width=int(s * 0.11), joint="curve")
+    for x, y in ((0.24, 0.36), (0.76, 0.36)):
+        draw.ellipse((s * x - s * 0.055, s * y - s * 0.055, s * x + s * 0.055, s * y + s * 0.055), fill=(255, 255, 255, 255))
+    finish(img, os.path.join(out, "UI_Icon_Arrow.png"))
+    img = canvas(96, 96)
+    draw = ImageDraw.Draw(img)
+    draw.line([(s * 0.22, s * 0.54), (s * 0.42, s * 0.74), (s * 0.78, s * 0.3)], fill=(255, 255, 255, 255), width=int(s * 0.12), joint="curve")
+    finish(img, os.path.join(out, "UI_Icon_Check.png"))
+    # Heart for the HUD lives row (white, tinted red/grey in Unity).
+    img = canvas(96, 96)
+    draw = ImageDraw.Draw(img)
+    r = s * 0.2
+    draw.ellipse((s * 0.5 - 2 * r, s * 0.2, s * 0.5, s * 0.2 + 2 * r), fill=(255, 255, 255, 255))
+    draw.ellipse((s * 0.5, s * 0.2, s * 0.5 + 2 * r, s * 0.2 + 2 * r), fill=(255, 255, 255, 255))
+    draw.polygon([(s * 0.5 - 2 * r + s * 0.012, s * 0.2 + r * 1.3), (s * 0.5 + 2 * r - s * 0.012, s * 0.2 + r * 1.3), (s * 0.5, s * 0.84)], fill=(255, 255, 255, 255))
+    finish(img, os.path.join(out, "UI_Icon_Heart.png"))
 
 
 def modern_ui():
@@ -618,6 +638,14 @@ def star_points(cx, cy, outer, inner, points=5, rotation=-math.pi / 2):
 
 
 GOLD = (255, 214, 102, 255)
+
+
+def paint_bag(draw, s):
+    # satchel for the HUD inventory button
+    draw.rounded_rectangle((s * 0.2, s * 0.34, s * 0.8, s * 0.84), radius=s * 0.1, fill=(186, 120, 70, 255))
+    draw.arc((s * 0.34, s * 0.14, s * 0.66, s * 0.5), 180, 360, fill=(230, 200, 150, 255), width=int(s * 0.05))
+    draw.rounded_rectangle((s * 0.2, s * 0.34, s * 0.8, s * 0.56), radius=s * 0.1, fill=(150, 92, 52, 255))
+    draw.rounded_rectangle((s * 0.44, s * 0.5, s * 0.56, s * 0.62), radius=s * 0.02, fill=(255, 214, 102, 255))
 WHITE = (255, 255, 255, 255)
 
 
@@ -729,7 +757,78 @@ def paint_arcane(draw, s):
         draw.polygon(star_points(px, py, s * 0.05, s * 0.02, points=4), fill=GOLD)
 
 
+def item_icon(name, painter):
+    """Equipment icon on a transparent background (the inventory cell supplies the rarity colour)."""
+    size = 256
+    img = canvas(size, size)
+    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    painter(ImageDraw.Draw(layer), size * SS)
+    shadow = layer.filter(ImageFilter.GaussianBlur(6 * SS))
+    shadow_dark = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    shadow_dark.paste((8, 6, 20, 170), (0, int(3 * SS)), shadow.split()[3])
+    img = Image.alpha_composite(img, shadow_dark)
+    img = Image.alpha_composite(img, layer)
+    finish(img, os.path.join(UI, "Icons", name + ".png"))
+
+
+INK = (30, 22, 48, 255)
+
+
+def paint_item_staff(draw, s):
+    # diagonal wooden staff with a crescent moon head and a glowing crystal
+    w = s * 0.055
+    draw.line([(s * 0.24, s * 0.86), (s * 0.66, s * 0.3)], fill=(150, 98, 58, 255), width=int(w))
+    draw.line([(s * 0.25, s * 0.85), (s * 0.64, s * 0.32)], fill=(196, 140, 86, 255), width=int(w * 0.35))
+    draw.ellipse((s * 0.36, s * 0.6, s * 0.46, s * 0.68), fill=GOLD)
+    cx, cy, r = s * 0.7, s * 0.25, s * 0.17
+    draw.ellipse((cx - r, cy - r, cx + r, cy + r), fill=GOLD)
+    draw.ellipse((cx - r * 0.55, cy - r * 1.05, cx + r * 1.25, cy + r * 0.75), fill=(0, 0, 0, 0))
+    draw.polygon([(cx - s * 0.02, cy - s * 0.1), (cx + s * 0.05, cy), (cx - s * 0.02, cy + s * 0.1), (cx - s * 0.09, cy)], fill=(140, 230, 255, 255))
+    draw.polygon([(cx - s * 0.02, cy - s * 0.1), (cx + s * 0.05, cy), (cx - s * 0.02, cy)], fill=(225, 250, 255, 255))
+
+
+def paint_item_hat(draw, s):
+    # witch hat: wide brim, bent cone, band and moon buckle
+    draw.ellipse((s * 0.1, s * 0.62, s * 0.9, s * 0.8), fill=(92, 54, 170, 255))
+    draw.polygon([(s * 0.28, s * 0.7), (s * 0.72, s * 0.7), (s * 0.62, s * 0.36), (s * 0.78, s * 0.12), (s * 0.5, s * 0.3), (s * 0.4, s * 0.4)], fill=(120, 72, 210, 255))
+    draw.polygon([(s * 0.3, s * 0.66), (s * 0.7, s * 0.66), (s * 0.68, s * 0.58), (s * 0.33, s * 0.58)], fill=(200, 160, 255, 255))
+    draw.ellipse((s * 0.46, s * 0.57, s * 0.54, s * 0.67), fill=GOLD)
+
+
+def paint_item_armor(draw, s):
+    # short-sleeved robe/tee with a gold clasp
+    body = [(s * 0.32, s * 0.2), (s * 0.68, s * 0.2), (s * 0.88, s * 0.34), (s * 0.78, s * 0.48), (s * 0.7, s * 0.42),
+            (s * 0.7, s * 0.86), (s * 0.3, s * 0.86), (s * 0.3, s * 0.42), (s * 0.22, s * 0.48), (s * 0.12, s * 0.34)]
+    draw.polygon(body, fill=(70, 80, 150, 255))
+    draw.polygon([(s * 0.42, s * 0.2), (s * 0.58, s * 0.2), (s * 0.5, s * 0.32)], fill=(170, 130, 240, 255))
+    draw.rectangle((s * 0.3, s * 0.78, s * 0.7, s * 0.86), fill=(120, 90, 210, 255))
+    draw.ellipse((s * 0.46, s * 0.36, s * 0.54, s * 0.44), fill=GOLD)
+
+
+def paint_item_pants(draw, s):
+    # shorts with a belt
+    draw.polygon([(s * 0.24, s * 0.26), (s * 0.76, s * 0.26), (s * 0.82, s * 0.74), (s * 0.56, s * 0.76), (s * 0.5, s * 0.5),
+                  (s * 0.44, s * 0.76), (s * 0.18, s * 0.74)], fill=(52, 52, 72, 255))
+    draw.rectangle((s * 0.24, s * 0.24, s * 0.76, s * 0.34), fill=(120, 90, 210, 255))
+    draw.rounded_rectangle((s * 0.44, s * 0.23, s * 0.56, s * 0.35), radius=s * 0.02, fill=GOLD)
+
+
+def paint_item_boots(draw, s):
+    # pair of boots with cuffs and a speed streak
+    for dx in (0.0, 0.26):
+        x = s * (0.16 + dx)
+        draw.rounded_rectangle((x, s * 0.26, x + s * 0.2, s * 0.68), radius=s * 0.05, fill=(126, 78, 46, 255))
+        draw.rounded_rectangle((x, s * 0.56, x + s * 0.34, s * 0.76), radius=s * 0.08, fill=(110, 66, 40, 255))
+        draw.rectangle((x - s * 0.01, s * 0.24, x + s * 0.21, s * 0.32), fill=(200, 160, 255, 255))
+    for i, y in enumerate((0.4, 0.5, 0.6)):
+        draw.line([(s * 0.04, s * y), (s * 0.13, s * y)], fill=WHITE if i != 1 else GOLD, width=int(s * 0.025))
+
+
 def icons():
+    for name, painter in (("ICON_Item_Staff", paint_item_staff), ("ICON_Item_Hat", paint_item_hat), ("ICON_Item_Armor", paint_item_armor),
+                          ("ICON_Item_Pants", paint_item_pants), ("ICON_Item_Boots", paint_item_boots)):
+        item_icon(name, painter)
+    item_icon("ICON_Bag", paint_bag)
     upgrades = {
         "ICON_Upgrade_Damage": paint_damage,
         "ICON_Upgrade_Speed": paint_speed,
@@ -751,7 +850,8 @@ def icons():
 
 def main():
     import sys
-    if len(sys.argv) > 1 and sys.argv[1] == "ui":
+    # Audio is now produced by build_audio_hd.py; the old synth SFX/MIDI only run with "legacy-audio".
+    if len(sys.argv) <= 1 or sys.argv[1] != "legacy-audio":
         # UI sprites only; leaves audio untouched.
         panels()
         modern_ui()

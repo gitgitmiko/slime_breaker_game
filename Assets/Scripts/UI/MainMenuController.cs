@@ -22,8 +22,16 @@ namespace SlimeBreaker
         public Button continueButton;
         public Text continueLabel;
         public SettingsPanel settings;
+        /// <summary>Easy / Normal / Hard picker for the next new run (index = DifficultyLevel).</summary>
+        public Dropdown difficultyDropdown;
+        /// <summary>Continue sits above Play; Play moves up into its place when there is no run to continue.</summary>
+        public RectTransform card;
+        /// <summary>Everything from Play down; it moves up (and the card shrinks) when there is no Continue button.</summary>
+        public RectTransform body;
+        public float continueSlot = 102f;
 
         SaveData save;
+        float fullCardHeight;
         Quaternion showcaseRest;
         bool hasRest;
 
@@ -51,6 +59,8 @@ namespace SlimeBreaker
                 speedButton.onClick.AddListener(() => Buy(ref save.speedRank, speedLabel, "Laju"));
             if (continueButton != null)
                 continueButton.onClick.AddListener(Continue);
+            if (difficultyDropdown != null)
+                difficultyDropdown.onValueChanged.AddListener(value => ChooseDifficulty((DifficultyLevel)value));
             Refresh();
         }
 
@@ -75,8 +85,20 @@ namespace SlimeBreaker
             settings?.Show();
         }
 
+        /// <summary>Difficulty of the next new run (a saved run keeps the one it started on).</summary>
+        public void ChooseDifficulty(DifficultyLevel level)
+        {
+            AudioService.Instance?.Play("ui");
+            // Re-read the save first: the sound sliders write to it too, and a stale copy would undo them.
+            save = SaveService.Load();
+            save.difficulty = (int)level;
+            SaveService.Save(save);
+            Refresh();
+        }
+
         void Buy(ref int rank, Text label, string title)
         {
+            save = SaveService.Load();
             int cost = baseCost * (rank + 1);
             if (save.gold < cost)
                 return;
@@ -99,12 +121,23 @@ namespace SlimeBreaker
             SetButton(damageLabel, damageButton, "Damage", save.damageRank);
             SetButton(healthLabel, healthButton, "Nyawa", save.healthRank);
             SetButton(speedLabel, speedButton, "Laju", save.speedRank);
+            var current = (DifficultyLevel)Mathf.Clamp(save.difficulty, 0, 2);
+            if (difficultyDropdown != null)
+                difficultyDropdown.SetValueWithoutNotify((int)current);
             var run = RunSaveService.Exists() ? RunSaveService.Load() : null;
             bool canContinue = run != null && run.level > 0;
             if (continueButton != null)
                 continueButton.gameObject.SetActive(canContinue);
+            if (body != null)
+                body.anchoredPosition = new Vector2(body.anchoredPosition.x, canContinue ? 0f : continueSlot);
+            if (card != null)
+            {
+                if (fullCardHeight <= 0f)
+                    fullCardHeight = card.sizeDelta.y;
+                card.sizeDelta = new Vector2(card.sizeDelta.x, canContinue ? fullCardHeight : fullCardHeight - continueSlot);
+            }
             if (continueLabel != null && canContinue)
-                continueLabel.text = "Lanjutkan (Lv " + run.level + " · Lantai " + Mathf.Max(1, run.floor > 0 ? run.floor : run.stage) + ")";
+                continueLabel.text = "Lanjutkan (Lv " + run.level + " · Lantai " + Mathf.Max(1, run.floor > 0 ? run.floor : run.stage) + " · " + Difficulty.Label((DifficultyLevel)Mathf.Clamp(run.difficulty, 0, 2)) + ")";
         }
 
         void SetButton(Text label, Button button, string title, int rank)

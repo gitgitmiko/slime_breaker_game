@@ -30,7 +30,7 @@ namespace SlimeBreaker
             if (!GameFlowController.IsPlaying || amount <= 0)
                 return;
             var stats = GameFlowController.Instance.Stats;
-            Xp += Mathf.Max(1, Mathf.RoundToInt(amount * stats.xpMultiplier));
+            Xp += Mathf.Max(1, Mathf.RoundToInt(amount * stats.xpMultiplier * Difficulty.Profile.xp));
             while (Xp >= XpToNext && GameFlowController.Instance.Stats.level < RunRules.MaxHeroLevel)
             {
                 Xp -= XpToNext;

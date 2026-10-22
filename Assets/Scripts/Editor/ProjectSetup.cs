@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.15.0";
+        const string AppVersion = "0.31.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -42,9 +42,26 @@ namespace SlimeBreaker.EditorTools
         static Sprite fillSprite;
         static Sprite ghostSprite;
         static Sprite circleGlassSprite;
+        static GameObject itemPickupPrefab;
+        static readonly string[] ItemIconNames = { "Staff", "Hat", "Armor", "Pants", "Boots" };
+
+        static Sprite[] ItemIcons()
+        {
+            var icons = new Sprite[ItemIconNames.Length];
+            for (int i = 0; i < icons.Length; i++)
+            {
+                icons[i] = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Icons/ICON_Item_" + ItemIconNames[i] + ".png");
+                if (icons[i] == null)
+                    Debug.LogWarning("Ikon item hilang: " + ItemIconNames[i]);
+            }
+            return icons;
+        }
         static Sprite ringSprite;
         static Sprite gearSprite;
         static Sprite pauseIconSprite;
+        static Sprite arrowSprite;
+        static Sprite checkSprite;
+        static Sprite heartSprite;
         static readonly Color AccentViolet = new Color(0.56f, 0.46f, 1f);
         static readonly Color AccentRed = new Color(0.86f, 0.22f, 0.3f);
         static readonly Color AccentGreen = new Color(0.36f, 0.86f, 0.46f);
@@ -67,43 +84,79 @@ namespace SlimeBreaker.EditorTools
         [MenuItem("Slime Breaker/Build Android APK")]
         public static void BuildAndroidApk()
         {
+            BuildAndroid(false);
+        }
+
+        /// <summary>
+        /// Google Play upload: an Android App Bundle signed with the upload key from
+        /// ~/.slimebreaker/upload-keystore.properties (outside the repository; see docs/play_store.md).
+        /// </summary>
+        [MenuItem("Slime Breaker/Build Android App Bundle (Play Store)")]
+        public static void BuildAndroidAab()
+        {
+            BuildAndroid(true);
+        }
+
+        static void BuildAndroid(bool bundle)
+        {
+            string marker = bundle ? "SLIMEBREAKER_AAB" : "SLIMEBREAKER_APK";
             try
             {
                 ConfigurePlayerSettings();
-                PlayerSettings.Android.useCustomKeystore = false;
-                EditorUserBuildSettings.buildAppBundle = false;
+                EditorUserBuildSettings.buildAppBundle = bundle;
+                if (bundle)
+                    UseUploadKeystore();
+                else
+                    PlayerSettings.Android.useCustomKeystore = false;
 
-                var output = AndroidOutputPath();
+                var output = AndroidOutputPath(bundle ? "Builds/SlimeBreaker.aab" : "Builds/SlimeBreaker.apk");
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output)) ?? "Builds");
 
-                var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+                BuildReport report;
+                try
                 {
-                    scenes = new[]
+                    report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
                     {
-                        "Assets/Scenes/Boot.unity",
-                        "Assets/Scenes/MainMenu.unity",
-                        "Assets/Scenes/GameArena.unity"
-                    },
-                    locationPathName = output,
-                    target = BuildTarget.Android,
-                    options = BuildOptions.CompressWithLz4
-                });
+                        scenes = new[]
+                        {
+                            "Assets/Scenes/Boot.unity",
+                            "Assets/Scenes/MainMenu.unity",
+                            "Assets/Scenes/GameArena.unity"
+                        },
+                        locationPathName = output,
+                        target = BuildTarget.Android,
+                        options = BuildOptions.CompressWithLz4,
+                        // Sideload APKs only ever request AdMob test ads; the Play bundle uses the real unit.
+                        extraScriptingDefines = bundle ? Array.Empty<string>() : new[] { "SB_ADMOB_TEST" }
+                    });
+                }
+                finally
+                {
+                    // Never leave signing secrets in ProjectSettings.asset.
+                    PlayerSettings.Android.useCustomKeystore = false;
+                    PlayerSettings.Android.keystorePass = string.Empty;
+                    PlayerSettings.Android.keyaliasPass = string.Empty;
+                    PlayerSettings.Android.keystoreName = string.Empty;
+                    PlayerSettings.Android.keyaliasName = string.Empty;
+                    EditorUserBuildSettings.buildAppBundle = false;
+                    AssetDatabase.SaveAssets();
+                }
 
                 if (report.summary.result != BuildResult.Succeeded)
                 {
-                    Debug.LogError("SLIMEBREAKER_APK_FAIL " + report.summary.result);
+                    Debug.LogError(marker + "_FAIL " + report.summary.result);
                     if (Application.isBatchMode)
                         EditorApplication.Exit(1);
                     return;
                 }
 
-                Debug.Log("SLIMEBREAKER_APK_OK " + Path.GetFullPath(output));
+                Debug.Log(marker + "_OK " + Path.GetFullPath(output));
                 if (Application.isBatchMode)
                     EditorApplication.Exit(0);
             }
             catch (Exception error)
             {
-                Debug.LogError("SLIMEBREAKER_APK_FAIL\n" + error);
+                Debug.LogError(marker + "_FAIL\n" + error);
                 if (Application.isBatchMode)
                     EditorApplication.Exit(1);
                 else
@@ -111,7 +164,29 @@ namespace SlimeBreaker.EditorTools
             }
         }
 
-        static string AndroidOutputPath()
+        static void UseUploadKeystore()
+        {
+            string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            string file = Environment.GetEnvironmentVariable("SLIMEBREAKER_KEYSTORE_PROPERTIES");
+            if (string.IsNullOrEmpty(file))
+                file = Path.Combine(home, ".slimebreaker", "upload-keystore.properties");
+            if (!File.Exists(file))
+                throw new InvalidOperationException("Upload keystore tidak ditemukan: " + file + " (lihat docs/play_store.md).");
+            var values = new Dictionary<string, string>();
+            foreach (var line in File.ReadAllLines(file))
+            {
+                int split = line.IndexOf('=');
+                if (split > 0)
+                    values[line.Substring(0, split).Trim()] = line.Substring(split + 1).Trim();
+            }
+            PlayerSettings.Android.useCustomKeystore = true;
+            PlayerSettings.Android.keystoreName = values["keystore"];
+            PlayerSettings.Android.keystorePass = values["storePass"];
+            PlayerSettings.Android.keyaliasName = values["alias"];
+            PlayerSettings.Android.keyaliasPass = values["keyPass"];
+        }
+
+        static string AndroidOutputPath(string fallback)
         {
             var args = Environment.GetCommandLineArgs();
             for (var i = 0; i < args.Length - 1; i++)
@@ -119,7 +194,7 @@ namespace SlimeBreaker.EditorTools
                 if (args[i] == "-buildOutput")
                     return args[i + 1];
             }
-            return "Builds/SlimeBreaker.apk";
+            return fallback;
         }
 
         [MenuItem("Slime Breaker/Build Project")]
@@ -158,6 +233,7 @@ namespace SlimeBreaker.EditorTools
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
             ConfigureTextures();
+            ConfigureAudio();
             LoadUiArt();
             SharedMaterials();
             var models = AssetDatabase.FindAssets("t:Model", new[] { ArtRoot });
@@ -202,7 +278,7 @@ namespace SlimeBreaker.EditorTools
             var tankDef = Enemy("Assets/ScriptableObjects/Enemies/ENM_Slime_Tank.asset", "Slime Tank", 64, 1.35f, 14, 1.4f, 0.9f, 8, false);
             var rangedDef = Enemy("Assets/ScriptableObjects/Enemies/ENM_Slime_Ranged.asset", "Slime Jarak", 18, 2.15f, 7, 6.4f, 1.35f, 4, false, ranged: true, tint: new Color(0.95f, 0.48f, 0.78f));
             int bossHit = RunRules.BossBasicDamage;
-            var bossDef = Enemy("Assets/ScriptableObjects/Enemies/BOSS_SlimeKing.asset", "Royal Slime", 100000, 2.1f, bossHit, 1.7f, 0.8f, 80, true, kind: BossKind.Royal);
+            var bossDef = Enemy("Assets/ScriptableObjects/Enemies/BOSS_SlimeKing.asset", "Royal Dumpling", 100000, 2.1f, bossHit, 1.7f, 0.8f, 80, true, kind: BossKind.Royal);
             var bossDefs = new[]
             {
                 Enemy("Assets/ScriptableObjects/Enemies/BOSS_RockSlime.asset", "Rock Slime", 10000, 1.8f, bossHit, 1.8f, 0.85f, 40, true, incoming: 0.65f, kind: BossKind.Rock, tint: BossCatalog.Tint(BossKind.Rock)),
@@ -269,6 +345,7 @@ namespace SlimeBreaker.EditorTools
             var fireRing = FireNovaPrefab("Assets/Prefabs/Skills/SKL_Fire_Nova.prefab");
             var lightning = LightningPrefab("Assets/Prefabs/Skills/SKL_Lightning.prefab");
             var powerUp = PowerUpPrefab("Assets/Prefabs/Pickups/PWR_Crystal.prefab");
+            itemPickupPrefab = ItemPickupPrefab("Assets/Prefabs/Pickups/PCK_Item.prefab");
 
             var hero = CharacterPrefab("Assets/Prefabs/Player/CHR_Hero_Main.prefab", "Assets/Art/Characters/Hero/CHR_Hero_Main.fbx", heroController, 1.35f, true, null, null);
             var breakerAura = BreakerAuraPrefab("Assets/Prefabs/VFX/VFX_BossBreaker_Aura.prefab");
@@ -301,6 +378,8 @@ namespace SlimeBreaker.EditorTools
             env["StormArch"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Storm_Arch.prefab", "Assets/Art/Environment/Biomes/ENV_Storm_Arch.fbx", 1.7f, false);
             env["CrystalSpire"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Crystal_Spire.prefab", "Assets/Art/Environment/Biomes/ENV_Crystal_Spire.fbx", 1.8f, false);
             env["RoyalColumn"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Royal_Column.prefab", "Assets/Art/Environment/Biomes/ENV_Royal_Column.fbx", 2.1f, false);
+            // The arena edge: a woven-bamboo steamer wall (the floor and props stay as they were).
+            env["SteamerWall"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Dimsum_Wall.prefab", "Assets/Art/Environment/Dimsum/ENV_Dimsum_Wall.fbx", 3.5f, false);
 
             var obstacles = new[]
             {
@@ -318,18 +397,27 @@ namespace SlimeBreaker.EditorTools
                 BiomeObstacle("Assets/Prefabs/Environment/OBS_CrystalSpire.prefab", Obstacle.Kind.Ruin, 0.75f, env["CrystalSpire"], Biome.Crystal),
                 BiomeObstacle("Assets/Prefabs/Environment/OBS_RoyalColumn.prefab", Obstacle.Kind.Ruin, 0.75f, env["RoyalColumn"], Biome.Royal)
             };
-            var rain = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Rain.prefab", new Color(0.65f, 0.75f, 0.9f), 280, 14f, 0.08f, 2.4f, ParticleSystemShapeType.Box, 20f, "rain", true);
-            var snowWx = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Snow.prefab", new Color(0.92f, 0.96f, 1f), 120, 1.4f, 0.12f, 0.25f, ParticleSystemShapeType.Box, 20f, "wind", false);
-            var fireflies = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Fireflies.prefab", new Color(1f, 0.92f, 0.45f), 36, 0.35f, 0.08f, -0.05f, ParticleSystemShapeType.Sphere, 10f, null, false);
-            var dust = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Dust.prefab", new Color(1f, 0.82f, 0.5f, 0.5f), 56, 0.4f, 0.16f, -0.08f, ParticleSystemShapeType.Box, 18f, "wind", false);
-            var ash = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Ash.prefab", new Color(0.55f, 0.32f, 0.18f, 0.7f), 70, 0.55f, 0.14f, 0.12f, ParticleSystemShapeType.Box, 18f, "wind", false);
-            var spores = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Spores.prefab", new Color(0.55f, 0.85f, 0.3f, 0.55f), 48, 0.28f, 0.12f, -0.04f, ParticleSystemShapeType.Box, 16f, null, false);
-            var sparks = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Sparks.prefab", new Color(1f, 0.92f, 0.45f), 40, 0.9f, 0.07f, 0.05f, ParticleSystemShapeType.Box, 16f, null, false);
+            // Weather sprites (build_pbr_textures.fx_textures): streaks for rain, flakes for snow, soft glows, mist puffs.
+            var rainMat = ParticleMaterial("Assets/Art/VFX/Materials/MAT_FX_Rain.mat", "TEX_FX_Rain", true);
+            var snowMat = ParticleMaterial("Assets/Art/VFX/Materials/MAT_FX_Snow.mat", "TEX_FX_Snow", false);
+            var glowMat = ParticleMaterial("Assets/Art/VFX/Materials/MAT_FX_Glow.mat", "TEX_FX_Glow", true);
+            var softMat = ParticleMaterial("Assets/Art/VFX/Materials/MAT_FX_Soft.mat", "TEX_FX_Glow", false);
+            var ringMat = ParticleMaterial("Assets/Art/VFX/Materials/MAT_FX_Ring.mat", "TEX_FX_Ring", false);
+            var mistMat = ParticleMaterial("Assets/Art/VFX/Materials/MAT_FX_Mist.mat", "TEX_FX_Mist", false);
+            var rain = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Rain.prefab", new Color(0.7f, 0.78f, 0.92f, 0.55f), 650, 16f, 0.06f, 2.6f, ParticleSystemShapeType.Box, 22f, "rain", true, rainMat, false, ringMat);
+            var snowWx = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Snow.prefab", new Color(0.95f, 0.97f, 1f, 0.9f), 320, 1.2f, 0.11f, 0.22f, ParticleSystemShapeType.Box, 22f, "wind", false, snowMat, true);
+            // Ground-level drifters (fireflies, dust, spores, sparks) live in a low slab around the hero, well below the camera.
+            var fireflies = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Fireflies.prefab", new Color(1f, 0.92f, 0.45f, 0.8f), 44, 0.35f, 0.07f, -0.02f, ParticleSystemShapeType.Box, 22f, null, false, glowMat, true, null, 1.3f);
+            var dust = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Dust.prefab", new Color(1f, 0.85f, 0.6f, 0.35f), 90, 0.5f, 0.14f, -0.02f, ParticleSystemShapeType.Box, 20f, "wind", false, softMat, true, null, 1.2f);
+            var ash = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Ash.prefab", new Color(0.45f, 0.4f, 0.38f, 0.75f), 130, 0.6f, 0.08f, 0.1f, ParticleSystemShapeType.Box, 20f, "wind", false, snowMat, true);
+            var spores = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Spores.prefab", new Color(0.6f, 0.9f, 0.35f, 0.7f), 70, 0.25f, 0.1f, -0.02f, ParticleSystemShapeType.Box, 18f, null, false, glowMat, true, null, 1.5f);
+            var sparks = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Sparks.prefab", new Color(1f, 0.85f, 0.4f), 50, 1.0f, 0.06f, -0.03f, ParticleSystemShapeType.Box, 18f, null, false, glowMat, true, null, 1.5f);
+            var mist = MistPrefab("Assets/Prefabs/VFX/VFX_Weather_Mist.prefab", mistMat);
             var portal = PortalPrefab("Assets/Prefabs/Environment/ENV_Exit_Portal.prefab", env["RuneRing"]);
 
             BuildBoot();
-            BuildMenu(hero, heroMenuController, env);
-            BuildArena(balance, upgrades, skills, hero, normal, fast, tank, ranged, boss, bossDefs, hostileBolt, lightning, env, vfx, powerUp, portal, obstacles, rain, snowWx, fireflies, dust, ash, spores, sparks);
+            BuildMenu(hero, heroMenuController, bossController, env, rain, snowWx, fireflies, dust, ash, spores, sparks, mist);
+            BuildArena(balance, upgrades, skills, hero, normal, fast, tank, ranged, boss, bossDefs, hostileBolt, lightning, env, vfx, powerUp, portal, obstacles, rain, snowWx, fireflies, dust, ash, spores, sparks, mist);
             ConfigurePlayerSettings();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -404,6 +492,13 @@ namespace SlimeBreaker.EditorTools
                     importer.alphaIsTransparency = true;
                     importer.mipmapEnabled = false;
                     importer.maxTextureSize = 1024;
+                    if (path.Contains("/AppIcon/"))
+                    {
+                        importer.textureType = TextureImporterType.Default;
+                        importer.textureCompression = TextureImporterCompression.Uncompressed;
+                        importer.SaveAndReimport();
+                        continue;
+                    }
                     if (path.Contains("UI_Panel"))
                         importer.spriteBorder = new Vector4(48f, 48f, 48f, 48f);
                     else if (path.Contains("UI_Button"))
@@ -432,12 +527,32 @@ namespace SlimeBreaker.EditorTools
                     if (importer == null)
                         continue;
                     bool normal = path.EndsWith("_Normal.png", StringComparison.OrdinalIgnoreCase);
+                    // PBR sets (build_pbr_textures.py): albedo alpha = height, _Mask = AO/smoothness/metallic (linear).
+                    bool linear = path.EndsWith("_Mask.png", StringComparison.OrdinalIgnoreCase) || path.Contains("TEX_Noise");
                     importer.textureType = normal ? TextureImporterType.NormalMap : TextureImporterType.Default;
-                    importer.sRGBTexture = !normal;
+                    importer.sRGBTexture = !normal && !linear;
+                    importer.alphaSource = TextureImporterAlphaSource.FromInput;
+                    importer.alphaIsTransparency = false;
                     importer.mipmapEnabled = true;
                     importer.anisoLevel = 4;
-                    importer.wrapMode = TextureWrapMode.Repeat;
-                    importer.maxTextureSize = 1024;
+                    importer.filterMode = FilterMode.Trilinear;
+                    bool fx = Path.GetFileName(path).StartsWith("TEX_FX_", StringComparison.OrdinalIgnoreCase);
+                    importer.wrapMode = fx ? TextureWrapMode.Clamp : TextureWrapMode.Repeat;
+                    if (fx)
+                        importer.alphaIsTransparency = true;
+                    importer.maxTextureSize = 2048;
+                    // Cut-out foliage atlases: keep alpha-test coverage in the mips so grass does not thin out with distance.
+                    bool atlas = path.Contains("_Atlas");
+                    importer.mipMapsPreserveCoverage = atlas && !normal && !linear;
+                    importer.alphaTestReferenceValue = 0.42f;
+                    importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings
+                    {
+                        name = "Android",
+                        overridden = true,
+                        maxTextureSize = 2048,
+                        format = normal ? TextureImporterFormat.ASTC_5x5 : TextureImporterFormat.ASTC_6x6,
+                        compressionQuality = 50
+                    });
                     importer.SaveAndReimport();
                 }
             }
@@ -453,10 +568,13 @@ namespace SlimeBreaker.EditorTools
             importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
             importer.importAnimation = true;
             importer.importBlendShapes = false;
-            importer.isReadable = false;
+            // Arena props are merged at runtime (static batching, ground-cover combine), which needs CPU-readable meshes.
+            importer.isReadable = path.Contains("/Environment/");
             importer.animationCompression = ModelImporterAnimationCompression.Optimal;
             importer.materialImportMode = ModelImporterMaterialImportMode.ImportViaMaterialDescription;
             importer.materialLocation = ModelImporterMaterialLocation.External;
+            // Name extracted materials after the Blender material (MAT_hd_*), not after their preview texture.
+            importer.materialName = ModelImporterMaterialName.BasedOnMaterialName;
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
             importer = AssetImporter.GetAtPath(path) as ModelImporter;
             var clips = importer.defaultClipAnimations;
@@ -497,6 +615,21 @@ namespace SlimeBreaker.EditorTools
                 // Hand-made particle/trail/beam materials keep their unlit shaders.
                 if (mat.shader != null && (mat.shader.name.Contains("Particles") || mat.shader.name.Contains("Unlit")))
                     continue;
+                // Slime bodies (and the boss body, not its cape) are gel.
+                if (IsJellyMaterial(mat.name))
+                {
+                    ConfigureJelly(mat);
+                    continue;
+                }
+                // Hand-built HD materials (ground sets) already use the Slime Breaker shaders; leave them alone.
+                if (mat.shader != null && mat.shader.name.StartsWith("SlimeBreaker/") && !mat.name.StartsWith("MAT_hd_", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                // HD props from build_props_hd.py use SlimeBreaker/Lit with a PBR texture set per surface.
+                if (mat.name.StartsWith("MAT_hd_", StringComparison.OrdinalIgnoreCase))
+                {
+                    ConfigureHdMaterial(mat, mat.name.Substring(7).ToLowerInvariant());
+                    continue;
+                }
                 Color color = Color.white;
                 if (mat.HasProperty("_BaseColor"))
                     color = mat.GetColor("_BaseColor");
@@ -570,6 +703,13 @@ namespace SlimeBreaker.EditorTools
                     mat.SetFloat("_Metallic", 0.75f);
                     mat.SetFloat("_Smoothness", 0.78f);
                 }
+                else if (name.Contains("star"))
+                {
+                    // Boss forehead star: self-lit gold so it still reads at night (metal would go black with no reflections).
+                    mat.SetFloat("_Metallic", 0f);
+                    mat.SetFloat("_Smoothness", 0.6f);
+                    Emissive(0.9f);
+                }
                 else if (name.Contains("skin"))
                     mat.SetFloat("_Smoothness", 0.38f);
                 else if (name.Contains("hair"))
@@ -612,8 +752,183 @@ namespace SlimeBreaker.EditorTools
                     mat.SetFloat("_Smoothness", 0.22f);
                 else if (name.Contains("robe") || name.Contains("hat") || name.Contains("cape"))
                     mat.SetFloat("_Smoothness", 0.32f);
+                // The witch is lit a little from within so she stays bright and colourful in shadow and at night.
+                if (name.Contains("hero_") && !name.Contains("blackeye"))
+                {
+                    float glow = name.Contains("boot") ? 0.12f : name.Contains("hat_trim") || name.Contains("hero_trim") ? 0.2f : 0.3f;
+                    mat.EnableKeyword("_EMISSION");
+                    var map = mat.HasProperty("_BaseMap") ? mat.GetTexture("_BaseMap") : null;
+                    if (map != null)
+                    {
+                        mat.SetTexture("_EmissionMap", map);
+                        mat.SetColor("_EmissionColor", Color.white * glow);
+                    }
+                    else
+                        mat.SetColor("_EmissionColor", color * glow);
+                    mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    mat.SetFloat("_Smoothness", 0.28f);
+                }
                 EditorUtility.SetDirty(mat);
             }
+        }
+
+        /// <summary>Surface table for MAT_hd_* (see SURFACES in build_props_hd.py).</summary>
+        class HdLook
+        {
+            public string texture;
+            public Color color = Color.white;
+            public bool alpha;
+            public float cutoff = 0.45f;
+            public float wind;
+            public float flutter;
+            public float translucency;
+            public Color translucencyColor = new Color(0.55f, 0.8f, 0.25f);
+            public float cover;
+            public float vertexAO;
+            public float smoothness = 1f;
+            public float metallic = 1f;
+            public float bump = 1f;
+            public Color emission = Color.black;
+            public bool emissionFromTexture;
+            public float rim;
+            public Color rimColor = Color.white;
+        }
+
+        static readonly Dictionary<string, HdLook> HdLooks = new Dictionary<string, HdLook>
+        {
+            { "bark", new HdLook { texture = "TEX_Bark_HD", cover = 0.6f, vertexAO = 0.7f } },
+            { "leaf", new HdLook { texture = "TEX_Leaf_Atlas", alpha = true, cutoff = 0.42f, wind = 0.06f, flutter = 0.035f, translucency = 0.9f, cover = 0.2f, vertexAO = 0.8f, bump = 0.6f } },
+            { "grass", new HdLook { texture = "TEX_Grass_Atlas", alpha = true, cutoff = 0.4f, wind = 0.1f, translucency = 0.7f, translucencyColor = new Color(0.6f, 0.75f, 0.3f), vertexAO = 0.85f, bump = 0.5f } },
+            { "rock", new HdLook { texture = "TEX_Rock_HD", cover = 1f, vertexAO = 0.7f } },
+            { "stone", new HdLook { texture = "TEX_Stone_Ruin", cover = 0.8f, vertexAO = 0.6f } },
+            { "marble", new HdLook { texture = "TEX_Marble_HD", cover = 0.3f, vertexAO = 0.5f } },
+            { "gold", new HdLook { color = new Color(1f, 0.78f, 0.36f), smoothness = 0.82f, metallic = 1f } },
+            { "obsidian", new HdLook { texture = "TEX_Obsidian", cover = 0.15f, rim = 0.35f, rimColor = new Color(0.5f, 0.3f, 0.9f) } },
+            { "glyph", new HdLook { color = new Color(0.2f, 0.1f, 0.35f), emission = new Color(2.2f, 1.0f, 4.0f), smoothness = 0.6f, metallic = 0f } },
+            { "cactus", new HdLook { texture = "TEX_Cactus_Skin", cover = 0.05f, vertexAO = 0.5f, bump = 0.6f } },
+            { "flower", new HdLook { color = new Color(0.62f, 0.12f, 0.2f), smoothness = 0.35f, metallic = 0f } },
+            { "mushcap", new HdLook { texture = "TEX_Mushroom_Cap", vertexAO = 0.4f } },
+            { "mushstem", new HdLook { color = new Color(0.9f, 0.87f, 0.78f), smoothness = 0.25f, metallic = 0f, vertexAO = 0.6f } },
+            { "gills", new HdLook { color = new Color(0.82f, 0.76f, 0.62f), smoothness = 0.15f, metallic = 0f } },
+            { "ice", new HdLook { texture = "TEX_Ice_HD", color = new Color(0.85f, 0.95f, 1f), emission = new Color(0.08f, 0.14f, 0.2f), rim = 0.9f, rimColor = new Color(0.7f, 0.9f, 1f), cover = 0.3f } },
+            { "crystal", new HdLook { texture = "TEX_Ice_HD", color = new Color(0.72f, 0.5f, 1f), emission = new Color(0.45f, 0.22f, 0.8f), rim = 1.2f, rimColor = new Color(0.85f, 0.6f, 1f) } },
+            { "glow_yellow", new HdLook { color = new Color(1f, 0.85f, 0.4f), emission = new Color(3.2f, 2.4f, 0.8f), smoothness = 0.9f, metallic = 0f } },
+            { "basalt", new HdLook { texture = "TEX_Volcano_Ground", emissionFromTexture = true, emission = new Color(1.6f, 0.62f, 0.18f), cover = 0.4f, vertexAO = 0.6f } },
+            { "slate", new HdLook { texture = "TEX_Storm_Ground", cover = 0.5f, vertexAO = 0.6f } },
+            { "rune", new HdLook { color = new Color(0.2f, 0.6f, 0.7f), emission = new Color(0.6f, 2.4f, 3.0f), smoothness = 0.7f, metallic = 0f } },
+            // Dim sum steamer wall (build_arena_dimsum.py)
+            { "steamwood", new HdLook { texture = "TEX_Steamer_Wood", vertexAO = 0.7f, bump = 0.8f } },
+            { "bambooband", new HdLook { color = new Color(0.74f, 0.54f, 0.28f), smoothness = 0.55f, metallic = 0f, vertexAO = 0.5f } },
+            { "weave", new HdLook { texture = "TEX_Bamboo_Weave", vertexAO = 0.6f } },
+        };
+
+        static void ConfigureHdMaterial(Material mat, string key)
+        {
+            var shader = Shader.Find("SlimeBreaker/Lit");
+            if (shader == null)
+                throw new InvalidOperationException("Shader SlimeBreaker/Lit tidak ditemukan (Assets/Shaders/SBLit.shader).");
+            if (!HdLooks.TryGetValue(key, out var look))
+            {
+                Debug.LogWarning("Material HD tanpa look: " + mat.name);
+                look = new HdLook();
+            }
+            mat.shader = shader;
+            mat.SetColor("_BaseColor", look.color);
+            Texture2D albedo = look.texture != null ? TextureNamed(look.texture) : null;
+            mat.SetTexture("_BaseMap", albedo);
+            mat.SetTexture("_BumpMap", look.texture != null ? TextureNamed(look.texture + "_Normal") : null);
+            mat.SetTexture("_MaskMap", look.texture != null ? TextureNamed(look.texture + "_Mask") : null);
+            if (look.texture != null && albedo == null)
+                Debug.LogWarning("Tekstur HD hilang: " + look.texture);
+            mat.SetFloat("_BumpScale", look.bump);
+            mat.SetFloat("_Smoothness", look.smoothness);
+            mat.SetFloat("_Metallic", look.texture == null && key != "gold" ? 0f : look.metallic);
+            if (look.texture == null)
+            {
+                // No mask texture: the white default means AO 1, smoothness 1, metallic 1, so the scales are the values.
+                mat.SetFloat("_Smoothness", look.smoothness);
+            }
+            mat.SetFloat("_OcclusionStrength", 1f);
+            mat.SetFloat("_VertexAO", look.vertexAO);
+            mat.SetFloat("_CoverWeight", look.cover);
+            SetKeyword(mat, "_COVER", look.cover > 0f);
+            mat.SetFloat("_Cutoff", look.cutoff);
+            SetKeyword(mat, "_ALPHATEST_ON", look.alpha);
+            mat.SetFloat("_Cull", look.alpha ? (float)CullMode.Off : (float)CullMode.Back);
+            mat.SetFloat("_FlipBackNormals", look.alpha ? 0f : 1f);
+            mat.SetFloat("_AlphaToMask", look.alpha ? 1f : 0f);
+            mat.renderQueue = look.alpha ? (int)RenderQueue.AlphaTest : (int)RenderQueue.Geometry;
+            mat.SetOverrideTag("RenderType", look.alpha ? "TransparentCutout" : "Opaque");
+            mat.SetFloat("_WindStrength", look.wind);
+            mat.SetFloat("_Flutter", look.flutter);
+            SetKeyword(mat, "_WIND", look.wind > 0f || look.flutter > 0f);
+            mat.SetFloat("_Translucency", look.translucency);
+            mat.SetColor("_TranslucencyColor", look.translucencyColor);
+            SetKeyword(mat, "_TRANSLUCENT", look.translucency > 0f);
+            mat.SetFloat("_RimStrength", look.rim);
+            mat.SetColor("_RimColor", look.rimColor);
+            bool emissive = look.emission.maxColorComponent > 0f;
+            mat.SetColor("_EmissionColor", look.emission);
+            mat.SetTexture("_EmissionMap", look.emissionFromTexture ? TextureNamed(look.texture + "_Emit") : null);
+            SetKeyword(mat, "_EMISSION", emissive);
+            mat.globalIlluminationFlags = emissive ? MaterialGlobalIlluminationFlags.RealtimeEmissive : MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            mat.enableInstancing = true;
+            EditorUtility.SetDirty(mat);
+        }
+
+        static bool IsJellyMaterial(string name)
+        {
+            string n = name.ToLowerInvariant();
+            return n.Contains("slime") || (n.StartsWith("mat_king") && !n.Contains("cape"));
+        }
+
+        /// <summary>SlimeBreaker/Jelly with the Blender colour; tank slimes are denser, the king glows more.</summary>
+        static void ConfigureJelly(Material mat)
+        {
+            var shader = Shader.Find("SlimeBreaker/Jelly");
+            if (shader == null)
+                throw new InvalidOperationException("Shader SlimeBreaker/Jelly tidak ditemukan.");
+            Color color = mat.HasProperty("_BaseColor") ? mat.GetColor("_BaseColor") : mat.HasProperty("_Color") ? mat.GetColor("_Color") : Color.green;
+            mat.shader = shader;
+            string n = mat.name.ToLowerInvariant();
+            mat.SetColor("_BaseColor", color);
+            mat.SetColor("_EmissionColor", Color.black);
+            mat.SetTexture("_NoiseMap", TextureNamed("TEX_Noise_Macro"));
+            mat.SetFloat("_Smoothness", 0.88f);
+            mat.SetFloat("_Wrap", 0.5f);
+            mat.SetFloat("_Subsurface", n.Contains("tank") ? 0.22f : 0.3f);
+            mat.SetFloat("_RimStrength", 0.45f);
+            mat.SetFloat("_RimPower", 3.2f);
+            mat.SetFloat("_CoreDarken", n.Contains("tank") ? 0.7f : 0.6f);
+            mat.SetFloat("_GlowStrength", n.Contains("king") ? 0.12f : 0.08f);
+            mat.SetFloat("_NoiseScale", n.Contains("king") ? 0.9f : 1.6f);
+            if (n.Contains("king"))
+            {
+                // Squishy glitter dumpling boss: glossier, more see-through core, glitter flecks.
+                mat.SetFloat("_Smoothness", 0.95f);
+                mat.SetFloat("_Subsurface", 0.5f);
+                mat.SetFloat("_CoreDarken", 0.22f);
+                mat.SetFloat("_Wrap", 0.65f);
+                mat.SetFloat("_RimStrength", 0.6f);
+                mat.SetFloat("_Glitter", 1f);
+                mat.SetFloat("_GlitterScale", 22f);
+            }
+            else
+            {
+                mat.SetFloat("_Glitter", 0f);
+            }
+            mat.SetFloat("_Rainbow", 0f);
+            mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.EmissiveIsBlack;
+            mat.enableInstancing = true;
+            EditorUtility.SetDirty(mat);
+        }
+
+        static void SetKeyword(Material mat, string keyword, bool on)
+        {
+            if (on)
+                mat.EnableKeyword(keyword);
+            else
+                mat.DisableKeyword(keyword);
         }
 
         static void SharedMaterials()
@@ -623,21 +938,27 @@ namespace SlimeBreaker.EditorTools
             var shader = Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default");
             additiveParticleMaterial = AdditiveMaterial("Assets/Art/VFX/Materials/MAT_Particle_Additive.mat", shader, true);
             trailMaterial = AdditiveMaterial("Assets/Art/VFX/Materials/MAT_Trail_Additive.mat", shader, false);
-            forestGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Forest.mat", "TEX_Forest_Ground", "TEX_Forest_Ground_Normal");
-            snowGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Snow.mat", "TEX_Snow_Ground", "TEX_Snow_Ground_Normal");
-            sandGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Sand.mat", "TEX_Sand_Ground", "TEX_Sand_Ground_Normal");
-            thunderGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Thunder.mat", "TEX_Thunder_Ground", "TEX_Thunder_Ground_Normal");
-            swampGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Swamp.mat", "TEX_Swamp_Ground", "TEX_Swamp_Ground_Normal");
-            shadowGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Shadow.mat", "TEX_Shadow_Ground", "TEX_Shadow_Ground_Normal");
-            volcanoGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Volcano.mat", "TEX_Volcano_Ground", "TEX_Volcano_Ground_Normal");
-            stormGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Storm.mat", "TEX_Storm_Ground", "TEX_Storm_Ground_Normal");
-            crystalGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Crystal.mat", "TEX_Crystal_Ground", "TEX_Crystal_Ground_Normal");
-            royalGroundMaterial = GroundMaterial("Assets/Art/Environment/Materials/MAT_Ground_Royal.mat", "TEX_Royal_Ground", "TEX_Royal_Ground_Normal");
+            var lavaGlow = new Color(1.6f, 0.62f, 0.18f);
+            forestGroundMaterial = GroundMaterial("MAT_Ground_Forest", "TEX_Forest_Ground", 6f, 1.0f, 0.95f);
+            snowGroundMaterial = GroundMaterial("MAT_Ground_Snow", "TEX_Snow_Ground", 6f, 0.8f, 1.0f);
+            sandGroundMaterial = GroundMaterial("MAT_Ground_Sand", "TEX_Sand_Ground", 6f, 1.0f, 1.0f);
+            thunderGroundMaterial = GroundMaterial("MAT_Ground_Thunder", "TEX_Thunder_Ground", 5f, 1.0f, 1.0f);
+            swampGroundMaterial = GroundMaterial("MAT_Ground_Swamp", "TEX_Swamp_Ground", 5f, 1.0f, 1.0f);
+            shadowGroundMaterial = GroundMaterial("MAT_Ground_Shadow", "TEX_Shadow_Ground", 5f, 1.0f, 1.0f, new Color(1.4f, 0.9f, 2.2f), 0.5f);
+            volcanoGroundMaterial = GroundMaterial("MAT_Ground_Volcano", "TEX_Volcano_Ground", 5f, 1.0f, 1.0f, lavaGlow, 0.35f);
+            stormGroundMaterial = GroundMaterial("MAT_Ground_Storm", "TEX_Storm_Ground", 5f, 1.0f, 1.0f);
+            crystalGroundMaterial = GroundMaterial("MAT_Ground_Crystal", "TEX_Crystal_Ground", 5f, 1.0f, 1.0f, new Color(1.1f, 0.8f, 1.8f), 0.4f);
+            royalGroundMaterial = GroundMaterial("MAT_Ground_Royal", "TEX_Royal_Ground", 5f, 1.0f, 1.0f);
         }
 
-        static Material GroundMaterial(string path, string albedoName, string normalName)
+        /// <summary>Arena floor on SlimeBreaker/Ground: albedo(+height), normal, mask, macro noise, optional pulsing emission.</summary>
+        static Material GroundMaterial(string name, string baseName, float tileMeters, float bumpScale, float smoothScale,
+            Color emission = default, float pulse = 0f)
         {
-            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            string path = "Assets/Art/Environment/Materials/" + name + ".mat";
+            var shader = Shader.Find("SlimeBreaker/Ground");
+            if (shader == null)
+                throw new InvalidOperationException("Shader SlimeBreaker/Ground tidak ditemukan (Assets/Shaders/SBGround.shader).");
             var material = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (material == null)
             {
@@ -645,18 +966,35 @@ namespace SlimeBreaker.EditorTools
                 AssetDatabase.CreateAsset(material, path);
             }
             material.shader = shader;
-            var albedo = TextureNamed(albedoName);
-            if (albedo != null)
-                material.SetTexture("_BaseMap", albedo);
+            material.SetTexture("_BaseMap", TextureNamed(baseName));
+            material.SetTexture("_BumpMap", TextureNamed(baseName + "_Normal"));
+            material.SetTexture("_MaskMap", TextureNamed(baseName + "_Mask"));
+            material.SetTexture("_MacroMap", TextureNamed("TEX_Noise_Macro"));
             material.SetColor("_BaseColor", Color.white);
-            material.SetFloat("_Smoothness", 0.12f);
-            material.SetFloat("_Metallic", 0f);
-            var normal = TextureNamed(normalName);
-            if (normal != null)
+            material.SetFloat("_TileMeters", tileMeters);
+            material.SetFloat("_BumpScale", bumpScale);
+            material.SetFloat("_SmoothnessScale", smoothScale);
+            material.SetFloat("_OcclusionStrength", 1f);
+            material.SetFloat("_MacroStrength", 0.2f);
+            material.SetFloat("_AntiTile", 1f);
+            var emit = TextureNamed(baseName + "_Emit");
+            if (emit != null && emission.maxColorComponent > 0f)
             {
-                material.EnableKeyword("_NORMALMAP");
-                material.SetTexture("_BumpMap", normal);
-                material.SetFloat("_BumpScale", 0.9f);
+                material.SetTexture("_EmissionMap", emit);
+                material.SetColor("_EmissionColor", emission);
+                material.SetFloat("_EmissionPulse", pulse);
+                material.EnableKeyword("_EMISSION");
+                material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            }
+            else
+            {
+                material.DisableKeyword("_EMISSION");
+                material.SetColor("_EmissionColor", Color.black);
+            }
+            foreach (var texture in new[] { baseName, baseName + "_Normal", baseName + "_Mask", "TEX_Noise_Macro" })
+            {
+                if (TextureNamed(texture) == null)
+                    Debug.LogWarning("Tekstur tanah hilang: " + texture);
             }
             EditorUtility.SetDirty(material);
             return material;
@@ -705,15 +1043,17 @@ namespace SlimeBreaker.EditorTools
             var mobile = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/Mobile_RPAsset.asset");
             var pc = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/PC_RPAsset.asset");
             // Default project quality stays High so a missing GraphicsService still looks sharp.
-            WriteUrp(mobile, 1f, 4, false, 40f, 4096, 2, true, 3, 1);
+            WriteUrp(mobile, 1f, 2, true, 32f, 2048, 2, true, 2, 1);
             WriteUrp(pc, 1f, 4, true, 48f, 4096, 2, true, 3, 1);
 
             graphicsPresets = new RenderPipelineAsset[3];
             if (mobile == null)
                 return;
             graphicsPresets[0] = MakeUrpPreset("Assets/Settings/URP_Low.asset", mobile, 0.8f, 1, false, 16f, 1024, 1, false, 1, 0);
-            graphicsPresets[1] = MakeUrpPreset("Assets/Settings/URP_Medium.asset", mobile, 1f, 2, false, 28f, 2048, 1, true, 2, 1);
-            graphicsPresets[2] = MakeUrpPreset("Assets/Settings/URP_High.asset", mobile, 1f, 4, false, 40f, 4096, 2, true, 3, 1);
+            // Mobile GPUs are fill-rate bound: MSAA 2x + 2048 shadows + medium PCF look the same at phone DPI but cost far less.
+            // Adaptive resolution (FSR upscale) then keeps 60 fps when a scene gets heavy.
+            graphicsPresets[1] = MakeUrpPreset("Assets/Settings/URP_Medium.asset", mobile, 1f, 2, true, 24f, 1024, 1, true, 1, 1);
+            graphicsPresets[2] = MakeUrpPreset("Assets/Settings/URP_High.asset", mobile, 1f, 2, true, 32f, 2048, 2, true, 2, 1);
         }
 
         static UniversalRenderPipelineAsset MakeUrpPreset(string path, UniversalRenderPipelineAsset source, float scale, int msaa, bool hdr, float shadowDistance, int shadowMap, int cascades, bool soft, int softQuality, int additionalLights)
@@ -745,6 +1085,11 @@ namespace SlimeBreaker.EditorTools
             Set(so, "m_AnyShadowsSupported", true);
             Set(so, "m_RequireDepthTexture", false);
             Set(so, "m_RequireOpaqueTexture", false);
+            // FSR 1 upscaling is used whenever AdaptiveResolution lowers the render scale; 32-bit HDR (R11G11B10) halves bandwidth.
+            Set(so, "m_UpscalingFilter", 3);
+            Set(so, "m_FsrOverrideSharpness", true);
+            Set(so, "m_FsrSharpness", 0.85f);
+            Set(so, "m_HDRColorBufferPrecision", 0);
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
         }
@@ -1227,26 +1572,51 @@ namespace SlimeBreaker.EditorTools
                 }
                 else if (path.Contains("Boulder"))
                     visual.transform.localScale = parts[i].transform.localScale * 1.35f;
+                else if (path.Contains("OBS_Tree"))
+                    // In-arena trees stay young (~3 m) so the canopy never hides the hero from the high camera.
+                    visual.transform.localScale = parts[i].transform.localScale * 0.72f;
             }
 
+            // Colliders hug the visible shape (an invisible, wider collider reads as "something is blocking me").
+            Bounds solid = default;
+            bool firstRenderer = true;
+            foreach (var renderer in root.GetComponentsInChildren<Renderer>())
+            {
+                if (renderer is ParticleSystemRenderer)
+                    continue;
+                if (firstRenderer)
+                {
+                    solid = renderer.bounds;
+                    firstRenderer = false;
+                }
+                else
+                {
+                    solid.Encapsulate(renderer.bounds);
+                }
+            }
+            float half = Mathf.Max(solid.extents.x, solid.extents.z);
+            float height = Mathf.Max(0.6f, solid.max.y);
             if (kind == Obstacle.Kind.Tree)
             {
+                // Trunk only: the canopy stays walkable-under visually, the trunk is what stops you.
                 var capsule = root.AddComponent<CapsuleCollider>();
-                capsule.center = new Vector3(0f, 1.15f, 0f);
-                capsule.radius = 0.62f;
-                capsule.height = 2.4f;
+                capsule.radius = path.Contains("OBS_Tree") ? 0.42f : Mathf.Clamp(half * 0.7f, 0.35f, 0.7f);
+                capsule.height = Mathf.Min(height, 2.6f);
+                capsule.center = new Vector3(0f, capsule.height * 0.5f, 0f);
             }
             else if (kind == Obstacle.Kind.Ruin)
             {
                 var box = root.AddComponent<BoxCollider>();
-                box.center = new Vector3(0f, 0.9f, 0f);
-                box.size = new Vector3(0.95f, 1.85f, 0.95f);
+                float width = Mathf.Clamp(solid.extents.x * 2f * 0.85f, 0.45f, 1.4f);
+                float depth = Mathf.Clamp(solid.extents.z * 2f * 0.85f, 0.45f, 1.4f);
+                box.size = new Vector3(width, height, depth);
+                box.center = new Vector3(0f, height * 0.5f, 0f);
             }
             else
             {
                 var sphere = root.AddComponent<SphereCollider>();
-                sphere.center = new Vector3(0f, 0.55f, 0f);
-                sphere.radius = path.Contains("Boulder") ? 1.05f : 0.92f;
+                sphere.radius = Mathf.Clamp(half * 0.85f, 0.38f, 1.3f);
+                sphere.center = new Vector3(0f, Mathf.Clamp(solid.size.y * 0.5f, 0.3f, 0.6f), 0f);
             }
 
             var marker = root.AddComponent<Obstacle>();
@@ -1263,7 +1633,8 @@ namespace SlimeBreaker.EditorTools
                 SetLayerRecursive(root.GetChild(i), layer);
         }
 
-        static GameObject WeatherPrefab(string path, Color color, int count, float speed, float size, float gravity, ParticleSystemShapeType shapeType, float shapeSize, string ambience, bool streaks)
+        static GameObject WeatherPrefab(string path, Color color, int count, float speed, float size, float gravity, ParticleSystemShapeType shapeType, float shapeSize, string ambience, bool streaks,
+            Material material = null, bool turbulence = false, Material splashMaterial = null, float height = 10f)
         {
             var root = new GameObject(Path.GetFileNameWithoutExtension(path));
             var particles = root.AddComponent<ParticleSystem>();
@@ -1272,7 +1643,7 @@ namespace SlimeBreaker.EditorTools
             main.playOnAwake = true;
             main.startLifetime = streaks ? 0.7f : 2.4f;
             main.startSpeed = speed;
-            main.startSize = size;
+            main.startSize = new ParticleSystem.MinMaxCurve(size * 0.6f, size * 1.4f);
             main.startColor = color;
             main.maxParticles = count * 3;
             main.gravityModifier = gravity;
@@ -1285,19 +1656,138 @@ namespace SlimeBreaker.EditorTools
                 shape.scale = new Vector3(shapeSize, 1.2f, shapeSize);
             else
                 shape.radius = shapeSize;
+            if (turbulence)
+            {
+                // Wind drift: flakes, ash and dust wander instead of falling on rails.
+                var noise = particles.noise;
+                noise.enabled = true;
+                noise.strength = 0.7f;
+                noise.frequency = 0.35f;
+                noise.scrollSpeed = 0.25f;
+                noise.quality = ParticleSystemNoiseQuality.Low;
+            }
             var renderer = root.GetComponent<ParticleSystemRenderer>();
-            renderer.sharedMaterial = additiveParticleMaterial;
+            renderer.sharedMaterial = material != null ? material : additiveParticleMaterial;
             renderer.shadowCastingMode = ShadowCastingMode.Off;
+            // Never let a flake or firefly that drifts past the lens fill the screen (it read as a white flash + bloom).
+            renderer.maxParticleSize = 0.02f;
             renderer.renderMode = streaks ? ParticleSystemRenderMode.Stretch : ParticleSystemRenderMode.Billboard;
             if (streaks)
             {
-                renderer.lengthScale = 2.4f;
-                renderer.velocityScale = 0.12f;
+                renderer.lengthScale = 3.2f;
+                renderer.velocityScale = 0.06f;
             }
+            if (splashMaterial != null)
+                AddRainSplashes(root.transform, splashMaterial, count);
             var rig = root.AddComponent<WeatherRig>();
-            rig.height = 10f;
+            rig.height = height;
             rig.ambienceId = ambience;
             return SavePrefab(root, path);
+        }
+
+        /// <summary>Little expanding rings on the ground under the rain (child of the rain rig, which floats at 10 m).</summary>
+        static void AddRainSplashes(Transform rig, Material material, int rainRate)
+        {
+            var go = new GameObject("Splashes");
+            go.transform.SetParent(rig, false);
+            go.transform.localPosition = new Vector3(0f, -9.97f, 0f);
+            var particles = go.AddComponent<ParticleSystem>();
+            var main = particles.main;
+            main.loop = true;
+            main.playOnAwake = true;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.4f);
+            main.startSpeed = 0f;
+            main.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.16f);
+            main.startColor = new Color(0.82f, 0.88f, 1f, 0.45f);
+            main.startRotation3D = true;
+            main.startRotationX = Mathf.PI * 0.5f;
+            main.maxParticles = rainRate;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            var emission = particles.emission;
+            emission.rateOverTime = rainRate * 0.45f;
+            var shape = particles.shape;
+            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.scale = new Vector3(18f, 0.01f, 18f);
+            var size = particles.sizeOverLifetime;
+            size.enabled = true;
+            size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 0.4f, 1f, 3.2f));
+            var fade = particles.colorOverLifetime;
+            fade.enabled = true;
+            var gradient = new Gradient();
+            gradient.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0f, 1f) });
+            fade.color = gradient;
+            var renderer = go.GetComponent<ParticleSystemRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.alignment = ParticleSystemRenderSpace.World;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+        }
+
+        /// <summary>Low ground mist: a few large, very faint puffs drifting around the hero (tinted to the fog at runtime).</summary>
+        static GameObject MistPrefab(string path, Material material)
+        {
+            var root = new GameObject(Path.GetFileNameWithoutExtension(path));
+            var particles = root.AddComponent<ParticleSystem>();
+            var main = particles.main;
+            main.loop = true;
+            main.playOnAwake = true;
+            main.prewarm = true;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(7f, 10f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.05f, 0.2f);
+            main.startSize = new ParticleSystem.MinMaxCurve(5f, 9f);
+            main.startColor = new Color(0.8f, 0.85f, 0.9f, 0.09f);
+            main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+            main.maxParticles = 70;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            var emission = particles.emission;
+            emission.rateOverTime = 7f;
+            var shape = particles.shape;
+            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.scale = new Vector3(28f, 0.4f, 28f);
+            var fade = particles.colorOverLifetime;
+            fade.enabled = true;
+            var gradient = new Gradient();
+            gradient.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.3f), new GradientAlphaKey(1f, 0.7f), new GradientAlphaKey(0f, 1f) });
+            fade.color = gradient;
+            var renderer = root.GetComponent<ParticleSystemRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.sortingFudge = -10f;
+            var rig = root.AddComponent<WeatherRig>();
+            rig.height = 0.7f;
+            return SavePrefab(root, path);
+        }
+
+        /// <summary>URP particle material with a sprite: additive (rain, glows) or alpha-blended (snow, rings, mist).</summary>
+        static Material ParticleMaterial(string path, string textureName, bool additive)
+        {
+            var shader = Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Universal Render Pipeline/Unlit");
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                material = new Material(shader);
+                AssetDatabase.CreateAsset(material, path);
+            }
+            material.shader = shader;
+            material.SetFloat("_Surface", 1f);
+            material.SetFloat("_Blend", additive ? 2f : 0f);
+            material.SetInt("_SrcBlend", (int)(additive ? BlendMode.One : BlendMode.SrcAlpha));
+            material.SetInt("_DstBlend", (int)(additive ? BlendMode.One : BlendMode.OneMinusSrcAlpha));
+            material.SetInt("_ZWrite", 0);
+            material.SetInt("_Cull", (int)CullMode.Off);
+            material.SetColor("_BaseColor", Color.white);
+            material.SetTexture("_BaseMap", TextureNamed(textureName));
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.renderQueue = (int)RenderQueue.Transparent;
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.DisableKeyword("_ALPHATEST_ON");
+            if (TextureNamed(textureName) == null)
+                Debug.LogWarning("Sprite partikel hilang: " + textureName);
+            EditorUtility.SetDirty(material);
+            return material;
         }
 
         static GameObject PortalPrefab(string path, GameObject runePrefab)
@@ -1429,6 +1919,43 @@ namespace SlimeBreaker.EditorTools
             var pickup = root.AddComponent<PowerUpPickup>();
             pickup.crystal = crystal.transform;
             pickup.beam = beam.transform;
+            return SavePrefab(root, path);
+        }
+
+        /// <summary>Equipment drop: small spinning gem + rarity beam + the item icon floating above (billboard).</summary>
+        static GameObject ItemPickupPrefab(string path)
+        {
+            var root = new GameObject(Path.GetFileNameWithoutExtension(path));
+            var gem = (GameObject)PrefabUtility.InstantiatePrefab(LoadModel("Assets/Art/VFX/VFX_PowerUp_Crystal.fbx"));
+            gem.name = "Gem";
+            gem.transform.SetParent(root.transform, false);
+            gem.transform.localPosition = new Vector3(0f, 0.55f, 0f);
+            gem.transform.localScale = Vector3.one * 0.75f;
+            foreach (var r in gem.GetComponentsInChildren<Renderer>())
+                r.shadowCastingMode = ShadowCastingMode.Off;
+
+            var beam = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            beam.name = "Beam";
+            UnityEngine.Object.DestroyImmediate(beam.GetComponent<Collider>());
+            beam.transform.SetParent(root.transform, false);
+            beam.transform.localPosition = new Vector3(0f, 1f, 0f);
+            beam.transform.localScale = new Vector3(0.16f, 1f, 0.16f);
+            var beamRenderer = beam.GetComponent<MeshRenderer>();
+            beamRenderer.sharedMaterial = TranslucentMaterial("Assets/Art/VFX/Materials/MAT_Item_Beam.mat", new Color(1f, 1f, 1f, 0.16f));
+            beamRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            beamRenderer.receiveShadows = false;
+
+            var iconObject = new GameObject("Icon");
+            iconObject.transform.SetParent(root.transform, false);
+            iconObject.transform.localPosition = new Vector3(0f, 1.35f, 0f);
+            iconObject.transform.localScale = Vector3.one * 0.32f;
+            var icon = iconObject.AddComponent<SpriteRenderer>();
+            icon.sortingOrder = 5;
+
+            var pickup = root.AddComponent<ItemPickup>();
+            pickup.gem = gem.transform;
+            pickup.beam = beam.transform;
+            pickup.icon = icon;
             return SavePrefab(root, path);
         }
 
@@ -1605,6 +2132,24 @@ namespace SlimeBreaker.EditorTools
                 bool small = path.Contains("Grass") || path.Contains("Flower") || path.Contains("Mushroom") || path.Contains("RuneRing");
                 foreach (var renderer in instance.GetComponentsInChildren<Renderer>())
                     renderer.shadowCastingMode = small ? ShadowCastingMode.Off : ShadowCastingMode.On;
+                // Yaw-free size for runtime collider fitting (measured here, in the prefab's own unrotated pose).
+                Bounds shape = default;
+                bool firstShape = true;
+                foreach (var renderer in instance.GetComponentsInChildren<Renderer>())
+                {
+                    if (renderer is ParticleSystemRenderer)
+                        continue;
+                    if (firstShape) { shape = renderer.bounds; firstShape = false; }
+                    else shape.Encapsulate(renderer.bounds);
+                }
+                if (!firstShape)
+                {
+                    var propShape = instance.AddComponent<PropShape>();
+                    propShape.halfWidth = Mathf.Max(shape.extents.x, shape.extents.z);
+                    propShape.halfX = shape.extents.x;
+                    propShape.halfZ = shape.extents.z;
+                    propShape.height = shape.max.y;
+                }
                 return SavePrefab(instance, path);
             }
 
@@ -1650,7 +2195,8 @@ namespace SlimeBreaker.EditorTools
             EditorSceneManager.SaveScene(scene, "Assets/Scenes/Boot.unity");
         }
 
-        static void BuildMenu(GameObject hero, RuntimeAnimatorController heroController, Dictionary<string, GameObject> env)
+        static void BuildMenu(GameObject hero, RuntimeAnimatorController heroController, RuntimeAnimatorController bossController, Dictionary<string, GameObject> env,
+            GameObject rain, GameObject snowWx, GameObject fireflies, GameObject dust, GameObject ash, GameObject spores, GameObject sparks, GameObject mist)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var camera = MakeCamera("Camera", new Color(0.09f, 0.12f, 0.2f));
@@ -1673,10 +2219,15 @@ namespace SlimeBreaker.EditorTools
 
             // Showcase: ground, rune ring and the idle sorceress to the right of the menu.
             var ground = (GameObject)PrefabUtility.InstantiatePrefab(env["ground"]);
+            foreach (var groundRenderer in ground.GetComponentsInChildren<Renderer>())
+                groundRenderer.sharedMaterial = forestGroundMaterial;
             ground.transform.position = Vector3.zero;
-            var rune = (GameObject)PrefabUtility.InstantiatePrefab(env["RuneRing"]);
-            rune.transform.position = new Vector3(1.55f, 0.012f, 0f);
-            rune.transform.localScale = Vector3.one * 0.55f;
+            var menuVisual = ground.transform.Find("Visual");
+            if (menuVisual != null)
+                menuVisual.localScale = new Vector3(1.6f, 1f, 1.6f);
+            var menuWall = (GameObject)PrefabUtility.InstantiatePrefab(env["SteamerWall"]);
+            menuWall.transform.position = new Vector3(0f, 0f, -9f);
+            MarkStatic(menuWall);
             var showcase = new GameObject("HeroShowcase");
             showcase.transform.position = new Vector3(1.55f, 0f, 0f);
             showcase.transform.rotation = Quaternion.Euler(0f, 195f, 0f);
@@ -1687,16 +2238,44 @@ namespace SlimeBreaker.EditorTools
                 animator = model.AddComponent<Animator>();
             animator.runtimeAnimatorController = heroController;
             animator.applyRootMotion = false;
+            // History: one dumpling per stage boss beaten (shown by MenuTrophies), in two arcs behind the hero.
+            var trophyRoot = new GameObject("BossTrophies").AddComponent<MenuTrophies>();
+            trophyRoot.trophies = new GameObject[10];
+            float[] trophyAngles = { 0f, -26f, 26f, -52f, 52f, -13f, 13f, -39f, 39f, 65f };
+            for (int t = 0; t < 10; t++)
+            {
+                var trophy = (GameObject)PrefabUtility.InstantiatePrefab(LoadModel("Assets/Art/Enemies/SlimeKing/BOSS_SlimeKing.fbx"));
+                trophy.name = "Trophy" + (t + 1) * 10;
+                trophy.transform.localScale = Vector3.one * 0.4f;
+                float radius = t < 5 ? 2.2f : 3.6f;
+                float angle = trophyAngles[t] * Mathf.Deg2Rad;
+                trophy.transform.position = new Vector3(1.9f + Mathf.Sin(angle) * radius, 0f, Mathf.Cos(angle) * radius);
+                trophy.transform.rotation = Quaternion.Euler(0f, 180f - trophyAngles[t] * 0.4f, 0f);
+                var trophyAnimator = trophy.GetComponentInChildren<Animator>();
+                if (trophyAnimator == null)
+                    trophyAnimator = trophy.AddComponent<Animator>();
+                trophyAnimator.runtimeAnimatorController = bossController;
+                trophyAnimator.applyRootMotion = false;
+                trophy.SetActive(false);
+                trophyRoot.trophies[t] = trophy;
+            }
             var rng = new System.Random(5);
-            Scatter(env["Grass"], 14, 0.8f, 3.2f, rng, new Vector3(1.55f, 0f, 0f));
-            Scatter(env["Flower"], 5, 1f, 3f, rng, new Vector3(1.55f, 0f, 0f));
-            Scatter(env["Tree_A"], 5, 6f, 11f, rng, new Vector3(1.55f, 0f, 2f));
-            Scatter(env["Tree_B"], 4, 6f, 12f, rng, new Vector3(1.55f, 0f, 2f));
-            Scatter(env["Bush"], 4, 3.5f, 6f, rng, new Vector3(1.55f, 0f, 1.5f));
+            // The backdrop is the real arena generator: it shows the biome of the furthest floor reached.
+            var menuGenerator = new GameObject("MenuArena").AddComponent<ArenaGenerator>();
+            ConfigureGenerator(menuGenerator, env, null, ground.GetComponentInChildren<Renderer>(), sun, camera, rain, snowWx, fireflies, dust, ash, spores, sparks, mist);
+            menuGenerator.generateOnStart = false;
+            menuGenerator.placeObstacles = false;
+            menuGenerator.keepClearCenter = new Vector3(1.9f, 0f, 0.5f);
+            menuGenerator.keepClearRadius = 7f;
+            var menuArena = menuGenerator.gameObject.AddComponent<MenuArena>();
+            menuArena.generator = menuGenerator;
+            menuArena.showcase = showcase.transform;
 
             var audio = new GameObject("Audio").AddComponent<AudioService>();
             audio.music = Clip("Assets/Audio/Music/MUS_Menu.ogg");
-            audio.musicVolume = 0.4f;
+            audio.musicVolume = 0.5f;
+            audio.biomeAmbience = new[] { Clip("Assets/Audio/Ambience/AMB_Forest.ogg") };
+            audio.ambienceVolume = 0.35f;
             audio.entries = new[] { Sfx("ui", "SFX_UI", 0.7f, 0.03f) };
 
             EventSystem();
@@ -1714,40 +2293,50 @@ namespace SlimeBreaker.EditorTools
             title.fontStyle = FontStyle.Bold;
             Shade(title);
             AnchorBox(title.rectTransform, new Vector2(0f, 1f), new Vector2(84f, -58f), new Vector2(780f, 110f));
-            var subtitle = Text(menuCard.transform, "Subtitle", "Satu arena. 100 lantai. 10 slime boss.", 28, TextAnchor.MiddleLeft, font);
-            subtitle.color = TextDim;
-            AnchorBox(subtitle.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -164f), new Vector2(760f, 40f));
             var goldPill = Graphic(menuCard.transform, "GoldPill", pillSprite, new Color(1f, 0.78f, 0.3f, 0.18f));
-            AnchorBox(goldPill.rectTransform, new Vector2(0f, 1f), new Vector2(84f, -232f), new Vector2(360f, 56f));
+            AnchorBox(goldPill.rectTransform, new Vector2(0f, 1f), new Vector2(84f, -186f), new Vector2(360f, 56f));
             var gold = Text(goldPill.transform, "Gold", "Emas 0", 28, TextAnchor.MiddleCenter, font);
             gold.fontStyle = FontStyle.Bold;
             gold.color = new Color(1f, 0.85f, 0.45f);
             Stretch(gold.rectTransform);
             var bestPill = Graphic(menuCard.transform, "BestPill", pillSprite, new Color(1f, 1f, 1f, 0.08f));
-            AnchorBox(bestPill.rectTransform, new Vector2(0f, 1f), new Vector2(460f, -232f), new Vector2(360f, 56f));
+            AnchorBox(bestPill.rectTransform, new Vector2(0f, 1f), new Vector2(460f, -186f), new Vector2(360f, 56f));
             var best = Text(bestPill.transform, "Best", "Rekor 00:00", 26, TextAnchor.MiddleCenter, font);
             best.fontStyle = FontStyle.Bold;
             Stretch(best.rectTransform);
-            var play = Button(menuCard.transform, "Play", "Main", font, Color.white, goldSprite);
-            play.GetComponentInChildren<Text>().fontSize = 42;
-            AnchorBox((RectTransform)play.transform, new Vector2(0f, 1f), new Vector2(84f, -322f), new Vector2(736f, 112f));
+            // Continue sits above Play; MainMenuController moves Play up when there is no run to continue.
             var cont = Button(menuCard.transform, "Continue", "Lanjutkan", font, Color.white, ghostSprite);
-            AnchorBox((RectTransform)cont.transform, new Vector2(0f, 1f), new Vector2(84f, -452f), new Vector2(736f, 92f));
-            var upgradesLabel = Text(menuCard.transform, "UpgradesLabel", "PENINGKATAN PERMANEN", 20, TextAnchor.MiddleLeft, font);
+            AnchorBox((RectTransform)cont.transform, new Vector2(0f, 1f), new Vector2(84f, -270f), new Vector2(736f, 92f));
+            // Everything from Play down lives in Body so it can slide up when there is no Continue button.
+            var body = new GameObject("Body", typeof(RectTransform)).GetComponent<RectTransform>();
+            body.SetParent(menuCard.transform, false);
+            AnchorBox(body, new Vector2(0f, 1f), Vector2.zero, new Vector2(900f, 900f));
+            var play = Button(body, "Play", "Main", font, Color.white, goldSprite);
+            play.GetComponentInChildren<Text>().fontSize = 42;
+            AnchorBox((RectTransform)play.transform, new Vector2(0f, 1f), new Vector2(84f, -374f), new Vector2(736f, 112f));
+            // Difficulty selector for the next new run (Easy / Normal / Hard) with a one-line summary.
+            var difficultyLabel = Text(body, "DifficultyLabel", "KESULITAN", 20, TextAnchor.MiddleLeft, font);
+            difficultyLabel.fontStyle = FontStyle.Bold;
+            difficultyLabel.color = TextDim;
+            AnchorBox(difficultyLabel.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -518f), new Vector2(200f, 30f));
+            var difficultyDropdown = BuildDropdown(body, "DifficultyDropdown", new[] { "Easy", "Normal", "Hard" }, font);
+            AnchorBox((RectTransform)difficultyDropdown.transform, new Vector2(0f, 1f), new Vector2(84f, -548f), new Vector2(736f, 84f));
+            difficultyDropdown.SetValueWithoutNotify((int)DifficultyLevel.Normal);
+            var upgradesLabel = Text(body, "UpgradesLabel", "PENINGKATAN PERMANEN", 20, TextAnchor.MiddleLeft, font);
             upgradesLabel.fontStyle = FontStyle.Bold;
             upgradesLabel.color = TextDim;
-            AnchorBox(upgradesLabel.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -580f), new Vector2(736f, 30f));
-            var damage = Button(menuCard.transform, "Damage", "Damage", font, Color.white, ghostSprite);
-            AnchorBox((RectTransform)damage.transform, new Vector2(0f, 1f), new Vector2(84f, -624f), new Vector2(236f, 120f));
-            var health = Button(menuCard.transform, "Health", "Nyawa", font, Color.white, ghostSprite);
-            AnchorBox((RectTransform)health.transform, new Vector2(0f, 1f), new Vector2(334f, -624f), new Vector2(236f, 120f));
-            var speed = Button(menuCard.transform, "Speed", "Laju", font, Color.white, ghostSprite);
-            AnchorBox((RectTransform)speed.transform, new Vector2(0f, 1f), new Vector2(584f, -624f), new Vector2(236f, 120f));
+            AnchorBox(upgradesLabel.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -664f), new Vector2(736f, 30f));
+            var damage = Button(body, "Damage", "Damage", font, Color.white, ghostSprite);
+            AnchorBox((RectTransform)damage.transform, new Vector2(0f, 1f), new Vector2(84f, -702f), new Vector2(236f, 120f));
+            var health = Button(body, "Health", "Nyawa", font, Color.white, ghostSprite);
+            AnchorBox((RectTransform)health.transform, new Vector2(0f, 1f), new Vector2(334f, -702f), new Vector2(236f, 120f));
+            var speed = Button(body, "Speed", "Laju", font, Color.white, ghostSprite);
+            AnchorBox((RectTransform)speed.transform, new Vector2(0f, 1f), new Vector2(584f, -702f), new Vector2(236f, 120f));
             foreach (var upgradeButton in new[] { damage, health, speed })
                 upgradeButton.GetComponentInChildren<Text>().fontSize = 26;
-            var version = Text(menuCard.transform, "Version", "v" + AppVersion, 18, TextAnchor.MiddleLeft, font);
+            var version = Text(body, "Version", "v" + AppVersion, 18, TextAnchor.MiddleLeft, font);
             version.color = new Color(1f, 1f, 1f, 0.35f);
-            AnchorBox(version.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -800f), new Vector2(300f, 28f));
+            AnchorBox(version.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -846f), new Vector2(300f, 28f));
             var settingsButton = Button(safe, "Settings", "", font, Color.white, circleGlassSprite);
             Place(settingsButton.gameObject, safe, new Vector2(0.955f, 0.925f), new Vector2(84f, 84f));
             var gearIcon = Graphic(settingsButton.transform, "Icon", gearSprite, Color.white);
@@ -1764,11 +2353,85 @@ namespace SlimeBreaker.EditorTools
             menu.continueButton = cont;
             menu.continueLabel = cont.GetComponentInChildren<Text>();
             menu.settings = settings;
+            menu.difficultyDropdown = difficultyDropdown;
+            menu.card = menuCard.rectTransform;
+            menu.body = body;
             AttachGraphics(new GameObject("Graphics"));
             UnityEventTools.AddPersistentListener(play.onClick, menu.Play);
             UnityEventTools.AddPersistentListener(cont.onClick, menu.Continue);
             UnityEventTools.AddPersistentListener(settingsButton.onClick, menu.OpenSettings);
             EditorSceneManager.SaveScene(scene, "Assets/Scenes/MainMenu.unity");
+        }
+
+        /// <summary>Wires every prop, ground material, weather rig and light a generator needs (arena and menu backdrop share it).</summary>
+        static void ConfigureGenerator(
+            ArenaGenerator generator,
+            Dictionary<string, GameObject> env,
+            GameObject[] obstaclePrefabs,
+            Renderer groundRenderer,
+            Light sun,
+            Camera camera,
+            GameObject rain,
+            GameObject snowWx,
+            GameObject fireflies,
+            GameObject dust,
+            GameObject ash,
+            GameObject spores,
+            GameObject sparks,
+            GameObject mist)
+        {
+            generator.props = new ArenaGenerator.PropSet
+            {
+                treeA = env["Tree_A"],
+                treeB = env["Tree_B"],
+                rockA = env["Rock_A"],
+                rockB = env["Rock_B"],
+                mushroom = env["Mushroom"],
+                bush = env["Bush"],
+                pillar = env["RuinPillar"],
+                grass = env["Grass"],
+                flower = env["Flower"],
+                boundaryStone = env["BoundaryStone"],
+                runeRing = env["RuneRing"],
+                cactus = env["Cactus"],
+                iceSpike = env["IceSpike"],
+                thunderSpire = env["ThunderSpire"],
+                swampRoot = env["SwampRoot"],
+                swampReed = env["SwampReed"],
+                shadowObelisk = env["ShadowObelisk"],
+                volcanoRock = env["VolcanoRock"],
+                volcanoPillar = env["VolcanoPillar"],
+                stormArch = env["StormArch"],
+                crystalSpire = env["CrystalSpire"],
+                royalColumn = env["RoyalColumn"]
+            };
+            generator.obstaclePrefabs = obstaclePrefabs;
+            generator.groundRenderer = groundRenderer;
+            generator.forestGround = forestGroundMaterial;
+            generator.coverMoss = TextureNamed("TEX_Cover_Moss");
+            generator.coverSnow = TextureNamed("TEX_Cover_Snow");
+            generator.coverSand = TextureNamed("TEX_Cover_Sand");
+            generator.coverAsh = TextureNamed("TEX_Cover_Ash");
+            generator.snowGround = snowGroundMaterial;
+            generator.sandGround = sandGroundMaterial;
+            generator.thunderGround = thunderGroundMaterial;
+            generator.swampGround = swampGroundMaterial;
+            generator.shadowGround = shadowGroundMaterial;
+            generator.volcanoGround = volcanoGroundMaterial;
+            generator.stormGround = stormGroundMaterial;
+            generator.crystalGround = crystalGroundMaterial;
+            generator.royalGround = royalGroundMaterial;
+            generator.rainRig = rain;
+            generator.snowRig = snowWx;
+            generator.mistRig = mist;
+            generator.firefliesRig = fireflies;
+            generator.dustRig = dust;
+            generator.ashRig = ash;
+            generator.sporesRig = spores;
+            generator.sparksRig = sparks;
+            generator.sun = sun;
+            generator.arenaCamera = camera;
+            generator.arenaRadius = RunRules.ArenaRadius;
         }
 
         static void BuildArena(
@@ -1795,11 +2458,22 @@ namespace SlimeBreaker.EditorTools
             GameObject dust,
             GameObject ash,
             GameObject spores,
-            GameObject sparks)
+            GameObject sparks,
+            GameObject mist)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var groundInstance = (GameObject)PrefabUtility.InstantiatePrefab(env["ground"]);
             groundInstance.transform.position = Vector3.zero;
+            foreach (var groundRenderer in groundInstance.GetComponentsInChildren<Renderer>())
+                groundRenderer.sharedMaterial = forestGroundMaterial;
+            // The steamer wall stands at r = 23 m: stretch the terrain so its edge (and the clear colour) never shows past the wall.
+            var groundVisual = groundInstance.transform.Find("Visual");
+            if (groundVisual != null)
+                groundVisual.localScale = new Vector3(1.6f, 1f, 1.6f);
+
+            var wallInstance = (GameObject)PrefabUtility.InstantiatePrefab(env["SteamerWall"]);
+            wallInstance.transform.position = Vector3.zero;
+            MarkStatic(wallInstance);
 
             var player = (GameObject)PrefabUtility.InstantiatePrefab(hero);
             player.transform.position = Vector3.zero;
@@ -1838,6 +2512,9 @@ namespace SlimeBreaker.EditorTools
             var generator = systems.AddComponent<ArenaGenerator>();
             var stage = systems.AddComponent<StageManager>();
             AttachGraphics(systems);
+            var inventory = systems.AddComponent<Inventory>();
+            inventory.pickupPrefab = itemPickupPrefab != null ? itemPickupPrefab.GetComponent<ItemPickup>() : null;
+            inventory.slotIcons = ItemIcons();
             flow.balance = balance;
             flow.run = run;
             flow.upgrades = upgradeManager;
@@ -1858,53 +2535,7 @@ namespace SlimeBreaker.EditorTools
             powerUps.skills = skills;
             powerUps.pickupPrefab = powerUpPrefab;
             powerUps.everyLevels = RunRules.PowerUpEvery;
-            generator.props = new ArenaGenerator.PropSet
-            {
-                treeA = env["Tree_A"],
-                treeB = env["Tree_B"],
-                rockA = env["Rock_A"],
-                rockB = env["Rock_B"],
-                mushroom = env["Mushroom"],
-                bush = env["Bush"],
-                pillar = env["RuinPillar"],
-                grass = env["Grass"],
-                flower = env["Flower"],
-                boundaryStone = env["BoundaryStone"],
-                runeRing = env["RuneRing"],
-                cactus = env["Cactus"],
-                iceSpike = env["IceSpike"],
-                thunderSpire = env["ThunderSpire"],
-                swampRoot = env["SwampRoot"],
-                swampReed = env["SwampReed"],
-                shadowObelisk = env["ShadowObelisk"],
-                volcanoRock = env["VolcanoRock"],
-                volcanoPillar = env["VolcanoPillar"],
-                stormArch = env["StormArch"],
-                crystalSpire = env["CrystalSpire"],
-                royalColumn = env["RoyalColumn"]
-            };
-            generator.obstaclePrefabs = obstaclePrefabs;
-            generator.groundRenderer = groundInstance.GetComponentInChildren<Renderer>();
-            generator.forestGround = forestGroundMaterial;
-            generator.snowGround = snowGroundMaterial;
-            generator.sandGround = sandGroundMaterial;
-            generator.thunderGround = thunderGroundMaterial;
-            generator.swampGround = swampGroundMaterial;
-            generator.shadowGround = shadowGroundMaterial;
-            generator.volcanoGround = volcanoGroundMaterial;
-            generator.stormGround = stormGroundMaterial;
-            generator.crystalGround = crystalGroundMaterial;
-            generator.royalGround = royalGroundMaterial;
-            generator.rainRig = rain;
-            generator.snowRig = snowWx;
-            generator.firefliesRig = fireflies;
-            generator.dustRig = dust;
-            generator.ashRig = ash;
-            generator.sporesRig = spores;
-            generator.sparksRig = sparks;
-            generator.sun = sun;
-            generator.arenaCamera = camera;
-            generator.arenaRadius = RunRules.ArenaRadius;
+            ConfigureGenerator(generator, env, obstaclePrefabs, groundInstance.GetComponentInChildren<Renderer>(), sun, camera, rain, snowWx, fireflies, dust, ash, spores, sparks, mist);
             generator.minObstacles = 10;
             generator.maxObstacles = 16;
             generator.generateOnStart = false;
@@ -1918,16 +2549,22 @@ namespace SlimeBreaker.EditorTools
             stage.minionPrefab = normal;
             stage.portalPrefab = portalPrefab;
             stage.cameraRig = follow;
-            audio.music = Clip("Assets/Audio/Music/MUS_Arena.ogg");
+            audio.music = Clip("Assets/Audio/Music/MUS_Forest.ogg");
+            audio.musicVolume = 0.5f;
+            audio.biomeMusic = BiomeClips("Music", "MUS_");
+            audio.bossMusic = Clip("Assets/Audio/Music/MUS_Boss.ogg");
+            audio.biomeAmbience = BiomeClips("Ambience", "AMB_");
+            audio.nightAmbience = Clip("Assets/Audio/Ambience/AMB_Night.ogg");
+            audio.ambienceVolume = 0.6f;
             audio.entries = new[]
             {
-                Sfx("hit", "SFX_Hit", 0.42f, 0.05f, 0.1f),
+                Sfx("hit", "SFX_Hit", 0.38f, 0.05f, 0.1f, 0.15f),
                 Sfx("bolthit", "SFX_BoltHit", 0.5f, 0.04f, 0.1f),
                 Sfx("cast", "SFX_Cast", 0.32f, 0.08f, 0.08f),
-                Sfx("enemydeath", "SFX_EnemyDeath", 0.55f, 0.06f, 0.12f),
+                Sfx("enemydeath", "SFX_EnemyDeath", 0.4f, 0.09f, 0.12f, 0.3f),
                 Sfx("playerhit", "SFX_PlayerHit", 0.85f, 0.1f),
                 Sfx("dash", "SFX_Dash", 0.7f, 0.08f),
-                Sfx("pickup", "SFX_Pickup", 0.4f, 0.03f, 0.14f),
+                Sfx("pickup", "SFX_Pickup", 0.2f, 0.08f, 0.05f, 0.4f),
                 Sfx("levelup", "SFX_LevelUp", 0.9f, 0.2f),
                 Sfx("powerupspawn", "SFX_PowerUpSpawn", 0.9f, 0.2f),
                 Sfx("powerup", "SFX_PowerUp", 0.95f, 0.2f),
@@ -1968,7 +2605,240 @@ namespace SlimeBreaker.EditorTools
             if (graphics == null)
                 graphics = host.AddComponent<GraphicsService>();
             graphics.presets = graphicsPresets;
+            if (host.GetComponent<AdaptiveResolution>() == null)
+                host.AddComponent<AdaptiveResolution>();
+            var postFx = host.GetComponent<PostFx>() ?? host.AddComponent<PostFx>();
+            postFx.menuCover = TextureNamed("TEX_Cover_Moss");
             return graphics;
+        }
+
+        /// <summary>HUD bag button + inventory screen (equipment column, 8×5 bag grid, detail strip).</summary>
+        static InventoryPanel BuildInventory(GameObject host, RectTransform safe, Font font)
+        {
+            var inv = host.AddComponent<InventoryPanel>();
+            var bag = Button(safe, "Bag", "", font, Color.white, circleGlassSprite);
+            Place(bag.gameObject, safe, new Vector2(0.905f, 0.925f), new Vector2(84f, 84f));
+            var bagIcon = Graphic(bag.transform, "Icon", AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Icons/ICON_Bag.png") ?? whiteSprite, Color.white);
+            bagIcon.preserveAspect = true;
+            bagIcon.raycastTarget = false;
+            Place(bagIcon.gameObject, bag.transform, new Vector2(0.5f, 0.5f), new Vector2(54f, 54f));
+            inv.openButton = bag;
+
+            var panel = Panel(safe, "Inventory", font, "Inventori");
+            var title = panel.transform.Find("Title");
+            if (title != null)
+                Place(title.gameObject, panel.transform, new Vector2(0.5f, 0.84f), new Vector2(1000f, 80f));
+            var accent = panel.transform.Find("TitleAccent");
+            if (accent != null)
+                Place(accent.gameObject, panel.transform, new Vector2(0.5f, 0.8f), new Vector2(96f, 8f));
+            var close = Button(panel.transform, "Close", "X", font, Color.white, dangerSprite);
+            Place(close.gameObject, panel.transform, new Vector2(0.835f, 0.845f), new Vector2(72f, 72f));
+            inv.closeButton = close;
+            inv.panel = panel;
+
+            // Equipment column.
+            var icons = ItemIcons();
+            int slots = ItemCatalog.SlotCount;
+            inv.slotButtons = new Button[slots];
+            inv.slotFrames = new Image[slots];
+            inv.slotIcons = new Image[slots];
+            inv.slotTexts = new Text[slots];
+            for (int i = 0; i < slots; i++)
+            {
+                var button = Button(panel.transform, "Slot_" + ItemIconNames[i], "", font, Color.white, ghostSprite);
+                Place(button.gameObject, panel.transform, new Vector2(0.27f, 0.72f - i * 0.1f), new Vector2(380f, 96f));
+                var frame = Graphic(button.transform, "Rarity", pillSprite, Color.white);
+                frame.raycastTarget = false;
+                Place(frame.gameObject, button.transform, new Vector2(0.14f, 0.5f), new Vector2(84f, 84f));
+                var icon = Graphic(button.transform, "Icon", icons[i] ?? whiteSprite, Color.white);
+                icon.preserveAspect = true;
+                icon.raycastTarget = false;
+                Place(icon.gameObject, button.transform, new Vector2(0.14f, 0.5f), new Vector2(70f, 70f));
+                var label = button.GetComponentInChildren<Text>();
+                label.alignment = TextAnchor.MiddleLeft;
+                label.fontSize = 24;
+                label.fontStyle = FontStyle.Normal;
+                var rect = label.rectTransform;
+                rect.anchorMin = new Vector2(0.28f, 0f);
+                rect.anchorMax = new Vector2(0.98f, 1f);
+                rect.offsetMin = Vector2.zero;
+                rect.offsetMax = Vector2.zero;
+                inv.slotButtons[i] = button;
+                inv.slotFrames[i] = frame;
+                inv.slotIcons[i] = icon;
+                inv.slotTexts[i] = label;
+            }
+            var totals = Text(panel.transform, "Totals", "", 24, TextAnchor.UpperCenter, font);
+            Place(totals.gameObject, panel.transform, new Vector2(0.27f, 0.17f), new Vector2(400f, 110f));
+            inv.totalsText = totals;
+
+            // Bag grid 8 × 5.
+            const int columns = 8;
+            const int rows = 5;
+            int cells = columns * rows;
+            inv.cellButtons = new Button[cells];
+            inv.cellFrames = new Image[cells];
+            inv.cellIcons = new Image[cells];
+            inv.cellMarks = new Text[cells];
+            for (int i = 0; i < cells; i++)
+            {
+                int col = i % columns;
+                int row = i / columns;
+                var cell = Button(panel.transform, "Cell" + i, "", font, Color.white, slotSprite);
+                Place(cell.gameObject, panel.transform, new Vector2(0.405f + col * 0.0505f, 0.72f - row * 0.088f), new Vector2(88f, 88f));
+                // Rarity wash inside the slot frame (green / blue / purple / orange).
+                var frame = Graphic(cell.transform, "Rarity", pillSprite, Color.white);
+                frame.raycastTarget = false;
+                Place(frame.gameObject, cell.transform, new Vector2(0.5f, 0.5f), new Vector2(78f, 78f));
+                frame.transform.SetSiblingIndex(0);
+                var icon = Graphic(cell.transform, "Icon", icons[0] ?? whiteSprite, Color.white);
+                icon.preserveAspect = true;
+                icon.raycastTarget = false;
+                Place(icon.gameObject, cell.transform, new Vector2(0.5f, 0.5f), new Vector2(66f, 66f));
+                var mark = cell.GetComponentInChildren<Text>();
+                mark.fontSize = 22;
+                mark.alignment = TextAnchor.UpperRight;
+                var markRect = mark.rectTransform;
+                markRect.offsetMin = new Vector2(4f, 4f);
+                markRect.offsetMax = new Vector2(-6f, -2f);
+                inv.cellButtons[i] = cell;
+                inv.cellFrames[i] = frame;
+                inv.cellIcons[i] = icon;
+                inv.cellMarks[i] = mark;
+            }
+            var capacity = Text(panel.transform, "Capacity", "0 / 40", 24, TextAnchor.MiddleRight, font);
+            Place(capacity.gameObject, panel.transform, new Vector2(0.73f, 0.775f), new Vector2(200f, 34f));
+            inv.capacityText = capacity;
+
+            // Detail strip under the grid.
+            var strip = Graphic(panel.transform, "Detail", pillSprite, new Color(1f, 1f, 1f, 0.07f));
+            Place(strip.gameObject, panel.transform, new Vector2(0.58f, 0.168f), new Vector2(790f, 124f));
+
+            // Sell row above the detail strip: mode toggle, rarity / level filter, auto select, sell.
+            float left = 0.58f * 1920f - 395f;
+            float[] widths = { 130f, 150f, 130f, 130f, 210f };
+            var sellButtons = new Button[5];
+            string[] sellNames = { "SellMode", "Rarity", "Level", "Auto", "Sell" };
+            string[] sellTexts = { "Mode jual", "Normal (1)", "Level: Semua", "Auto pilih", "Jual" };
+            Sprite[] sellSprites = { ghostSprite, ghostSprite, ghostSprite, buttonSprite, goldSprite };
+            float cursor = left;
+            for (int i = 0; i < 5; i++)
+            {
+                sellButtons[i] = Button(panel.transform, sellNames[i], sellTexts[i], font, Color.white, sellSprites[i]);
+                Place(sellButtons[i].gameObject, panel.transform, new Vector2((cursor + widths[i] * 0.5f) / 1920f, 0.272f), new Vector2(widths[i], 64f));
+                sellButtons[i].GetComponentInChildren<Text>().fontSize = 22;
+                cursor += widths[i] + 10f;
+            }
+            inv.sellModeButton = sellButtons[0];
+            inv.sellModeLabel = sellButtons[0].GetComponentInChildren<Text>();
+            inv.rarityButton = sellButtons[1];
+            inv.rarityLabel = sellButtons[1].GetComponentInChildren<Text>();
+            var chip = Graphic(sellButtons[1].transform, "Chip", pillSprite, Color.white);
+            chip.raycastTarget = false;
+            Place(chip.gameObject, sellButtons[1].transform, new Vector2(0.5f, 0.1f), new Vector2(110f, 6f));
+            inv.rarityChip = chip;
+            inv.levelButton = sellButtons[2];
+            inv.levelLabel = sellButtons[2].GetComponentInChildren<Text>();
+            inv.autoButton = sellButtons[3];
+            inv.sellButton = sellButtons[4];
+            inv.sellLabel = sellButtons[4].GetComponentInChildren<Text>();
+            var gold = Text(panel.transform, "Gold", "Emas 0", 24, TextAnchor.MiddleLeft, font);
+            gold.color = new Color(1f, 0.85f, 0.4f);
+            Place(gold.gameObject, panel.transform, new Vector2(0.45f, 0.775f), new Vector2(240f, 34f));
+            inv.goldText = gold;
+            var detailTitle = Text(strip.transform, "Title", "Pilih item", 28, TextAnchor.UpperLeft, font);
+            detailTitle.fontStyle = FontStyle.Bold;
+            Place(detailTitle.gameObject, strip.transform, new Vector2(0.33f, 0.72f), new Vector2(500f, 40f));
+            var detailBody = Text(strip.transform, "Body", "", 26, TextAnchor.UpperLeft, font);
+            Place(detailBody.gameObject, strip.transform, new Vector2(0.33f, 0.3f), new Vector2(500f, 70f));
+            var equip = Button(strip.transform, "Equip", "Pakai", font, Color.white, goldSprite);
+            Place(equip.gameObject, strip.transform, new Vector2(0.745f, 0.5f), new Vector2(150f, 80f));
+            var discard = Button(strip.transform, "Discard", "Buang", font, Color.white, dangerSprite);
+            Place(discard.gameObject, strip.transform, new Vector2(0.93f, 0.5f), new Vector2(110f, 80f));
+            inv.detailTitle = detailTitle;
+            inv.detailBody = detailBody;
+            inv.equipButton = equip;
+            inv.equipLabel = equip.GetComponentInChildren<Text>();
+            inv.discardButton = discard;
+            // The frame reaches lower so the sell row and detail strip sit inside it, and the content is centred in it
+            // (it was hugging the left edge with a wide empty margin on the right).
+            var frameRect = (RectTransform)panel.transform.Find("Frame");
+            frameRect.anchorMin = new Vector2(0.14f, 0.06f);
+            for (int c = 0; c < panel.transform.childCount; c++)
+            {
+                var child = (RectTransform)panel.transform.GetChild(c);
+                if (child.name == "Frame" || child.name == "Title" || child.name == "TitleAccent" || child.name == "Close")
+                    continue;
+                child.anchorMin += new Vector2(0.02f, 0f);
+                child.anchorMax += new Vector2(0.02f, 0f);
+            }
+            panel.SetActive(false);
+            return inv;
+        }
+
+        /// <summary>Glass dropdown (caption + arrow, popup list with a check on the chosen row).</summary>
+        static Dropdown BuildDropdown(Transform parent, string name, string[] options, Font font)
+        {
+            var face = Graphic(parent, name, ghostSprite, Color.white);
+            var dropdown = face.gameObject.AddComponent<Dropdown>();
+            dropdown.targetGraphic = face;
+            var caption = Text(face.transform, "Label", options[0], 32, TextAnchor.MiddleLeft, font);
+            caption.fontStyle = FontStyle.Bold;
+            Stretch(caption.rectTransform);
+            caption.rectTransform.offsetMin = new Vector2(30f, 4f);
+            caption.rectTransform.offsetMax = new Vector2(-90f, -4f);
+            var arrow = Graphic(face.transform, "Arrow", arrowSprite, Color.white);
+            arrow.raycastTarget = false;
+            Place(arrow.gameObject, face.transform, new Vector2(0.94f, 0.5f), new Vector2(40f, 40f));
+
+            const float itemHeight = 76f;
+            var template = Graphic(face.transform, "Template", cardSprite, Color.white);
+            var templateRect = template.rectTransform;
+            templateRect.anchorMin = new Vector2(0f, 0f);
+            templateRect.anchorMax = new Vector2(1f, 0f);
+            templateRect.pivot = new Vector2(0.5f, 1f);
+            templateRect.anchoredPosition = new Vector2(0f, -4f);
+            templateRect.sizeDelta = new Vector2(0f, itemHeight * options.Length + 16f);
+            var scroll = template.gameObject.AddComponent<ScrollRect>();
+            scroll.horizontal = false;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            var viewport = Graphic(template.transform, "Viewport", whiteSprite, new Color(1f, 1f, 1f, 0.02f));
+            viewport.gameObject.AddComponent<Mask>().showMaskGraphic = false;
+            Stretch(viewport.rectTransform);
+            viewport.rectTransform.pivot = new Vector2(0f, 1f);
+            var content = new GameObject("Content", typeof(RectTransform)).GetComponent<RectTransform>();
+            content.SetParent(viewport.transform, false);
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.sizeDelta = new Vector2(0f, itemHeight);
+            var itemBack = Graphic(content, "Item", whiteSprite, new Color(1f, 1f, 1f, 0.06f));
+            var itemRect = itemBack.rectTransform;
+            itemRect.anchorMin = new Vector2(0f, 0.5f);
+            itemRect.anchorMax = new Vector2(1f, 0.5f);
+            itemRect.sizeDelta = new Vector2(0f, itemHeight);
+            var toggle = itemBack.gameObject.AddComponent<Toggle>();
+            toggle.targetGraphic = itemBack;
+            var tick = Graphic(itemBack.transform, "Checkmark", checkSprite, new Color(0.55f, 1f, 0.65f));
+            tick.raycastTarget = false;
+            Place(tick.gameObject, itemBack.transform, new Vector2(0.93f, 0.5f), new Vector2(40f, 40f));
+            toggle.graphic = tick;
+            var itemLabel = Text(itemBack.transform, "Item Label", options[0], 30, TextAnchor.MiddleLeft, font);
+            Stretch(itemLabel.rectTransform);
+            itemLabel.rectTransform.offsetMin = new Vector2(30f, 2f);
+            itemLabel.rectTransform.offsetMax = new Vector2(-90f, -2f);
+            scroll.viewport = viewport.rectTransform;
+            scroll.content = content;
+            template.gameObject.SetActive(false);
+
+            dropdown.template = templateRect;
+            dropdown.captionText = caption;
+            dropdown.itemText = itemLabel;
+            dropdown.options.Clear();
+            foreach (var option in options)
+                dropdown.options.Add(new Dropdown.OptionData(option));
+            dropdown.RefreshShownValue();
+            return dropdown;
         }
 
         static SettingsPanel BuildSettingsOverlay(RectTransform safe, Font font)
@@ -1980,25 +2850,34 @@ namespace SlimeBreaker.EditorTools
             var graphicsLabel = Text(dim.transform, "GraphicsLabel", "GRAFIS", 20, TextAnchor.MiddleLeft, font);
             graphicsLabel.fontStyle = FontStyle.Bold;
             graphicsLabel.color = TextDim;
-            Place(graphicsLabel.gameObject, dim.transform, new Vector2(0.5f, 0.655f), new Vector2(860f, 30f));
+            Place(graphicsLabel.gameObject, dim.transform, new Vector2(0.5f, 0.70f), new Vector2(860f, 30f));
             var graphicsState = Text(dim.transform, "GraphicsState", "Grafis: High", 20, TextAnchor.MiddleRight, font);
             graphicsState.color = TextDim;
-            Place(graphicsState.gameObject, dim.transform, new Vector2(0.5f, 0.655f), new Vector2(860f, 30f));
+            Place(graphicsState.gameObject, dim.transform, new Vector2(0.5f, 0.70f), new Vector2(860f, 30f));
             var low = Button(dim.transform, "Low", "Low", font, Color.white, ghostSprite);
-            Place(low.gameObject, dim.transform, new Vector2(0.3f, 0.565f), new Vector2(276f, 100f));
+            Place(low.gameObject, dim.transform, new Vector2(0.3f, 0.625f), new Vector2(276f, 84f));
             var medium = Button(dim.transform, "Medium", "Medium", font, Color.white, ghostSprite);
-            Place(medium.gameObject, dim.transform, new Vector2(0.5f, 0.565f), new Vector2(276f, 100f));
+            Place(medium.gameObject, dim.transform, new Vector2(0.5f, 0.625f), new Vector2(276f, 84f));
             var high = Button(dim.transform, "High", "High", font, Color.white, ghostSprite);
-            Place(high.gameObject, dim.transform, new Vector2(0.7f, 0.565f), new Vector2(276f, 100f));
+            Place(high.gameObject, dim.transform, new Vector2(0.7f, 0.625f), new Vector2(276f, 84f));
             var controlLabel = Text(dim.transform, "ControlLabel", "KONTROL", 20, TextAnchor.MiddleLeft, font);
             controlLabel.fontStyle = FontStyle.Bold;
             controlLabel.color = TextDim;
-            Place(controlLabel.gameObject, dim.transform, new Vector2(0.5f, 0.45f), new Vector2(860f, 30f));
+            Place(controlLabel.gameObject, dim.transform, new Vector2(0.5f, 0.545f), new Vector2(860f, 30f));
             // Joystick mode toggle: Fixed (default) / Free.
             var joystickToggle = Button(dim.transform, "JoystickMode", "Joystick: Fixed", font, Color.white, ghostSprite);
-            Place(joystickToggle.gameObject, dim.transform, new Vector2(0.5f, 0.36f), new Vector2(860f, 96f));
+            Place(joystickToggle.gameObject, dim.transform, new Vector2(0.5f - 0.1146f, 0.48f), new Vector2(420f, 80f));
+            var cameraToggle = Button(dim.transform, "CameraMode", "Kamera: Normal", font, Color.white, ghostSprite);
+            Place(cameraToggle.gameObject, dim.transform, new Vector2(0.5f + 0.1146f, 0.48f), new Vector2(420f, 80f));
+            // Sound: BGM and game-sound volume sliders.
+            var soundLabel = Text(dim.transform, "SoundLabel", "SUARA", 20, TextAnchor.MiddleLeft, font);
+            soundLabel.fontStyle = FontStyle.Bold;
+            soundLabel.color = TextDim;
+            Place(soundLabel.gameObject, dim.transform, new Vector2(0.5f, 0.40f), new Vector2(860f, 30f));
+            var musicSlider = VolumeSlider(dim.transform, "Musik", "Musik (BGM)", font, 0.335f, out var musicValue);
+            var sfxSlider = VolumeSlider(dim.transform, "SuaraGame", "Suara game", font, 0.26f, out var sfxValue);
             var close = Button(dim.transform, "Close", "Tutup", font, Color.white, dangerSprite);
-            Place(close.gameObject, dim.transform, new Vector2(0.5f, 0.19f), new Vector2(300f, 90f));
+            Place(close.gameObject, dim.transform, new Vector2(0.5f, 0.15f), new Vector2(300f, 80f));
             var title = graphicsState;
             panel.selectedSprite = buttonSprite;
             panel.normalSprite = ghostSprite;
@@ -2009,12 +2888,18 @@ namespace SlimeBreaker.EditorTools
             panel.closeButton = close;
             panel.joystickButton = joystickToggle;
             panel.joystickLabel = joystickToggle.GetComponentInChildren<Text>();
+            panel.cameraButton = cameraToggle;
+            panel.cameraLabel = cameraToggle.GetComponentInChildren<Text>();
             panel.title = title;
+            panel.musicSlider = musicSlider;
+            panel.sfxSlider = sfxSlider;
+            panel.musicValue = musicValue;
+            panel.sfxValue = sfxValue;
             dim.SetActive(false);
             return panel;
         }
 
-        static AudioService.Entry Sfx(string id, string file, float volume, float minInterval, float jitter = 0.06f)
+        static AudioService.Entry Sfx(string id, string file, float volume, float minInterval, float jitter = 0.06f, float crowdFalloff = 0f)
         {
             return new AudioService.Entry
             {
@@ -2022,7 +2907,8 @@ namespace SlimeBreaker.EditorTools
                 clip = Clip("Assets/Audio/SFX/" + file + ".ogg"),
                 volume = volume,
                 minInterval = minInterval,
-                pitchJitter = jitter
+                pitchJitter = jitter,
+                crowdFalloff = crowdFalloff
             };
         }
 
@@ -2055,6 +2941,17 @@ namespace SlimeBreaker.EditorTools
             var damage = Text(safe, "Damage", "ATK 12", 22, TextAnchor.MiddleLeft, font);
             damage.fontStyle = FontStyle.Bold;
             damage.gameObject.SetActive(false);
+            // Lives: one heart per life under the level pill; spent lives turn grey.
+            var lives = new GameObject("Lives", typeof(RectTransform));
+            Place(lives, safe, new Vector2(0.3135f, 0.887f), new Vector2(112f, 32f));
+            var lifeIcons = new Image[RunRules.HeroLives];
+            for (int i = 0; i < lifeIcons.Length; i++)
+            {
+                lifeIcons[i] = Graphic(lives.transform, "Life" + i, heartSprite, new Color(1f, 0.32f, 0.42f));
+                lifeIcons[i].preserveAspect = true;
+                lifeIcons[i].gameObject.AddComponent<Shadow>().effectColor = new Color(0f, 0f, 0f, 0.6f);
+                Place(lifeIcons[i].gameObject, lives.transform, new Vector2((i + 0.5f) / lifeIcons.Length, 0.5f), new Vector2(32f, 32f));
+            }
             // Status card: glass panel, header, 2×5 grid of label/value cells.
             var statusPanel = new GameObject("Status", typeof(RectTransform), typeof(Image));
             ApplyImage(statusPanel.GetComponent<Image>(), cardSprite, Image.Type.Sliced, Color.white);
@@ -2236,6 +3133,19 @@ namespace SlimeBreaker.EditorTools
             Place(breaker.gameObject, safe, new Vector2(0.86f, 0.735f), new Vector2(420f, 36f));
             breaker.gameObject.SetActive(false);
 
+            // Right half of the screen: drag sideways to orbit the camera. Bottom sibling so every HUD button stays on top.
+            var dragZone = new GameObject("CameraDragZone", typeof(RectTransform), typeof(Image), typeof(CameraDragZone));
+            dragZone.transform.SetParent(safe, false);
+            dragZone.transform.SetAsFirstSibling();
+            var dragRect = dragZone.GetComponent<RectTransform>();
+            dragRect.anchorMin = new Vector2(0.5f, 0f);
+            dragRect.anchorMax = Vector2.one;
+            dragRect.offsetMin = Vector2.zero;
+            dragRect.offsetMax = Vector2.zero;
+            dragRect.localScale = Vector3.one;
+            ApplyImage(dragZone.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(1f, 1f, 1f, 0f));
+            dragZone.GetComponent<Image>().raycastTarget = true;
+
             // Bottom-left: joystick. Fixed by default (only the base steers); Settings can switch it to
             // free, where the whole lower-left zone takes input and the base jumps to the thumb.
             var stick = new GameObject("Joystick", typeof(RectTransform), typeof(Image), typeof(VirtualJoystick));
@@ -2327,6 +3237,9 @@ namespace SlimeBreaker.EditorTools
             var choices = new Button[3];
             var labels = new Text[3];
             var icons = new Image[3];
+            var rarityTags = new Text[3];
+            var bands = new Image[3];
+            var fills = new Image[3];
             for (int i = 0; i < 3; i++)
             {
                 choices[i] = Button(levelPanel.transform, "Choice" + i, "Upgrade", font, Color.white, ghostSprite);
@@ -2344,6 +3257,21 @@ namespace SlimeBreaker.EditorTools
                 ApplyImage(icons[i], whiteSprite, Image.Type.Simple, Color.white);
                 icons[i].preserveAspect = true;
                 icons[i].raycastTarget = false;
+                // Rarity wash over the whole glass card, behind the icon and text.
+                var fill = Graphic(choices[i].transform, "RarityFill", pillSprite, Color.white);
+                fill.raycastTarget = false;
+                Stretch(fill.rectTransform);
+                fill.rectTransform.SetSiblingIndex(0);
+                fills[i] = fill;
+                // Solid rarity band across the top of the card (green / blue / purple / orange) carrying the tag.
+                var band = Graphic(choices[i].transform, "RarityBand", pillSprite, Color.white);
+                band.raycastTarget = false;
+                Place(band.gameObject, choices[i].transform, new Vector2(0.5f, 1.0f), new Vector2(200f, 40f));
+                rarityTags[i] = Text(band.transform, "Rarity", "NORMAL", 22, TextAnchor.MiddleCenter, font);
+                rarityTags[i].fontStyle = FontStyle.Bold;
+                rarityTags[i].raycastTarget = false;
+                Stretch(rarityTags[i].rectTransform);
+                bands[i] = band;
             }
             levelPanel.SetActive(false);
 
@@ -2356,6 +3284,7 @@ namespace SlimeBreaker.EditorTools
             Place(menu.gameObject, pausePanel.transform, new Vector2(0.5f, 0.22f), new Vector2(380f, 96f));
             pausePanel.SetActive(false);
             var settings = BuildSettingsOverlay(safe, font);
+            BuildInventory(uiObject, safe, font);
 
             var resultPanel = Panel(safe, "Result", font, "Hasil");
             var resultTitle = resultPanel.GetComponentInChildren<Text>();
@@ -2366,6 +3295,35 @@ namespace SlimeBreaker.EditorTools
             var exit = Button(resultPanel.transform, "Exit", "Menu", font, Color.white, dangerSprite);
             Place(exit.gameObject, resultPanel.transform, new Vector2(0.64f, 0.24f), new Vector2(300f, 96f));
             resultPanel.SetActive(false);
+
+            // Out of lives: 5-second countdown ring, New Game or Continue (after a full-screen ad).
+            var continuePanel = Panel(safe, "Continue", font, "Nyawa Habis");
+            var continueTrack = Graphic(continuePanel.transform, "RingTrack", ringSprite, new Color(1f, 1f, 1f, 0.14f));
+            Place(continueTrack.gameObject, continuePanel.transform, new Vector2(0.5f, 0.52f), new Vector2(210f, 210f));
+            var continueRing = Graphic(continuePanel.transform, "Ring", ringSprite, new Color(1f, 0.78f, 0.3f, 0.95f));
+            continueRing.type = Image.Type.Filled;
+            continueRing.fillMethod = Image.FillMethod.Radial360;
+            continueRing.fillOrigin = (int)Image.Origin360.Top;
+            continueRing.fillClockwise = false;
+            continueRing.fillAmount = 1f;
+            Place(continueRing.gameObject, continuePanel.transform, new Vector2(0.5f, 0.52f), new Vector2(210f, 210f));
+            var continueCount = Text(continuePanel.transform, "Countdown", "5", 104, TextAnchor.MiddleCenter, font);
+            continueCount.fontStyle = FontStyle.Bold;
+            continueCount.raycastTarget = false;
+            Shade(continueCount);
+            Place(continueCount.gameObject, continuePanel.transform, new Vector2(0.5f, 0.52f), new Vector2(210f, 160f));
+            var continueHint = Text(continuePanel.transform, "Hint", "Lanjutkan dengan HP penuh dan 3 nyawa setelah menonton iklan", 28, TextAnchor.MiddleCenter, font);
+            continueHint.color = TextDim;
+            continueHint.raycastTarget = false;
+            Place(continueHint.gameObject, continuePanel.transform, new Vector2(0.5f, 0.36f), new Vector2(900f, 44f));
+            var newGame = Button(continuePanel.transform, "NewGame", "Game Baru", font, Color.white, dangerSprite);
+            Place(newGame.gameObject, continuePanel.transform, new Vector2(0.36f, 0.22f), new Vector2(320f, 96f));
+            var continueButton = Button(continuePanel.transform, "ContinueAd", "Lanjutkan", font, Color.white, goldSprite);
+            Place(continueButton.gameObject, continuePanel.transform, new Vector2(0.64f, 0.22f), new Vector2(320f, 96f));
+            var adBadge = Tag(continueButton.transform, "AdBadge", "IKLAN", AccentViolet, font, 15);
+            Place(adBadge.gameObject, continueButton.transform, new Vector2(0.86f, 0.98f), new Vector2(76f, 28f));
+            continuePanel.SetActive(false);
+            var ads = BuildAdOverlay(uiObject, font);
 
             var finder = uiObject.AddComponent<Wayfinder>();
             var portalArrow = WayArrow(safe, font, "PortalArrow", new Color(0.45f, 0.95f, 1f));
@@ -2379,6 +3337,11 @@ namespace SlimeBreaker.EditorTools
             player.joystick = joystick;
             ui.hpSlider = hp;
             ui.hpText = hpText;
+            ui.lifeIcons = lifeIcons;
+            ui.continuePanel = continuePanel;
+            ui.continueCountdown = continueCount;
+            ui.continueRing = continueRing;
+            flow.ads = ads;
             ui.xpSlider = xp;
             ui.levelText = level;
             ui.floorText = floor;
@@ -2392,6 +3355,9 @@ namespace SlimeBreaker.EditorTools
             ui.choiceButtons = choices;
             ui.choiceLabels = labels;
             ui.choiceIcons = icons;
+            ui.choiceRarityLabels = rarityTags;
+            ui.choiceRarityBands = bands;
+            ui.choiceRarityFills = fills;
             ui.pausePanel = pausePanel;
             ui.resultPanel = resultPanel;
             ui.resultTitle = resultTitle;
@@ -2445,9 +3411,84 @@ namespace SlimeBreaker.EditorTools
             UnityEventTools.AddPersistentListener(menu.onClick, flow.QuitToMenu);
             UnityEventTools.AddPersistentListener(retry.onClick, flow.Restart);
             UnityEventTools.AddPersistentListener(exit.onClick, flow.QuitToMenu);
+            UnityEventTools.AddPersistentListener(newGame.onClick, flow.NewGame);
+            UnityEventTools.AddPersistentListener(continueButton.onClick, flow.ContinueWithAd);
             UnityEventTools.AddPersistentListener(dashButton.onClick, dash.QueueDash);
             canvas.sortingOrder = 0;
             return ui;
+        }
+
+        /// <summary>
+        /// Full-screen interstitial on its own top canvas (covers the notch area too). Until an ad SDK is added it
+        /// shows a house ad; the countdown ring turns into a close (X) button after <see cref="AdService.adSeconds"/>.
+        /// </summary>
+        static AdService BuildAdOverlay(GameObject host, Font font)
+        {
+            var canvas = Canvas(out var safe);
+            canvas.name = "AdCanvas";
+            canvas.sortingOrder = 100;
+            var root = new GameObject("Ad", typeof(RectTransform), typeof(Image), typeof(CanvasGroup));
+            root.transform.SetParent(canvas.transform, false);
+            Stretch(root.GetComponent<RectTransform>());
+            ApplyImage(root.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(0.05f, 0.03f, 0.11f, 1f));
+            safe.SetParent(root.transform, false);
+            Stretch(safe);
+            var glow = Graphic(safe, "Glow", circleSprite, new Color(0.56f, 0.4f, 1f, 0.22f));
+            Place(glow.gameObject, safe, new Vector2(0.5f, 0.53f), new Vector2(560f, 560f));
+            var art = new GameObject("Art", typeof(RectTransform));
+            Place(art, safe, new Vector2(0.5f, 0.53f), new Vector2(560f, 560f));
+            var staff = Graphic(art.transform, "Staff", AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Icons/ICON_Item_Staff.png"), Color.white);
+            staff.preserveAspect = true;
+            Place(staff.gameObject, art.transform, new Vector2(0.5f, 0.56f), new Vector2(300f, 300f));
+            string[] skills = { "Fire", "Ice", "Lightning", "Arcane" };
+            for (int i = 0; i < skills.Length; i++)
+            {
+                var icon = Graphic(art.transform, "Skill" + skills[i], AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Icons/ICON_Skill_" + skills[i] + ".png"), Color.white);
+                icon.preserveAspect = true;
+                Place(icon.gameObject, art.transform, new Vector2(0.2f + i * 0.2f, 0.1f), new Vector2(96f, 96f));
+            }
+            var title = Text(safe, "Title", "SLIME BREAKER", 88, TextAnchor.MiddleCenter, font);
+            title.fontStyle = FontStyle.Bold;
+            title.color = new Color(1f, 0.84f, 0.36f);
+            Shade(title);
+            Place(title.gameObject, safe, new Vector2(0.5f, 0.86f), new Vector2(1200f, 110f));
+            var line = Text(safe, "Line", "Kumpulkan staff Legend & Ultra, kalahkan 10 Boss Dumpling sampai lantai 100!", 32, TextAnchor.MiddleCenter, font);
+            Place(line.gameObject, safe, new Vector2(0.5f, 0.2f), new Vector2(1300f, 50f));
+            var cta = Tag(safe, "Cta", "MAIN TERUS", new Color(1f, 0.7f, 0.22f), font, 30);
+            Place(cta.gameObject, safe, new Vector2(0.5f, 0.1f), new Vector2(320f, 70f));
+            var label = Tag(safe, "AdLabel", "IKLAN", new Color(1f, 1f, 1f, 0.22f), font, 20);
+            Place(label.gameObject, safe, new Vector2(0.055f, 0.94f), new Vector2(110f, 40f));
+
+            var countdown = new GameObject("Countdown", typeof(RectTransform));
+            Place(countdown, safe, new Vector2(0.95f, 0.91f), new Vector2(96f, 96f));
+            var back = Graphic(countdown.transform, "Back", circleGlassSprite, Color.white);
+            Stretch(back.rectTransform);
+            var ring = Graphic(countdown.transform, "Ring", ringSprite, new Color(1f, 1f, 1f, 0.9f));
+            ring.type = Image.Type.Filled;
+            ring.fillMethod = Image.FillMethod.Radial360;
+            ring.fillOrigin = (int)Image.Origin360.Top;
+            ring.fillClockwise = false;
+            Stretch(ring.rectTransform);
+            ring.rectTransform.offsetMin = new Vector2(6f, 6f);
+            ring.rectTransform.offsetMax = new Vector2(-6f, -6f);
+            var count = Text(countdown.transform, "Value", "5", 40, TextAnchor.MiddleCenter, font);
+            count.fontStyle = FontStyle.Bold;
+            count.raycastTarget = false;
+            Stretch(count.rectTransform);
+            var close = Button(safe, "Close", "X", font, Color.white, circleGlassSprite);
+            Place(close.gameObject, safe, new Vector2(0.95f, 0.91f), new Vector2(96f, 96f));
+            close.GetComponentInChildren<Text>().fontSize = 44;
+
+            var ads = host.AddComponent<AdService>();
+            ads.group = root.GetComponent<CanvasGroup>();
+            ads.closeButton = close;
+            ads.countdown = countdown;
+            ads.countdownText = count;
+            ads.countdownRing = ring;
+            ads.art = art.GetComponent<RectTransform>();
+            ads.adSeconds = 5f;
+            root.SetActive(false);
+            return ads;
         }
 
         static RectTransform WayArrow(RectTransform parent, Font font, string name, Color color)
@@ -2517,7 +3558,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 15;
+            PlayerSettings.Android.bundleVersionCode = 42;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;
@@ -2525,12 +3566,104 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.allowedAutorotateToLandscapeLeft = true;
             PlayerSettings.allowedAutorotateToLandscapeRight = true;
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel25;
+            // Google Play requires new apps and updates to target a recent API level (Android 16 = API 36).
+            PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel36;
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
             PlayerSettings.Android.androidTVCompatibility = false;
             PlayerSettings.Android.optimizedFramePacing = true;
             PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.Vulkan, GraphicsDeviceType.OpenGLES3 });
             PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
+            ConfigureAppIcons();
+            ConfigureAdMob();
+        }
+
+        const string AdMobAndroidAppId = "ca-app-pub-6808667639334235~3733831999";
+
+        /// <summary>Writes the AdMob app id into the Google Mobile Ads settings asset (its build step refuses to build without it).</summary>
+        static void ConfigureAdMob()
+        {
+            var type = Type.GetType("GoogleMobileAds.Editor.GoogleMobileAdsSettings, GoogleMobileAds.Editor");
+            var load = type?.GetMethod("LoadInstance", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+            if (load == null)
+            {
+                Debug.LogWarning("Google Mobile Ads belum terpasang; iklan memakai house ad.");
+                return;
+            }
+            var settings = load.Invoke(null, null) as ScriptableObject;
+            var serialized = new SerializedObject(settings);
+            serialized.FindProperty("adMobAndroidAppId").stringValue = AdMobAndroidAppId;
+            serialized.FindProperty("userLanguage").stringValue = "en";
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(settings);
+            AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>Launcher icons from build_store_art.py: adaptive (background + foreground), round and legacy.</summary>
+        static void ConfigureAppIcons()
+        {
+            const string folder = "Assets/Art/UI/AppIcon/";
+            var full = AssetDatabase.LoadAssetAtPath<Texture2D>(folder + "APP_Icon.png");
+            var background = AssetDatabase.LoadAssetAtPath<Texture2D>(folder + "APP_Icon_Background.png");
+            var foreground = AssetDatabase.LoadAssetAtPath<Texture2D>(folder + "APP_Icon_Foreground.png");
+            if (full == null || background == null || foreground == null)
+            {
+                Debug.LogWarning("Ikon aplikasi belum ada di " + folder + " (jalankan build_store_art.py).");
+                return;
+            }
+            PlayerSettings.SetIcons(NamedBuildTarget.Unknown, new[] { full }, IconKind.Application);
+            var target = NamedBuildTarget.Android;
+            foreach (var kind in PlayerSettings.GetSupportedIconKinds(target))
+            {
+                var icons = PlayerSettings.GetPlatformIcons(target, kind);
+                foreach (var icon in icons)
+                {
+                    if (icon.maxLayerCount >= 2)
+                        icon.SetTextures(background, foreground);
+                    else
+                        icon.SetTexture(full);
+                }
+                PlayerSettings.SetPlatformIcons(target, kind, icons);
+            }
+        }
+
+        static readonly string[] BiomeAudioNames = { "Forest", "Snow", "Desert", "Thunder", "Swamp", "Shadow", "Volcano", "Storm", "Crystal", "Royal" };
+
+        /// <summary>Music streams from disk (long tracks), ambience beds decompress on load, short effects stay in memory.</summary>
+        static void ConfigureAudio()
+        {
+            foreach (var guid in AssetDatabase.FindAssets("t:AudioClip", new[] { AudioRoot }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var importer = AssetImporter.GetAtPath(path) as AudioImporter;
+                if (importer == null)
+                    continue;
+                bool musicTrack = path.Contains("/Music/");
+                bool bed = path.Contains("/Ambience/") || path.EndsWith("SFX_Rain.ogg") || path.EndsWith("SFX_Wind.ogg");
+                var settings = importer.defaultSampleSettings;
+                var loadType = musicTrack ? AudioClipLoadType.Streaming : bed ? AudioClipLoadType.CompressedInMemory : AudioClipLoadType.DecompressOnLoad;
+                float quality = musicTrack ? 0.6f : bed ? 0.5f : 0.7f;
+                bool mono = bed && !path.Contains("/Ambience/");
+                if (settings.compressionFormat == AudioCompressionFormat.Vorbis && settings.loadType == loadType && Mathf.Approximately(settings.quality, quality)
+                    && settings.preloadAudioData == !musicTrack && importer.loadInBackground == musicTrack && importer.forceToMono == mono)
+                    continue;
+                settings.compressionFormat = AudioCompressionFormat.Vorbis;
+                settings.loadType = loadType;
+                settings.quality = quality;
+                settings.preloadAudioData = !musicTrack;
+                importer.defaultSampleSettings = settings;
+                importer.loadInBackground = musicTrack;
+                importer.forceToMono = mono;
+                importer.SaveAndReimport();
+            }
+        }
+
+        static AudioClip[] BiomeClips(string folder, string prefix)
+        {
+            var clips = new AudioClip[BiomeAudioNames.Length];
+            for (int i = 0; i < clips.Length; i++)
+                clips[i] = Clip("Assets/Audio/" + folder + "/" + prefix + BiomeAudioNames[i] + ".ogg");
+            return clips;
         }
 
         static AudioClip Clip(string path)
@@ -2653,6 +3786,60 @@ namespace SlimeBreaker.EditorTools
             return button;
         }
 
+        /// <summary>Settings row: label, draggable slider (large handle for touch) and a percentage readout.</summary>
+        static Slider VolumeSlider(Transform parent, string name, string label, Font font, float y, out Text value)
+        {
+            var caption = Text(parent, name + "Label", label, 26, TextAnchor.MiddleLeft, font);
+            Place(caption.gameObject, parent, new Vector2(0.345f, y), new Vector2(300f, 56f));
+            var root = new GameObject(name + "Slider", typeof(RectTransform));
+            Place(root, parent, new Vector2(0.575f, y), new Vector2(520f, 56f));
+            var track = new GameObject("Track", typeof(RectTransform), typeof(Image));
+            track.transform.SetParent(root.transform, false);
+            ApplyImage(track.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(1f, 1f, 1f, 0.18f));
+            var trackRect = track.GetComponent<RectTransform>();
+            trackRect.anchorMin = new Vector2(0f, 0.5f);
+            trackRect.anchorMax = new Vector2(1f, 0.5f);
+            trackRect.sizeDelta = new Vector2(0f, 14f);
+            var fillArea = new GameObject("FillArea", typeof(RectTransform));
+            fillArea.transform.SetParent(root.transform, false);
+            var areaRect = fillArea.GetComponent<RectTransform>();
+            areaRect.anchorMin = new Vector2(0f, 0.5f);
+            areaRect.anchorMax = new Vector2(1f, 0.5f);
+            areaRect.sizeDelta = new Vector2(-28f, 14f);
+            var fill = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+            fill.transform.SetParent(fillArea.transform, false);
+            ApplyImage(fill.GetComponent<Image>(), whiteSprite, Image.Type.Simple, AccentViolet);
+            var fillRect = fill.GetComponent<RectTransform>();
+            Stretch(fillRect);
+            var handleArea = new GameObject("HandleArea", typeof(RectTransform));
+            handleArea.transform.SetParent(root.transform, false);
+            // Zero-height strip: the Slider stretches the handle across the area's height, so the handle's own
+            // sizeDelta (48 px) becomes its real height and it stays a circle.
+            var handleAreaRect = handleArea.GetComponent<RectTransform>();
+            handleAreaRect.anchorMin = new Vector2(0f, 0.5f);
+            handleAreaRect.anchorMax = new Vector2(1f, 0.5f);
+            handleAreaRect.sizeDelta = new Vector2(-28f, 0f);
+            handleAreaRect.anchoredPosition = Vector2.zero;
+            var handle = new GameObject("Handle", typeof(RectTransform), typeof(Image));
+            handle.transform.SetParent(handleArea.transform, false);
+            ApplyImage(handle.GetComponent<Image>(), joystickKnobSprite != null ? joystickKnobSprite : whiteSprite, Image.Type.Simple, Color.white);
+            var handleRect = handle.GetComponent<RectTransform>();
+            handleRect.sizeDelta = new Vector2(48f, 48f);
+            var slider = root.AddComponent<Slider>();
+            slider.fillRect = fillRect;
+            slider.handleRect = handleRect;
+            slider.targetGraphic = handle.GetComponent<Image>();
+            slider.direction = UnityEngine.UI.Slider.Direction.LeftToRight;
+            slider.minValue = 0f;
+            slider.maxValue = 1f;
+            slider.value = 1f;
+            slider.transition = Selectable.Transition.None;
+            value = Text(parent, name + "Value", "100%", 26, TextAnchor.MiddleRight, font);
+            value.fontStyle = FontStyle.Bold;
+            Place(value.gameObject, parent, new Vector2(0.765f, y), new Vector2(110f, 56f));
+            return slider;
+        }
+
         static Slider Slider(Transform parent, string name, Color color, Sprite background)
         {
             var root = new GameObject(name, typeof(RectTransform));
@@ -2721,6 +3908,9 @@ namespace SlimeBreaker.EditorTools
             ringSprite = UiSprite("UI_Ring", circleSprite);
             gearSprite = UiSprite("UI_Icon_Gear", whiteSprite);
             pauseIconSprite = UiSprite("UI_Icon_Pause", whiteSprite);
+            arrowSprite = UiSprite("UI_Icon_Arrow", whiteSprite);
+            checkSprite = UiSprite("UI_Icon_Check", whiteSprite);
+            heartSprite = UiSprite("UI_Icon_Heart", whiteSprite);
             if (panelSprite == null || buttonSprite == null || whiteSprite == null)
                 throw new InvalidOperationException("Sprite UI tidak ter-load.");
         }

@@ -164,6 +164,122 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - PlayMode menambah tes klip hero + tekstur mata + emote Cast/Victory, dan menu utama memutar loop Menu 4 s.
 - Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
 
+## Hasil 17 Oktober 2026 (putaran 16 — lingkungan dan audio HD)
+
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 22/22; PlayMode 31/31 lolos; APK: `SLIMEBREAKER_APK_OK`.
+- APK: `Builds/SlimeBreaker.apk` (98 MB — tekstur PBR 2048 dan audio orkestra), disalin ke `~/Downloads/SlimeBreaker-0.16.0.apk`.
+- Paket: `com.gitgitmiko.slimebreaker` 0.16.0 (versionCode 16).
+- PlayMode menambah tes lingkungan HD di 10 bioma (PostFx, shader Ground, properti HD) dan audio per bioma + boss.
+- Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
+
+## Hasil 17 Oktober 2026 (putaran 17 — performa 60 fps, kaktus)
+
+- Rumput/bunga/alang-alang digabung per material ke 8 sektor (tanpa bayangan); tint bioma memakai salinan material, bukan property block, jadi SRP batcher + static batching bekerja (mesh lingkungan kini readable). Renderer arena: hutan 581 → 141, kerajaan 361 → 84, rawa 311 → 93.
+- Preset High: MSAA 2×, shadow map 2048, PCF medium, jarak bayangan 32 m, HDR 32-bit; bloom dual-filter seperempat resolusi.
+- `AdaptiveResolution`: render scale turun bertahap (min 0,7) bila frame > 18 ms dan naik lagi saat longgar, di-upscale FSR 1; resolusi internal dibatasi ~1080p di layar sangat padat. Nonaktif di editor.
+- Kaktus: ujung batang/lengan kini kubah tertutup (tutup datar berbentuk bintang dulu salah triangulasi → kilau kuning/putih), kuncup putih diganti buah merah kecil.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 22/22; PlayMode 32/32 (tes baru `RenderBudgetPerBiome`); APK `SLIMEBREAKER_APK_OK` 0.16.1 (versionCode 17).
+- Unduhan: `https://testimony-entire-journalism-residents.trycloudflare.com/`
+
+## Hasil 17 Oktober 2026 (putaran 18 — hero cat-boy, HP boss, audio tenang)
+
+- Hero dibangun ulang mengikuti referensi cat-boy (rambut hitam bergerigi, telinga kucing, mata amber, :3 + taring, choker lonceng, kaos navy, celana hitam) + topi, jubah, tongkat penyihir. `CHR_Hero_Main.fbx` 28.546 tris, rig dan klip sama.
+- HP boss 10.000.000 × tier (lantai 100 = 100.000.000).
+- SFX pickup diganti "bloop" lembut; volume pickup/kematian/hit turun + pelembutan otomatis saat beruntun.
+- Kaktus: duri/areola diredam dan smoothness rendah, tak ada lagi kilau putih saat kamera bergerak.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 22/22; PlayMode 32/32; APK `SLIMEBREAKER_APK_OK` 0.17.0 (versionCode 18).
+
+## Hasil 17 Oktober 2026 (putaran 19 — proporsi hero mengikuti chibi cat-boy)
+
+- Proporsi diukur dari gambar referensi lalu disamakan: rambut lebih ramping (±0,27 H) dengan tonjolan bergelombang di sisi/belakang dan ujung tidak turun di bawah dagu, kaki lebih tebal dan rapat (tulang kaki digeser ke x ±0,075–0,085), lengan/tangan lebih tebal, kaos lebih lebar, telinga di sudut atas rambut. `CHR_Hero_Main.fbx` 28.578 tris.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 22/22; PlayMode 32/32; APK `SLIMEBREAKER_APK_OK` 0.17.1 (versionCode 19).
+
+## Hasil 17 Oktober 2026 (putaran 20 — bola cahaya putih)
+
+- Penyebab "cahaya putih" di dekat kaktus saat hero bergerak: kunang-kunang malam dipancarkan dari bola radius 10 m yang berpusat 10 m di atas hero, jadi sebagian lewat tepat di depan lensa kamera (kamera ±8 m di atas hero) dan tampil sebagai cakram putih raksasa + bloom.
+- Perbaikan: kunang-kunang, debu, spora, dan percikan kini di lapisan rendah (1,2–1,5 m) di sekitar hero; semua partikel cuaca dibatasi `maxParticleSize` 0,02 layar. Tes `RenderBudgetPerBiome` memeriksa keduanya.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 22/22; PlayMode 32/32; APK `SLIMEBREAKER_APK_OK` 0.17.2 (versionCode 20).
+
+## Hasil 17 Oktober 2026 (putaran 21 — glitch kaktus NaN, cuaca acak)
+
+- Akar masalah cahaya putih / segi delapan hitam: ujung kubah kaktus (2 face di puncak batang, 1 di tiap ujung lengan) punya UV runtuh ke satu titik → tangent nol dari importer → `normalize(0)` = NaN di `SlimeBreaker/Lit` → bloom melebarkan satu piksel NaN/Inf jadi cakram putih atau hitam. Muncul saat bergerak karena tergantung sudut kamera.
+- Perbaikan berlapis: `fix_degenerate_uvs` di `build_props_hd.py` (proyeksi planar untuk face ber-UV nol; hanya kaktus yang terkena), TBN aman (`SafeNormalize` + tangent cadangan) dan clamp output 0–32 di ketiga shader, `stopNaN` di kamera, `bloom.clamp` 24.
+- Cuaca dan siang/malam kini diacak terpisah per lantai dari seed run (60% siang); cuaca tidak berulang di dua lantai berturut bioma sama. Sebelumnya cuaca dan waktu sama-sama berotasi ganjil/genap, sehingga hujan selalu malam. Tes EditMode `RainFallsByDayAndByNight`.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 23/23; PlayMode 32/32; APK `SLIMEBREAKER_APK_OK` 0.17.3 (versionCode 21).
+
+## Hasil 17 Oktober 2026 (putaran 22 — rarity upgrade, HP boss 10.000)
+
+- Kartu level-up ber-rarity: Normal hijau 65% +0,1%, Rare biru 20% +0,3%, Legend ungu 10% +0,5%, Ultra oranye 5% +1% (sisa 5% dari 95% ditambahkan ke Normal sesuai pilihan). Kartu memakai pita + warna rarity; status HUD 0,1% presisi.
+- HP boss kembali 10.000 × tier (lantai 100 = 100.000).
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 25/25; PlayMode 32/32; APK `SLIMEBREAKER_APK_OK` 0.18.0 (versionCode 22).
+
+## Hasil 17 Oktober 2026 (putaran 23 — item drop dan inventori)
+
+- Item Staff/Topi/Baju/Celana/Sepatu ber-rarity dengan stat per band lantai (Legend staff +1000 di lantai 1–10, +2000 di 11–20, …); drop 5% per slime, boss 4 item dengan 1 Ultra pasti.
+- Inventori 40 slot, layar perlengkapan + tas + detail (Pakai/Lepas/Buang), tersimpan di save run; stat gear dihitung terpisah (`RunStats.gear*`, `Total*`).
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 27/27; PlayMode 33/33; APK `SLIMEBREAKER_APK_OK` 0.19.0 (versionCode 23).
+
+## Hasil 18 Oktober 2026 (putaran 24 — pengaturan suara)
+
+- Peluru musuh tidak lagi memutar `bolthit` saat kena hero (suara kerumunan slime ranged menutupi BGM); `playerhit` milik hero tetap berbunyi.
+- Pengaturan: slider Musik (BGM) dan Suara game, persen tampil di sisi kanan, tersimpan ke save meta (ditulis ±0,4 dtk setelah digeser).
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 34/34; APK `SLIMEBREAKER_APK_OK` 0.19.1 (versionCode 24).
+
+## Hasil 18 Oktober 2026 (putaran 26 — dinding wadah dimsum)
+
+- Koreksi arah: lantai dan properti kembali seperti semula; hanya dinding arena yang menjadi steamer dimsum berlapis anyaman bambu, dan semua properti yang tadinya di luar batas (pohon) dipindah ke dalam.
+- Tes baru `SteamerWallEnclosesTheArenaAndEveryPropIsInside` (dinding terlihat di tepi, tak ada properti di luar dinding di 4 lantai/bioma).
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 35/35; APK `SLIMEBREAKER_APK_OK` 0.20.1 (versionCode 26).
+
+## Hasil 18 Oktober 2026 (putaran 27 — collider tak terlihat, pohon acak)
+
+- Akar masalah hero "terhalang sesuatu": properti ring/scatter (pohon, batu, tiang, kaktus, dll.) memasang collider langsung pada akar model FBX yang membawa rotasi sumbu (-90° X). Capsule/box-nya jadi **rebah ke samping** dan **bergeser 1–3,6 m** dari propnya (capsule pohon selebar 5–6,6 m, tinggi 1,4 m). Setelah pohon dipindah ke dalam arena, collider itu mulai menghalangi.
+- Perbaikan: collider kini dipasang di anak `SolidCollider` yang tegak dan terkompensasi skala, ukurannya dari `PropShape` (ukuran bebas-yaw, diukur saat prefab dibuat): pohon = batang saja (r 0,3–0,5), batu = bola ±0,85× setengah lebar, tiang/lengkungan = kotak tipis mengikuti bentuk. Prefab `OBS_*` juga diketatkan (sebelumnya bola ES 2,0 m untuk paku es setinggi 0,9 m, kotak persegi untuk lengkungan tipis, dst.).
+- Pohon besar kini tersebar acak di seluruh arena (termasuk tengah), ditempatkan terakhir menghindari properti lain, jalur kardinal, dan titik spawn.
+- Tes baru: `ObstacleCollidersHugTheirVisibleShape` (collider tidak lebih lebar dari bentuk yang terlihat, tidak rebah, tidak keluar dari bentuk visual di 10 bioma) dan `BigTreesAreScatteredAcrossTheArenaIncludingTheMiddle`.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 37/37; APK `SLIMEBREAKER_APK_OK` 0.20.2 (versionCode 27).
+
+## Hasil 18 Oktober 2026 (putaran 28 — garis biru, level item)
+
+- Cincin rune biru bercahaya di lantai dekat dinding dihapus (dinding steamer sudah jadi batas arena; cincin hanya tersisa di pintu portal dan di bawah hero di menu).
+- Level item mengikuti lantai: 1–10 = level 1, 11–20 = level 2, dst. Staff terbaik (Ultra) level 1 = +1000, level 2 = +2000, level 3 = +3000. Staff: Normal 100, Rare 250, Legend 500, Ultra 1000 × level. Level tampil di notifikasi ambil item, slot, dan kotak tas ("L2").
+- Tes: `ItemStatsFollowSlotRarityAndFloorBand` (tak ada item level 1 > +1000, lantai 15 = level 2) dan drop nyata di lantai 15 pada `ItemsDropEquipAndPersist`.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 37/37; APK `SLIMEBREAKER_APK_OK` 0.20.3 (versionCode 28).
+
+## Hasil 18 Oktober 2026 (putaran 29 — boss squishy dumpling)
+
+- Boss jadi dumpling jelly berglitter berwajah kawaii + bintang emas; nama "X Dumpling"; jubah dan mahkota dihapus; Royal (lantai 100) pelangi.
+- Shader Jelly: `_Glitter`, `_GlitterScale`, `_Rainbow`; `EnemyHealth` mengirim `_Rainbow` untuk Royal dan menjaga cahaya sendiri bintang/pipi saat tint.
+- Tes: `EveryBossSpawnsWithItsOwnLookAndHp` (jenis, HP, potret) dan `AssertDumplingLook`.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 38/38; APK `SLIMEBREAKER_APK_OK` 0.21.0 (versionCode 29).
+
+## Hasil 18 Oktober 2026 (putaran 30 — cahaya boss malam hari)
+
+- Saat lantai malam, tiap boss membawa lampu titik 2,9 m di atas kepalanya (range 9, intensitas 2,6), berwarna versi terang dari warna boss (Royal pelangi: putih hangat), seperti lampu hero. Siang tanpa lampu. Tes `EveryBossSpawnsWithItsOwnLookAndHp` memeriksa keduanya.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 38/38; APK `SLIMEBREAKER_APK_OK` 0.21.1 (versionCode 30).
+
+## Hasil 18 Oktober 2026 (putaran 31 — tata letak pohon)
+
+- Pohon besar kini ditempatkan lebih dulu (sebelum properti ring), jadi benar-benar tersebar acak termasuk tengah arena (±37% berada <13 m dari pusat; sebelumnya ±15%); properti ring melewati titik yang sudah terisi. Skala pohon 0,85–1,15. Tes `BigTreesAreScatteredAcrossTheArenaIncludingTheMiddle` dikencangkan (stabil di 3 run).
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 28/28; PlayMode 38/38; APK `SLIMEBREAKER_APK_OK` 0.21.2 (versionCode 31).
+
+## Hasil 18 Oktober 2026 (putaran 32 — mode kesulitan)
+
+- `Difficulty` (Easy/Normal/Hard) dengan profil pengali; dipilih di menu utama, disimpan di `SaveData.difficulty` (baru: Normal) dan `RunSave.difficulty` (lama: Hard). Diterapkan ke HP/damage monster, jeda spawn, HP/damage boss, HP awal hero, bonus kartu, peluang drop item, dan EXP.
+- Perbaikan sampingan: bar HP hero kini memakai HP awal sebenarnya (rank HP permanen dan kesulitan) — sebelumnya `PlayerHealth` bisa terbangun sebelum stat run dan tertahan di 100. Menu juga membaca ulang save sebelum membeli upgrade/memilih kesulitan supaya slider suara tak tertimpa.
+- Tes: `DifficultyLevelsScaleMonstersBossesUpgradesAndDrops`, `DifficultyIsSavedWithTheRunAndOldSavesStayHard`, `MenuDifficultyButtonsDecideTheNextRun`; semua tes arena memakai Hard.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 30/30; PlayMode 39/39; APK `SLIMEBREAKER_APK_OK` 0.22.0 (versionCode 32).
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 41/41; APK 0.23.0 (versionCode 33): jual item + auto pilih, dropdown kesulitan.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 42/42; APK 0.24.0 (versionCode 34): menu (Lanjutkan di atas Main, tanpa deskripsi), boss yang sudah dikalahkan berdiri di belakang hero.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 43/43; APK 0.25.0 (versionCode 35): arena menu mengikuti lantai terjauh (`MenuArena`), kartu menu dan inventori dirapikan.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 43/43; APK 0.26.0 (versionCode 36): hero baru penyihir chibi (tahap 3 redesign).
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 44/44; APK 0.27.0 (versionCode 37): geser di separuh kanan layar memutar kamera.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 44/44; APK 0.28.0 (versionCode 38): orbit kamera dihaluskan + bisa atas/bawah, hero lebih cerah (warna lebih jenuh + emisi lembut).
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 45/45; APK 0.29.0 (versionCode 39): pengaturan arah rotasi kamera Normal (bawaan) / Inverted.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 32/32; PlayMode 48/48; APK `SLIMEBREAKER_APK_OK` 0.30.0 (versionCode 40): 3 nyawa per run, panel Nyawa Habis (hitung mundur 5 detik, Game Baru / Lanjutkan), iklan layar penuh (house ad `AdService`) sebelum lanjut. Screenshot `30_life_lost`, `31_continue_countdown`, `32_ad_fullscreen`, `33_ad_close`.
+- Persiapan Google Play, 0.30.1 (versionCode 41): ikon aplikasi (adaptive + legacy), target API 36, `BuildAndroidAab` → `Builds/SlimeBreaker.aab` 104 MB ditandatangani upload key (`jarsigner -verify` lolos), semua `.so` arm64 rata 16 KB (`0x4000`). Panduan lengkap: `docs/play_store.md`.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 32/32; PlayMode 49/49; APK + AAB 0.31.0 (versionCode 42): AdMob Rewarded (Google Mobile Ads 11.5.0 + UMP). Manifest berisi App ID AdMob + izin `AD_ID`; APK memakai unit uji Google (`SB_ADMOB_TEST`), AAB memakai unit asli `…/8407574176`; iklan ditutup sebelum reward → kembali ke panel Nyawa Habis.
+
 ## Pasang di HP
 
 1. Salin `SlimeBreaker.apk` ke ponsel (USB, Drive, atau kirim ke diri sendiri).

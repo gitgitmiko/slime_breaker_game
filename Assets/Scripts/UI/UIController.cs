@@ -9,6 +9,8 @@ namespace SlimeBreaker
         public Slider hpSlider;
         public Slider xpSlider;
         public Text hpText;
+        /// <summary>One heart per life, left to right; spent lives turn grey.</summary>
+        public Image[] lifeIcons;
         public Text levelText;
         public Text floorText;
         public Slider floorProgress;
@@ -23,8 +25,15 @@ namespace SlimeBreaker
         public Button[] choiceButtons;
         public Text[] choiceLabels;
         public Image[] choiceIcons;
+        public Text[] choiceRarityLabels;
+        public Image[] choiceRarityBands;
+        public Image[] choiceRarityFills;
         public GameObject pausePanel;
         public GameObject resultPanel;
+        [Header("Out of lives")]
+        public GameObject continuePanel;
+        public Text continueCountdown;
+        public Image continueRing;
         public Text resultTitle;
         public Text resultBody;
         public Button pauseButton;
@@ -88,7 +97,10 @@ namespace SlimeBreaker
             dash = health != null ? health.GetComponent<DashController>() : null;
             skills = health != null ? health.GetComponent<SkillController>() : SkillController.Instance;
             if (health != null)
+            {
                 health.Changed += RefreshHealth;
+                health.LifeLost += OnLifeLost;
+            }
             if (skills != null)
                 skills.Changed += RefreshSkills;
             if (choiceButtons != null)
@@ -109,6 +121,7 @@ namespace SlimeBreaker
                 pausePanel.SetActive(false);
             if (resultPanel != null)
                 resultPanel.SetActive(false);
+            HideContinue();
             if (toastGroup != null)
                 toastGroup.alpha = 0f;
             if (bossWarningGroup != null)
@@ -121,9 +134,46 @@ namespace SlimeBreaker
         void OnDestroy()
         {
             if (health != null)
+            {
                 health.Changed -= RefreshHealth;
+                health.LifeLost -= OnLifeLost;
+            }
             if (skills != null)
                 skills.Changed -= RefreshSkills;
+        }
+
+        static readonly Color LifeColor = new Color(1f, 0.32f, 0.42f);
+        static readonly Color SpentLifeColor = new Color(0.3f, 0.3f, 0.38f, 0.75f);
+
+        void OnLifeLost()
+        {
+            if (health == null)
+                return;
+            ShowToast("Nyawa berkurang!  Sisa " + health.Lives, LifeColor);
+        }
+
+        public bool ContinueVisible => continuePanel != null && continuePanel.activeSelf;
+        public string ContinueCountdownText => continueCountdown != null ? continueCountdown.text : string.Empty;
+
+        public void ShowContinue(float secondsLeft, float total)
+        {
+            if (continuePanel != null)
+                continuePanel.SetActive(true);
+            SetContinueCountdown(secondsLeft, total);
+        }
+
+        public void HideContinue()
+        {
+            if (continuePanel != null)
+                continuePanel.SetActive(false);
+        }
+
+        public void SetContinueCountdown(float secondsLeft, float total)
+        {
+            if (continueCountdown != null)
+                continueCountdown.text = Mathf.CeilToInt(secondsLeft).ToString();
+            if (continueRing != null)
+                continueRing.fillAmount = total <= 0f ? 0f : Mathf.Clamp01(secondsLeft / total);
         }
 
         void Update()
@@ -456,7 +506,7 @@ namespace SlimeBreaker
                 toastGroup.alpha = 0f;
         }
 
-        public void ShowLevelUp(UpgradeDefinition[] choices)
+        public void ShowLevelUp(UpgradeOffer[] choices)
         {
             if (levelUpPanel != null)
                 levelUpPanel.SetActive(true);
@@ -465,18 +515,33 @@ namespace SlimeBreaker
             int count = choices != null ? choices.Length : 0;
             for (int i = 0; i < choiceButtons.Length; i++)
             {
-                bool visible = i < count && choices[i] != null;
+                bool visible = i < count && choices[i].IsValid;
                 choiceButtons[i].gameObject.SetActive(visible);
                 if (!visible)
                     continue;
-                choiceLabels[i].text = choices[i].title + "\n<size=22>" + choices[i].description + "</size>";
+                var offer = choices[i];
+                Color tint = UpgradeRarities.Color(offer.rarity);
+                // Card body takes the rarity colour (green / blue / purple / orange), title and tag stay readable.
+                choiceLabels[i].text = offer.Title + "\n<size=22>" + offer.Description + "</size>";
+                if (choiceRarityLabels != null && i < choiceRarityLabels.Length && choiceRarityLabels[i] != null)
+                {
+                    choiceRarityLabels[i].text = UpgradeRarities.Name(offer.rarity);
+                    choiceRarityLabels[i].color = Color.white;
+                }
+                if (choiceRarityBands != null && i < choiceRarityBands.Length && choiceRarityBands[i] != null)
+                    choiceRarityBands[i].color = tint;
+                if (choiceRarityFills != null && i < choiceRarityFills.Length && choiceRarityFills[i] != null)
+                    choiceRarityFills[i].color = new Color(tint.r, tint.g, tint.b, 0.42f);
                 if (choiceIcons != null && i < choiceIcons.Length && choiceIcons[i] != null)
                 {
-                    choiceIcons[i].sprite = choices[i].icon;
-                    choiceIcons[i].enabled = choices[i].icon != null;
+                    choiceIcons[i].sprite = offer.definition.icon;
+                    choiceIcons[i].enabled = offer.definition.icon != null;
                 }
             }
         }
+
+        /// <summary>Rarity tag shown on a visible level-up card (playtests).</summary>
+        public string ChoiceRarity(int index) => choiceRarityLabels != null && index < choiceRarityLabels.Length && choiceRarityLabels[index] != null ? choiceRarityLabels[index].text : null;
 
         public void HideLevelUp()
         {
@@ -505,7 +570,7 @@ namespace SlimeBreaker
                 ? GameFlowController.Instance.Stats.level
                 : 1;
             int damage = GameFlowController.Instance != null && GameFlowController.Instance.Stats != null
-                ? GameFlowController.Instance.Stats.damage
+                ? GameFlowController.Instance.Stats.TotalDamage
                 : 0;
             int floor = StageManager.Instance != null ? StageManager.Instance.Floor : 1;
             if (resultTitle != null)
@@ -580,21 +645,24 @@ namespace SlimeBreaker
             if (stats == null)
                 return;
             if (damageText != null)
-                damageText.text = "ATK " + stats.damage;
-            int expBonus = Mathf.RoundToInt(Mathf.Max(0f, stats.xpMultiplier - 1f) * 100f);
-            int defense = Mathf.RoundToInt(stats.damageReduction * 100f);
-            int steal = Mathf.RoundToInt(stats.lifesteal * 100f);
-            SetStat(0, stats.damage.ToString(), Color.white);
+                damageText.text = "ATK " + stats.TotalDamage;
+            float expBonus = Mathf.Max(0f, stats.xpMultiplier - 1f) * 100f;
+            float defense = stats.TotalDamageReduction * 100f;
+            float steal = stats.lifesteal * 100f;
+            SetStat(0, stats.TotalDamage.ToString(), stats.gearDamage > 0 ? StatGold : Color.white);
             SetStat(1, stats.AttacksPerSecond.ToString("0.00") + "/s", Color.white);
-            SetStat(2, stats.HasCrit ? stats.critMultiplier.ToString("0.0") + "x" : "—", stats.HasCrit ? StatGold : StatDim);
-            SetStat(3, (stats.HasCrit ? Mathf.RoundToInt(stats.critChance * 100f) : 0) + "%", stats.HasCrit ? StatGold : StatDim);
-            SetStat(4, stats.attackRange.ToString("0.0") + " m", Color.white);
-            SetStat(5, stats.moveSpeed.ToString("0.0"), Color.white);
-            SetStat(6, steal + "%", steal > 0 ? StatGreen : StatDim);
-            SetStat(7, "+" + expBonus + "%", expBonus > 0 ? Color.white : StatDim);
-            SetStat(8, defense + "%", defense > 0 ? StatBlue : StatDim);
-            SetStat(9, (100 - defense) + "%", defense > 0 ? StatBlue : StatDim);
+            SetStat(2, stats.HasCrit ? stats.critMultiplier.ToString("0.0##", System.Globalization.CultureInfo.InvariantCulture) + "x" : "—", stats.HasCrit ? StatGold : StatDim);
+            SetStat(3, Pct(stats.HasCrit ? stats.critChance * 100f : 0f) + "%", stats.HasCrit ? StatGold : StatDim);
+            SetStat(4, stats.attackRange.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " m", Color.white);
+            SetStat(5, stats.TotalMoveSpeed.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture), Color.white);
+            SetStat(6, Pct(steal) + "%", steal > 0.01f ? StatGreen : StatDim);
+            SetStat(7, "+" + Pct(expBonus) + "%", expBonus > 0.01f ? Color.white : StatDim);
+            SetStat(8, Pct(defense) + "%", defense > 0.01f ? StatBlue : StatDim);
+            SetStat(9, Pct(100f - defense) + "%", defense > 0.01f ? StatBlue : StatDim);
         }
+
+        /// <summary>Percentages in 0.1% steps (rarity cards add 0.1–1%): 16 → "16", 8.3 → "8.3".</summary>
+        static string Pct(float value) => (Mathf.Round(value * 10f) / 10f).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
 
         void SetStat(int index, string value, Color color)
         {
@@ -614,6 +682,14 @@ namespace SlimeBreaker
                 hpSlider.value = (float)health.Current / health.Max;
             if (hpText != null)
                 hpText.text = health.Current + " / " + health.Max;
+            if (lifeIcons != null)
+            {
+                for (int i = 0; i < lifeIcons.Length; i++)
+                {
+                    if (lifeIcons[i] != null)
+                        lifeIcons[i].color = i < health.Lives ? LifeColor : SpentLifeColor;
+                }
+            }
         }
 
         void RefreshSkills()

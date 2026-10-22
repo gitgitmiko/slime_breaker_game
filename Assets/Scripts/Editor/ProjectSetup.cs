@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.29.0";
+        const string AppVersion = "0.30.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -61,6 +61,7 @@ namespace SlimeBreaker.EditorTools
         static Sprite pauseIconSprite;
         static Sprite arrowSprite;
         static Sprite checkSprite;
+        static Sprite heartSprite;
         static readonly Color AccentViolet = new Color(0.56f, 0.46f, 1f);
         static readonly Color AccentRed = new Color(0.86f, 0.22f, 0.3f);
         static readonly Color AccentGreen = new Color(0.36f, 0.86f, 0.46f);
@@ -2875,6 +2876,17 @@ namespace SlimeBreaker.EditorTools
             var damage = Text(safe, "Damage", "ATK 12", 22, TextAnchor.MiddleLeft, font);
             damage.fontStyle = FontStyle.Bold;
             damage.gameObject.SetActive(false);
+            // Lives: one heart per life under the level pill; spent lives turn grey.
+            var lives = new GameObject("Lives", typeof(RectTransform));
+            Place(lives, safe, new Vector2(0.3135f, 0.887f), new Vector2(112f, 32f));
+            var lifeIcons = new Image[RunRules.HeroLives];
+            for (int i = 0; i < lifeIcons.Length; i++)
+            {
+                lifeIcons[i] = Graphic(lives.transform, "Life" + i, heartSprite, new Color(1f, 0.32f, 0.42f));
+                lifeIcons[i].preserveAspect = true;
+                lifeIcons[i].gameObject.AddComponent<Shadow>().effectColor = new Color(0f, 0f, 0f, 0.6f);
+                Place(lifeIcons[i].gameObject, lives.transform, new Vector2((i + 0.5f) / lifeIcons.Length, 0.5f), new Vector2(32f, 32f));
+            }
             // Status card: glass panel, header, 2×5 grid of label/value cells.
             var statusPanel = new GameObject("Status", typeof(RectTransform), typeof(Image));
             ApplyImage(statusPanel.GetComponent<Image>(), cardSprite, Image.Type.Sliced, Color.white);
@@ -3219,6 +3231,35 @@ namespace SlimeBreaker.EditorTools
             Place(exit.gameObject, resultPanel.transform, new Vector2(0.64f, 0.24f), new Vector2(300f, 96f));
             resultPanel.SetActive(false);
 
+            // Out of lives: 5-second countdown ring, New Game or Continue (after a full-screen ad).
+            var continuePanel = Panel(safe, "Continue", font, "Nyawa Habis");
+            var continueTrack = Graphic(continuePanel.transform, "RingTrack", ringSprite, new Color(1f, 1f, 1f, 0.14f));
+            Place(continueTrack.gameObject, continuePanel.transform, new Vector2(0.5f, 0.52f), new Vector2(210f, 210f));
+            var continueRing = Graphic(continuePanel.transform, "Ring", ringSprite, new Color(1f, 0.78f, 0.3f, 0.95f));
+            continueRing.type = Image.Type.Filled;
+            continueRing.fillMethod = Image.FillMethod.Radial360;
+            continueRing.fillOrigin = (int)Image.Origin360.Top;
+            continueRing.fillClockwise = false;
+            continueRing.fillAmount = 1f;
+            Place(continueRing.gameObject, continuePanel.transform, new Vector2(0.5f, 0.52f), new Vector2(210f, 210f));
+            var continueCount = Text(continuePanel.transform, "Countdown", "5", 104, TextAnchor.MiddleCenter, font);
+            continueCount.fontStyle = FontStyle.Bold;
+            continueCount.raycastTarget = false;
+            Shade(continueCount);
+            Place(continueCount.gameObject, continuePanel.transform, new Vector2(0.5f, 0.52f), new Vector2(210f, 160f));
+            var continueHint = Text(continuePanel.transform, "Hint", "Lanjutkan dengan HP penuh dan 3 nyawa setelah menonton iklan", 28, TextAnchor.MiddleCenter, font);
+            continueHint.color = TextDim;
+            continueHint.raycastTarget = false;
+            Place(continueHint.gameObject, continuePanel.transform, new Vector2(0.5f, 0.36f), new Vector2(900f, 44f));
+            var newGame = Button(continuePanel.transform, "NewGame", "Game Baru", font, Color.white, dangerSprite);
+            Place(newGame.gameObject, continuePanel.transform, new Vector2(0.36f, 0.22f), new Vector2(320f, 96f));
+            var continueButton = Button(continuePanel.transform, "ContinueAd", "Lanjutkan", font, Color.white, goldSprite);
+            Place(continueButton.gameObject, continuePanel.transform, new Vector2(0.64f, 0.22f), new Vector2(320f, 96f));
+            var adBadge = Tag(continueButton.transform, "AdBadge", "IKLAN", AccentViolet, font, 15);
+            Place(adBadge.gameObject, continueButton.transform, new Vector2(0.86f, 0.98f), new Vector2(76f, 28f));
+            continuePanel.SetActive(false);
+            var ads = BuildAdOverlay(uiObject, font);
+
             var finder = uiObject.AddComponent<Wayfinder>();
             var portalArrow = WayArrow(safe, font, "PortalArrow", new Color(0.45f, 0.95f, 1f));
             var powerArrow = WayArrow(safe, font, "PowerArrow", new Color(1f, 0.82f, 0.3f));
@@ -3231,6 +3272,11 @@ namespace SlimeBreaker.EditorTools
             player.joystick = joystick;
             ui.hpSlider = hp;
             ui.hpText = hpText;
+            ui.lifeIcons = lifeIcons;
+            ui.continuePanel = continuePanel;
+            ui.continueCountdown = continueCount;
+            ui.continueRing = continueRing;
+            flow.ads = ads;
             ui.xpSlider = xp;
             ui.levelText = level;
             ui.floorText = floor;
@@ -3300,9 +3346,84 @@ namespace SlimeBreaker.EditorTools
             UnityEventTools.AddPersistentListener(menu.onClick, flow.QuitToMenu);
             UnityEventTools.AddPersistentListener(retry.onClick, flow.Restart);
             UnityEventTools.AddPersistentListener(exit.onClick, flow.QuitToMenu);
+            UnityEventTools.AddPersistentListener(newGame.onClick, flow.NewGame);
+            UnityEventTools.AddPersistentListener(continueButton.onClick, flow.ContinueWithAd);
             UnityEventTools.AddPersistentListener(dashButton.onClick, dash.QueueDash);
             canvas.sortingOrder = 0;
             return ui;
+        }
+
+        /// <summary>
+        /// Full-screen interstitial on its own top canvas (covers the notch area too). Until an ad SDK is added it
+        /// shows a house ad; the countdown ring turns into a close (X) button after <see cref="AdService.adSeconds"/>.
+        /// </summary>
+        static AdService BuildAdOverlay(GameObject host, Font font)
+        {
+            var canvas = Canvas(out var safe);
+            canvas.name = "AdCanvas";
+            canvas.sortingOrder = 100;
+            var root = new GameObject("Ad", typeof(RectTransform), typeof(Image), typeof(CanvasGroup));
+            root.transform.SetParent(canvas.transform, false);
+            Stretch(root.GetComponent<RectTransform>());
+            ApplyImage(root.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(0.05f, 0.03f, 0.11f, 1f));
+            safe.SetParent(root.transform, false);
+            Stretch(safe);
+            var glow = Graphic(safe, "Glow", circleSprite, new Color(0.56f, 0.4f, 1f, 0.22f));
+            Place(glow.gameObject, safe, new Vector2(0.5f, 0.53f), new Vector2(560f, 560f));
+            var art = new GameObject("Art", typeof(RectTransform));
+            Place(art, safe, new Vector2(0.5f, 0.53f), new Vector2(560f, 560f));
+            var staff = Graphic(art.transform, "Staff", AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Icons/ICON_Item_Staff.png"), Color.white);
+            staff.preserveAspect = true;
+            Place(staff.gameObject, art.transform, new Vector2(0.5f, 0.56f), new Vector2(300f, 300f));
+            string[] skills = { "Fire", "Ice", "Lightning", "Arcane" };
+            for (int i = 0; i < skills.Length; i++)
+            {
+                var icon = Graphic(art.transform, "Skill" + skills[i], AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Icons/ICON_Skill_" + skills[i] + ".png"), Color.white);
+                icon.preserveAspect = true;
+                Place(icon.gameObject, art.transform, new Vector2(0.2f + i * 0.2f, 0.1f), new Vector2(96f, 96f));
+            }
+            var title = Text(safe, "Title", "SLIME BREAKER", 88, TextAnchor.MiddleCenter, font);
+            title.fontStyle = FontStyle.Bold;
+            title.color = new Color(1f, 0.84f, 0.36f);
+            Shade(title);
+            Place(title.gameObject, safe, new Vector2(0.5f, 0.86f), new Vector2(1200f, 110f));
+            var line = Text(safe, "Line", "Kumpulkan staff Legend & Ultra, kalahkan 10 Boss Dumpling sampai lantai 100!", 32, TextAnchor.MiddleCenter, font);
+            Place(line.gameObject, safe, new Vector2(0.5f, 0.2f), new Vector2(1300f, 50f));
+            var cta = Tag(safe, "Cta", "MAIN TERUS", new Color(1f, 0.7f, 0.22f), font, 30);
+            Place(cta.gameObject, safe, new Vector2(0.5f, 0.1f), new Vector2(320f, 70f));
+            var label = Tag(safe, "AdLabel", "IKLAN", new Color(1f, 1f, 1f, 0.22f), font, 20);
+            Place(label.gameObject, safe, new Vector2(0.055f, 0.94f), new Vector2(110f, 40f));
+
+            var countdown = new GameObject("Countdown", typeof(RectTransform));
+            Place(countdown, safe, new Vector2(0.95f, 0.91f), new Vector2(96f, 96f));
+            var back = Graphic(countdown.transform, "Back", circleGlassSprite, Color.white);
+            Stretch(back.rectTransform);
+            var ring = Graphic(countdown.transform, "Ring", ringSprite, new Color(1f, 1f, 1f, 0.9f));
+            ring.type = Image.Type.Filled;
+            ring.fillMethod = Image.FillMethod.Radial360;
+            ring.fillOrigin = (int)Image.Origin360.Top;
+            ring.fillClockwise = false;
+            Stretch(ring.rectTransform);
+            ring.rectTransform.offsetMin = new Vector2(6f, 6f);
+            ring.rectTransform.offsetMax = new Vector2(-6f, -6f);
+            var count = Text(countdown.transform, "Value", "5", 40, TextAnchor.MiddleCenter, font);
+            count.fontStyle = FontStyle.Bold;
+            count.raycastTarget = false;
+            Stretch(count.rectTransform);
+            var close = Button(safe, "Close", "X", font, Color.white, circleGlassSprite);
+            Place(close.gameObject, safe, new Vector2(0.95f, 0.91f), new Vector2(96f, 96f));
+            close.GetComponentInChildren<Text>().fontSize = 44;
+
+            var ads = host.AddComponent<AdService>();
+            ads.group = root.GetComponent<CanvasGroup>();
+            ads.closeButton = close;
+            ads.countdown = countdown;
+            ads.countdownText = count;
+            ads.countdownRing = ring;
+            ads.art = art.GetComponent<RectTransform>();
+            ads.adSeconds = 5f;
+            root.SetActive(false);
+            return ads;
         }
 
         static RectTransform WayArrow(RectTransform parent, Font font, string name, Color color)
@@ -3372,7 +3493,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Slime Breaker";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 39;
+            PlayerSettings.Android.bundleVersionCode = 40;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.slimebreaker");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;
@@ -3671,6 +3792,7 @@ namespace SlimeBreaker.EditorTools
             pauseIconSprite = UiSprite("UI_Icon_Pause", whiteSprite);
             arrowSprite = UiSprite("UI_Icon_Arrow", whiteSprite);
             checkSprite = UiSprite("UI_Icon_Check", whiteSprite);
+            heartSprite = UiSprite("UI_Icon_Heart", whiteSprite);
             if (panelSprite == null || buttonSprite == null || whiteSprite == null)
                 throw new InvalidOperationException("Sprite UI tidak ter-load.");
         }

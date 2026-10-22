@@ -9,6 +9,8 @@ namespace SlimeBreaker
         public Slider hpSlider;
         public Slider xpSlider;
         public Text hpText;
+        /// <summary>One heart per life, left to right; spent lives turn grey.</summary>
+        public Image[] lifeIcons;
         public Text levelText;
         public Text floorText;
         public Slider floorProgress;
@@ -28,6 +30,10 @@ namespace SlimeBreaker
         public Image[] choiceRarityFills;
         public GameObject pausePanel;
         public GameObject resultPanel;
+        [Header("Out of lives")]
+        public GameObject continuePanel;
+        public Text continueCountdown;
+        public Image continueRing;
         public Text resultTitle;
         public Text resultBody;
         public Button pauseButton;
@@ -91,7 +97,10 @@ namespace SlimeBreaker
             dash = health != null ? health.GetComponent<DashController>() : null;
             skills = health != null ? health.GetComponent<SkillController>() : SkillController.Instance;
             if (health != null)
+            {
                 health.Changed += RefreshHealth;
+                health.LifeLost += OnLifeLost;
+            }
             if (skills != null)
                 skills.Changed += RefreshSkills;
             if (choiceButtons != null)
@@ -112,6 +121,7 @@ namespace SlimeBreaker
                 pausePanel.SetActive(false);
             if (resultPanel != null)
                 resultPanel.SetActive(false);
+            HideContinue();
             if (toastGroup != null)
                 toastGroup.alpha = 0f;
             if (bossWarningGroup != null)
@@ -124,9 +134,46 @@ namespace SlimeBreaker
         void OnDestroy()
         {
             if (health != null)
+            {
                 health.Changed -= RefreshHealth;
+                health.LifeLost -= OnLifeLost;
+            }
             if (skills != null)
                 skills.Changed -= RefreshSkills;
+        }
+
+        static readonly Color LifeColor = new Color(1f, 0.32f, 0.42f);
+        static readonly Color SpentLifeColor = new Color(0.3f, 0.3f, 0.38f, 0.75f);
+
+        void OnLifeLost()
+        {
+            if (health == null)
+                return;
+            ShowToast("Nyawa berkurang!  Sisa " + health.Lives, LifeColor);
+        }
+
+        public bool ContinueVisible => continuePanel != null && continuePanel.activeSelf;
+        public string ContinueCountdownText => continueCountdown != null ? continueCountdown.text : string.Empty;
+
+        public void ShowContinue(float secondsLeft, float total)
+        {
+            if (continuePanel != null)
+                continuePanel.SetActive(true);
+            SetContinueCountdown(secondsLeft, total);
+        }
+
+        public void HideContinue()
+        {
+            if (continuePanel != null)
+                continuePanel.SetActive(false);
+        }
+
+        public void SetContinueCountdown(float secondsLeft, float total)
+        {
+            if (continueCountdown != null)
+                continueCountdown.text = Mathf.CeilToInt(secondsLeft).ToString();
+            if (continueRing != null)
+                continueRing.fillAmount = total <= 0f ? 0f : Mathf.Clamp01(secondsLeft / total);
         }
 
         void Update()
@@ -635,6 +682,14 @@ namespace SlimeBreaker
                 hpSlider.value = (float)health.Current / health.Max;
             if (hpText != null)
                 hpText.text = health.Current + " / " + health.Max;
+            if (lifeIcons != null)
+            {
+                for (int i = 0; i < lifeIcons.Length; i++)
+                {
+                    if (lifeIcons[i] != null)
+                        lifeIcons[i].color = i < health.Lives ? LifeColor : SpentLifeColor;
+                }
+            }
         }
 
         void RefreshSkills()

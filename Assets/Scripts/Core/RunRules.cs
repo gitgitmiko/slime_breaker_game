@@ -21,6 +21,12 @@ namespace SlimeBreaker
         public const float SlimeHealthPerFloor = 0.1f;
         public const int BossDamagePerFloor = 3;
         public const float ArenaRadius = 22f;
+        /// <summary>Lives per run; HP reaching zero spends one and the hero gets back up with full HP.</summary>
+        public const int HeroLives = 3;
+        /// <summary>Seconds the "New Game / Continue" choice waits once every life is gone.</summary>
+        public const float ContinueSeconds = 5f;
+        /// <summary>Invulnerability after losing a life or continuing.</summary>
+        public const float ReviveInvulnerability = 2.5f;
 
         public static bool IsBossFloor(int floor)
         {

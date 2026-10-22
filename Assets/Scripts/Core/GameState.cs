@@ -9,6 +9,8 @@ namespace SlimeBreaker
         LevelUp,
         Paused,
         Victory,
-        Defeat
+        Defeat,
+        /// <summary>All lives gone: waiting for New Game / Continue (watch an ad).</summary>
+        OutOfLives
     }
 }

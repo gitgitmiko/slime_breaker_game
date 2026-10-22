@@ -10,7 +10,11 @@ namespace SlimeBreaker
         public int Current { get; private set; }
         public int Max { get; private set; }
         public bool IsDead { get; private set; }
+        /// <summary>Lives left this run (<see cref="RunRules.HeroLives"/> at the start).</summary>
+        public int Lives { get; private set; } = RunRules.HeroLives;
         public event Action Changed;
+        /// <summary>Raised when HP hits zero but a life was left: the hero gets back up with full HP.</summary>
+        public event Action LifeLost;
 
         /// <summary>Lifesteal shown so far as green numbers over the hero.</summary>
         public int ShownLifesteal { get; private set; }
@@ -153,12 +157,48 @@ namespace SlimeBreaker
                 camera.Shake(0.18f);
             GiveInvulnerability(0.35f);
             if (Current <= 0)
+                LoseLife();
+        }
+
+        void LoseLife()
+        {
+            Lives = Mathf.Max(0, Lives - 1);
+            if (Lives > 0)
             {
-                IsDead = true;
-                if (animator != null)
-                    animator.SetTrigger("Death");
-                GameFlowController.Instance?.EndRun(false);
+                Current = Max;
+                GiveInvulnerability(RunRules.ReviveInvulnerability);
+                VfxPlayer.Instance?.Play("levelup", transform.position + Vector3.up * 0.6f);
+                Changed?.Invoke();
+                LifeLost?.Invoke();
+                return;
             }
+            IsDead = true;
+            Changed?.Invoke();
+            if (animator != null)
+                animator.SetTrigger("Death");
+            GameFlowController.Instance?.OutOfLives();
+        }
+
+        /// <summary>Back on its feet after a continue: full HP, every life back, a moment of invulnerability.</summary>
+        public void Revive()
+        {
+            IsDead = false;
+            Lives = RunRules.HeroLives;
+            Current = Max;
+            invulnerableFor = RunRules.ReviveInvulnerability;
+            if (animator != null)
+            {
+                animator.Rebind();
+                animator.Update(0f);
+            }
+            VfxPlayer.Instance?.Play("levelup", transform.position + Vector3.up * 0.6f);
+            Changed?.Invoke();
+        }
+
+        public void RestoreLives(int lives)
+        {
+            Lives = lives > 0 ? Mathf.Min(lives, RunRules.HeroLives) : RunRules.HeroLives;
+            Changed?.Invoke();
         }
     }
 }

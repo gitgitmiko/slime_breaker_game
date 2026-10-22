@@ -29,6 +29,8 @@ namespace SlimeBreaker
         public int nextItemId = 1;
         /// <summary>Difficulty the run was started on (runs saved before difficulties existed were Hard).</summary>
         public int difficulty = 2;
+        /// <summary>Lives left (runs saved before lives existed start with the full count).</summary>
+        public int lives = RunRules.HeroLives;
 
         public ArenaTheme ToTheme()
         {

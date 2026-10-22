@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4521172458169509324}
   - component: {fileID: 1813440858757563765}
-  - component: {fileID: 258338000619113728}
+  - component: {fileID: 3944792822223047048}
   m_Layer: 8
   m_Name: OBS_RockCluster
   m_TagString: Untagged
@@ -56,7 +56,7 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.6661978
   m_Center: {x: 0, y: 0.3, z: 0}
---- !u!114 &258338000619113728
+--- !u!114 &3944792822223047048
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

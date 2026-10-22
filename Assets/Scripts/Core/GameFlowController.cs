@@ -17,6 +17,11 @@ namespace SlimeBreaker
         public RunManager run;
         public AudioService audioService;
         public PowerUpSpawner powerUps;
+        public AdService ads;
+
+        /// <summary>Seconds left on the New Game / Continue choice (counts only while no ad is showing).</summary>
+        public float ContinueTimeLeft { get; private set; }
+        public bool WatchingAd { get; private set; }
 
         int queuedLevelUps;
         UpgradeOffer[] currentChoices;
@@ -81,6 +86,7 @@ namespace SlimeBreaker
             SkillController.Instance?.RestoreFrom(data.skillKinds, data.skillLevels, catalog);
             Inventory.Instance?.Restore(data);
             PlayerHealth.Instance?.Restore(data.hp);
+            PlayerHealth.Instance?.RestoreLives(data.lives);
         }
 
         void OnDestroy()
@@ -101,9 +107,66 @@ namespace SlimeBreaker
             PersistRun();
         }
 
+        void Update()
+        {
+            if (State != GameState.OutOfLives || WatchingAd)
+                return;
+            ContinueTimeLeft = Mathf.Max(0f, ContinueTimeLeft - Time.unscaledDeltaTime);
+            ui?.SetContinueCountdown(ContinueTimeLeft, RunRules.ContinueSeconds);
+            if (ContinueTimeLeft <= 0f)
+                EndRun(false);
+        }
+
+        /// <summary>Every life is gone: freeze and offer New Game or Continue (after a full-screen ad) for a few seconds.</summary>
+        public void OutOfLives()
+        {
+            if (State == GameState.Victory || State == GameState.Defeat || State == GameState.OutOfLives)
+                return;
+            State = GameState.OutOfLives;
+            Time.timeScale = 0f;
+            WatchingAd = false;
+            ContinueTimeLeft = RunRules.ContinueSeconds;
+            ui?.HideLevelUp();
+            ui?.ShowContinue(ContinueTimeLeft, RunRules.ContinueSeconds);
+        }
+
+        /// <summary>"Game Baru": the run ends as a defeat (gold is banked) and a fresh run starts.</summary>
+        public void NewGame()
+        {
+            if (State != GameState.OutOfLives || WatchingAd)
+                return;
+            EndRun(false);
+            Restart();
+        }
+
+        /// <summary>"Lanjutkan": a full-screen ad plays; when it is closed the hero is back with full HP and every life.</summary>
+        public void ContinueWithAd()
+        {
+            if (State != GameState.OutOfLives || WatchingAd)
+                return;
+            WatchingAd = true;
+            ui?.HideContinue();
+            audioService?.Play("ui");
+            if (ads != null)
+                ads.ShowInterstitial(FinishContinue);
+            else
+                FinishContinue();
+        }
+
+        void FinishContinue()
+        {
+            WatchingAd = false;
+            if (State != GameState.OutOfLives)
+                return;
+            PlayerHealth.Instance?.Revive();
+            State = GameState.Playing;
+            Time.timeScale = 1f;
+            PersistRun();
+        }
+
         public void BeginBossIntro()
         {
-            if (State == GameState.Victory || State == GameState.Defeat)
+            if (State == GameState.Victory || State == GameState.Defeat || State == GameState.OutOfLives)
                 return;
             State = GameState.BossIntro;
         }
@@ -118,7 +181,7 @@ namespace SlimeBreaker
 
         public void BeginLevelUp()
         {
-            if (State == GameState.Victory || State == GameState.Defeat || State == GameState.BossIntro)
+            if (State == GameState.Victory || State == GameState.Defeat || State == GameState.BossIntro || State == GameState.OutOfLives)
                 return;
             if (Stats == null || !Stats.TryLevelUp())
                 return;
@@ -209,6 +272,8 @@ namespace SlimeBreaker
                 return;
             State = victory ? GameState.Victory : GameState.Defeat;
             Time.timeScale = 0f;
+            WatchingAd = false;
+            ui?.HideContinue();
             RunSaveService.Clear();
             var save = SaveService.Load();
             int floor = StageManager.Instance != null ? StageManager.Instance.Floor : 1;
@@ -281,7 +346,8 @@ namespace SlimeBreaker
                 stats = Stats ?? new RunStats(),
                 elapsed = run != null ? run.Elapsed : 0f,
                 xp = XPManager.Instance != null ? XPManager.Instance.Xp : 0,
-                hp = PlayerHealth.Instance != null ? PlayerHealth.Instance.Current : (Stats != null ? Stats.TotalMaxHealth : 100)
+                hp = PlayerHealth.Instance != null ? PlayerHealth.Instance.Current : (Stats != null ? Stats.TotalMaxHealth : 100),
+                lives = PlayerHealth.Instance != null ? PlayerHealth.Instance.Lives : RunRules.HeroLives
             };
             var stage = StageManager.Instance;
             if (stage != null)

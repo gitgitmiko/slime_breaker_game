@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4046273953242263363}
   - component: {fileID: 1482405498467859944}
-  - component: {fileID: 4177083922296387393}
+  - component: {fileID: 2672599228114555877}
   m_Layer: 8
   m_Name: OBS_Boulder
   m_TagString: Untagged
@@ -55,7 +55,7 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.7681023
   m_Center: {x: 0, y: 0.3887902, z: 0}
---- !u!114 &4177083922296387393
+--- !u!114 &2672599228114555877
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

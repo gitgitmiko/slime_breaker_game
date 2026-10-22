@@ -276,6 +276,7 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 44/44; APK 0.27.0 (versionCode 37): geser di separuh kanan layar memutar kamera.
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 44/44; APK 0.28.0 (versionCode 38): orbit kamera dihaluskan + bisa atas/bawah, hero lebih cerah (warna lebih jenuh + emisi lembut).
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 31/31; PlayMode 45/45; APK 0.29.0 (versionCode 39): pengaturan arah rotasi kamera Normal (bawaan) / Inverted.
+- Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 32/32; PlayMode 48/48; APK `SLIMEBREAKER_APK_OK` 0.30.0 (versionCode 40): 3 nyawa per run, panel Nyawa Habis (hitung mundur 5 detik, Game Baru / Lanjutkan), iklan layar penuh (house ad `AdService`) sebelum lanjut. Screenshot `30_life_lost`, `31_continue_countdown`, `32_ad_fullscreen`, `33_ad_close`.
 
 ## Pasang di HP
 

@@ -6,7 +6,17 @@ Satu run berlangsung di arena radius 22 m selama **100 lantai**. Level hero terp
 
 ## Loop
 
-Menu → arena lantai 1 (hutan siang cerah) → gerak dan dash → penyihir otomatis menembakkan bolt sihir pelacak **hanya saat diam** ke musuh terdekat yang terlihat (jangkauan 4,4 m; batu/pohon memblokir tembakan) → orb EXP → setiap naik **level hero**, serangan dasar **+10**, lalu permainan jeda dan menawarkan 3 upgrade (hero max Lv 999) → setiap kelipatan 5 **level hero** satu kristal power-up muncul di map yang sama → lantai N butuh **N×10** slime (lantai 1 = 10, lantai 2 = 20, …) sebelum **pintu** muncul; hero masuk dulu baru naik lantai → setiap kelipatan 10 **lantai** slime biasa lenyap, peringatan **BOSS LANTAI N**, kamera zoom ke bos, lalu pertarungan (boss memanggil 10 slime kecil tiap 20 detik) → Royal Slime di lantai 100 = tamat → emas disimpan → upgrade permanen di menu. Keluar di tengah run menyimpan progres ke `slimebreaker-run.json`; tombol **Lanjutkan** di menu memulihkan lantai, level, skill, HP, dan EXP.
+Menu → arena lantai 1 (hutan siang cerah) → gerak dan dash → penyihir otomatis menembakkan bolt sihir pelacak **hanya saat diam** ke musuh terdekat yang terlihat (jangkauan 4,4 m; batu/pohon memblokir tembakan) → orb EXP → setiap naik **level hero**, serangan dasar **+10**, lalu permainan jeda dan menawarkan 3 upgrade (hero max Lv 999) → setiap kelipatan 5 **level hero** satu kristal power-up muncul di map yang sama → lantai N butuh **N×10** slime (lantai 1 = 10, lantai 2 = 20, …) sebelum **pintu** muncul; hero masuk dulu baru naik lantai → setiap kelipatan 10 **lantai** slime biasa lenyap, peringatan **BOSS LANTAI N**, kamera zoom ke bos, lalu pertarungan (boss memanggil 10 slime kecil tiap 20 detik) → Royal Slime di lantai 100 = tamat → emas disimpan → upgrade permanen di menu.
+
+### Nyawa dan lanjutkan
+
+Hero punya **3 nyawa** per run (hati merah di bawah pil Lv; nyawa terpakai jadi abu-abu). HP habis memakai satu nyawa: hero langsung bangkit dengan HP penuh, kebal 2,5 detik, dan toast **Nyawa berkurang!**. Saat nyawa terakhir habis, arena beku dan panel **Nyawa Habis** muncul dengan hitung mundur **5 detik** (cincin emas):
+
+- **Game Baru** — run berakhir sebagai kekalahan (emas tetap masuk), arena dimuat ulang dari lantai 1.
+- **Lanjutkan** — iklan layar penuh tampil (audio game dijeda, hitung mundur panel berhenti). Tombol tutup (X) baru muncul setelah 5 detik; setelah ditutup hero bangkit dengan HP penuh dan 3 nyawa lagi, lantai/level/item tetap.
+- Hitung mundur habis tanpa pilihan → layar hasil **Kalah** seperti biasa.
+
+Nyawa ikut tersimpan di run-save (`RunSave.lives`; save lama = 3). Belum ada SDK jaringan iklan di proyek, jadi `AdService` menampilkan iklan internal (house ad) layar penuh; SDK seperti AdMob bisa dipasang lewat `AdService.Provider` tanpa mengubah alur. Keluar di tengah run menyimpan progres ke `slimebreaker-run.json`; tombol **Lanjutkan** di menu memulihkan lantai, level, skill, HP, dan EXP.
 
 Hero adalah penyihir chibi bertopi raksasa dengan rambut bob pirang-merah muda (lihat `docs/art_direction.md`). Serangan dasar dianimasikan sebagai pukulan tongkat; bolt sihir lepas tepat saat tongkat menghantam. Mengambil power-up atau Boss Breaker memutar animasi Cast; mengalahkan boss memutar Victory. Menu utama menampilkan hero dengan animasi Menu (melambai, memutar tongkat) yang berayun pelan menghadap kamera.
 

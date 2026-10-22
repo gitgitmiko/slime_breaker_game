@@ -2163,6 +2163,180 @@ namespace SlimeBreaker.Tests
             Assert.IsNotNull(QualitySettings.renderPipeline);
         }
 
+        /// <summary>Clears enemies and spawning so only the test decides when the hero gets hurt.</summary>
+        static void QuietArena()
+        {
+            foreach (var spawner in Object.FindObjectsByType<EnemySpawner>(FindObjectsSortMode.None))
+                spawner.enabled = false;
+            foreach (var enemy in new List<EnemyHealth>(EnemyHealth.Active))
+            {
+                if (enemy != null)
+                    Object.Destroy(enemy.gameObject);
+            }
+            foreach (var shot in Object.FindObjectsByType<HostileProjectile>(FindObjectsSortMode.None))
+                Object.Destroy(shot.gameObject);
+        }
+
+        /// <summary>Waits out the hero's invulnerability, then deals more damage than the HP bar holds.</summary>
+        static IEnumerator EmptyHealthBar(PlayerHealth hero)
+        {
+            float t = 0f;
+            while (hero.IsInvulnerable && !hero.IsDead && t < 6f)
+            {
+                yield return null;
+                t += Time.unscaledDeltaTime;
+            }
+            Assert.IsFalse(hero.IsInvulnerable, "hero stayed invulnerable");
+            hero.TakeDamage(999999);
+            yield return null;
+        }
+
+        static IEnumerator SpendAllLives(PlayerHealth hero)
+        {
+            while (hero.Lives > 0 && !hero.IsDead)
+                yield return EmptyHealthBar(hero);
+        }
+
+        [UnityTest]
+        public IEnumerator HeroHasThreeLivesThenContinuesAfterAFullScreenAd()
+        {
+            yield return null;
+            QuietArena();
+            var flow = GameFlowController.Instance;
+            var hero = PlayerHealth.Instance;
+            var ui = Object.FindAnyObjectByType<UIController>();
+            Assert.AreEqual(3, RunRules.HeroLives);
+            Assert.AreEqual(RunRules.HeroLives, hero.Lives, "a run starts with three lives");
+            Assert.AreEqual(RunRules.HeroLives, ui.lifeIcons.Length, "HUD shows one heart per life");
+            Assert.IsNotNull(ui.lifeIcons[0].sprite);
+            Assert.AreEqual("UI_Icon_Heart", ui.lifeIcons[0].sprite.name);
+
+            yield return EmptyHealthBar(hero);
+            Assert.AreEqual(2, hero.Lives, "emptying the HP bar should spend one life");
+            Assert.IsFalse(hero.IsDead);
+            Assert.AreEqual(hero.Max, hero.Current, "the hero gets back up with full HP");
+            Assert.AreEqual(GameState.Playing, flow.State);
+            Assert.IsTrue(hero.IsInvulnerable, "a lost life gives a moment of invulnerability");
+            Assert.AreEqual(2, flow.CaptureRun().lives, "lives are saved with the run");
+            Assert.Less(ui.lifeIcons[2].color.r, 0.5f, "spent life heart should turn grey");
+            Assert.Greater(ui.lifeIcons[1].color.r, 0.9f, "remaining life heart should stay red");
+            Capture("30_life_lost");
+
+            yield return SpendAllLives(hero);
+            Assert.AreEqual(0, hero.Lives);
+            Assert.IsTrue(hero.IsDead);
+            Assert.AreEqual(GameState.OutOfLives, flow.State, "no lives left should open the continue choice, not end the run");
+            Assert.AreEqual(0f, Time.timeScale, "the arena freezes while the choice is open");
+            Assert.IsTrue(ui.ContinueVisible, "continue panel did not open");
+            Assert.AreEqual("5", ui.ContinueCountdownText);
+            yield return new WaitForSecondsRealtime(1.3f);
+            Assert.Less(flow.ContinueTimeLeft, 4f, "countdown did not run");
+            Assert.Greater(flow.ContinueTimeLeft, 2.5f);
+            Assert.AreEqual(Mathf.CeilToInt(flow.ContinueTimeLeft).ToString(), ui.ContinueCountdownText);
+            Capture("31_continue_countdown");
+
+            var ads = AdService.Instance;
+            Assert.IsNotNull(ads, "GameArena has no AdService");
+            Assert.AreSame(ads, flow.ads);
+            ads.adSeconds = 1.5f;
+            var buttons = ui.continuePanel.GetComponentsInChildren<Button>(true);
+            Button continueButton = null;
+            foreach (var button in buttons)
+            {
+                if (button.name == "ContinueAd")
+                    continueButton = button;
+            }
+            Assert.IsNotNull(continueButton, "continue panel has no Lanjutkan button");
+            continueButton.onClick.Invoke();
+            yield return null;
+            Assert.IsTrue(ads.IsShowing, "Lanjutkan did not show an ad");
+            Assert.IsFalse(ui.ContinueVisible, "continue panel should hide behind the ad");
+            Assert.IsTrue(AudioListener.pause, "game audio should pause during the ad");
+            var adRect = ads.group.GetComponent<RectTransform>();
+            Assert.AreEqual(Vector2.zero, adRect.anchorMin, "ad must fill the screen");
+            Assert.AreEqual(Vector2.one, adRect.anchorMax, "ad must fill the screen");
+            var adCanvas = ads.group.GetComponentInParent<Canvas>().rootCanvas;
+            foreach (var canvas in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+            {
+                if (canvas.isRootCanvas && canvas != adCanvas)
+                    Assert.Greater(adCanvas.sortingOrder, canvas.sortingOrder, "ad canvas must be on top of " + canvas.name);
+            }
+            Assert.AreEqual(1f, ads.group.GetComponent<Image>().color.a, 0.001f, "ad background must be opaque");
+            Assert.IsFalse(ads.closeButton.gameObject.activeSelf, "ad can be closed before its countdown ends");
+            float frozen = flow.ContinueTimeLeft;
+            ads.Close();
+            Assert.IsTrue(ads.IsShowing, "ad closed early");
+            Capture("32_ad_fullscreen");
+            yield return new WaitForSecondsRealtime(1.7f);
+            Assert.AreEqual(frozen, flow.ContinueTimeLeft, 0.001f, "the continue countdown should not run during the ad");
+            Assert.AreEqual(GameState.OutOfLives, flow.State, "the run ended while the ad was playing");
+            Assert.IsTrue(ads.closeButton.gameObject.activeSelf, "close button never appeared");
+            Capture("33_ad_close");
+            ads.closeButton.onClick.Invoke();
+            yield return null;
+            Assert.IsFalse(ads.IsShowing);
+            Assert.IsFalse(AudioListener.pause, "audio stayed paused after the ad");
+            Assert.AreEqual(GameState.Playing, flow.State, "closing the ad should continue the run");
+            Assert.AreEqual(1f, Time.timeScale);
+            Assert.IsFalse(hero.IsDead);
+            Assert.AreEqual(RunRules.HeroLives, hero.Lives, "continue restores every life");
+            Assert.AreEqual(hero.Max, hero.Current, "continue restores full HP");
+            Assert.IsTrue(hero.IsInvulnerable);
+            Assert.Greater(ui.lifeIcons[2].color.r, 0.9f);
+        }
+
+        [UnityTest]
+        public IEnumerator OutOfLivesCountdownEndsTheRunWhenNothingIsChosen()
+        {
+            yield return null;
+            QuietArena();
+            var flow = GameFlowController.Instance;
+            var ui = Object.FindAnyObjectByType<UIController>();
+            yield return SpendAllLives(PlayerHealth.Instance);
+            Assert.AreEqual(GameState.OutOfLives, flow.State);
+            float t = 0f;
+            while (flow.State == GameState.OutOfLives && t < 7f)
+            {
+                yield return null;
+                t += Time.unscaledDeltaTime;
+            }
+            Assert.AreEqual(GameState.Defeat, flow.State, "countdown never ended the run");
+            Assert.That(t, Is.InRange(4.5f, 6f), "countdown should last about 5 seconds");
+            Assert.IsFalse(ui.ContinueVisible);
+            Assert.IsTrue(ui.resultPanel.activeSelf, "result panel did not open after the countdown");
+            Assert.IsNull(RunSaveService.PeekResume(), "a finished run should not stay resumable");
+        }
+
+        [UnityTest]
+        public IEnumerator OutOfLivesNewGameStartsAFreshRun()
+        {
+            yield return null;
+            QuietArena();
+            var flow = GameFlowController.Instance;
+            int goldBefore = SaveService.Load().gold;
+            yield return SpendAllLives(PlayerHealth.Instance);
+            Assert.AreEqual(GameState.OutOfLives, flow.State);
+            Button newGame = null;
+            foreach (var button in flow.ui.continuePanel.GetComponentsInChildren<Button>(true))
+            {
+                if (button.name == "NewGame")
+                    newGame = button;
+            }
+            Assert.IsNotNull(newGame, "continue panel has no Game Baru button");
+            newGame.onClick.Invoke();
+            yield return null;
+            yield return null;
+            var fresh = GameFlowController.Instance;
+            Assert.IsNotNull(fresh);
+            Assert.AreNotSame(flow, fresh, "Game Baru did not reload the arena");
+            Assert.AreEqual(GameState.Playing, fresh.State);
+            Assert.AreEqual(1f, Time.timeScale);
+            Assert.AreEqual(RunRules.HeroLives, PlayerHealth.Instance.Lives);
+            Assert.IsFalse(PlayerHealth.Instance.IsDead);
+            Assert.AreEqual(1, StageManager.Instance.Floor);
+            Assert.Greater(SaveService.Load().gold, goldBefore, "the ended run should still bank its gold");
+        }
+
         static void AssertDumplingLook(EnemyHealth boss)
         {
             Assert.IsNotNull(boss);

@@ -569,6 +569,14 @@ def panels():
     draw = ImageDraw.Draw(img)
     draw.line([(s * 0.22, s * 0.54), (s * 0.42, s * 0.74), (s * 0.78, s * 0.3)], fill=(255, 255, 255, 255), width=int(s * 0.12), joint="curve")
     finish(img, os.path.join(out, "UI_Icon_Check.png"))
+    # Heart for the HUD lives row (white, tinted red/grey in Unity).
+    img = canvas(96, 96)
+    draw = ImageDraw.Draw(img)
+    r = s * 0.2
+    draw.ellipse((s * 0.5 - 2 * r, s * 0.2, s * 0.5, s * 0.2 + 2 * r), fill=(255, 255, 255, 255))
+    draw.ellipse((s * 0.5, s * 0.2, s * 0.5 + 2 * r, s * 0.2 + 2 * r), fill=(255, 255, 255, 255))
+    draw.polygon([(s * 0.5 - 2 * r + s * 0.012, s * 0.2 + r * 1.3), (s * 0.5 + 2 * r - s * 0.012, s * 0.2 + r * 1.3), (s * 0.5, s * 0.84)], fill=(255, 255, 255, 255))
+    finish(img, os.path.join(out, "UI_Icon_Heart.png"))
 
 
 def modern_ui():

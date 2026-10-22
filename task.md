@@ -211,6 +211,8 @@
 - Separuh kanan layar: geser ke samping memutar kamera mengelilingi hero (`CameraDragZone`, `FollowCamera.Yaw`); gerak joystick relatif kamera jadi ikut berputar; tombol HUD tetap di atas zona. APK 0.27.0.
 - Orbit kamera dihaluskan (hanya titik fokus yang tertinggal; sudut diredam) dan ditambah sudut atas/bawah (32°–78°); hero dicerahkan (warna lebih jenuh, emisi lembut pada material hero). APK 0.28.0.
 - Pengaturan > Kamera: Normal (bawaan) / Inverted untuk geser rotasi kamera; arah sebelumnya (dunia mengikuti jari) kini bernama Inverted. APK 0.29.0.
+- 3 nyawa per run (hati di HUD); nyawa habis → hitung mundur 5 detik: Game Baru atau Lanjutkan setelah iklan layar penuh (house ad `AdService`, belum ada SDK iklan). APK 0.30.0.
+- Berikutnya untuk iklan sungguhan: pasang SDK (mis. Google Mobile Ads) + ID unit iklan dari akun AdMob, daftarkan sebagai `AdService.Provider`.
 
 ## Berikutnya
 

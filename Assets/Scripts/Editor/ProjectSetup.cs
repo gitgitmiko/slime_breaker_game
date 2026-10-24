@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.32.0";
+        const string AppVersion = "0.32.1";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -3558,7 +3558,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Dumpling Witch";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 43;
+            PlayerSettings.Android.bundleVersionCode = 44;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.dumplingwitch");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

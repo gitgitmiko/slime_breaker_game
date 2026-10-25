@@ -4,6 +4,7 @@
 
 | Syarat Play | Status |
 |---|---|
+| Nama dan paket | **Dumpling Witch**, paket `com.gitgitmiko.dumplingwitch` (sejak 0.32.0; paket tidak bisa diganti setelah upload pertama). Nama kode proyek/repo tetap Slime Breaker. |
 | Format Android App Bundle (`.aab`) | `ProjectSetup.BuildAndroidAab` → `Builds/SlimeBreaker.aab` (log `SLIMEBREAKER_AAB_OK`) |
 | Ditandatangani upload key | `~/.slimebreaker/upload.keystore` (alias `upload`, RSA 4096, PKCS12), kata sandi di `~/.slimebreaker/upload-keystore.properties` (chmod 600). **Di luar repo, jangan di-commit.** Path lain lewat env `SLIMEBREAKER_KEYSTORE_PROPERTIES`. Setelah build, password dikosongkan lagi dari `ProjectSettings.asset`. |
 | Target API terbaru | `targetSdkVersion` = API 36 (Android 16), `minSdk` 25 |
@@ -11,9 +12,10 @@
 | Ikon aplikasi | Adaptive (background + foreground), round, legacy dari `asset_work/output/UI/AppIcon/` |
 | Tanpa izin sensitif | Tidak ada izin lokasi/kamera/mikrofon/kontak; Unity Analytics/Cloud mati. SDK AdMob menambah `INTERNET`, `ACCESS_NETWORK_STATE`, dan `AD_ID` |
 | Ikon 512, feature graphic, screenshot | `asset_work/store/icon_512.png`, `feature_graphic_1024x500.png`, `screenshots/*.png` (1280×720) |
-| Kebijakan privasi | `docs/store/privacy-policy.html` (ID + EN) — harus di-host di URL publik |
+| Situs developer | **https://gitgitdev.my.id** (repo `~/github-repos/gitgitdev-site`). Halaman game: `https://gitgitdev.my.id/dumpling-witch/` |
+| Kebijakan privasi | **https://gitgitdev.my.id/dumpling-witch/privacy/** (ID + EN; sumber di repo situs, `docs/store/privacy-policy.html` hanya salinan lama) |
 | AdMob | Google Mobile Ads 11.5.0 (OpenUPM) + UMP consent. App ID `ca-app-pub-6808667639334235~3733831999`, unit Rewarded `ca-app-pub-6808667639334235/8407574176` (`Continue_Revive`). AAB memakai unit asli; APK sideload dibangun dengan `SB_ADMOB_TEST` dan hanya meminta iklan uji Google. |
-| app-ads.txt | `docs/store/app-ads.txt` — taruh di root domain situs developer (mis. `https://gitgitmiko.my.id/app-ads.txt`) dan isi domain itu sebagai *Website* di Play Console |
+| app-ads.txt | **https://gitgitdev.my.id/app-ads.txt** (aktif). Isi `https://gitgitdev.my.id` sebagai *Website* di Play Console |
 
 Bangun ulang aset store:
 
@@ -39,8 +41,8 @@ Simpan cadangan `~/.slimebreaker/upload.keystore` **dan** `upload-keystore.prope
 ## Langkah di Play Console (dikerjakan pemilik akun)
 
 1. **Akun developer** di play.google.com/console — biaya sekali USD 25, verifikasi identitas (KTP) dan nomor HP.
-2. **Create app**: nama *Slime Breaker*, bahasa default Indonesia, *Game*, *Free*, centang deklarasi.
-3. **Host kebijakan privasi** di URL publik (mis. `https://gitgitmiko.my.id/slimebreaker/privacy`, GitHub Pages, atau Google Sites), lalu isi di *App content → Privacy policy*.
+2. **Create app**: nama *Dumpling Witch*, bahasa default Indonesia, *Game*, *Free*, centang deklarasi.
+3. **Kebijakan privasi**: isi `https://gitgitdev.my.id/dumpling-witch/privacy/` di *App content → Privacy policy*; *Store settings → Website*: `https://gitgitdev.my.id`.
 4. **App content**:
    - *Ads*: **Ya, berisi iklan** (iklan reward AdMob saat pemain memilih Lanjutkan).
    - *Advertising ID*: **Ya**, dipakai untuk *Advertising or marketing*.
@@ -49,7 +51,7 @@ Simpan cadangan `~/.slimebreaker/upload.keystore` **dan** `upload-keystore.prope
    - *Target audience*: **13+** (13–15, 16–17, 18+). Jangan pilih di bawah 13 kecuali siap memenuhi *Families Policy* (SDK iklan bersertifikat keluarga, tanpa iklan personal).
    - *Data safety* (AdMob sudah terpasang sejak 0.31.0): mengumpulkan *Device or other IDs* (advertising ID), *App info and performance* (crash/diagnostik) dan *App interactions*, dibagikan ke Google untuk *Advertising or marketing* dan *Fraud prevention*; data dienkripsi saat transit; pengguna tidak bisa meminta penghapusan lewat aplikasi (tidak ada akun).
    - *Government app*, *Financial features*, *Health*: Tidak.
-5. **Store listing**: teks di bawah, ikon 512, feature graphic, minimal 2 screenshot ponsel (sudah ada 8). Kategori *Action* atau *Role Playing*; email kontak.
+5. **Store listing**: teks di bawah, ikon 512, feature graphic, minimal 2 screenshot ponsel (sudah ada 8). Kategori *Action* atau *Role Playing*; email kontak `support@gitgitdev.my.id` (Cloudflare Email Routing → Gmail).
 6. **Testing → Closed testing** (wajib untuk akun pribadi yang dibuat setelah November 2023): buat track, upload `SlimeBreaker.aab`, undang **minimal 12 penguji** (email Google) yang tetap ikut **14 hari berturut-turut**. Setelah itu ajukan *Production access*.
 7. **Production**: buat rilis dari AAB yang sama atau yang lebih baru, isi catatan rilis, kirim untuk review (biasanya beberapa hari).
 
@@ -59,7 +61,7 @@ Aplikasi AdMob *Dumpling Witch* sudah dibuat tanpa tautan store. Alur di game: L
 
 ## Teks store listing
 
-**Nama aplikasi** (≤30): `Slime Breaker`
+**Nama aplikasi** (≤30): `Dumpling Witch`
 
 **Deskripsi singkat** (≤80): `Penyihir chibi vs ribuan slime! Tembus 100 lantai dan kalahkan 10 boss dumpling.`
 

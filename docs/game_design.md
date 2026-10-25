@@ -1,6 +1,6 @@
 # Desain gameplay
 
-Slime Breaker adalah action roguelite 3D offline untuk Android, landscape, target 60 fps.
+Dumpling Witch (nama kode proyek: Slime Breaker) adalah action roguelite 3D offline untuk Android, landscape, target 60 fps.
 
 Satu run berlangsung di arena radius 22 m selama **100 lantai**. Level hero terpisah, maksimum **999**. Setiap lantai, cuaca dan siang/malam berganti. Setiap 10 lantai biome map berganti. Setiap 10 lantai muncul slime boss unik. Mengalahkan **Royal Slime** di lantai 100 menamatkan permainan.
 

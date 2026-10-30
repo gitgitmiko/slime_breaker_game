@@ -16,6 +16,8 @@ namespace SlimeBreaker
         public Text joystickLabel;
         public Button cameraButton;
         public Text cameraLabel;
+        public Button fpsButton;
+        public Text fpsLabel;
         public Text title;
         public Slider musicSlider;
         public Slider sfxSlider;
@@ -40,6 +42,8 @@ namespace SlimeBreaker
                 joystickButton.onClick.AddListener(ToggleJoystick);
             if (cameraButton != null)
                 cameraButton.onClick.AddListener(ToggleCamera);
+            if (fpsButton != null)
+                fpsButton.onClick.AddListener(ToggleFps);
             if (musicSlider != null)
                 musicSlider.onValueChanged.AddListener(value => AudioService.Instance?.SetMusicLevel(value));
             if (sfxSlider != null)
@@ -99,8 +103,20 @@ namespace SlimeBreaker
             Refresh();
         }
 
+        public void ToggleFps()
+        {
+            AudioService.Instance?.Play("ui");
+            var graphics = GraphicsService.Instance;
+            graphics?.SetFps(graphics.Fps == 60 ? 30 : 60);
+            Refresh();
+        }
+
         void Refresh()
         {
+            int fps = GraphicsService.CurrentFps;
+            if (fpsLabel != null)
+                fpsLabel.text = "FPS: " + fps;
+            Mark(fpsButton, fps == 60);
             bool inverted = ControlSettings.InvertCamera;
             if (cameraLabel != null)
                 cameraLabel.text = "Kamera: " + (inverted ? "Inverted" : "Normal");
@@ -111,7 +127,7 @@ namespace SlimeBreaker
             Mark(joystickButton, free);
             int current = GraphicsService.Instance != null ? GraphicsService.Instance.Level : GraphicsService.High;
             if (title != null)
-                title.text = "Grafis: " + GraphicsService.Label(current) + " · " + GraphicsService.For(current).targetFps + " FPS";
+                title.text = "Grafis: " + GraphicsService.Label(current);
             Mark(lowButton, current == GraphicsService.Low);
             Mark(mediumButton, current == GraphicsService.Medium);
             Mark(highButton, current == GraphicsService.High);

@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.34.0";
+        const string AppVersion = "0.34.1";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -2923,15 +2923,17 @@ namespace SlimeBreaker.EditorTools
             Place(medium.gameObject, dim.transform, new Vector2(0.5f, 0.625f), new Vector2(276f, 84f));
             var high = Button(dim.transform, "High", "High", font, Color.white, ghostSprite);
             Place(high.gameObject, dim.transform, new Vector2(0.7f, 0.625f), new Vector2(276f, 84f));
-            var controlLabel = Text(dim.transform, "ControlLabel", "KONTROL", 20, TextAnchor.MiddleLeft, font);
+            var controlLabel = Text(dim.transform, "ControlLabel", "KONTROL & FPS", 20, TextAnchor.MiddleLeft, font);
             controlLabel.fontStyle = FontStyle.Bold;
             controlLabel.color = TextDim;
             Place(controlLabel.gameObject, dim.transform, new Vector2(0.5f, 0.545f), new Vector2(860f, 30f));
             // Joystick mode toggle: Fixed (default) / Free.
             var joystickToggle = Button(dim.transform, "JoystickMode", "Joystick: Fixed", font, Color.white, ghostSprite);
-            Place(joystickToggle.gameObject, dim.transform, new Vector2(0.5f - 0.1146f, 0.48f), new Vector2(420f, 80f));
+            Place(joystickToggle.gameObject, dim.transform, new Vector2(0.3f, 0.48f), new Vector2(276f, 80f));
             var cameraToggle = Button(dim.transform, "CameraMode", "Kamera: Normal", font, Color.white, ghostSprite);
-            Place(cameraToggle.gameObject, dim.transform, new Vector2(0.5f + 0.1146f, 0.48f), new Vector2(420f, 80f));
+            Place(cameraToggle.gameObject, dim.transform, new Vector2(0.5f, 0.48f), new Vector2(276f, 80f));
+            var fpsToggle = Button(dim.transform, "FpsMode", "FPS: 30", font, Color.white, ghostSprite);
+            Place(fpsToggle.gameObject, dim.transform, new Vector2(0.7f, 0.48f), new Vector2(276f, 80f));
             // Sound: BGM and game-sound volume sliders.
             var soundLabel = Text(dim.transform, "SoundLabel", "SUARA", 20, TextAnchor.MiddleLeft, font);
             soundLabel.fontStyle = FontStyle.Bold;
@@ -2953,6 +2955,8 @@ namespace SlimeBreaker.EditorTools
             panel.joystickLabel = joystickToggle.GetComponentInChildren<Text>();
             panel.cameraButton = cameraToggle;
             panel.cameraLabel = cameraToggle.GetComponentInChildren<Text>();
+            panel.fpsButton = fpsToggle;
+            panel.fpsLabel = fpsToggle.GetComponentInChildren<Text>();
             panel.title = title;
             panel.musicSlider = musicSlider;
             panel.sfxSlider = sfxSlider;
@@ -3621,7 +3625,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Dumpling Witch";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 46;
+            PlayerSettings.Android.bundleVersionCode = 47;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.dumplingwitch");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

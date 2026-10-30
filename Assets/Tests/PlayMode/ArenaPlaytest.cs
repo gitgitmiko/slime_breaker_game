@@ -23,6 +23,7 @@ namespace SlimeBreaker.Tests
 
         int originalDifficulty;
         int originalGraphics;
+        bool originalFps60;
 
         [UnitySetUp]
         public IEnumerator LoadArena()
@@ -33,6 +34,8 @@ namespace SlimeBreaker.Tests
             saved.difficulty = (int)DifficultyLevel.Hard;
             originalGraphics = saved.graphicsLevel;
             saved.graphicsLevel = GraphicsService.High;
+            originalFps60 = saved.fps60;
+            saved.fps60 = true;
             SaveService.Save(saved);
             SceneManager.LoadScene("GameArena");
             yield return null;
@@ -60,6 +63,7 @@ namespace SlimeBreaker.Tests
             var restored = SaveService.Load();
             restored.difficulty = originalDifficulty;
             restored.graphicsLevel = originalGraphics;
+            restored.fps60 = originalFps60;
             SaveService.Save(restored);
             Difficulty.Set(DifficultyLevel.Hard);
             yield return null;
@@ -2303,13 +2307,38 @@ namespace SlimeBreaker.Tests
                     + " msaa=" + pipeline.msaaSampleCount + " shadowDist=" + pipeline.shadowDistance + " shadowMap=" + pipeline.mainLightShadowmapResolution
                     + " hdr=" + pipeline.supportsHDR + " post=" + Camera.main.GetUniversalAdditionalCameraData().renderPostProcessing);
                 Capture("50_graphics_" + names[level]);
-                Assert.AreEqual(GraphicsService.For(level).targetFps, Application.targetFrameRate);
+                Assert.AreEqual(60, Application.targetFrameRate, "the graphics level must not touch the frame cap");
                 Assert.AreEqual(level, QualitySettings.GetQualityLevel(), "each preset is its own quality level");
             }
             Assert.Less(trees[0], trees[1], "Low holds fewer trees than Medium");
             Assert.Less(trees[1], trees[2], "Medium holds fewer trees than High");
             Assert.Less(triangles[0], triangles[1], "Low draws less than Medium");
             Assert.Less(triangles[1], triangles[2], "Medium draws less than High");
+        }
+
+        [UnityTest]
+        public IEnumerator FpsToggleIsIndependentOfTheGraphicsLevel()
+        {
+            yield return null;
+            var graphics = Object.FindAnyObjectByType<GraphicsService>();
+            var panel = GameFlowController.Instance.ui.settings;
+            Assert.IsNotNull(panel.fpsButton, "settings need an FPS toggle");
+            graphics.Apply(GraphicsService.Low, persist: false);
+            panel.Show();
+            yield return null;
+            Assert.AreEqual("FPS: 60", panel.fpsLabel.text);
+            Assert.AreEqual(60, Application.targetFrameRate, "Low can run at 60");
+            Capture("51_settings_fps");
+            panel.fpsButton.onClick.Invoke();
+            Assert.AreEqual("FPS: 30", panel.fpsLabel.text);
+            Assert.AreEqual(30, Application.targetFrameRate);
+            Assert.AreEqual(GraphicsService.Low, graphics.Level, "the toggle leaves the graphics level alone");
+            Assert.IsFalse(SaveService.Load().fps60, "the choice is saved");
+            graphics.Apply(GraphicsService.High, persist: false);
+            Assert.AreEqual(30, Application.targetFrameRate, "High can run at 30");
+            panel.fpsButton.onClick.Invoke();
+            Assert.AreEqual(60, Application.targetFrameRate);
+            Assert.IsTrue(SaveService.Load().fps60);
         }
 
         [UnityTest]

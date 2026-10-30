@@ -97,7 +97,7 @@ namespace SlimeBreaker
                 return;
             timer = 0f;
 
-            float budget = 1f / GraphicsService.Current.targetFps;
+            float budget = 1f / GraphicsService.CurrentFps;
             float next = Scale;
             if (average > budget * 1.1f)
             {

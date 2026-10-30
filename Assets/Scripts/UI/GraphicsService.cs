@@ -3,10 +3,9 @@ using UnityEngine.Rendering;
 
 namespace SlimeBreaker
 {
-    /// <summary>What one graphics level costs: frame cap, internal resolution and how much the arena holds.</summary>
+    /// <summary>What one graphics level costs: internal resolution and how much the arena holds.</summary>
     public struct GraphicsProfile
     {
-        public int targetFps;
         /// <summary>Cap on the short side of the render target, in pixels.</summary>
         public float maxRenderHeight;
         public float treeDensity;
@@ -24,7 +23,7 @@ namespace SlimeBreaker
         }
     }
 
-    /// <summary>Applies Low / Medium / High presets and remembers the choice in the meta save.</summary>
+    /// <summary>Applies Low / Medium / High presets and the separate 30 / 60 FPS choice, and remembers both in the meta save.</summary>
     public class GraphicsService : MonoBehaviour
     {
         public static GraphicsService Instance { get; private set; }
@@ -36,6 +35,13 @@ namespace SlimeBreaker
         public RenderPipelineAsset[] presets = new RenderPipelineAsset[3];
 
         public int Level { get; private set; } = High;
+        /// <summary>Frame cap, independent of the graphics level.</summary>
+        public int Fps { get; private set; } = 60;
+
+        /// <summary>The frame cap in use; without a service (tools, tests) the arena runs at 60.</summary>
+        public static int CurrentFps => Instance != null ? Instance.Fps : 60;
+
+        public static int FpsFor(SaveData save) => save.fps60 ? 60 : 30;
 
         /// <summary>The profile in use; without a service (tools, tests) the High numbers apply.</summary>
         public static GraphicsProfile Current => For(Instance != null ? Instance.Level : High);
@@ -47,19 +53,19 @@ namespace SlimeBreaker
                 case Low:
                     return new GraphicsProfile
                     {
-                        targetFps = 30, maxRenderHeight = 720f, treeDensity = 0.35f, propDensity = 0.5f, scatterDensity = 0.25f,
+                        maxRenderHeight = 720f, treeDensity = 0.35f, propDensity = 0.5f, scatterDensity = 0.25f,
                         weatherDensity = 0.4f, mist = false, textureMipLimit = 1
                     };
                 case Medium:
                     return new GraphicsProfile
                     {
-                        targetFps = 30, maxRenderHeight = 900f, treeDensity = 0.6f, propDensity = 0.75f, scatterDensity = 0.6f,
+                        maxRenderHeight = 900f, treeDensity = 0.6f, propDensity = 0.75f, scatterDensity = 0.6f,
                         weatherDensity = 0.7f, mist = true, textureMipLimit = 0
                     };
                 default:
                     return new GraphicsProfile
                     {
-                        targetFps = 60, maxRenderHeight = 1080f, treeDensity = 0.8f, propDensity = 1f, scatterDensity = 1f,
+                        maxRenderHeight = 1080f, treeDensity = 0.8f, propDensity = 1f, scatterDensity = 1f,
                         weatherDensity = 1f, mist = true, textureMipLimit = 0
                     };
             }
@@ -75,6 +81,7 @@ namespace SlimeBreaker
             Instance = this;
             var save = SaveService.Load();
             Level = Mathf.Clamp(save.graphicsLevel, Low, High);
+            Fps = FpsFor(save);
             Apply(Level, persist: false);
         }
 
@@ -96,7 +103,7 @@ namespace SlimeBreaker
                 QualitySettings.renderPipeline = pipeline;
             var profile = For(Level);
             QualitySettings.vSyncCount = 0;
-            Application.targetFrameRate = profile.targetFps;
+            Application.targetFrameRate = Fps;
             QualitySettings.globalTextureMipmapLimit = profile.textureMipLimit;
             // Cheap surface paths (no normal maps or biome cover) and no post-processing on Low.
             if (Level == Low)
@@ -111,6 +118,16 @@ namespace SlimeBreaker
                 return;
             var save = SaveService.Load();
             save.graphicsLevel = Level;
+            SaveService.Save(save);
+        }
+
+        public void SetFps(int fps)
+        {
+            Fps = fps >= 60 ? 60 : 30;
+            Application.targetFrameRate = Fps;
+            AdaptiveResolution.Instance?.ResetScale();
+            var save = SaveService.Load();
+            save.fps60 = Fps == 60;
             SaveService.Save(save);
         }
 

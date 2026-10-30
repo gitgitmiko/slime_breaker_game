@@ -110,7 +110,7 @@ blender --background --python asset_work/scripts/build_arena_dimsum.py -- asset_
 
 ### Preset grafis (0.34.0)
 
-`GraphicsService.For(level)` memegang target FPS (Low 30, Medium 30, High 60), batas resolusi (720/900/1080), kepadatan pohon/properti/rumput/cuaca, dan batas mipmap. URP preset ada di `ProjectSetup.ConfigureRenderPipeline`, masing-masing jadi quality level supaya varian shadernya ikut di build.
+FPS 30/60 adalah tombol terpisah (`GraphicsService.SetFps`, `SaveData.fps60`, bawaan 30). `GraphicsService.For(level)` memegang batas resolusi (720/900/1080), kepadatan pohon/properti/rumput/cuaca, dan batas mipmap. URP preset ada di `ProjectSetup.ConfigureRenderPipeline`, masing-masing jadi quality level supaya varian shadernya ikut di build.
 
 ### Pintu arena dan orb XP (0.33.0)
 

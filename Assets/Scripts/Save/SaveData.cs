@@ -13,6 +13,8 @@ namespace SlimeBreaker
         public float bestRunTime;
         /// <summary>0 = Low, 1 = Medium, 2 = High. Default Medium for new installs.</summary>
         public int graphicsLevel = 1;
+        /// <summary>False = 30 FPS (default, kinder to the battery); true = 60 FPS. Independent of the graphics level.</summary>
+        public bool fps60;
         /// <summary>False = fixed joystick (default); true = free/floating joystick.</summary>
         public bool freeJoystick;
         /// <summary>False = normal camera drag (default); true = inverted (the world follows the finger).</summary>

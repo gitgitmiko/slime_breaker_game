@@ -9,7 +9,7 @@ namespace SlimeBreaker
         {
             // vSync must be off for targetFrameRate to apply; scenes without a GraphicsService still honour the saved level.
             QualitySettings.vSyncCount = 0;
-            Application.targetFrameRate = GraphicsService.For(SaveService.Load().graphicsLevel).targetFps;
+            Application.targetFrameRate = GraphicsService.FpsFor(SaveService.Load());
 
             var cameras = FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             for (int i = 0; i < cameras.Length; i++)

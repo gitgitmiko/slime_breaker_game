@@ -33,6 +33,8 @@ namespace SlimeBreaker.Tests
             SceneManager.LoadScene("GameArena");
             yield return null;
             yield return null;
+            // Tests measure the arena from its middle; the walk through the south door has its own test.
+            Object.FindAnyObjectByType<StageManager>().SkipEntrance();
             previousSettings = InputSystem.settings;
             var settings = Object.Instantiate(previousSettings);
             settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
@@ -611,7 +613,7 @@ namespace SlimeBreaker.Tests
             Assert.AreEqual(60, Application.targetFrameRate, "target frame rate is not 60");
             var audio = AudioService.Instance;
             Assert.IsNotNull(audio, "GameArena has no AudioService");
-            foreach (var id in new[] { "hit", "cast", "bolthit", "enemydeath", "playerhit", "dash", "pickup", "levelup", "powerup", "powerupspawn", "freeze", "lightning", "fire", "arcane", "bosswarn", "slam", "ui", "portal" })
+            foreach (var id in new[] { "hit", "cast", "bolthit", "enemydeath", "playerhit", "dash", "pickup", "levelup", "powerup", "powerupspawn", "freeze", "lightning", "fire", "arcane", "bosswarn", "slam", "ui", "portal", "door", "rangedhit" })
                 Assert.IsTrue(audio.Has(id), "AudioService has no clip for '" + id + "'");
             Assert.IsNotNull(audio.music, "GameArena has no music clip");
             Assert.AreEqual(10, audio.biomeMusic != null ? audio.biomeMusic.Length : 0, "AudioService needs one music track per biome");
@@ -1214,7 +1216,7 @@ namespace SlimeBreaker.Tests
                 wait += Time.unscaledDeltaTime;
             }
             Assert.AreEqual(2, stage.Floor, "entering the portal should move to lantai 2");
-            yield return Hold(0.8f);
+            yield return Hold(1.8f);
             Assert.IsFalse(stage.FloorCleared);
             Assert.IsNull(ExitPortal.Active, "leftover slimes must not open the next floor immediately");
             spawner.Paused = true;
@@ -1233,6 +1235,101 @@ namespace SlimeBreaker.Tests
             Assert.AreEqual(Biome.Forest, stage.Theme.biome, "floors 1-10 stay on the grass biome");
             Assert.AreNotEqual(firstTheme.weather, stage.Theme.weather, "weather should change between floors");
             Assert.AreNotEqual(firstTheme.seed, stage.Theme.seed, "layout seed should change every floor");
+        }
+
+        [UnityTest]
+        public IEnumerator NewRunStartsWithHeroWalkingInFromSouthDoor()
+        {
+            RunSaveService.Clear();
+            SceneManager.LoadScene("GameArena");
+            yield return null;
+            yield return null;
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            var spawner = Object.FindAnyObjectByType<EnemySpawner>();
+            var hero = PlayerHealth.Instance;
+            Assert.Less(hero.transform.position.z, -20f, "the hero starts in the south door");
+            Assert.IsTrue(stage.entryDoor.IsOpen);
+            Assert.IsTrue(spawner.Paused, "no slimes while the hero walks in");
+            yield return Hold(0.4f);
+            Capture("33_new_run_entrance");
+            yield return Hold(1.4f);
+            Assert.AreEqual(-19.5f, hero.transform.position.z, 0.4f);
+            Assert.IsFalse(stage.entryDoor.IsOpen, "the south door shuts behind the hero");
+            Assert.IsFalse(spawner.Paused, "slimes start once the hero is in");
+        }
+
+        [UnityTest]
+        public IEnumerator DoorsLeadHeroThroughFloorsAndBossFloorPlaysAd()
+        {
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            var spawner = Object.FindAnyObjectByType<EnemySpawner>();
+            var hero = PlayerHealth.Instance;
+            Assert.IsNotNull(stage.entryDoor, "StageManager has no south door");
+            Assert.IsNotNull(stage.exitDoor, "StageManager has no north door");
+            stage.ForceFloor(1);
+            Assert.IsFalse(stage.exitDoor.IsOpen, "the north door stays shut until the floor is cleared");
+            hero.transform.position = new Vector3(0f, 0f, 19f);
+            spawner.Paused = true;
+            XPOrb.Spawn(spawner.normalPrefab.GetComponent<EnemyHealth>().xpOrbPrefab, hero.transform.position + new Vector3(1.6f, 0.5f, 1.6f), 1);
+            yield return Hold(0.5f);
+            Capture("30_doors_closed");
+            KillSlimes(spawner, RunRules.KillQuota(1));
+            yield return null;
+            Assert.IsTrue(stage.exitDoor.IsOpen, "clearing the quota should open the north door");
+            Assert.Greater(ExitPortal.Active.transform.position.z, 20f, "the way out must be at the north door");
+            yield return Hold(1.2f);
+            hero.transform.position = new Vector3(0f, 0f, 19f);
+            yield return Hold(0.6f);
+            Capture("31_door_open");
+            hero.transform.position = new Vector3(0f, 0f, 21.5f);
+            float wait = 0f;
+            while (stage.Floor < 2 && wait < 3f)
+            {
+                yield return null;
+                wait += Time.unscaledDeltaTime;
+            }
+            Assert.AreEqual(2, stage.Floor, "walking into the north door should advance the floor");
+            yield return null;
+            Assert.Less(hero.transform.position.z, -18f, "the next floor starts at the south door");
+            Assert.IsTrue(stage.entryDoor.IsOpen, "the south door is open while the hero walks in");
+            yield return Hold(0.4f);
+            Capture("32_hero_entering");
+            yield return Hold(0.5f);
+            Capture("34_hero_past_door");
+            yield return Hold(0.7f);
+            Assert.IsFalse(stage.entryDoor.IsOpen, "the south door shuts behind the hero");
+            Assert.AreEqual(-19.5f, hero.transform.position.z, 0.4f);
+
+            stage.ForceFloor(9);
+            spawner.Paused = true;
+            KillSlimes(spawner, RunRules.KillQuota(9));
+            yield return null;
+            var ads = GameFlowController.Instance.ads;
+            int shown = ads.Shown;
+            ExitPortal.Active.Enter();
+            wait = 0f;
+            while (stage.Floor < 10 && wait < 3f)
+            {
+                yield return null;
+                wait += Time.unscaledDeltaTime;
+            }
+            yield return null;
+            Assert.AreEqual(shown + 1, ads.Shown, "entering a boss floor plays an ad");
+            Assert.IsTrue(ads.IsShowing);
+            yield return new WaitForSecondsRealtime(1f);
+            Assert.AreEqual(BossKind.None, stage.ActiveBoss, "the boss must not appear before the ad is exited");
+            Assert.IsFalse(ads.CanClose, "the countdown is still running");
+            while (!ads.CanClose)
+                yield return null;
+            ads.Close();
+            wait = 0f;
+            while (stage.ActiveBoss == BossKind.None && wait < 5f)
+            {
+                yield return null;
+                wait += Time.unscaledDeltaTime;
+            }
+            Assert.AreNotEqual(BossKind.None, stage.ActiveBoss, "the boss appears once the ad is closed");
+            Assert.AreEqual(shown + 1, ads.Shown, "only one ad per boss floor");
         }
 
         [UnityTest]
@@ -2287,6 +2384,8 @@ namespace SlimeBreaker.Tests
 
         class FakeAdProvider : AdService.IProvider
         {
+            public bool IsInterstitialReady => false;
+            public void ShowInterstitial(System.Action closed) => closed?.Invoke();
             public bool reward;
             public int shown;
             public bool IsReady => true;

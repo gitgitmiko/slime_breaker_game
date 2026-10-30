@@ -25,6 +25,8 @@ namespace SlimeBreaker
         /// <summary>Chance that a slime drops an item.</summary>
         public float dropChance;
         public float xp;
+        /// <summary>Hero levels between power-up crystals.</summary>
+        public int powerUpEvery;
     }
 
     /// <summary>
@@ -53,19 +55,19 @@ namespace SlimeBreaker
                     return new DifficultyProfile
                     {
                         monsterHealth = 0.7f, monsterDamage = 0.5f, spawnInterval = 1.35f, bossHealth = 0.5f, bossDamage = 0.5f,
-                        heroHealth = 1.5f, upgradeBonus = 3f, dropChance = 0.15f, xp = 1.5f
+                        heroHealth = 1.5f, upgradeBonus = 3f, dropChance = 0.15f, xp = 1.5f, powerUpEvery = 5
                     };
                 case DifficultyLevel.Normal:
                     return new DifficultyProfile
                     {
                         monsterHealth = 0.85f, monsterDamage = 0.75f, spawnInterval = 1.15f, bossHealth = 0.75f, bossDamage = 0.75f,
-                        heroHealth = 1.25f, upgradeBonus = 2f, dropChance = 0.08f, xp = 1.25f
+                        heroHealth = 1.25f, upgradeBonus = 2f, dropChance = 0.08f, xp = 1.25f, powerUpEvery = 10
                     };
                 default:
                     return new DifficultyProfile
                     {
                         monsterHealth = 1f, monsterDamage = 1f, spawnInterval = 1f, bossHealth = 1f, bossDamage = 1f,
-                        heroHealth = 1f, upgradeBonus = 1f, dropChance = 0.05f, xp = 1f
+                        heroHealth = 1f, upgradeBonus = 1f, dropChance = 0.05f, xp = 1f, powerUpEvery = RunRules.PowerUpEvery
                     };
             }
         }
@@ -78,9 +80,9 @@ namespace SlimeBreaker
             switch (level)
             {
                 case DifficultyLevel.Easy:
-                    return "Damage monster 50% · HP hero +50% · kartu ×3 · drop 15%";
+                    return "Damage monster 50% · HP hero +50% · kartu ×3 · drop 15% · power-up tiap 5 level";
                 case DifficultyLevel.Normal:
-                    return "Damage monster 75% · HP hero +25% · kartu ×2 · drop 8%";
+                    return "Damage monster 75% · HP hero +25% · kartu ×2 · drop 8% · power-up tiap 10 level";
                 default:
                     return "Seimbang seperti aslinya: tantangan penuh";
             }

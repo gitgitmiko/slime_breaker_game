@@ -14,6 +14,38 @@ namespace SlimeBreaker
         DashController dash;
         Animator animator;
         Vector3 wish;
+        bool scripted;
+        Vector3 scriptedTarget;
+        float scriptedSpeed;
+
+        /// <summary>True until a scripted walk (through an arena door) has reached its target.</summary>
+        public bool IsWalking => scripted && (transform.position - scriptedTarget).sqrMagnitude > 0.0004f;
+
+        /// <summary>Takes over the hero and moves them to <paramref name="target"/>, ignoring input and the arena edge.</summary>
+        public void WalkTo(Vector3 target, float speed)
+        {
+            scripted = true;
+            scriptedTarget = target;
+            scriptedSpeed = speed;
+            if (body != null)
+                body.enabled = false;
+        }
+
+        /// <summary>Teleports the hero to <paramref name="position"/> and keeps them there until the next walk.</summary>
+        public void HoldAt(Vector3 position)
+        {
+            WalkTo(position, 0f);
+            transform.position = position;
+        }
+
+        public void ReleaseWalk()
+        {
+            scripted = false;
+            if (body != null)
+                body.enabled = true;
+            if (animator != null)
+                animator.SetFloat("Speed", 0f);
+        }
 
         void Awake()
         {
@@ -30,6 +62,11 @@ namespace SlimeBreaker
             var health = GetComponent<PlayerHealth>();
             if (health != null && health.IsDead)
                 return;
+            if (scripted)
+            {
+                MoveScripted();
+                return;
+            }
 
             var stats = flow.Stats;
             Vector2 input = ReadMove();
@@ -66,6 +103,21 @@ namespace SlimeBreaker
 
             if (animator != null)
                 animator.SetFloat("Speed", dash != null && dash.IsDashing ? 1f : wish.magnitude);
+        }
+
+        void MoveScripted()
+        {
+            wish = Vector3.zero;
+            Vector3 to = scriptedTarget - transform.position;
+            to.y = 0f;
+            bool moving = scriptedSpeed > 0f && to.sqrMagnitude > 0.0004f;
+            if (moving)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, scriptedTarget, scriptedSpeed * Time.deltaTime);
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(to.normalized, Vector3.up), 14f * Time.deltaTime);
+            }
+            if (animator != null)
+                animator.SetFloat("Speed", moving ? 1f : 0f);
         }
 
         public Vector3 WishDirection => wish;

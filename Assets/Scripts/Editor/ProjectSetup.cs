@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.32.1";
+        const string AppVersion = "0.33.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -269,7 +269,7 @@ namespace SlimeBreaker.EditorTools
                 Vfx("powerup", Burst("VFX_PowerUp", Color.white, 40, 3.5f, 0.2f, 0.8f, 0.3f)),
                 Vfx("cast", Burst("VFX_Cast", new Color(0.8f, 0.55f, 1f), 8, 1.6f, 0.1f)),
                 Vfx("death", Burst("VFX_Enemy_Death", new Color(0.4f, 0.9f, 0.5f), 22, 3f, 0.2f, 0.5f, 0.2f, 0.8f)),
-                Vfx("pickup", Burst("VFX_Pickup", new Color(0.5f, 1f, 0.6f), 8, 2f, 0.1f)),
+                Vfx("pickup", Burst("VFX_Pickup", new Color(0.4f, 0.7f, 1f), 8, 2f, 0.1f)),
                 Vfx("playerhit", Burst("VFX_Player_Hit", new Color(1f, 0.3f, 0.3f), 16, 3f, 0.16f))
             };
 
@@ -380,6 +380,7 @@ namespace SlimeBreaker.EditorTools
             env["RoyalColumn"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Royal_Column.prefab", "Assets/Art/Environment/Biomes/ENV_Royal_Column.fbx", 2.1f, false);
             // The arena edge: a woven-bamboo steamer wall (the floor and props stay as they were).
             env["SteamerWall"] = StaticPrefab("Assets/Prefabs/Environment/ENV_Dimsum_Wall.prefab", "Assets/Art/Environment/Dimsum/ENV_Dimsum_Wall.fbx", 3.5f, false);
+            env["ArenaDoor"] = DoorPrefab("Assets/Prefabs/Environment/ENV_Dimsum_Door.prefab");
 
             var obstacles = new[]
             {
@@ -413,7 +414,7 @@ namespace SlimeBreaker.EditorTools
             var spores = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Spores.prefab", new Color(0.6f, 0.9f, 0.35f, 0.7f), 70, 0.25f, 0.1f, -0.02f, ParticleSystemShapeType.Box, 18f, null, false, glowMat, true, null, 1.5f);
             var sparks = WeatherPrefab("Assets/Prefabs/VFX/VFX_Weather_Sparks.prefab", new Color(1f, 0.85f, 0.4f), 50, 1.0f, 0.06f, -0.03f, ParticleSystemShapeType.Box, 18f, null, false, glowMat, true, null, 1.5f);
             var mist = MistPrefab("Assets/Prefabs/VFX/VFX_Weather_Mist.prefab", mistMat);
-            var portal = PortalPrefab("Assets/Prefabs/Environment/ENV_Exit_Portal.prefab", env["RuneRing"]);
+            var portal = PortalPrefab("Assets/Prefabs/Environment/ENV_Exit_Portal.prefab");
 
             BuildBoot();
             BuildMenu(hero, heroMenuController, bossController, env, rain, snowWx, fireflies, dust, ash, spores, sparks, mist);
@@ -820,6 +821,8 @@ namespace SlimeBreaker.EditorTools
             { "steamwood", new HdLook { texture = "TEX_Steamer_Wood", vertexAO = 0.7f, bump = 0.8f } },
             { "bambooband", new HdLook { color = new Color(0.74f, 0.54f, 0.28f), smoothness = 0.55f, metallic = 0f, vertexAO = 0.5f } },
             { "weave", new HdLook { texture = "TEX_Bamboo_Weave", vertexAO = 0.6f } },
+            { "doorred", new HdLook { color = new Color(0.62f, 0.09f, 0.07f), smoothness = 0.62f, metallic = 0f, vertexAO = 0.5f } },
+            { "doorbrass", new HdLook { color = new Color(0.95f, 0.68f, 0.24f), smoothness = 0.75f, metallic = 0.85f } },
         };
 
         static void ConfigureHdMaterial(Material mat, string key)
@@ -1790,66 +1793,94 @@ namespace SlimeBreaker.EditorTools
             return material;
         }
 
-        static GameObject PortalPrefab(string path, GameObject runePrefab)
+        static GameObject PortalPrefab(string path)
         {
+            // Sits on the arena side of the open north door: the curtain fills the doorway, 1 m behind the trigger.
             var root = new GameObject(Path.GetFileNameWithoutExtension(path));
-            var frame = runePrefab != null
-                ? (GameObject)PrefabUtility.InstantiatePrefab(runePrefab)
-                : GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            frame.name = "Frame";
-            frame.transform.SetParent(root.transform, false);
-            frame.transform.localPosition = new Vector3(0f, 1.15f, 0f);
-            frame.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            frame.transform.localScale = Vector3.one * 1.35f;
-            foreach (var collider in frame.GetComponentsInChildren<Collider>())
-                UnityEngine.Object.DestroyImmediate(collider);
-
-            var core = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            core.name = "Core";
-            UnityEngine.Object.DestroyImmediate(core.GetComponent<Collider>());
-            core.transform.SetParent(root.transform, false);
-            core.transform.localPosition = new Vector3(0f, 1.15f, 0f);
-            core.transform.localScale = Vector3.one * 0.85f;
-            var coreRenderer = core.GetComponent<MeshRenderer>();
-            coreRenderer.sharedMaterial = TranslucentMaterial("Assets/Art/VFX/Materials/MAT_Portal_Core.mat", new Color(0.35f, 0.9f, 1f, 0.35f));
-            coreRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            var curtain = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            curtain.name = "Curtain";
+            UnityEngine.Object.DestroyImmediate(curtain.GetComponent<Collider>());
+            curtain.transform.SetParent(root.transform, false);
+            curtain.transform.localPosition = new Vector3(0f, 1.5f, 1.1f);
+            curtain.transform.localScale = new Vector3(2.9f, 3f, 1f);
+            var curtainRenderer = curtain.GetComponent<MeshRenderer>();
+            curtainRenderer.sharedMaterial = TranslucentMaterial("Assets/Art/VFX/Materials/MAT_Portal_Core.mat", new Color(0.35f, 0.9f, 1f, 0.55f));
+            curtainRenderer.shadowCastingMode = ShadowCastingMode.Off;
 
             var lightObject = new GameObject("Glow");
             lightObject.transform.SetParent(root.transform, false);
-            lightObject.transform.localPosition = new Vector3(0f, 1.2f, 0f);
+            lightObject.transform.localPosition = new Vector3(0f, 1.4f, 0.4f);
             var glow = lightObject.AddComponent<Light>();
             glow.type = LightType.Point;
-            glow.range = 6f;
+            glow.range = 7f;
             glow.intensity = 1.8f;
             glow.color = new Color(0.35f, 0.9f, 1f);
             glow.shadows = LightShadows.None;
 
             var swirlObject = new GameObject("Swirl");
             swirlObject.transform.SetParent(root.transform, false);
-            swirlObject.transform.localPosition = new Vector3(0f, 1.15f, 0f);
+            swirlObject.transform.localPosition = new Vector3(0f, 0.2f, 0.9f);
             var swirl = swirlObject.AddComponent<ParticleSystem>();
             var main = swirl.main;
             main.loop = true;
-            main.startLifetime = 1.1f;
-            main.startSpeed = 0.4f;
+            main.startLifetime = 1.3f;
+            main.startSpeed = 1.1f;
             main.startSize = 0.12f;
             main.startColor = new Color(0.45f, 0.95f, 1f);
-            main.maxParticles = 40;
+            main.maxParticles = 50;
             var emission = swirl.emission;
-            emission.rateOverTime = 22f;
+            emission.rateOverTime = 28f;
             var shape = swirl.shape;
-            shape.shapeType = ParticleSystemShapeType.Circle;
-            shape.radius = 0.7f;
+            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.scale = new Vector3(2.6f, 0.1f, 0.4f);
+            shape.rotation = new Vector3(-90f, 0f, 0f);
             var swirlRenderer = swirlObject.GetComponent<ParticleSystemRenderer>();
             swirlRenderer.sharedMaterial = additiveParticleMaterial;
             swirlRenderer.shadowCastingMode = ShadowCastingMode.Off;
 
             var portal = root.AddComponent<ExitPortal>();
-            portal.frame = frame.transform;
-            portal.core = core.transform;
+            portal.frame = curtain.transform;
+            portal.spin = 0f;
             portal.glow = glow;
-            portal.color = new Color(0.3f, 0.9f, 1f);
+            portal.color = new Color(0.3f, 0.9f, 1f, 0.5f);
             return SavePrefab(root, path);
+        }
+
+        static GameObject DoorPrefab(string path)
+        {
+            const string folder = "Assets/Art/Environment/Dimsum/";
+            var root = new GameObject(Path.GetFileNameWithoutExtension(path));
+            var frame = (GameObject)PrefabUtility.InstantiatePrefab(LoadModel(folder + "ENV_Dimsum_DoorFrame.fbx"));
+            frame.name = "Frame";
+            frame.transform.SetParent(root.transform, false);
+            var door = root.AddComponent<ArenaDoor>();
+            door.leftHinge = DoorLeaf(root.transform, folder, "HingeLeft", -1.4f, 0f);
+            door.rightHinge = DoorLeaf(root.transform, folder, "HingeRight", 1.4f, 180f);
+            foreach (var renderer in root.GetComponentsInChildren<Renderer>())
+                renderer.shadowCastingMode = ShadowCastingMode.On;
+            return SavePrefab(root, path);
+        }
+
+        static Transform DoorLeaf(Transform root, string folder, string name, float hingeX, float yaw)
+        {
+            var hinge = new GameObject(name).transform;
+            hinge.SetParent(root, false);
+            hinge.localPosition = new Vector3(hingeX, 0f, -0.9f);
+            hinge.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            var leaf = (GameObject)PrefabUtility.InstantiatePrefab(LoadModel(folder + "ENV_Dimsum_DoorLeaf.fbx"));
+            leaf.name = "Leaf";
+            leaf.transform.SetParent(hinge, false);
+            leaf.transform.localPosition = new Vector3(0.7f, 0f, 0f);
+            return hinge;
+        }
+
+        /// <summary>Stands a door in one of the gaps of a steamer wall centred on <paramref name="wallCentre"/>; local -Z faces the arena.</summary>
+        static ArenaDoor PlaceDoor(GameObject prefab, Vector3 wallCentre, bool north)
+        {
+            var door = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            door.transform.position = wallCentre + new Vector3(0f, 0f, north ? 24f : -24f);
+            door.transform.rotation = north ? Quaternion.identity : Quaternion.Euler(0f, 180f, 0f);
+            return door.GetComponent<ArenaDoor>();
         }
 
         static GameObject LightningPrefab(string path)
@@ -2228,6 +2259,8 @@ namespace SlimeBreaker.EditorTools
             var menuWall = (GameObject)PrefabUtility.InstantiatePrefab(env["SteamerWall"]);
             menuWall.transform.position = new Vector3(0f, 0f, -9f);
             MarkStatic(menuWall);
+            PlaceDoor(env["ArenaDoor"], new Vector3(0f, 0f, -9f), true);
+            PlaceDoor(env["ArenaDoor"], new Vector3(0f, 0f, -9f), false);
             var showcase = new GameObject("HeroShowcase");
             showcase.transform.position = new Vector3(1.55f, 0f, 0f);
             showcase.transform.rotation = Quaternion.Euler(0f, 195f, 0f);
@@ -2474,6 +2507,8 @@ namespace SlimeBreaker.EditorTools
             var wallInstance = (GameObject)PrefabUtility.InstantiatePrefab(env["SteamerWall"]);
             wallInstance.transform.position = Vector3.zero;
             MarkStatic(wallInstance);
+            var exitDoor = PlaceDoor(env["ArenaDoor"], Vector3.zero, true);
+            var entryDoor = PlaceDoor(env["ArenaDoor"], Vector3.zero, false);
 
             var player = (GameObject)PrefabUtility.InstantiatePrefab(hero);
             player.transform.position = Vector3.zero;
@@ -2549,6 +2584,8 @@ namespace SlimeBreaker.EditorTools
             stage.minionPrefab = normal;
             stage.portalPrefab = portalPrefab;
             stage.cameraRig = follow;
+            stage.exitDoor = exitDoor;
+            stage.entryDoor = entryDoor;
             audio.music = Clip("Assets/Audio/Music/MUS_Forest.ogg");
             audio.musicVolume = 0.5f;
             audio.biomeMusic = BiomeClips("Music", "MUS_");
@@ -2580,6 +2617,8 @@ namespace SlimeBreaker.EditorTools
                 Sfx("victory", "SFX_Victory", 1f, 0.5f, 0f),
                 Sfx("defeat", "SFX_Defeat", 1f, 0.5f, 0f),
                 Sfx("portal", "SFX_Portal", 0.85f, 0.2f, 0f),
+                Sfx("door", "SFX_DoorOpen", 0.8f, 0.3f, 0.03f),
+                Sfx("rangedhit", "SFX_RangedHit", 0.7f, 0.1f, 0.08f),
                 Sfx("rain", "SFX_Rain", 0.35f, 0f, 0f),
                 Sfx("wind", "SFX_Wind", 0.28f, 0f, 0f)
             };
@@ -3558,7 +3597,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Dumpling Witch";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 44;
+            PlayerSettings.Android.bundleVersionCode = 45;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.dumplingwitch");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

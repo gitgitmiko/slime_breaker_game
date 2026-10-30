@@ -5,8 +5,9 @@ namespace SlimeBreaker
 {
     /// <summary>
     /// Floors 1–100. Each floor rebuilds the arena: weather and day/night rotate every floor,
-    /// biome changes every ten floors. Power-ups drop every five hero levels.
-    /// Clearing the floor kill quota (N×10 slimes on lantai N) or beating a boss opens an exit portal; walking in advances the floor.
+    /// biome changes every ten floors. Power-ups drop every few hero levels (see <see cref="DifficultyProfile.powerUpEvery"/>).
+    /// The hero walks in through the south door of the arena. Clearing the floor kill quota (N×10 slimes on lantai N) or beating a boss
+    /// opens the north door; walking through it advances the floor. Entering a boss floor plays an ad first.
     /// Every ten floors a unique boss is announced, the camera zooms in, and regular spawning
     /// pauses until that boss falls. Bosses summon minions so the hero can keep levelling.
     /// </summary>
@@ -25,6 +26,8 @@ namespace SlimeBreaker
         public GameObject minionPrefab;
         public GameObject portalPrefab;
         public FollowCamera cameraRig;
+        public ArenaDoor entryDoor;
+        public ArenaDoor exitDoor;
 
         public int Floor { get; private set; } = 1;
         public int FloorKills { get; private set; }
@@ -40,6 +43,15 @@ namespace SlimeBreaker
 
         bool introducing;
         bool transitioning;
+        Coroutine entrance;
+
+        /// <summary>Where the hero stands, out of sight in the south door, before walking in.</summary>
+        static readonly Vector3 DoorwayOutside = new Vector3(0f, 0f, -24.6f);
+        static readonly Vector3 DoorwayInside = new Vector3(0f, 0f, -19.5f);
+        /// <summary>Beyond the north door; the hero keeps walking there while the screen fades.</summary>
+        static readonly Vector3 ExitBeyond = new Vector3(0f, 0f, 25f);
+        static readonly Vector3 ExitTrigger = new Vector3(0f, 0f, 22.3f);
+        const float DoorWalkSpeed = 5.2f;
 
         void Awake()
         {
@@ -74,7 +86,7 @@ namespace SlimeBreaker
                 FloorCleared = FloorKills >= RunRules.KillQuota(Floor) && !RunRules.IsBossFloor(Floor);
                 RunSeed = resume.runSeed != 0 ? resume.runSeed : resume.themeSeed;
                 Theme = resume.ToTheme();
-                HandledPowerTiers = resume.level / RunRules.PowerUpEvery;
+                HandledPowerTiers = resume.level / Difficulty.Profile.powerUpEvery;
                 HandledBossTiers = Floor / RunRules.BossEvery;
                 if (resume.intermission)
                     HandledBossTiers = Mathf.Max(0, HandledBossTiers - 1);
@@ -96,8 +108,47 @@ namespace SlimeBreaker
                 Theme = ArenaTheme.ForFloor(1, RunSeed);
                 ApplyTheme(true);
                 if (spawner != null)
+                {
                     spawner.Stage = 1;
+                    spawner.Paused = true;
+                }
+                entrance = StartCoroutine(EnterFloor());
             }
+        }
+
+        /// <summary>South door opens, the hero walks in, it shuts behind them, and only then does the floor start.</summary>
+        IEnumerator EnterFloor()
+        {
+            transitioning = true;
+            yield return WalkIn();
+            transitioning = false;
+            entrance = null;
+        }
+
+        IEnumerator WalkIn()
+        {
+            exitDoor?.SetOpen(false, true);
+            entryDoor?.SetOpen(true, true);
+            StageHeroOutside();
+            var walker = PlayerHealth.Instance != null ? PlayerHealth.Instance.GetComponent<PlayerController>() : null;
+            walker?.WalkTo(DoorwayInside, DoorWalkSpeed);
+            while (walker != null && walker.IsWalking)
+                yield return null;
+            walker?.ReleaseWalk();
+            entryDoor?.SetOpen(false);
+            if (spawner != null)
+                spawner.Paused = RunRules.IsBossFloor(Floor);
+        }
+
+        void StageHeroOutside()
+        {
+            var hero = PlayerHealth.Instance;
+            if (hero == null)
+                return;
+            var walker = hero.GetComponent<PlayerController>();
+            walker?.HoldAt(DoorwayOutside);
+            hero.transform.rotation = Quaternion.LookRotation(Vector3.forward, Vector3.up);
+            cameraRig?.Recenter();
         }
 
         void Update()
@@ -111,7 +162,7 @@ namespace SlimeBreaker
                 return;
 
             int level = flow.Stats.level;
-            int power = level / RunRules.PowerUpEvery;
+            int power = level / Difficulty.Profile.powerUpEvery;
             while (HandledPowerTiers < power)
             {
                 HandledPowerTiers++;
@@ -172,7 +223,8 @@ namespace SlimeBreaker
         {
             if (bossPrefab == null)
                 return null;
-            Vector3 position = new Vector3(0f, 0f, 8.5f);
+            // The hero has just walked in from the south door; the middle of the arena is always free of obstacles.
+            Vector3 position = Vector3.zero;
             if (Obstacles.Overlaps(position, 1.4f))
                 position = new Vector3(7f, 0f, 0f);
             var instance = Instantiate(bossPrefab, position, Quaternion.LookRotation(Vector3.back, Vector3.up));
@@ -258,6 +310,7 @@ namespace SlimeBreaker
             FloorCleared = true;
             if (ExitPortal.Active != null)
                 return;
+            exitDoor?.SetOpen(true);
             SpawnPortal();
             GameFlowController.Instance?.ui?.ShowToast(message ?? "Pintu terbuka — masuk untuk naik lantai", new Color(0.55f, 0.9f, 1f));
             GameFlowController.Instance?.PersistRun();
@@ -267,27 +320,32 @@ namespace SlimeBreaker
         {
             if (portalPrefab == null)
                 return;
-            Vector3 hero = PlayerHealth.Instance != null ? PlayerHealth.Instance.transform.position : Vector3.zero;
-            Vector3 position = Vector3.zero;
-            for (int attempt = 0; attempt < 16; attempt++)
-            {
-                float angle = Random.Range(0f, Mathf.PI * 2f);
-                float radius = Random.Range(5f, 12f);
-                position = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
-                Vector3 flat = position - hero;
-                flat.y = 0f;
-                if (flat.magnitude < 4f)
-                    continue;
-                if (Obstacles.Overlaps(position, 1.2f))
-                    continue;
-                break;
-            }
-            Instantiate(portalPrefab, position, Quaternion.identity);
+            Instantiate(portalPrefab, ExitTrigger, Quaternion.identity);
+        }
+
+        /// <summary>Playtest helper: ends the walk through the south door at once, with the hero in the middle of the arena.</summary>
+        public void SkipEntrance()
+        {
+            if (entrance == null)
+                return;
+            StopCoroutine(entrance);
+            entrance = null;
+            transitioning = false;
+            var walker = PlayerHealth.Instance != null ? PlayerHealth.Instance.GetComponent<PlayerController>() : null;
+            walker?.ReleaseWalk();
+            PlaceHero(Vector3.zero);
+            cameraRig?.Recenter();
+            entryDoor?.SetOpen(false, true);
+            if (spawner != null)
+                spawner.Paused = RunRules.IsBossFloor(Floor);
         }
 
         /// <summary>Playtest helper: jump to a floor without walking the kill quota.</summary>
         public void ForceFloor(int floor)
         {
+            SkipEntrance();
+            entryDoor?.SetOpen(false, true);
+            exitDoor?.SetOpen(false, true);
             Floor = Mathf.Clamp(floor, 1, RunRules.MaxFloor);
             FloorKills = 0;
             FloorCleared = false;
@@ -329,6 +387,8 @@ namespace SlimeBreaker
             if (spawner != null)
                 spawner.Paused = true;
             ItemPickup.CollectAll();
+            var walker = PlayerHealth.Instance != null ? PlayerHealth.Instance.GetComponent<PlayerController>() : null;
+            walker?.WalkTo(ExitBeyond, DoorWalkSpeed);
             if (fader != null)
                 yield return fader.FadeOut(0.32f);
 
@@ -337,19 +397,36 @@ namespace SlimeBreaker
             FloorCleared = false;
             Theme = ArenaTheme.ForFloor(Floor, RunSeed != 0 ? RunSeed : 2024, Theme);
             ApplyTheme(false);
-            PlaceHero(Vector3.zero);
+            exitDoor?.SetOpen(false, true);
+            entryDoor?.SetOpen(true, true);
+            StageHeroOutside();
             if (spawner != null)
-            {
                 spawner.Stage = Floor;
-                spawner.Paused = RunRules.IsBossFloor(Floor);
-            }
+
+            // The boss scene only appears once the ad has been closed; the screen stays black behind it.
+            if (RunRules.IsBossFloor(Floor))
+                yield return PlayBossFloorAd();
 
             if (fader != null)
-                yield return fader.FadeIn(0.32f);
+                StartCoroutine(fader.FadeIn(0.32f));
+            yield return WalkIn();
             transitioning = false;
             if (!RunRules.IsBossFloor(Floor))
                 GameFlowController.Instance?.ui?.ShowToast("Lantai " + Floor + " — " + Theme.Title, new Color(0.55f, 0.9f, 1f));
             GameFlowController.Instance?.PersistRun();
+        }
+
+        IEnumerator PlayBossFloorAd()
+        {
+            var ads = GameFlowController.Instance != null ? GameFlowController.Instance.ads : null;
+            if (ads == null)
+                yield break;
+            bool closed = false;
+            Time.timeScale = 0f;
+            ads.ShowInterstitial(() => closed = true);
+            while (!closed)
+                yield return null;
+            Time.timeScale = 1f;
         }
 
         void ApplyTheme(bool immediate)

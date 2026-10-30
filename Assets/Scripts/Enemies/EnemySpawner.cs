@@ -66,6 +66,8 @@ namespace SlimeBreaker
             return rangedPrefab != null ? rangedPrefab : fastPrefab;
         }
 
+        const float MinHeroDistance = 7f;
+
         void Spawn(GameObject prefab)
         {
             if (prefab == null)
@@ -76,6 +78,10 @@ namespace SlimeBreaker
                 float angle = Random.Range(0f, Mathf.PI * 2f);
                 float radius = Random.Range(arenaRadius * 0.58f, arenaRadius * 0.86f);
                 position = new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
+                // The hero starts each floor near the south door, inside the spawn ring: never spawn on top of them.
+                var hero = PlayerHealth.Instance;
+                if (hero != null && (hero.transform.position - position).sqrMagnitude < MinHeroDistance * MinHeroDistance)
+                    continue;
                 if (!Obstacles.Overlaps(position, 0.7f))
                     break;
             }

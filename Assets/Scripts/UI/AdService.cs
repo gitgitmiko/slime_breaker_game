@@ -5,7 +5,7 @@ using UnityEngine.UI;
 namespace SlimeBreaker
 {
     /// <summary>
-    /// Full-screen rewarded ad played before a continue. On Android AdMobProvider serves AdMob;
+    /// Full-screen ads: rewarded before a continue, interstitial on entering a boss floor. On Android AdMobProvider serves AdMob;
     /// when no ad is loaded (offline, no fill, editor) a built-in house ad covers the whole screen (audio paused)
     /// and can be closed after <see cref="adSeconds"/>.
     /// </summary>
@@ -16,6 +16,8 @@ namespace SlimeBreaker
             bool IsReady { get; }
             /// <summary>Shows the ad; <c>closed(true)</c> only when the reward was earned.</summary>
             void Show(Action<bool> closed);
+            bool IsInterstitialReady { get; }
+            void ShowInterstitial(Action closed);
         }
 
         public static AdService Instance { get; private set; }
@@ -61,12 +63,29 @@ namespace SlimeBreaker
                 Provider.Show(onClosed);
                 return;
             }
+            ShowHouseAd(onClosed);
+        }
+
+        void ShowHouseAd(Action<bool> onClosed)
+        {
             closed = onClosed;
             IsShowing = true;
             Remaining = Mathf.Max(0f, adSeconds);
             AudioListener.pause = true;
             SetVisible(true);
             Refresh();
+        }
+
+        /// <summary>Plays an ad with no reward attached; <paramref name="onClosed"/> runs once it has been exited.</summary>
+        public void ShowInterstitial(Action onClosed)
+        {
+            Shown++;
+            if (Provider != null && Provider.IsInterstitialReady)
+            {
+                Provider.ShowInterstitial(onClosed);
+                return;
+            }
+            ShowHouseAd(_ => onClosed?.Invoke());
         }
 
         void Update()

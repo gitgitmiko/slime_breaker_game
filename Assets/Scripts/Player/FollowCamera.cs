@@ -112,6 +112,16 @@ namespace SlimeBreaker
             }
         }
 
+        /// <summary>Jumps to the target without easing (used after the hero is teleported behind a black screen).</summary>
+        public void Recenter()
+        {
+            hasFocus = false;
+            lead = Vector3.zero;
+            if (target != null)
+                lastTargetPosition = target.position;
+            Snap(1f);
+        }
+
         public float TargetYaw => targetYaw;
 
         public void Rotate(float degrees)

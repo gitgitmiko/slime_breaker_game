@@ -8,7 +8,7 @@ namespace SlimeBreaker
         public float speed = 9f;
         public float hitRadius = 0.4f;
         public float lifetime = 3.2f;
-        public string hitSfx = "bolthit";
+        public string hitSfx = "rangedhit";
         public string hitVfx = "hit";
 
         int damage;
@@ -67,10 +67,10 @@ namespace SlimeBreaker
             Vector3 point = player.transform.position + Vector3.up * 0.7f;
             if ((point - transform.position).sqrMagnitude <= hitRadius * hitRadius + 0.35f)
             {
-                player.TakeDamage(damage);
+                // The bolt's own sound replaces "playerhit". It only plays when the hit lands, so the invulnerability
+                // window after a hit keeps a crowd of ranged slimes from drowning out the music.
+                player.TakeDamage(damage, hitSfx);
                 VfxPlayer.Instance?.Play(hitVfx, transform.position);
-                // Enemy bolts are silent on impact: a crowd of ranged slimes drowned out the music. The hero's own
-                // "playerhit" (played by PlayerHealth.TakeDamage) is the only hit sound the player hears.
                 Destroy(gameObject);
             }
         }

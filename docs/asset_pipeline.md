@@ -108,6 +108,12 @@ blender --background --python asset_work/scripts/build_arena_dimsum.py -- asset_
 - `build_arena_dimsum.py ... all` juga membangun set properti dimsum (dumpling mini jelly berwajah, bambu, pak choi, sumpit, dll.) dan dekor meja; set itu belum dipakai di game (disiapkan untuk tahap boss dumpling).
 - `ProjectSetup` memasang dinding di scene arena dan menu; terrain digandakan 1,6× agar tepinya tak terlihat dari balik dinding.
 
+### Pintu arena dan orb XP (0.33.0)
+
+- `build_arena_dimsum.py` tanpa argumen kini juga membangun `ENV_Dimsum_DoorFrame` dan `ENV_Dimsum_DoorLeaf`, dan `ENV_Dimsum_Wall` punya celah pintu di sisi utara dan selatan. `ProjectSetup.DoorPrefab` merakitnya jadi `ENV_Dimsum_Door`.
+- Orb XP biru: `blender --background --python asset_work/scripts/build_assets.py -- asset_work/output asset_work/previews asset_work/textures xp`.
+- SFX baru: `python3 asset_work/scripts/build_audio_hd.py sfx SFX_RangedHit SFX_DoorOpen`.
+
 ### Audio HD (putaran 16)
 
 `build_audio_hd.py [music|ambience|sfx|all] [nama…]`: komposer prosedural (pretty_midi, progresi akor, voice leading, melodi di-snap ke nada akor) → FluidSynth kering (`-R 0 -C 0`) dengan soundfont GeneralUser GS (`~/game-toolchain/soundfonts/GeneralUser-GS.sf2`) → pedalboard (HP, shelf, kompresor, reverb, tail di-wrap agar loop mulus) → pyloudnorm → soft-knee peak (tanpa make-up gain, puncak ≤ 0,97) → `oggenc`. Hasil: 12 musik (`MUS_Menu`, 10 bioma, `MUS_Boss`, −15 s.d. −19 LUFS), 11 ambience loop 34 s (`AMB_<Bioma>`, `AMB_Night`, sekitar −25 LUFS), 23 SFX/jingle. Tidak ada sampel yang clipping.

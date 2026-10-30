@@ -88,7 +88,7 @@ PALETTE = {
     "thunder_glow": (1.0, 0.92, 0.40, 1),
     # vfx
     "ring": (0.95, 0.45, 0.18, 1),
-    "xp": (0.55, 0.95, 0.35, 1),
+    "xp": (0.04, 0.16, 1.0, 1),
     "ice": (0.70, 0.92, 1.0, 1),
     "arcane": (0.85, 0.45, 1.0, 1),
     "fire": (1.0, 0.50, 0.16, 1),
@@ -123,7 +123,7 @@ def parse_args():
         raise SystemExit("Pass output, preview, and texture directories after --")
     args = argv[argv.index("--") + 1 :]
     if len(args) < 3:
-        raise SystemExit("Expected: <out_dir> <preview_dir> <texture_dir> [env|hero]")
+        raise SystemExit("Expected: <out_dir> <preview_dir> <texture_dir> [env|hero|boss|xp]")
     mode = args[3] if len(args) >= 4 else "all"
     return args[0], args[1], args[2], mode
 
@@ -1915,6 +1915,13 @@ def main():
     if MODE == "boss":
         studio = hero_studio()
         produce_character("BOSS_SlimeKing", "Enemies/SlimeKing", lambda: build_slime("BOSS_SlimeKing", mats["king"], 0.95, 1.05, "king", mats), 5.5, 2.1, 0.9)
+        hero_studio_off(studio)
+        write_catalog(merge=True)
+        return
+    if MODE == "xp":
+        studio = hero_studio()
+        orb = static_mesh(add_ico("VFX_XP_Orb", 0.16, (0, 0, 0.16), subdiv=2), mats["xp"])
+        produce_static("VFX_XP_Orb", "VFX", orb, 1.6, 0.7, 0.16)
         hero_studio_off(studio)
         write_catalog(merge=True)
         return

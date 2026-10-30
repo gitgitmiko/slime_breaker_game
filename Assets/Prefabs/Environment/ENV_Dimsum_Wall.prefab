@@ -77,8 +77,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e9e16389057d301f9214faca28991cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SlimeBreaker::SlimeBreaker.PropShape
-  halfWidth: 25.140003
+  halfWidth: 25.132168
   halfX: 25.132168
-  halfZ: 25.140003
+  halfZ: 24.976414
   height: 2.5000033
   centreHeight: 0

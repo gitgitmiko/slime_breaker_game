@@ -7,22 +7,28 @@ using UnityEngine;
 namespace SlimeBreaker
 {
     /// <summary>
-    /// Google AdMob rewarded ad behind "Lanjutkan". Asks for consent (UMP) on start, keeps one rewarded ad loaded,
-    /// and reports whether the reward was earned. Until an ad is loaded <see cref="AdService"/> falls back to its house ad.
+    /// Google AdMob: a rewarded ad behind "Lanjutkan" and an interstitial on entering a boss floor. Asks for consent (UMP) on start,
+    /// keeps one ad of each kind loaded, and reports whether the reward was earned. Until an ad is loaded <see cref="AdService"/> falls back to its house ad.
     /// Sideload APKs are built with SB_ADMOB_TEST and only request Google's test ads.
     /// </summary>
     public class AdMobProvider : AdService.IProvider
     {
 #if SB_ADMOB_TEST
         const string RewardedUnitId = "ca-app-pub-3940256099942544/5224354917";
+        const string InterstitialUnitId = "ca-app-pub-3940256099942544/1033173712";
 #else
         const string RewardedUnitId = "ca-app-pub-6808667639334235/8407574176";
+        // Empty until the interstitial unit exists in AdMob: boss floors then show the house ad.
+        const string InterstitialUnitId = "";
 #endif
 
         RewardedAd rewarded;
+        InterstitialAd interstitial;
         bool loading;
+        bool loadingInterstitial;
         bool initialized;
         float retryAt;
+        float interstitialRetryAt;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Install()
@@ -59,7 +65,11 @@ namespace SlimeBreaker
             if (initialized)
                 return;
             initialized = true;
-            MobileAds.Initialize(_ => Load());
+            MobileAds.Initialize(_ =>
+            {
+                Load();
+                LoadInterstitial();
+            });
         }
 
         void Load()
@@ -90,6 +100,66 @@ namespace SlimeBreaker
                     Load();
                 return false;
             }
+        }
+
+        void LoadInterstitial()
+        {
+            if (string.IsNullOrEmpty(InterstitialUnitId) || loadingInterstitial || (interstitial != null && interstitial.CanShowAd()))
+                return;
+            loadingInterstitial = true;
+            InterstitialAd.Load(InterstitialUnitId, new AdRequest(), (ad, error) =>
+            {
+                loadingInterstitial = false;
+                if (error != null || ad == null)
+                {
+                    Debug.LogWarning("AdMob interstitial load failed: " + (error != null ? error.GetMessage() : "no ad"));
+                    interstitialRetryAt = Time.realtimeSinceStartup + 30f;
+                    return;
+                }
+                interstitial = ad;
+            });
+        }
+
+        public bool IsInterstitialReady
+        {
+            get
+            {
+                if (interstitial != null && interstitial.CanShowAd())
+                    return true;
+                if (initialized && Time.realtimeSinceStartup >= interstitialRetryAt)
+                    LoadInterstitial();
+                return false;
+            }
+        }
+
+        public void ShowInterstitial(Action closed)
+        {
+            var ad = interstitial;
+            interstitial = null;
+            if (ad == null || !ad.CanShowAd())
+            {
+                closed?.Invoke();
+                return;
+            }
+            bool done = false;
+            void Finish()
+            {
+                if (done)
+                    return;
+                done = true;
+                AudioListener.pause = false;
+                ad.Destroy();
+                LoadInterstitial();
+                closed?.Invoke();
+            }
+            ad.OnAdFullScreenContentClosed += Finish;
+            ad.OnAdFullScreenContentFailed += error =>
+            {
+                Debug.LogWarning("AdMob interstitial show failed: " + error.GetMessage());
+                Finish();
+            };
+            AudioListener.pause = true;
+            ad.Show();
         }
 
         public void Show(Action<bool> closed)

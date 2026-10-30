@@ -33,6 +33,8 @@ ENV = "Environment/Dimsum"
 # Preview colours only; Unity swaps in the real looks by material name.
 bp.SURFACES.update({
     "steamwood": ((0.90, 0.76, 0.52, 1), "TEX_Steamer_Wood"),
+    "doorred": ((0.66, 0.11, 0.09, 1), None),
+    "doorbrass": ((0.92, 0.68, 0.26, 1), None),
     "bambooband": ((0.62, 0.44, 0.22, 1), None),
     "weave": ((0.86, 0.68, 0.38, 1), "TEX_Bamboo_Weave"),
     "floor": ((0.86, 0.68, 0.38, 1), None),
@@ -151,10 +153,25 @@ def floor_disc():
     return part(obj, "floor")
 
 
+DOOR_GAP = 1.62  # half width of the openings cut into the wall on its north and south sides
+
+
+def cut_door_gaps(obj):
+    """Remove the faces in front of both doors (the door frame hides the cut ends)."""
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    doomed = [f for f in bm.faces if abs(f.calc_center_median().x) < DOOR_GAP]
+    bmesh.ops.delete(bm, geom=doomed, context="FACES")
+    bm.to_mesh(obj.data)
+    bm.free()
+    return obj
+
+
 def steamer_wall():
     """Arena edge: the wall of a bamboo steamer. Woven bamboo inside and out, a rounded wood rim, bamboo hoops outside.
 
     The base is sunk 1 m so it stays buried where the terrain rises toward the rim of the old floor mesh.
+    Openings on the north and south sides take the arena doors.
     """
     inner_r, outer_r = 23.0, 24.9
     base = -1.0
@@ -176,7 +193,50 @@ def steamer_wall():
         a = k / 16 * math.tau
         knot = sphere(f"knot{k}", 0.16, (math.cos(a) * (outer_r + 0.08), math.sin(a) * (outer_r + 0.08), 0.95), scale=(1, 1, 1.5), seg=10, rings=8)
         parts.append(part(knot, "bambooband"))
+    for piece in parts:
+        cut_door_gaps(piece)
     return bp.join(parts, "ENV_Dimsum_Wall")
+
+
+def box(name, size, loc, key, uv=1.0, ao=None):
+    obj = ba.add_cube(name, 1.0, loc, scale=size)
+    bp.uv_box(obj, uv)
+    return part(obj, key, ao)
+
+
+def door_frame():
+    """Red lacquer gate standing in a wall opening: two posts, a lintel with a brass boss, a wooden threshold.
+    Origin = centre of the doorway on the ground; the posts cover the 1.9 m wall. The lintel stays slim because the
+    camera looks over the south door while the hero walks in beneath it."""
+    parts = []
+    depth = 2.5
+    for side in (-1, 1):
+        x = side * 1.68
+        parts.append(box(f"post{side}", (0.5, depth, 3.5), (x, 0, 1.55), "doorred", ao=lambda co: 0.55 + 0.45 * min(1.0, max(0.0, co.z / 1.5))))
+        for z in (0.5, 2.5):
+            parts.append(box(f"band{side}{z}", (0.56, depth + 0.06, 0.14), (x, 0, z), "doorbrass"))
+    parts.append(box("lintel", (4.3, 0.7, 0.5), (0, 0, 3.4), "doorred"))
+    parts.append(box("lintel_cap", (4.7, 0.95, 0.16), (0, 0, 3.72), "steamwood"))
+    for y in (-1, 1):
+        boss = sphere(f"boss{y}", 0.3, (0, y * 0.42, 3.4), scale=(1, 0.45, 1))
+        parts.append(part(boss, "doorbrass"))
+    parts.append(box("threshold", (2.9, depth, 0.1), (0, 0, 0.03), "steamwood", uv=0.5))
+    return bp.join(parts, "ENV_Dimsum_DoorFrame")
+
+
+def door_leaf():
+    """One door leaf, 1.4 m wide and 2.95 m tall, centred on X and standing on the ground (Unity adds the hinge offset)."""
+    w, h, t = 1.38, 2.95, 0.12
+    parts = [box("panel", (w - 0.2, t * 0.6, h - 0.2), (0, 0, h / 2), "weave", uv=0.31, ao=lambda co: 0.65 + 0.35 * min(1.0, co.z / 1.5))]
+    for x in (-w / 2 + 0.08, w / 2 - 0.08):
+        parts.append(box(f"stile{x}", (0.16, t, h), (x, 0, h / 2), "doorred"))
+    for z in (0.08, h / 2, h - 0.08):
+        parts.append(box(f"rail{z}", (w, t, 0.16), (0, 0, z), "doorred"))
+    for z in (0.7, 2.25):
+        for y in (-1, 1):
+            stud = sphere(f"stud{z}{y}", 0.11, (0, y * t * 0.6, z), scale=(1, 0.5, 1), seg=12, rings=8)
+            parts.append(part(stud, "doorbrass"))
+    return bp.join(parts, "ENV_Dimsum_DoorLeaf")
 
 
 def table_ring():
@@ -530,6 +590,8 @@ ASSETS = [
     # id, builder, preview distance, height, target z
     ("ENV_Dimsum_Floor", lambda: floor_disc(), 80.0, 60.0, 0.0),
     ("ENV_Dimsum_Wall", lambda: steamer_wall(), 70.0, 50.0, 1.0),
+    ("ENV_Dimsum_DoorFrame", lambda: door_frame(), 9.0, 3.6, 1.8),
+    ("ENV_Dimsum_DoorLeaf", lambda: door_leaf(), 6.0, 2.4, 1.5),
     ("ENV_Dimsum_Table", lambda: table_ring(), 150.0, 110.0, 0.0),
     ("ENV_Dimsum_Lid", lambda: lid(), 22.0, 12.0, 3.2),
     ("ENV_Dimsum_Tier", lambda: tier(), 36.0, 18.0, 2.5),
@@ -551,8 +613,8 @@ ASSETS = [
 def main():
     ba.reset_file()
     studio = ba.hero_studio()
-    # Default: only the steamer wall (the arena keeps its old floor). `all` or explicit ids build the rest.
-    wanted = ONLY or {"ENV_Dimsum_Wall"}
+    # Default: only the steamer wall and its doors (the arena keeps its old floor). `all` or explicit ids build the rest.
+    wanted = ONLY or {"ENV_Dimsum_Wall", "ENV_Dimsum_DoorFrame", "ENV_Dimsum_DoorLeaf"}
     for asset_id, builder, distance, height, target_z in ASSETS:
         if "all" not in wanted and asset_id not in wanted:
             continue

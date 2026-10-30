@@ -48,14 +48,6 @@
     "notes": "no rig"
   },
   {
-    "id": "VFX_XP_Orb",
-    "file": "VFX/VFX_XP_Orb.fbx",
-    "kind": "static",
-    "triangles": 80,
-    "vertices": 42,
-    "notes": "no rig"
-  },
-  {
     "id": "VFX_Ice_Shard",
     "file": "VFX/VFX_Ice_Shard.fbx",
     "kind": "static",
@@ -392,14 +384,6 @@
     "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
   },
   {
-    "id": "ENV_Dimsum_Wall",
-    "file": "Environment/Dimsum/ENV_Dimsum_Wall.fbx",
-    "kind": "static",
-    "triangles": 12224,
-    "vertices": 6720,
-    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
-  },
-  {
     "id": "BOSS_SlimeKing",
     "file": "Enemies/SlimeKing/BOSS_SlimeKing.fbx",
     "kind": "character",
@@ -414,5 +398,37 @@
     "triangles": 19670,
     "vertices": 10375,
     "notes": "generic rig, in-place clips"
+  },
+  {
+    "id": "ENV_Dimsum_Wall",
+    "file": "Environment/Dimsum/ENV_Dimsum_Wall.fbx",
+    "kind": "static",
+    "triangles": 11528,
+    "vertices": 6402,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_DoorLeaf",
+    "file": "Environment/Dimsum/ENV_Dimsum_DoorLeaf.fbx",
+    "kind": "static",
+    "triangles": 744,
+    "vertices": 392,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "ENV_Dimsum_DoorFrame",
+    "file": "Environment/Dimsum/ENV_Dimsum_DoorFrame.fbx",
+    "kind": "static",
+    "triangles": 988,
+    "vertices": 516,
+    "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
+  },
+  {
+    "id": "VFX_XP_Orb",
+    "file": "VFX/VFX_XP_Orb.fbx",
+    "kind": "static",
+    "triangles": 80,
+    "vertices": 42,
+    "notes": "no rig"
   }
 ]

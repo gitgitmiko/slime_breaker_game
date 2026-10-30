@@ -2,7 +2,7 @@ namespace SlimeBreaker
 {
     /// <summary>
     /// Shared run limits: 100 floors, hero levels to 999, a power-up every twenty
-    /// hero levels, a biome every ten floors, and a boss every ten floors.
+    /// hero levels on Hard (see <see cref="DifficultyProfile.powerUpEvery"/>), a biome every ten floors, and a boss every ten floors.
     /// </summary>
     public static class RunRules
     {

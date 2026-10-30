@@ -108,6 +108,10 @@ blender --background --python asset_work/scripts/build_arena_dimsum.py -- asset_
 - `build_arena_dimsum.py ... all` juga membangun set properti dimsum (dumpling mini jelly berwajah, bambu, pak choi, sumpit, dll.) dan dekor meja; set itu belum dipakai di game (disiapkan untuk tahap boss dumpling).
 - `ProjectSetup` memasang dinding di scene arena dan menu; terrain digandakan 1,6× agar tepinya tak terlihat dari balik dinding.
 
+### Preset grafis (0.34.0)
+
+`GraphicsService.For(level)` memegang target FPS (Low 30, Medium 30, High 60), batas resolusi (720/900/1080), kepadatan pohon/properti/rumput/cuaca, dan batas mipmap. URP preset ada di `ProjectSetup.ConfigureRenderPipeline`, masing-masing jadi quality level supaya varian shadernya ikut di build.
+
 ### Pintu arena dan orb XP (0.33.0)
 
 - `build_arena_dimsum.py` tanpa argumen kini juga membangun `ENV_Dimsum_DoorFrame` dan `ENV_Dimsum_DoorLeaf`, dan `ENV_Dimsum_Wall` punya celah pintu di sisi utara dan selatan. `ProjectSetup.DoorPrefab` merakitnya jadi `ENV_Dimsum_Door`.

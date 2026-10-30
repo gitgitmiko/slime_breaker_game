@@ -5,13 +5,11 @@ namespace SlimeBreaker
 {
     public class UrpSceneBootstrap : MonoBehaviour
     {
-        public int targetFrameRate = 60;
-
         void Awake()
         {
-            // Mobile defaults to 30 fps; vSync must be off for targetFrameRate to apply.
+            // vSync must be off for targetFrameRate to apply; scenes without a GraphicsService still honour the saved level.
             QualitySettings.vSyncCount = 0;
-            Application.targetFrameRate = targetFrameRate;
+            Application.targetFrameRate = GraphicsService.For(SaveService.Load().graphicsLevel).targetFps;
 
             var cameras = FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             for (int i = 0; i < cameras.Length; i++)

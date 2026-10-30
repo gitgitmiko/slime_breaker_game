@@ -111,7 +111,7 @@ namespace SlimeBreaker
             Mark(joystickButton, free);
             int current = GraphicsService.Instance != null ? GraphicsService.Instance.Level : GraphicsService.High;
             if (title != null)
-                title.text = "Grafis: " + GraphicsService.Label(current);
+                title.text = "Grafis: " + GraphicsService.Label(current) + " · " + GraphicsService.For(current).targetFps + " FPS";
             Mark(lowButton, current == GraphicsService.Low);
             Mark(mediumButton, current == GraphicsService.Medium);
             Mark(highButton, current == GraphicsService.High);

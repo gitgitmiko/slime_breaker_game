@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.33.0";
+        const string AppVersion = "0.34.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -1046,30 +1046,54 @@ namespace SlimeBreaker.EditorTools
             var mobile = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/Mobile_RPAsset.asset");
             var pc = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/PC_RPAsset.asset");
             // Default project quality stays High so a missing GraphicsService still looks sharp.
-            WriteUrp(mobile, 1f, 2, true, 32f, 2048, 2, true, 2, 1);
-            WriteUrp(pc, 1f, 4, true, 48f, 4096, 2, true, 3, 1);
+            WriteUrp(mobile, 1f, 2, true, 32f, 2048, 2, true, 2, 1, 3);
+            WriteUrp(pc, 1f, 4, true, 48f, 4096, 2, true, 3, 1, 3);
 
             graphicsPresets = new RenderPipelineAsset[3];
             if (mobile == null)
                 return;
-            graphicsPresets[0] = MakeUrpPreset("Assets/Settings/URP_Low.asset", mobile, 0.8f, 1, false, 16f, 1024, 1, false, 1, 0);
-            // Mobile GPUs are fill-rate bound: MSAA 2x + 2048 shadows + medium PCF look the same at phone DPI but cost far less.
-            // Adaptive resolution (FSR upscale) then keeps 60 fps when a scene gets heavy.
-            graphicsPresets[1] = MakeUrpPreset("Assets/Settings/URP_Medium.asset", mobile, 1f, 2, true, 24f, 1024, 1, true, 1, 1);
-            graphicsPresets[2] = MakeUrpPreset("Assets/Settings/URP_High.asset", mobile, 1f, 2, true, 32f, 2048, 2, true, 2, 1);
+            // Low: hard shadows around the hero (the camera alone stands 11 m away), no MSAA or HDR, vertex-lit extra lights, plain upscaling.
+            graphicsPresets[0] = MakeUrpPreset("Assets/Settings/URP_Low.asset", mobile, 1f, 1, false, 16f, 512, 1, false, 1, 2, 1);
+            // Medium: mobile GPUs are fill-rate bound, so no MSAA; one hard cascade. GraphicsProfile caps the resolution of each level.
+            graphicsPresets[1] = MakeUrpPreset("Assets/Settings/URP_Medium.asset", mobile, 1f, 1, true, 18f, 1024, 1, false, 1, 1, 3);
+            graphicsPresets[2] = MakeUrpPreset("Assets/Settings/URP_High.asset", mobile, 1f, 2, true, 32f, 2048, 2, true, 2, 1, 3);
+            ConfigureQualityLevels();
         }
 
-        static UniversalRenderPipelineAsset MakeUrpPreset(string path, UniversalRenderPipelineAsset source, float scale, int msaa, bool hdr, float shadowDistance, int shadowMap, int cascades, bool soft, int softQuality, int additionalLights)
+        /// <summary>One quality level per preset: URP only keeps the shader variants of pipeline assets that quality levels list.</summary>
+        static void ConfigureQualityLevels()
+        {
+            var settings = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/QualitySettings.asset")[0];
+            var so = new SerializedObject(settings);
+            var levels = so.FindProperty("m_QualitySettings");
+            levels.arraySize = graphicsPresets.Length;
+            for (int i = 0; i < graphicsPresets.Length; i++)
+            {
+                var level = levels.GetArrayElementAtIndex(i);
+                level.FindPropertyRelative("name").stringValue = GraphicsService.Label(i);
+                level.FindPropertyRelative("customRenderPipeline").objectReferenceValue = graphicsPresets[i];
+                level.FindPropertyRelative("excludedTargetPlatforms").arraySize = 0;
+                level.FindPropertyRelative("vSyncCount").intValue = 0;
+            }
+            so.FindProperty("m_CurrentQuality").intValue = GraphicsService.Medium;
+            var defaults = so.FindProperty("m_PerPlatformDefaultQuality");
+            for (int i = 0; i < defaults.arraySize; i++)
+                defaults.GetArrayElementAtIndex(i).FindPropertyRelative("second").intValue = GraphicsService.Medium;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssets();
+        }
+
+        static UniversalRenderPipelineAsset MakeUrpPreset(string path, UniversalRenderPipelineAsset source, float scale, int msaa, bool hdr, float shadowDistance, int shadowMap, int cascades, bool soft, int softQuality, int additionalLights, int upscaling)
         {
             if (File.Exists(path))
                 AssetDatabase.DeleteAsset(path);
             var copy = UnityEngine.Object.Instantiate(source);
             AssetDatabase.CreateAsset(copy, path);
-            WriteUrp(copy, scale, msaa, hdr, shadowDistance, shadowMap, cascades, soft, softQuality, additionalLights);
+            WriteUrp(copy, scale, msaa, hdr, shadowDistance, shadowMap, cascades, soft, softQuality, additionalLights, upscaling);
             return AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(path);
         }
 
-        static void WriteUrp(UniversalRenderPipelineAsset asset, float scale, int msaa, bool hdr, float shadowDistance, int shadowMap, int cascades, bool soft, int softQuality, int additionalLights)
+        static void WriteUrp(UniversalRenderPipelineAsset asset, float scale, int msaa, bool hdr, float shadowDistance, int shadowMap, int cascades, bool soft, int softQuality, int additionalLights, int upscaling)
         {
             if (asset == null)
                 return;
@@ -1088,8 +1112,8 @@ namespace SlimeBreaker.EditorTools
             Set(so, "m_AnyShadowsSupported", true);
             Set(so, "m_RequireDepthTexture", false);
             Set(so, "m_RequireOpaqueTexture", false);
-            // FSR 1 upscaling is used whenever AdaptiveResolution lowers the render scale; 32-bit HDR (R11G11B10) halves bandwidth.
-            Set(so, "m_UpscalingFilter", 3);
+            // The upscaler runs whenever the render scale is below 1 (1 = linear, 3 = FSR 1); 32-bit HDR (R11G11B10) halves bandwidth.
+            Set(so, "m_UpscalingFilter", upscaling);
             Set(so, "m_FsrOverrideSharpness", true);
             Set(so, "m_FsrSharpness", 0.85f);
             Set(so, "m_HDRColorBufferPrecision", 0);
@@ -3597,7 +3621,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Dumpling Witch";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 45;
+            PlayerSettings.Android.bundleVersionCode = 46;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.dumplingwitch");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

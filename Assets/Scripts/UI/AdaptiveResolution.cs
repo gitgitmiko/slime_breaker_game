@@ -5,19 +5,16 @@ using UnityEngine.Rendering.Universal;
 namespace SlimeBreaker
 {
     /// <summary>
-    /// Keeps 60 fps by trading render resolution instead of visual features: when frames run long the URP render
-    /// scale drops in small steps (FSR 1 upscales back to native, so the image stays sharp); when there is headroom it
-    /// climbs back. Also caps the internal resolution at ~1080p on very high-DPI screens, where extra pixels are
-    /// invisible at phone size but cost fill rate. Low quality keeps its fixed preset scale. Inactive in the editor so
+    /// Holds the frame rate of the current graphics level by trading render resolution: when frames run long the URP render
+    /// scale drops in small steps; when there is headroom it climbs back. The level also caps the internal resolution
+    /// (<see cref="GraphicsProfile.maxRenderHeight"/>), since extra pixels are barely visible at phone size but cost fill rate. Inactive in the editor so
     /// playtests and the shared URP assets stay deterministic.
     /// </summary>
     public class AdaptiveResolution : MonoBehaviour
     {
         public static AdaptiveResolution Instance { get; private set; }
 
-        [Range(0.5f, 1f)] public float minScale = 0.7f;
-        public float maxRenderHeight = 1080f;
-        public float targetFps = 60f;
+        [Range(0.5f, 1f)] public float minScale = 0.55f;
         public bool runInEditor;
 
         public float Scale { get; private set; } = 1f;
@@ -52,14 +49,7 @@ namespace SlimeBreaker
 
         bool Active => runInEditor || !Application.isEditor;
 
-        float Ceiling
-        {
-            get
-            {
-                float shortSide = Mathf.Min(Screen.width, Screen.height);
-                return shortSide <= 0f ? 1f : Mathf.Clamp(maxRenderHeight / shortSide, minScale, 1f);
-            }
-        }
+        float Ceiling => GraphicsService.Current.RenderScale(Mathf.Min(Screen.width, Screen.height), minScale);
 
         /// <summary>Called when the graphics preset changes: forget the old asset and start from the ceiling.</summary>
         public void ResetScale()
@@ -91,12 +81,6 @@ namespace SlimeBreaker
         {
             if (!Active)
                 return;
-            var graphics = GraphicsService.Instance;
-            if (graphics != null && graphics.Level == GraphicsService.Low)
-            {
-                Unbind();
-                return;
-            }
             var asset = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
             if (asset != bound)
                 Bind(asset);
@@ -113,7 +97,7 @@ namespace SlimeBreaker
                 return;
             timer = 0f;
 
-            float budget = 1f / targetFps;
+            float budget = 1f / GraphicsService.Current.targetFps;
             float next = Scale;
             if (average > budget * 1.1f)
             {

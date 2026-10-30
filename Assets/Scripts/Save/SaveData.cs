@@ -11,8 +11,8 @@ namespace SlimeBreaker
         public int healthRank;
         public int speedRank;
         public float bestRunTime;
-        /// <summary>0 = Low, 1 = Medium, 2 = High. Default High for new installs.</summary>
-        public int graphicsLevel = 2;
+        /// <summary>0 = Low, 1 = Medium, 2 = High. Default Medium for new installs.</summary>
+        public int graphicsLevel = 1;
         /// <summary>False = fixed joystick (default); true = free/floating joystick.</summary>
         public bool freeJoystick;
         /// <summary>False = normal camera drag (default); true = inverted (the world follows the finger).</summary>

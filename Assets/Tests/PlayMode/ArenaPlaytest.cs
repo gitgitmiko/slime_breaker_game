@@ -1,3 +1,4 @@
+using UnityEngine.Rendering.Universal;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -21,6 +22,7 @@ namespace SlimeBreaker.Tests
         readonly List<MeshCollider> groundColliders = new List<MeshCollider>();
 
         int originalDifficulty;
+        int originalGraphics;
 
         [UnitySetUp]
         public IEnumerator LoadArena()
@@ -29,6 +31,8 @@ namespace SlimeBreaker.Tests
             var saved = SaveService.Load();
             originalDifficulty = saved.difficulty;
             saved.difficulty = (int)DifficultyLevel.Hard;
+            originalGraphics = saved.graphicsLevel;
+            saved.graphicsLevel = GraphicsService.High;
             SaveService.Save(saved);
             SceneManager.LoadScene("GameArena");
             yield return null;
@@ -55,6 +59,7 @@ namespace SlimeBreaker.Tests
             Time.timeScale = 1f;
             var restored = SaveService.Load();
             restored.difficulty = originalDifficulty;
+            restored.graphicsLevel = originalGraphics;
             SaveService.Save(restored);
             Difficulty.Set(DifficultyLevel.Hard);
             yield return null;
@@ -2244,6 +2249,67 @@ namespace SlimeBreaker.Tests
             yield return null;
             Assert.Greater(Object.FindObjectsByType<DamagePopup>(FindObjectsSortMode.None).Length, 0, "hero hit showed no damage number");
             Capture("16_damage_numbers");
+        }
+
+        /// <summary>Scene load from the gameplay camera, counted from the meshes themselves (GPU counters are empty in batch mode).</summary>
+        static void MeasureView(out int triangles, out int casters, out int renderers)
+        {
+            triangles = casters = renderers = 0;
+            var planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
+            foreach (var renderer in Object.FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None))
+            {
+                if (!renderer.enabled || !GeometryUtility.TestPlanesAABB(planes, renderer.bounds))
+                    continue;
+                var filter = renderer.GetComponent<MeshFilter>();
+                if (filter == null || filter.sharedMesh == null)
+                    continue;
+                renderers++;
+                if (renderer.shadowCastingMode != UnityEngine.Rendering.ShadowCastingMode.Off)
+                    casters++;
+                int first = renderer.subMeshStartIndex;
+                int count = Mathf.Min(renderer.sharedMaterials.Length, filter.sharedMesh.subMeshCount - first);
+                for (int i = 0; i < count; i++)
+                    triangles += (int)filter.sharedMesh.GetIndexCount(first + i) / 3;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator GraphicsPresetsChangeWhatIsRendered()
+        {
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            var graphics = Object.FindAnyObjectByType<GraphicsService>();
+            var generator = Object.FindAnyObjectByType<ArenaGenerator>();
+            QuietArena();
+            stage.ForceFloor(1);
+            PlayerHealth.Instance.GiveInvulnerability(600f);
+            int[] triangles = new int[3];
+            int[] trees = new int[3];
+            string[] names = { "low", "medium", "high" };
+            for (int level = 0; level < 3; level++)
+            {
+                graphics.Apply(level, persist: false);
+                yield return null;
+                yield return null;
+                yield return Hold(0.3f);
+                MeasureView(out triangles[level], out int casters, out int renderers);
+                foreach (var t in generator.Root.GetComponentsInChildren<Transform>())
+                {
+                    if (t.parent == generator.Root && t.name.StartsWith("ENV_Forest_Tree"))
+                        trees[level]++;
+                }
+                var pipeline = (UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset)QualitySettings.renderPipeline;
+                Debug.Log("PLAYTEST graphics " + names[level] + " fps=" + Application.targetFrameRate + " trees=" + trees[level]
+                    + " viewTris=" + triangles[level] + " viewRenderers=" + renderers + " shadowCasters=" + casters
+                    + " msaa=" + pipeline.msaaSampleCount + " shadowDist=" + pipeline.shadowDistance + " shadowMap=" + pipeline.mainLightShadowmapResolution
+                    + " hdr=" + pipeline.supportsHDR + " post=" + Camera.main.GetUniversalAdditionalCameraData().renderPostProcessing);
+                Capture("50_graphics_" + names[level]);
+                Assert.AreEqual(GraphicsService.For(level).targetFps, Application.targetFrameRate);
+                Assert.AreEqual(level, QualitySettings.GetQualityLevel(), "each preset is its own quality level");
+            }
+            Assert.Less(trees[0], trees[1], "Low holds fewer trees than Medium");
+            Assert.Less(trees[1], trees[2], "Medium holds fewer trees than High");
+            Assert.Less(triangles[0], triangles[1], "Low draws less than Medium");
+            Assert.Less(triangles[1], triangles[2], "Medium draws less than High");
         }
 
         [UnityTest]

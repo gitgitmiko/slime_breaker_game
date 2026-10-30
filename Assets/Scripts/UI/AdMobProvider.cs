@@ -18,8 +18,7 @@ namespace SlimeBreaker
         const string InterstitialUnitId = "ca-app-pub-3940256099942544/1033173712";
 #else
         const string RewardedUnitId = "ca-app-pub-6808667639334235/8407574176";
-        // Empty until the interstitial unit exists in AdMob: boss floors then show the house ad.
-        const string InterstitialUnitId = "";
+        const string InterstitialUnitId = "ca-app-pub-6808667639334235/9848849010";
 #endif
 
         RewardedAd rewarded;

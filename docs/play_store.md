@@ -44,7 +44,7 @@ Simpan cadangan `~/.slimebreaker/upload.keystore` **dan** `upload-keystore.prope
 2. **Create app**: nama *Dumpling Witch*, bahasa default Indonesia, *Game*, *Free*, centang deklarasi.
 3. **Kebijakan privasi**: isi `https://gitgitdev.my.id/dumpling-witch/privacy/` di *App content → Privacy policy*; *Store settings → Website*: `https://gitgitdev.my.id`.
 4. **App content**:
-   - *Ads*: **Ya, berisi iklan** (iklan reward AdMob saat pemain memilih Lanjutkan).
+   - *Ads*: **Ya, berisi iklan** (iklan reward AdMob saat pemain memilih Lanjutkan, dan interstitial saat masuk lantai boss).
    - *Advertising ID*: **Ya**, dipakai untuk *Advertising or marketing*.
    - *App access*: semua fitur bisa dipakai tanpa login.
    - *Content rating* (kuesioner IARC): kategori Game; kekerasan fantasi/kartun ringan terhadap makhluk fantasi (slime), tanpa darah, tanpa interaksi pengguna, tanpa pembelian, tanpa judi. Hasil biasanya PEGI 7 / ESRB Everyone 10+ / IARC 7+.

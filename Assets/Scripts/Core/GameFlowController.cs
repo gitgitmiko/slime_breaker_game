@@ -170,6 +170,25 @@ namespace SlimeBreaker
             PersistRun();
         }
 
+        /// <summary>Freezes a run in progress behind a full-screen ad; the pause button stays dead until <see cref="EndAdBreak"/>.</summary>
+        public void BeginAdBreak()
+        {
+            if (State != GameState.Playing)
+                return;
+            State = GameState.Paused;
+            Time.timeScale = 0f;
+            WatchingAd = true;
+        }
+
+        public void EndAdBreak()
+        {
+            if (!WatchingAd || State != GameState.Paused)
+                return;
+            WatchingAd = false;
+            State = GameState.Playing;
+            Time.timeScale = 1f;
+        }
+
         public void BeginBossIntro()
         {
             if (State == GameState.Victory || State == GameState.Defeat || State == GameState.OutOfLives)
@@ -255,7 +274,7 @@ namespace SlimeBreaker
 
         public void TogglePause()
         {
-            if (State == GameState.BossIntro || InventoryOpen)
+            if (State == GameState.BossIntro || InventoryOpen || WatchingAd)
                 return;
             if (State == GameState.Playing)
             {

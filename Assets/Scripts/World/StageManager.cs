@@ -163,10 +163,12 @@ namespace SlimeBreaker
 
             int level = flow.Stats.level;
             int power = level / Difficulty.Profile.powerUpEvery;
-            while (HandledPowerTiers < power)
+            if (HandledPowerTiers < power)
             {
-                HandledPowerTiers++;
-                powerUps?.Spawn();
+                int crystals = power - HandledPowerTiers;
+                HandledPowerTiers = power;
+                StartCoroutine(DropPowerUps(crystals));
+                return;
             }
 
             if (BossAlive() || Intermission)
@@ -414,6 +416,25 @@ namespace SlimeBreaker
             if (!RunRules.IsBossFloor(Floor))
                 GameFlowController.Instance?.ui?.ShowToast("Lantai " + Floor + " — " + Theme.Title, new Color(0.55f, 0.9f, 1f));
             GameFlowController.Instance?.PersistRun();
+        }
+
+        /// <summary>An ad plays first and the crystals land once it is closed. No crystal to give (every skill at MAX) means no ad.</summary>
+        IEnumerator DropPowerUps(int crystals)
+        {
+            if (powerUps == null || !powerUps.CanSpawn)
+                yield break;
+            var flow = GameFlowController.Instance;
+            if (flow != null && flow.ads != null)
+            {
+                bool closed = false;
+                flow.BeginAdBreak();
+                flow.ads.ShowInterstitial(() => closed = true);
+                while (!closed)
+                    yield return null;
+                flow.EndAdBreak();
+            }
+            for (int i = 0; i < crystals; i++)
+                powerUps.Spawn();
         }
 
         IEnumerator PlayBossFloorAd()

@@ -215,6 +215,7 @@
 - Persiapan Google Play: ikon aplikasi, target API 36, AAB bertanda tangan upload key, aset store (ikon 512, feature graphic, 8 screenshot), kebijakan privasi, panduan `docs/play_store.md`. APK/AAB 0.30.1.
 - AdMob Rewarded di tombol Lanjutkan (`AdMobProvider`, consent UMP, house ad sebagai cadangan); APK sideload = iklan uji, AAB Play = iklan asli. APK/AAB 0.31.0.
 - Nama game jadi **Dumpling Witch** (judul menu, house ad, nama aplikasi, feature graphic, teks store, kebijakan privasi); paket `com.gitgitmiko.dumplingwitch`. APK/AAB 0.32.0.
+- Iklan interstitial setiap power-up muncul (arena beku, kristal jatuh setelah iklan ditutup; tanpa iklan kalau semua skill MAX). APK/AAB 0.35.0.
 
 ## Berikutnya
 

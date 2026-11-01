@@ -683,10 +683,24 @@ namespace SlimeBreaker.Tests
             }
             yield return null;
             Assert.AreEqual(0, PowerUpPickup.Active.Count, "a power-up spawned before level 20");
+            var ads = flow.ads;
+            ads.adSeconds = 0.5f;
+            int adsBefore = ads.Shown;
             flow.BeginLevelUp();
             flow.ChooseUpgrade(0);
             yield return null;
             yield return null;
+            Assert.AreEqual(adsBefore + 1, ads.Shown, "a power-up appearing plays an ad");
+            Assert.IsTrue(ads.IsShowing);
+            Assert.AreEqual(0, PowerUpPickup.Active.Count, "the crystal must wait until the ad is closed");
+            Assert.AreEqual(0f, Time.timeScale, "the arena stays frozen behind the ad");
+            flow.TogglePause();
+            Assert.IsTrue(flow.WatchingAd, "pause must not resume the run behind the ad");
+            Assert.AreEqual(0f, Time.timeScale);
+            yield return CloseAd(ads);
+            Assert.AreEqual(GameState.Playing, flow.State, "closing the ad resumes the run");
+            Assert.AreEqual(1f, Time.timeScale);
+            Assert.AreEqual(adsBefore + 1, ads.Shown, "only one ad per power-up");
             Assert.AreEqual(20, flow.Stats.level);
             Assert.AreEqual(1, stage.Floor, "power-ups follow hero level, not floor");
             Assert.IsFalse(stage.Intermission, "level 20 is a power-up beat, not a boss stage");
@@ -717,9 +731,39 @@ namespace SlimeBreaker.Tests
             flow.ChooseUpgrade(0);
             yield return null;
             yield return null;
+            Assert.AreEqual(adsBefore + 2, ads.Shown, "the next power-up plays its own ad");
+            yield return CloseAd(ads);
             Assert.AreEqual(1, PowerUpPickup.Active.Count, "no power-up at level 40");
             Assert.AreEqual(BossKind.None, stage.ActiveBoss, "hero level 40 must not spawn a floor boss");
             Assert.AreEqual(1, stage.Floor);
+        }
+
+        static IEnumerator CloseAd(AdService ads)
+        {
+            while (!ads.CanClose)
+                yield return null;
+            ads.Close();
+            yield return null;
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator NoAdWhenThereIsNoPowerUpToGive()
+        {
+            var flow = GameFlowController.Instance;
+            var spawner = Object.FindAnyObjectByType<PowerUpSpawner>();
+            spawner.skills = new SkillDefinition[0];
+            int shown = flow.ads.Shown;
+            while (flow.Stats.level < 20)
+            {
+                flow.BeginLevelUp();
+                flow.ChooseUpgrade(0);
+            }
+            yield return null;
+            yield return null;
+            Assert.AreEqual(shown, flow.ads.Shown, "every skill at MAX: no crystal, so no ad");
+            Assert.AreEqual(0, PowerUpPickup.Active.Count);
+            Assert.AreEqual(GameState.Playing, flow.State);
         }
 
         [UnityTest]

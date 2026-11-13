@@ -46,7 +46,7 @@ namespace SlimeBreaker
         public Text sellLabel;
         public Text goldText;
 
-        static readonly Color EmptyFrame = new Color(1f, 1f, 1f, 0.12f);
+        static readonly Color EmptyFrame = new Color(1f, 1f, 1f, 0f);
 
         readonly List<ItemData> ordered = new List<ItemData>();
         readonly HashSet<int> marked = new HashSet<int>();
@@ -275,8 +275,8 @@ namespace SlimeBreaker
                 slotIcons[slot].sprite = inventory.IconFor((ItemSlot)slot);
                 slotIcons[slot].color = item != null ? Color.white : new Color(1f, 1f, 1f, 0.25f);
                 slotTexts[slot].text = item != null
-                    ? "<b>" + item.Name + "</b> <size=20>Lv " + item.band + "</size>\n<size=20>" + item.Stats + "</size>"
-                    : "<b>" + ItemCatalog.SlotLabels[slot] + "</b>\n<size=20><color=#ffffff80>kosong</color></size>";
+                    ? item.Name + " <size=20>Lv " + item.band + "</size>\n<size=20>" + item.Stats + "</size>"
+                    : ItemCatalog.SlotLabels[slot] + "\n<size=20><color=#ffffff80>kosong</color></size>";
             }
 
             ordered.Clear();
@@ -363,7 +363,7 @@ namespace SlimeBreaker
             if (sellButton != null)
                 sellButton.interactable = marked.Count > 0;
             if (goldText != null)
-                goldText.text = "Emas " + SaveService.Load().gold;
+                goldText.text = UIController.Thousands(SaveService.Load().gold);
         }
 
         static Color Rarity(ItemData item) => UpgradeRarities.Color(item.Rarity);

@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.35.0";
+        const string AppVersion = "0.36.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -62,11 +62,35 @@ namespace SlimeBreaker.EditorTools
         static Sprite arrowSprite;
         static Sprite checkSprite;
         static Sprite heartSprite;
-        static readonly Color AccentViolet = new Color(0.56f, 0.46f, 1f);
+        static Sprite greenSprite;
+        static Sprite blueSprite;
+        static Sprite skillSlotSprite;
+        static Sprite cardTintSprite;
+        static Sprite tagSprite;
+        static Sprite washSprite;
+        static Sprite circleGoldSprite;
+        static Sprite circleRedSprite;
+        static Sprite dashSprite;
+        static Sprite ribbonSprite;
+        static Sprite ribbonVioletSprite;
+        static Sprite burstSprite;
+        static Sprite fadeSprite;
+        static Sprite closeSprite;
+        static Sprite pointerSprite;
+        static Sprite playIconSprite;
+        static Sprite logoSprite;
+        static Sprite avatarSprite;
+        static Sprite keyArtSprite;
+        static Font displayFont;
+        static Font bodyFont;
+        static readonly Color Ink = new Color(0.133f, 0.07f, 0.247f);
+        static readonly Color Cream = new Color(1f, 0.957f, 0.847f);
+        static readonly Color Gold = new Color(1f, 0.83f, 0.3f);
+        static readonly Color AccentViolet = new Color(0.62f, 0.5f, 1f);
         static readonly Color AccentRed = new Color(0.86f, 0.22f, 0.3f);
         static readonly Color AccentGreen = new Color(0.36f, 0.86f, 0.46f);
         static readonly Color AccentBlue = new Color(0.36f, 0.72f, 1f);
-        static readonly Color TextDim = new Color(0.66f, 0.68f, 0.78f);
+        static readonly Color TextDim = new Color(0.76f, 0.7f, 0.98f);
         static Material additiveParticleMaterial;
         static Material trailMaterial;
         static Material forestGroundMaterial;
@@ -304,8 +328,8 @@ namespace SlimeBreaker.EditorTools
                 Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Xp.asset", UpgradeKind.Xp, "EXP", "+25% EXP gain", 0.25f, "Assets/Art/UI/Icons/ICON_Upgrade_Xp.png"),
                 Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Armor.asset", UpgradeKind.Armor, "Defender", "-8% damage taken", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_Armor.png"),
                 Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_Lifesteal.asset", UpgradeKind.Lifesteal, "Lifesteal", "Heal 8% of damage dealt", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_Lifesteal.png"),
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_CritRate.asset", UpgradeKind.CritChance, "Crit Rate", "+8% critical chance", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_AttackRate.png"),
-                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_CritDamage.asset", UpgradeKind.CritDamage, "Critical", "+30% critical damage", 0.3f, "Assets/Art/UI/Icons/ICON_Upgrade_Damage.png")
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_CritRate.asset", UpgradeKind.CritChance, "Crit Rate", "+8% critical chance", 0.08f, "Assets/Art/UI/Icons/ICON_Upgrade_CritRate.png"),
+                Upgrade("Assets/ScriptableObjects/Upgrades/ICON_Upgrade_CritDamage.asset", UpgradeKind.CritDamage, "Critical", "+30% critical damage", 0.3f, "Assets/Art/UI/Icons/ICON_Upgrade_CritDamage.png")
             };
 
             var skills = new[]
@@ -500,22 +524,48 @@ namespace SlimeBreaker.EditorTools
                         importer.SaveAndReimport();
                         continue;
                     }
-                    if (path.Contains("UI_Panel"))
-                        importer.spriteBorder = new Vector4(48f, 48f, 48f, 48f);
-                    else if (path.Contains("UI_Button"))
-                        importer.spriteBorder = new Vector4(60f, 58f, 60f, 58f);
-                    else if (path.Contains("UI_Slot"))
-                        importer.spriteBorder = new Vector4(28f, 28f, 28f, 28f);
-                    else if (path.Contains("UI_Bar_Back"))
-                        importer.spriteBorder = new Vector4(20f, 14f, 20f, 14f);
-                    else if (path.Contains("UI_Card_Glass"))
-                        importer.spriteBorder = new Vector4(26f, 26f, 26f, 26f);
-                    else if (path.Contains("UI_Pill"))
-                        importer.spriteBorder = new Vector4(22f, 21f, 22f, 21f);
-                    else if (path.Contains("UI_Bar_Track"))
-                        importer.spriteBorder = new Vector4(14f, 14f, 14f, 14f);
-                    else if (path.Contains("UI_Bar_Fill"))
-                        importer.spriteBorder = new Vector4(11f, 11f, 11f, 11f);
+                    // Frames are authored at twice the canvas size (build_ui_modern.py): 200 PPU keeps their borders crisp.
+                    // Borders are (left, bottom, right, top) in texture pixels.
+                    string file = Path.GetFileNameWithoutExtension(path);
+                    importer.spriteBorder = Vector4.zero;
+                    if (path.Contains("/Panels/"))
+                    {
+                        importer.spritePixelsPerUnit = 200f;
+                        importer.textureCompression = TextureImporterCompression.Uncompressed;
+                        importer.filterMode = FilterMode.Bilinear;
+                    }
+                    else if (path.Contains("/Art/"))
+                    {
+                        importer.maxTextureSize = 2048;
+                        importer.textureCompression = TextureImporterCompression.CompressedHQ;
+                    }
+                    else
+                    {
+                        importer.maxTextureSize = 256;
+                        importer.textureCompression = TextureImporterCompression.CompressedHQ;
+                    }
+                    if (file == "UI_Panel")
+                        importer.spriteBorder = new Vector4(120f, 136f, 120f, 120f);
+                    else if (file.StartsWith("UI_Button"))
+                        importer.spriteBorder = new Vector4(80f, 92f, 80f, 80f);
+                    else if (file == "UI_Card_Tint")
+                        importer.spriteBorder = new Vector4(88f, 100f, 88f, 88f);
+                    else if (file == "UI_Card_Glass")
+                        importer.spriteBorder = new Vector4(56f, 56f, 56f, 56f);
+                    else if (file.StartsWith("UI_Slot"))
+                        importer.spriteBorder = new Vector4(60f, 60f, 60f, 60f);
+                    else if (file == "UI_Bar_Back" || file == "UI_Bar_Track")
+                        importer.spriteBorder = new Vector4(40f, 36f, 40f, 36f);
+                    else if (file == "UI_Bar_Fill")
+                        importer.spriteBorder = new Vector4(20f, 16f, 20f, 28f);
+                    else if (file == "UI_Pill")
+                        importer.spriteBorder = new Vector4(48f, 42f, 48f, 42f);
+                    else if (file == "UI_Tag")
+                        importer.spriteBorder = new Vector4(52f, 44f, 52f, 40f);
+                    else if (file == "UI_Wash")
+                        importer.spriteBorder = new Vector4(32f, 32f, 32f, 32f);
+                    else if (file.StartsWith("UI_Ribbon"))
+                        importer.spriteBorder = new Vector4(148f, 0f, 148f, 0f);
                     importer.SaveAndReimport();
                 }
             }
@@ -2257,7 +2307,7 @@ namespace SlimeBreaker.EditorTools
             var camera = MakeCamera("Camera", new Color(0.09f, 0.12f, 0.2f));
             camera.fieldOfView = 36f;
             camera.transform.position = new Vector3(0.1f, 1.35f, -4.3f);
-            camera.transform.rotation = Quaternion.LookRotation(new Vector3(0.85f, 0.9f, 0f) - camera.transform.position, Vector3.up);
+            camera.transform.rotation = Quaternion.LookRotation(new Vector3(1.45f, 0.82f, 0f) - camera.transform.position, Vector3.up);
             new GameObject("UrpBootstrap").AddComponent<UrpSceneBootstrap>();
             var sun = Light();
             sun.transform.rotation = Quaternion.Euler(42f, 18f, 0f);
@@ -2336,68 +2386,130 @@ namespace SlimeBreaker.EditorTools
             audio.entries = new[] { Sfx("ui", "SFX_UI", 0.7f, 0.03f) };
 
             EventSystem();
-            Canvas(out var safe);
+            var menuCanvas = Canvas(out var safe);
             var menu = new GameObject("Menu").AddComponent<MainMenuController>();
             menu.showcase = showcase.transform;
             var font = Font();
-            // Left column on a glass card: title, tagline, gold/record pills, Play, Continue, upgrades.
-            var menuCard = Graphic(safe, "MenuCard", cardSprite, Color.white);
-            Place(menuCard.gameObject, safe, new Vector2(0.27f, 0.5f), new Vector2(900f, 900f));
-            var accent = Graphic(menuCard.transform, "Accent", pillSprite, AccentViolet);
-            AnchorBox(accent.rectTransform, new Vector2(0f, 1f), new Vector2(54f, -70f), new Vector2(8f, 96f));
-            var title = Text(menuCard.transform, "Title", "Dumpling Witch", 84, TextAnchor.MiddleLeft, font);
-            title.color = new Color(1f, 0.93f, 0.74f);
-            title.fontStyle = FontStyle.Bold;
-            Shade(title);
-            AnchorBox(title.rectTransform, new Vector2(0f, 1f), new Vector2(84f, -58f), new Vector2(780f, 110f));
-            var goldPill = Graphic(menuCard.transform, "GoldPill", pillSprite, new Color(1f, 0.78f, 0.3f, 0.18f));
-            AnchorBox(goldPill.rectTransform, new Vector2(0f, 1f), new Vector2(84f, -186f), new Vector2(360f, 56f));
-            var gold = Text(goldPill.transform, "Gold", "Emas 0", 28, TextAnchor.MiddleCenter, font);
+            // Lobby layout: logo and permanent upgrades on the left, currencies and settings along the top,
+            // difficulty / Continue / Play stacked bottom-right; the hero stands in the middle.
+            var topFade = Graphic(menuCanvas.transform, "TopFade", fadeSprite, new Color(0.07f, 0.03f, 0.18f, 0.7f));
+            topFade.transform.SetAsFirstSibling();
+            topFade.rectTransform.anchorMin = new Vector2(0f, 1f);
+            topFade.rectTransform.anchorMax = new Vector2(1f, 1f);
+            topFade.rectTransform.pivot = new Vector2(0.5f, 1f);
+            topFade.rectTransform.sizeDelta = new Vector2(0f, 300f);
+            var bottomFade = Graphic(menuCanvas.transform, "BottomFade", fadeSprite, new Color(0.07f, 0.03f, 0.18f, 0.8f));
+            bottomFade.transform.SetSiblingIndex(1);
+            bottomFade.rectTransform.anchorMin = new Vector2(0f, 0f);
+            bottomFade.rectTransform.anchorMax = new Vector2(1f, 0f);
+            bottomFade.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            bottomFade.rectTransform.sizeDelta = new Vector2(0f, 420f);
+            bottomFade.rectTransform.anchoredPosition = new Vector2(0f, 210f);
+            bottomFade.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 180f);
+
+            var logo = Graphic(safe, "Logo", logoSprite != null ? logoSprite : whiteSprite, Color.white);
+            logo.preserveAspect = true;
+            AnchorBox(logo.rectTransform, new Vector2(0f, 1f), new Vector2(36f, -20f), new Vector2(640f, 330f));
+            var logoPulse = logo.gameObject.AddComponent<UiPulse>();
+            logoPulse.scaleAmount = 0f;
+            logoPulse.bob = 7f;
+            logoPulse.scaleSpeed = 1.7f;
+            if (logoSprite == null)
+            {
+                logo.enabled = false;
+                var title = Text(safe, "Title", "Dumpling Witch", 96, TextAnchor.MiddleLeft, font);
+                title.color = Gold;
+                title.fontStyle = FontStyle.Bold;
+                AnchorBox(title.rectTransform, new Vector2(0f, 1f), new Vector2(48f, -40f), new Vector2(900f, 130f));
+            }
+
+            // Top-right: gold, best time, settings.
+            var goldPill = Graphic(safe, "GoldPill", cardSprite, Color.white);
+            AnchorBox(goldPill.rectTransform, new Vector2(1f, 1f), new Vector2(-690f, -30f), new Vector2(250f, 68f));
+            IconAt(goldPill.transform, "Icon", Icon("ICON_Coin"), new Vector2(0.06f, 0.5f), 82f);
+            var gold = Text(goldPill.transform, "Gold", "0", 36, TextAnchor.MiddleRight, font);
             gold.fontStyle = FontStyle.Bold;
-            gold.color = new Color(1f, 0.85f, 0.45f);
+            gold.color = Gold;
             Stretch(gold.rectTransform);
-            var bestPill = Graphic(menuCard.transform, "BestPill", pillSprite, new Color(1f, 1f, 1f, 0.08f));
-            AnchorBox(bestPill.rectTransform, new Vector2(0f, 1f), new Vector2(460f, -186f), new Vector2(360f, 56f));
-            var best = Text(bestPill.transform, "Best", "Rekor 00:00", 26, TextAnchor.MiddleCenter, font);
+            gold.rectTransform.offsetMin = new Vector2(60f, 0f);
+            gold.rectTransform.offsetMax = new Vector2(-24f, 0f);
+            var bestPill = Graphic(safe, "BestPill", cardSprite, Color.white);
+            AnchorBox(bestPill.rectTransform, new Vector2(1f, 1f), new Vector2(-410f, -30f), new Vector2(250f, 68f));
+            IconAt(bestPill.transform, "Icon", Icon("ICON_Trophy"), new Vector2(0.06f, 0.5f), 82f);
+            var best = Text(bestPill.transform, "Best", "00:00", 36, TextAnchor.MiddleRight, font);
             best.fontStyle = FontStyle.Bold;
             Stretch(best.rectTransform);
-            // Continue sits above Play; MainMenuController moves Play up when there is no run to continue.
-            var cont = Button(menuCard.transform, "Continue", "Lanjutkan", font, Color.white, ghostSprite);
-            AnchorBox((RectTransform)cont.transform, new Vector2(0f, 1f), new Vector2(84f, -270f), new Vector2(736f, 92f));
-            // Everything from Play down lives in Body so it can slide up when there is no Continue button.
-            var body = new GameObject("Body", typeof(RectTransform)).GetComponent<RectTransform>();
-            body.SetParent(menuCard.transform, false);
-            AnchorBox(body, new Vector2(0f, 1f), Vector2.zero, new Vector2(900f, 900f));
-            var play = Button(body, "Play", "Main", font, Color.white, goldSprite);
-            play.GetComponentInChildren<Text>().fontSize = 42;
-            AnchorBox((RectTransform)play.transform, new Vector2(0f, 1f), new Vector2(84f, -374f), new Vector2(736f, 112f));
-            // Difficulty selector for the next new run (Easy / Normal / Hard) with a one-line summary.
-            var difficultyLabel = Text(body, "DifficultyLabel", "KESULITAN", 20, TextAnchor.MiddleLeft, font);
-            difficultyLabel.fontStyle = FontStyle.Bold;
-            difficultyLabel.color = TextDim;
-            AnchorBox(difficultyLabel.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -518f), new Vector2(200f, 30f));
-            var difficultyDropdown = BuildDropdown(body, "DifficultyDropdown", new[] { "Easy", "Normal", "Hard" }, font);
-            AnchorBox((RectTransform)difficultyDropdown.transform, new Vector2(0f, 1f), new Vector2(84f, -548f), new Vector2(736f, 84f));
-            difficultyDropdown.SetValueWithoutNotify((int)DifficultyLevel.Normal);
-            var upgradesLabel = Text(body, "UpgradesLabel", "PENINGKATAN PERMANEN", 20, TextAnchor.MiddleLeft, font);
-            upgradesLabel.fontStyle = FontStyle.Bold;
-            upgradesLabel.color = TextDim;
-            AnchorBox(upgradesLabel.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -664f), new Vector2(736f, 30f));
-            var damage = Button(body, "Damage", "Damage", font, Color.white, ghostSprite);
-            AnchorBox((RectTransform)damage.transform, new Vector2(0f, 1f), new Vector2(84f, -702f), new Vector2(236f, 120f));
-            var health = Button(body, "Health", "Nyawa", font, Color.white, ghostSprite);
-            AnchorBox((RectTransform)health.transform, new Vector2(0f, 1f), new Vector2(334f, -702f), new Vector2(236f, 120f));
-            var speed = Button(body, "Speed", "Laju", font, Color.white, ghostSprite);
-            AnchorBox((RectTransform)speed.transform, new Vector2(0f, 1f), new Vector2(584f, -702f), new Vector2(236f, 120f));
-            foreach (var upgradeButton in new[] { damage, health, speed })
-                upgradeButton.GetComponentInChildren<Text>().fontSize = 26;
-            var version = Text(body, "Version", "v" + AppVersion, 18, TextAnchor.MiddleLeft, font);
-            version.color = new Color(1f, 1f, 1f, 0.35f);
-            AnchorBox(version.rectTransform, new Vector2(0f, 1f), new Vector2(86f, -846f), new Vector2(300f, 28f));
+            best.rectTransform.offsetMin = new Vector2(60f, 0f);
+            best.rectTransform.offsetMax = new Vector2(-24f, 0f);
             var settingsButton = Button(safe, "Settings", "", font, Color.white, circleGlassSprite);
-            Place(settingsButton.gameObject, safe, new Vector2(0.955f, 0.925f), new Vector2(84f, 84f));
+            AnchorBox((RectTransform)settingsButton.transform, new Vector2(1f, 1f), new Vector2(-132f, -16f), new Vector2(100f, 100f));
             var gearIcon = Graphic(settingsButton.transform, "Icon", gearSprite, Color.white);
-            Place(gearIcon.gameObject, settingsButton.transform, new Vector2(0.5f, 0.5f), new Vector2(48f, 48f));
+            Place(gearIcon.gameObject, settingsButton.transform, new Vector2(0.5f, 0.54f), new Vector2(62f, 62f));
+
+            // Bottom-left: permanent upgrades as three cards (icon, name + rank, price).
+            var upgradesLabel = Text(safe, "UpgradesLabel", "PENINGKATAN PERMANEN", 26, TextAnchor.MiddleLeft, font);
+            upgradesLabel.fontStyle = FontStyle.Bold;
+            upgradesLabel.color = Cream;
+            AnchorBox(upgradesLabel.rectTransform, new Vector2(0f, 0f), new Vector2(48f, 366f), new Vector2(640f, 40f));
+            string[] upgradeNames = { "Damage", "Health", "Speed" };
+            string[] upgradeTitles = { "Damage", "Nyawa", "Laju" };
+            string[] upgradeIcons = { "ICON_Upgrade_Damage", "ICON_Upgrade_Health", "ICON_Upgrade_Speed" };
+            var upgradeButtons = new Button[3];
+            var upgradeCosts = new Text[3];
+            for (int i = 0; i < 3; i++)
+            {
+                var card = Button(safe, upgradeNames[i], upgradeTitles[i], font, Color.white, ghostSprite);
+                AnchorBox((RectTransform)card.transform, new Vector2(0f, 0f), new Vector2(40f + i * 212f, 316f), new Vector2(200f, 260f));
+                IconAt(card.transform, "Icon", Icon(upgradeIcons[i]), new Vector2(0.5f, 0.69f), 118f);
+                var name = card.GetComponentInChildren<Text>();
+                name.fontSize = 28;
+                Place(name.gameObject, card.transform, new Vector2(0.5f, 0.38f), new Vector2(190f, 40f));
+                var price = Graphic(card.transform, "Price", pillSprite, new Color(0.09f, 0.05f, 0.2f, 0.7f));
+                Place(price.gameObject, card.transform, new Vector2(0.5f, 0.17f), new Vector2(150f, 46f));
+                IconAt(price.transform, "Coin", Icon("ICON_Coin"), new Vector2(0.14f, 0.5f), 48f);
+                upgradeCosts[i] = Text(price.transform, "Cost", "30", 28, TextAnchor.MiddleCenter, font);
+                upgradeCosts[i].fontStyle = FontStyle.Bold;
+                upgradeCosts[i].color = Gold;
+                upgradeCosts[i].raycastTarget = false;
+                Stretch(upgradeCosts[i].rectTransform);
+                upgradeCosts[i].rectTransform.offsetMin = new Vector2(34f, 0f);
+                upgradeButtons[i] = card;
+            }
+            var damage = upgradeButtons[0];
+            var health = upgradeButtons[1];
+            var speed = upgradeButtons[2];
+            var version = Text(safe, "Version", "v" + AppVersion, 20, TextAnchor.MiddleLeft, font);
+            version.color = new Color(1f, 1f, 1f, 0.55f);
+            AnchorBox(version.rectTransform, new Vector2(0f, 0f), new Vector2(48f, 44f), new Vector2(300f, 28f));
+
+            // Bottom-right: Play (largest), Continue above it, difficulty on top. The difficulty block slides down
+            // into Continue's place when there is no run to continue.
+            var playHolder = new GameObject("PlayHolder", typeof(RectTransform), typeof(UiPulse));
+            playHolder.transform.SetParent(safe, false);
+            AnchorBox((RectTransform)playHolder.transform, new Vector2(1f, 0f), new Vector2(-580f, 216f), new Vector2(540f, 176f));
+            ((RectTransform)playHolder.transform).pivot = new Vector2(0.5f, 0.5f);
+            ((RectTransform)playHolder.transform).anchoredPosition = new Vector2(-310f, 128f);
+            playHolder.GetComponent<UiPulse>().scaleAmount = 0.025f;
+            var play = Button(playHolder.transform, "Play", "MAIN", font, Color.white, goldSprite);
+            Stretch((RectTransform)play.transform);
+            var playLabel = play.GetComponentInChildren<Text>();
+            playLabel.fontSize = 88;
+            playLabel.rectTransform.offsetMin = new Vector2(110f, 14f);
+            ButtonIcon(play, playIconSprite, 84f, 0.2f);
+            var cont = Button(safe, "Continue", "LANJUTKAN", font, Color.white, greenSprite);
+            AnchorBox((RectTransform)cont.transform, new Vector2(1f, 0f), new Vector2(-580f, 372f), new Vector2(540f, 136f));
+            cont.GetComponentInChildren<Text>().fontSize = 40;
+            var body = new GameObject("Body", typeof(RectTransform)).GetComponent<RectTransform>();
+            body.SetParent(safe, false);
+            AnchorBox(body, new Vector2(1f, 0f), new Vector2(-580f, 532f), new Vector2(540f, 140f));
+            var difficultyLabel = Text(body, "DifficultyLabel", "KESULITAN", 26, TextAnchor.MiddleLeft, font);
+            difficultyLabel.fontStyle = FontStyle.Bold;
+            difficultyLabel.color = Cream;
+            AnchorBox(difficultyLabel.rectTransform, new Vector2(0f, 1f), new Vector2(8f, 0f), new Vector2(300f, 40f));
+            var difficultyDropdown = BuildDropdown(body, "DifficultyDropdown", new[] { "Easy", "Normal", "Hard" }, font);
+            AnchorBox((RectTransform)difficultyDropdown.transform, new Vector2(0f, 1f), new Vector2(0f, -44f), new Vector2(540f, 96f));
+            difficultyDropdown.SetValueWithoutNotify((int)DifficultyLevel.Normal);
+
             var settings = BuildSettingsOverlay(safe, font);
             menu.goldText = gold;
             menu.bestText = best;
@@ -2407,12 +2519,16 @@ namespace SlimeBreaker.EditorTools
             menu.damageLabel = damage.GetComponentInChildren<Text>();
             menu.healthLabel = health.GetComponentInChildren<Text>();
             menu.speedLabel = speed.GetComponentInChildren<Text>();
+            menu.damageCost = upgradeCosts[0];
+            menu.healthCost = upgradeCosts[1];
+            menu.speedCost = upgradeCosts[2];
             menu.continueButton = cont;
             menu.continueLabel = cont.GetComponentInChildren<Text>();
             menu.settings = settings;
             menu.difficultyDropdown = difficultyDropdown;
-            menu.card = menuCard.rectTransform;
             menu.body = body;
+            menu.continueSlot = -160f;
+            StyleTexts(menuCanvas.transform);
             AttachGraphics(new GameObject("Graphics"));
             UnityEventTools.AddPersistentListener(play.onClick, menu.Play);
             UnityEventTools.AddPersistentListener(cont.onClick, menu.Continue);
@@ -2680,22 +2796,15 @@ namespace SlimeBreaker.EditorTools
         {
             var inv = host.AddComponent<InventoryPanel>();
             var bag = Button(safe, "Bag", "", font, Color.white, circleGlassSprite);
-            Place(bag.gameObject, safe, new Vector2(0.905f, 0.925f), new Vector2(84f, 84f));
-            var bagIcon = Graphic(bag.transform, "Icon", AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Icons/ICON_Bag.png") ?? whiteSprite, Color.white);
+            AnchorBox((RectTransform)bag.transform, new Vector2(1f, 1f), new Vector2(-244f, -16f), new Vector2(100f, 100f));
+            var bagIcon = Graphic(bag.transform, "Icon", Icon("ICON_Bag"), Color.white);
             bagIcon.preserveAspect = true;
             bagIcon.raycastTarget = false;
-            Place(bagIcon.gameObject, bag.transform, new Vector2(0.5f, 0.5f), new Vector2(54f, 54f));
+            Place(bagIcon.gameObject, bag.transform, new Vector2(0.5f, 0.55f), new Vector2(70f, 70f));
             inv.openButton = bag;
 
-            var panel = Panel(safe, "Inventory", font, "Inventori");
-            var title = panel.transform.Find("Title");
-            if (title != null)
-                Place(title.gameObject, panel.transform, new Vector2(0.5f, 0.84f), new Vector2(1000f, 80f));
-            var accent = panel.transform.Find("TitleAccent");
-            if (accent != null)
-                Place(accent.gameObject, panel.transform, new Vector2(0.5f, 0.8f), new Vector2(96f, 8f));
-            var close = Button(panel.transform, "Close", "X", font, Color.white, dangerSprite);
-            Place(close.gameObject, panel.transform, new Vector2(0.835f, 0.845f), new Vector2(72f, 72f));
+            var panel = Panel(safe, "Inventory", font, "Inventori", 0.13f, 0.05f, 0.87f, 0.9f, 560f);
+            var close = CloseButton(panel.transform, font, new Vector2(0.862f, 0.89f));
             inv.closeButton = close;
             inv.panel = panel;
 
@@ -2709,14 +2818,16 @@ namespace SlimeBreaker.EditorTools
             for (int i = 0; i < slots; i++)
             {
                 var button = Button(panel.transform, "Slot_" + ItemIconNames[i], "", font, Color.white, ghostSprite);
-                Place(button.gameObject, panel.transform, new Vector2(0.27f, 0.72f - i * 0.1f), new Vector2(380f, 96f));
-                var frame = Graphic(button.transform, "Rarity", pillSprite, Color.white);
+                Place(button.gameObject, panel.transform, new Vector2(0.27f, 0.745f - i * 0.103f), new Vector2(390f, 104f));
+                var well = Graphic(button.transform, "Well", slotSprite, Color.white);
+                Place(well.gameObject, button.transform, new Vector2(0.14f, 0.54f), new Vector2(84f, 84f));
+                var frame = Graphic(button.transform, "Rarity", washSprite, Color.white);
                 frame.raycastTarget = false;
-                Place(frame.gameObject, button.transform, new Vector2(0.14f, 0.5f), new Vector2(84f, 84f));
+                Place(frame.gameObject, button.transform, new Vector2(0.14f, 0.54f), new Vector2(66f, 66f));
                 var icon = Graphic(button.transform, "Icon", icons[i] ?? whiteSprite, Color.white);
                 icon.preserveAspect = true;
                 icon.raycastTarget = false;
-                Place(icon.gameObject, button.transform, new Vector2(0.14f, 0.5f), new Vector2(70f, 70f));
+                Place(icon.gameObject, button.transform, new Vector2(0.14f, 0.54f), new Vector2(72f, 72f));
                 var label = button.GetComponentInChildren<Text>();
                 label.alignment = TextAnchor.MiddleLeft;
                 label.fontSize = 24;
@@ -2724,7 +2835,7 @@ namespace SlimeBreaker.EditorTools
                 var rect = label.rectTransform;
                 rect.anchorMin = new Vector2(0.28f, 0f);
                 rect.anchorMax = new Vector2(0.98f, 1f);
-                rect.offsetMin = Vector2.zero;
+                rect.offsetMin = new Vector2(0f, 8f);
                 rect.offsetMax = Vector2.zero;
                 inv.slotButtons[i] = button;
                 inv.slotFrames[i] = frame;
@@ -2732,7 +2843,7 @@ namespace SlimeBreaker.EditorTools
                 inv.slotTexts[i] = label;
             }
             var totals = Text(panel.transform, "Totals", "", 24, TextAnchor.UpperCenter, font);
-            Place(totals.gameObject, panel.transform, new Vector2(0.27f, 0.17f), new Vector2(400f, 110f));
+            Place(totals.gameObject, panel.transform, new Vector2(0.27f, 0.165f), new Vector2(400f, 110f));
             inv.totalsText = totals;
 
             // Bag grid 8 × 5.
@@ -2748,38 +2859,42 @@ namespace SlimeBreaker.EditorTools
                 int col = i % columns;
                 int row = i / columns;
                 var cell = Button(panel.transform, "Cell" + i, "", font, Color.white, slotSprite);
-                Place(cell.gameObject, panel.transform, new Vector2(0.405f + col * 0.0505f, 0.72f - row * 0.088f), new Vector2(88f, 88f));
+                // The panel scales selected cells itself, so no press spring here.
+                UnityEngine.Object.DestroyImmediate(cell.GetComponent<UiPress>());
+                Place(cell.gameObject, panel.transform, new Vector2(0.425f + col * 0.0505f, 0.72f - row * 0.088f), new Vector2(90f, 90f));
                 // Rarity wash inside the slot frame (green / blue / purple / orange).
-                var frame = Graphic(cell.transform, "Rarity", pillSprite, Color.white);
+                var frame = Graphic(cell.transform, "Rarity", washSprite, Color.white);
                 frame.raycastTarget = false;
-                Place(frame.gameObject, cell.transform, new Vector2(0.5f, 0.5f), new Vector2(78f, 78f));
+                Place(frame.gameObject, cell.transform, new Vector2(0.5f, 0.5f), new Vector2(70f, 70f));
                 frame.transform.SetSiblingIndex(0);
                 var icon = Graphic(cell.transform, "Icon", icons[0] ?? whiteSprite, Color.white);
                 icon.preserveAspect = true;
                 icon.raycastTarget = false;
-                Place(icon.gameObject, cell.transform, new Vector2(0.5f, 0.5f), new Vector2(66f, 66f));
+                Place(icon.gameObject, cell.transform, new Vector2(0.5f, 0.5f), new Vector2(68f, 68f));
                 var mark = cell.GetComponentInChildren<Text>();
-                mark.fontSize = 22;
+                mark.fontSize = 20;
                 mark.alignment = TextAnchor.UpperRight;
                 var markRect = mark.rectTransform;
                 markRect.offsetMin = new Vector2(4f, 4f);
-                markRect.offsetMax = new Vector2(-6f, -2f);
+                markRect.offsetMax = new Vector2(-8f, -4f);
+                mark.transform.SetAsLastSibling();
                 inv.cellButtons[i] = cell;
                 inv.cellFrames[i] = frame;
                 inv.cellIcons[i] = icon;
                 inv.cellMarks[i] = mark;
             }
-            var capacity = Text(panel.transform, "Capacity", "0 / 40", 24, TextAnchor.MiddleRight, font);
-            Place(capacity.gameObject, panel.transform, new Vector2(0.73f, 0.775f), new Vector2(200f, 34f));
+            var capacity = Text(panel.transform, "Capacity", "0 / 40", 26, TextAnchor.MiddleRight, font);
+            capacity.fontStyle = FontStyle.Bold;
+            Place(capacity.gameObject, panel.transform, new Vector2(0.75f, 0.79f), new Vector2(200f, 36f));
             inv.capacityText = capacity;
 
             // Detail strip under the grid.
-            var strip = Graphic(panel.transform, "Detail", pillSprite, new Color(1f, 1f, 1f, 0.07f));
-            Place(strip.gameObject, panel.transform, new Vector2(0.58f, 0.168f), new Vector2(790f, 124f));
+            var strip = Graphic(panel.transform, "Detail", cardSprite, Color.white);
+            Place(strip.gameObject, panel.transform, new Vector2(0.6f, 0.158f), new Vector2(790f, 132f));
 
             // Sell row above the detail strip: mode toggle, rarity / level filter, auto select, sell.
-            float left = 0.58f * 1920f - 395f;
-            float[] widths = { 130f, 150f, 130f, 130f, 210f };
+            float left = 0.6f * 1920f - 395f;
+            float[] widths = { 140f, 150f, 140f, 140f, 180f };
             var sellButtons = new Button[5];
             string[] sellNames = { "SellMode", "Rarity", "Level", "Auto", "Sell" };
             string[] sellTexts = { "Mode jual", "Normal (1)", "Level: Semua", "Auto pilih", "Jual" };
@@ -2788,8 +2903,8 @@ namespace SlimeBreaker.EditorTools
             for (int i = 0; i < 5; i++)
             {
                 sellButtons[i] = Button(panel.transform, sellNames[i], sellTexts[i], font, Color.white, sellSprites[i]);
-                Place(sellButtons[i].gameObject, panel.transform, new Vector2((cursor + widths[i] * 0.5f) / 1920f, 0.272f), new Vector2(widths[i], 64f));
-                sellButtons[i].GetComponentInChildren<Text>().fontSize = 22;
+                Place(sellButtons[i].gameObject, panel.transform, new Vector2((cursor + widths[i] * 0.5f) / 1920f, 0.27f), new Vector2(widths[i], 72f));
+                sellButtons[i].GetComponentInChildren<Text>().fontSize = 21;
                 cursor += widths[i] + 10f;
             }
             inv.sellModeButton = sellButtons[0];
@@ -2798,43 +2913,35 @@ namespace SlimeBreaker.EditorTools
             inv.rarityLabel = sellButtons[1].GetComponentInChildren<Text>();
             var chip = Graphic(sellButtons[1].transform, "Chip", pillSprite, Color.white);
             chip.raycastTarget = false;
-            Place(chip.gameObject, sellButtons[1].transform, new Vector2(0.5f, 0.1f), new Vector2(110f, 6f));
+            Place(chip.gameObject, sellButtons[1].transform, new Vector2(0.5f, 0.24f), new Vector2(100f, 6f));
             inv.rarityChip = chip;
             inv.levelButton = sellButtons[2];
             inv.levelLabel = sellButtons[2].GetComponentInChildren<Text>();
             inv.autoButton = sellButtons[3];
             inv.sellButton = sellButtons[4];
             inv.sellLabel = sellButtons[4].GetComponentInChildren<Text>();
-            var gold = Text(panel.transform, "Gold", "Emas 0", 24, TextAnchor.MiddleLeft, font);
-            gold.color = new Color(1f, 0.85f, 0.4f);
-            Place(gold.gameObject, panel.transform, new Vector2(0.45f, 0.775f), new Vector2(240f, 34f));
+            IconAt(panel.transform, "GoldIcon", Icon("ICON_Coin"), new Vector2(0.413f, 0.79f), 44f);
+            var gold = Text(panel.transform, "Gold", "0", 28, TextAnchor.MiddleLeft, font);
+            gold.fontStyle = FontStyle.Bold;
+            gold.color = Gold;
+            Place(gold.gameObject, panel.transform, new Vector2(0.492f, 0.79f), new Vector2(240f, 36f));
             inv.goldText = gold;
             var detailTitle = Text(strip.transform, "Title", "Pilih item", 28, TextAnchor.UpperLeft, font);
             detailTitle.fontStyle = FontStyle.Bold;
-            Place(detailTitle.gameObject, strip.transform, new Vector2(0.33f, 0.72f), new Vector2(500f, 40f));
-            var detailBody = Text(strip.transform, "Body", "", 26, TextAnchor.UpperLeft, font);
-            Place(detailBody.gameObject, strip.transform, new Vector2(0.33f, 0.3f), new Vector2(500f, 70f));
-            var equip = Button(strip.transform, "Equip", "Pakai", font, Color.white, goldSprite);
-            Place(equip.gameObject, strip.transform, new Vector2(0.745f, 0.5f), new Vector2(150f, 80f));
+            Place(detailTitle.gameObject, strip.transform, new Vector2(0.345f, 0.72f), new Vector2(500f, 40f));
+            var detailBody = Text(strip.transform, "Body", "", 24, TextAnchor.UpperLeft, font);
+            Place(detailBody.gameObject, strip.transform, new Vector2(0.345f, 0.3f), new Vector2(500f, 70f));
+            var equip = Button(strip.transform, "Equip", "Pakai", font, Color.white, greenSprite);
+            Place(equip.gameObject, strip.transform, new Vector2(0.755f, 0.5f), new Vector2(150f, 88f));
             var discard = Button(strip.transform, "Discard", "Buang", font, Color.white, dangerSprite);
-            Place(discard.gameObject, strip.transform, new Vector2(0.93f, 0.5f), new Vector2(110f, 80f));
+            Place(discard.gameObject, strip.transform, new Vector2(0.92f, 0.5f), new Vector2(120f, 88f));
+            foreach (var button in new[] { equip, discard })
+                button.GetComponentInChildren<Text>().fontSize = 26;
             inv.detailTitle = detailTitle;
             inv.detailBody = detailBody;
             inv.equipButton = equip;
             inv.equipLabel = equip.GetComponentInChildren<Text>();
             inv.discardButton = discard;
-            // The frame reaches lower so the sell row and detail strip sit inside it, and the content is centred in it
-            // (it was hugging the left edge with a wide empty margin on the right).
-            var frameRect = (RectTransform)panel.transform.Find("Frame");
-            frameRect.anchorMin = new Vector2(0.14f, 0.06f);
-            for (int c = 0; c < panel.transform.childCount; c++)
-            {
-                var child = (RectTransform)panel.transform.GetChild(c);
-                if (child.name == "Frame" || child.name == "Title" || child.name == "TitleAccent" || child.name == "Close")
-                    continue;
-                child.anchorMin += new Vector2(0.02f, 0f);
-                child.anchorMax += new Vector2(0.02f, 0f);
-            }
             panel.SetActive(false);
             return inv;
         }
@@ -2909,40 +3016,33 @@ namespace SlimeBreaker.EditorTools
             var host = new GameObject("SettingsHost", typeof(RectTransform));
             host.transform.SetParent(safe, false);
             var panel = host.AddComponent<SettingsPanel>();
-            var dim = Panel(safe, "Settings", font, "Pengaturan");
-            var graphicsLabel = Text(dim.transform, "GraphicsLabel", "GRAFIS", 20, TextAnchor.MiddleLeft, font);
-            graphicsLabel.fontStyle = FontStyle.Bold;
-            graphicsLabel.color = TextDim;
-            Place(graphicsLabel.gameObject, dim.transform, new Vector2(0.5f, 0.70f), new Vector2(860f, 30f));
-            var graphicsState = Text(dim.transform, "GraphicsState", "Grafis: High", 20, TextAnchor.MiddleRight, font);
-            graphicsState.color = TextDim;
-            Place(graphicsState.gameObject, dim.transform, new Vector2(0.5f, 0.70f), new Vector2(860f, 30f));
+            var dim = Panel(safe, "Settings", font, "Pengaturan", 0.2f, 0.08f, 0.8f, 0.9f, 600f);
+            Caption(dim.transform, "GraphicsLabel", "GRAFIS", font, new Vector2(0.5f, 0.775f), new Vector2(900f, 34f));
+            var graphicsState = Caption(dim.transform, "GraphicsState", "Grafis: High", font, new Vector2(0.5f, 0.775f), new Vector2(900f, 34f), TextAnchor.MiddleRight);
             var low = Button(dim.transform, "Low", "Low", font, Color.white, ghostSprite);
-            Place(low.gameObject, dim.transform, new Vector2(0.3f, 0.625f), new Vector2(276f, 84f));
+            Place(low.gameObject, dim.transform, new Vector2(0.34f, 0.695f), new Vector2(290f, 96f));
             var medium = Button(dim.transform, "Medium", "Medium", font, Color.white, ghostSprite);
-            Place(medium.gameObject, dim.transform, new Vector2(0.5f, 0.625f), new Vector2(276f, 84f));
+            Place(medium.gameObject, dim.transform, new Vector2(0.5f, 0.695f), new Vector2(290f, 96f));
             var high = Button(dim.transform, "High", "High", font, Color.white, ghostSprite);
-            Place(high.gameObject, dim.transform, new Vector2(0.7f, 0.625f), new Vector2(276f, 84f));
-            var controlLabel = Text(dim.transform, "ControlLabel", "KONTROL & FPS", 20, TextAnchor.MiddleLeft, font);
-            controlLabel.fontStyle = FontStyle.Bold;
-            controlLabel.color = TextDim;
-            Place(controlLabel.gameObject, dim.transform, new Vector2(0.5f, 0.545f), new Vector2(860f, 30f));
+            Place(high.gameObject, dim.transform, new Vector2(0.66f, 0.695f), new Vector2(290f, 96f));
+            Caption(dim.transform, "ControlLabel", "KONTROL & FPS", font, new Vector2(0.5f, 0.6f), new Vector2(900f, 34f));
             // Joystick mode toggle: Fixed (default) / Free.
             var joystickToggle = Button(dim.transform, "JoystickMode", "Joystick: Fixed", font, Color.white, ghostSprite);
-            Place(joystickToggle.gameObject, dim.transform, new Vector2(0.3f, 0.48f), new Vector2(276f, 80f));
+            Place(joystickToggle.gameObject, dim.transform, new Vector2(0.34f, 0.52f), new Vector2(290f, 96f));
             var cameraToggle = Button(dim.transform, "CameraMode", "Kamera: Normal", font, Color.white, ghostSprite);
-            Place(cameraToggle.gameObject, dim.transform, new Vector2(0.5f, 0.48f), new Vector2(276f, 80f));
+            Place(cameraToggle.gameObject, dim.transform, new Vector2(0.5f, 0.52f), new Vector2(290f, 96f));
             var fpsToggle = Button(dim.transform, "FpsMode", "FPS: 30", font, Color.white, ghostSprite);
-            Place(fpsToggle.gameObject, dim.transform, new Vector2(0.7f, 0.48f), new Vector2(276f, 80f));
+            Place(fpsToggle.gameObject, dim.transform, new Vector2(0.66f, 0.52f), new Vector2(290f, 96f));
+            foreach (var toggle in new[] { low, medium, high, joystickToggle, cameraToggle, fpsToggle })
+                toggle.GetComponentInChildren<Text>().fontSize = 28;
             // Sound: BGM and game-sound volume sliders.
-            var soundLabel = Text(dim.transform, "SoundLabel", "SUARA", 20, TextAnchor.MiddleLeft, font);
-            soundLabel.fontStyle = FontStyle.Bold;
-            soundLabel.color = TextDim;
-            Place(soundLabel.gameObject, dim.transform, new Vector2(0.5f, 0.40f), new Vector2(860f, 30f));
-            var musicSlider = VolumeSlider(dim.transform, "Musik", "Musik (BGM)", font, 0.335f, out var musicValue);
-            var sfxSlider = VolumeSlider(dim.transform, "SuaraGame", "Suara game", font, 0.26f, out var sfxValue);
-            var close = Button(dim.transform, "Close", "Tutup", font, Color.white, dangerSprite);
-            Place(close.gameObject, dim.transform, new Vector2(0.5f, 0.15f), new Vector2(300f, 80f));
+            Caption(dim.transform, "SoundLabel", "SUARA", font, new Vector2(0.5f, 0.425f), new Vector2(900f, 34f));
+            var musicSlider = VolumeSlider(dim.transform, "Musik", "Musik (BGM)", font, 0.345f, out var musicValue, Icon("ICON_Music"));
+            var sfxSlider = VolumeSlider(dim.transform, "SuaraGame", "Suara game", font, 0.255f, out var sfxValue, Icon("ICON_Sound"));
+            var close = CloseButton(dim.transform, font, new Vector2(0.792f, 0.89f));
+            var done = Button(dim.transform, "Done", "OK", font, Color.white, greenSprite);
+            Place(done.gameObject, dim.transform, new Vector2(0.5f, 0.15f), new Vector2(300f, 96f));
+            UnityEventTools.AddPersistentListener(done.onClick, panel.Hide);
             var title = graphicsState;
             panel.selectedSprite = buttonSprite;
             panel.normalSprite = ghostSprite;
@@ -2985,97 +3085,104 @@ namespace SlimeBreaker.EditorTools
             var font = Font();
             var uiObject = new GameObject("UI");
             var ui = uiObject.AddComponent<UIController>();
+            ui.popupFont = displayFont;
 
-            // Top-left: HP and EXP in the boss-bar style (tag pill + dark track + glossy fill + value).
-            var hpTag = Tag(safe, "HPTag", "HP", AccentRed, font, 20);
-            Place(hpTag.gameObject, safe, new Vector2(0.0552f, 0.935f), new Vector2(68f, 40f));
-            var hp = GlassBar(safe, "HP", new Color(0.92f, 0.24f, 0.32f));
-            Place(hp.gameObject, safe, new Vector2(0.1797f, 0.935f), new Vector2(394f, 40f));
-            var hpText = Text(hp.transform, "Value", "100 / 100", 21, TextAnchor.MiddleCenter, font);
+            // Top-left: hero badge with the level tag, HP bar (heart cap), EXP bar and the lives.
+            var hp = GlassBar(safe, "HP", new Color(1f, 0.27f, 0.36f));
+            AnchorBox((RectTransform)hp.transform, new Vector2(0f, 1f), new Vector2(138f, -30f), new Vector2(420f, 50f));
+            var hpText = Text(hp.transform, "Value", "100 / 100", 26, TextAnchor.MiddleCenter, font);
             hpText.fontStyle = FontStyle.Bold;
             hpText.raycastTarget = false;
-            Shade(hpText);
             Stretch(hpText.rectTransform);
-            var xpTag = Tag(safe, "EXPTag", "EXP", AccentGreen, font, 14);
-            Place(xpTag.gameObject, safe, new Vector2(0.0552f, 0.887f), new Vector2(68f, 24f));
-            var xp = GlassBar(safe, "EXP", new Color(0.4f, 0.9f, 0.5f), 4f);
-            Place(xp.gameObject, safe, new Vector2(0.1797f, 0.887f), new Vector2(394f, 20f));
-            var heroLevelPill = Tag(safe, "LevelPill", "", AccentViolet, font, 20);
-            Place(heroLevelPill.gameObject, safe, new Vector2(0.3135f, 0.935f), new Vector2(112f, 40f));
+            var xp = GlassBar(safe, "EXP", new Color(0.3f, 0.78f, 1f), 5f);
+            AnchorBox((RectTransform)xp.transform, new Vector2(0f, 1f), new Vector2(138f, -86f), new Vector2(380f, 30f));
+            var xpTag = Text(xp.transform, "Tag", "EXP", 17, TextAnchor.MiddleCenter, font);
+            xpTag.fontStyle = FontStyle.Bold;
+            xpTag.raycastTarget = false;
+            Stretch(xpTag.rectTransform);
+            var avatar = Graphic(safe, "Avatar", avatarSprite != null ? avatarSprite : circleGlassSprite, Color.white);
+            AnchorBox(avatar.rectTransform, new Vector2(0f, 1f), new Vector2(18f, -10f), new Vector2(136f, 136f));
+            var heroLevelPill = Tag(safe, "LevelPill", "", AccentViolet, font, 22);
+            AnchorBox(heroLevelPill.rectTransform, new Vector2(0f, 1f), new Vector2(34f, -122f), new Vector2(104f, 42f));
             var level = heroLevelPill.GetComponentInChildren<Text>();
             level.text = "Lv 1";
-            level.fontSize = 22;
             var damage = Text(safe, "Damage", "ATK 12", 22, TextAnchor.MiddleLeft, font);
             damage.fontStyle = FontStyle.Bold;
             damage.gameObject.SetActive(false);
-            // Lives: one heart per life under the level pill; spent lives turn grey.
+            // Lives: one heart per life next to the EXP bar; spent lives turn grey.
             var lives = new GameObject("Lives", typeof(RectTransform));
-            Place(lives, safe, new Vector2(0.3135f, 0.887f), new Vector2(112f, 32f));
+            lives.transform.SetParent(safe, false);
+            AnchorBox((RectTransform)lives.transform, new Vector2(0f, 1f), new Vector2(528f, -80f), new Vector2(126f, 42f));
             var lifeIcons = new Image[RunRules.HeroLives];
             for (int i = 0; i < lifeIcons.Length; i++)
             {
-                lifeIcons[i] = Graphic(lives.transform, "Life" + i, heartSprite, new Color(1f, 0.32f, 0.42f));
+                lifeIcons[i] = Graphic(lives.transform, "Life" + i, heartSprite, Color.white);
                 lifeIcons[i].preserveAspect = true;
-                lifeIcons[i].gameObject.AddComponent<Shadow>().effectColor = new Color(0f, 0f, 0f, 0.6f);
-                Place(lifeIcons[i].gameObject, lives.transform, new Vector2((i + 0.5f) / lifeIcons.Length, 0.5f), new Vector2(32f, 32f));
+                Place(lifeIcons[i].gameObject, lives.transform, new Vector2((i + 0.5f) / lifeIcons.Length, 0.5f), new Vector2(42f, 42f));
             }
-            // Status card: glass panel, header, 2×5 grid of label/value cells.
+            // Status card: header, 2×5 grid of label/value cells.
             var statusPanel = new GameObject("Status", typeof(RectTransform), typeof(Image));
             ApplyImage(statusPanel.GetComponent<Image>(), cardSprite, Image.Type.Sliced, Color.white);
             statusPanel.GetComponent<Image>().raycastTarget = false;
-            Place(statusPanel, safe, new Vector2(0.16f, 0.772f), new Vector2(470f, 196f));
-            var statusAccent = Graphic(statusPanel.transform, "Accent", pillSprite, new Color(0.62f, 0.52f, 1f, 0.95f));
-            AnchorBox(statusAccent.rectTransform, new Vector2(0f, 1f), new Vector2(18f, -14f), new Vector2(6f, 20f));
-            var statusHeader = Text(statusPanel.transform, "Header", "STATUS", 15, TextAnchor.MiddleLeft, font);
+            statusPanel.transform.SetParent(safe, false);
+            AnchorBox((RectTransform)statusPanel.transform, new Vector2(0f, 1f), new Vector2(22f, -176f), new Vector2(470f, 204f));
+            var statusAccent = Graphic(statusPanel.transform, "Accent", pillSprite, Gold);
+            AnchorBox(statusAccent.rectTransform, new Vector2(0f, 1f), new Vector2(20f, -16f), new Vector2(6f, 20f));
+            var statusHeader = Text(statusPanel.transform, "Header", "STATUS", 17, TextAnchor.MiddleLeft, font);
             statusHeader.fontStyle = FontStyle.Bold;
-            statusHeader.color = new Color(0.78f, 0.8f, 0.9f);
+            statusHeader.color = Cream;
             statusHeader.raycastTarget = false;
-            AnchorBox(statusHeader.rectTransform, new Vector2(0f, 1f), new Vector2(32f, -14f), new Vector2(200f, 22f));
+            AnchorBox(statusHeader.rectTransform, new Vector2(0f, 1f), new Vector2(34f, -15f), new Vector2(200f, 22f));
             var statusValues = new Text[UIController.StatKeys.Length];
             for (int i = 0; i < UIController.StatKeys.Length; i++)
             {
                 int column = i % 2;
                 int row = i / 2;
-                var cell = Graphic(statusPanel.transform, "Stat_" + UIController.StatKeys[i].Replace(' ', '_'), pillSprite, new Color(1f, 1f, 1f, 0.06f));
-                AnchorBox(cell.rectTransform, new Vector2(0f, 1f), new Vector2(14f + column * 224f, -42f - row * 30f), new Vector2(216f, 26f));
-                var label = Text(cell.transform, "Label", UIController.StatKeys[i], 14, TextAnchor.MiddleLeft, font);
-                label.color = new Color(0.62f, 0.64f, 0.74f);
+                var cell = Graphic(statusPanel.transform, "Stat_" + UIController.StatKeys[i].Replace(' ', '_'), pillSprite, new Color(1f, 1f, 1f, 0.08f));
+                AnchorBox(cell.rectTransform, new Vector2(0f, 1f), new Vector2(16f + column * 222f, -46f - row * 30f), new Vector2(216f, 26f));
+                var label = Text(cell.transform, "Label", UIController.StatKeys[i], 15, TextAnchor.MiddleLeft, font);
+                label.color = TextDim;
                 label.raycastTarget = false;
                 Stretch(label.rectTransform);
                 label.rectTransform.offsetMin = new Vector2(12f, 0f);
-                var value = Text(cell.transform, "Value", "0", 17, TextAnchor.MiddleRight, font);
+                var value = Text(cell.transform, "Value", "0", 18, TextAnchor.MiddleRight, font);
                 value.fontStyle = FontStyle.Bold;
                 value.raycastTarget = false;
                 Stretch(value.rectTransform);
                 value.rectTransform.offsetMax = new Vector2(-12f, 0f);
                 statusValues[i] = value;
             }
-            // Top centre: LANTAI tag + floor number, then the kill-quota bar.
-            var floorTag = Tag(safe, "FloorTag", "LANTAI", AccentBlue, font, 18);
-            Place(floorTag.gameObject, safe, new Vector2(0.4875f, 0.957f), new Vector2(124f, 34f));
-            var floor = Text(safe, "Floor", "1 / 100", 28, TextAnchor.MiddleLeft, font);
+            // Top centre: floor ribbon, then the kill-quota bar between a skull and the exit door.
+            var floorRibbon = Graphic(safe, "FloorRibbon", ribbonVioletSprite, Color.white);
+            Place(floorRibbon.gameObject, safe, new Vector2(0.5f, 1f), new Vector2(460f, 88f)).anchoredPosition = new Vector2(0f, -52f);
+            var floorTag = Text(floorRibbon.transform, "FloorTag", "LANTAI", 24, TextAnchor.MiddleRight, font);
+            floorTag.fontStyle = FontStyle.Bold;
+            floorTag.color = Cream;
+            floorTag.raycastTarget = false;
+            Place(floorTag.gameObject, floorRibbon.transform, new Vector2(0.3f, 0.62f), new Vector2(130f, 40f));
+            var floor = Text(floorRibbon.transform, "Floor", "1 / 100", 34, TextAnchor.MiddleLeft, font);
             floor.fontStyle = FontStyle.Bold;
             floor.raycastTarget = false;
-            Shade(floor);
-            Place(floor.gameObject, safe, new Vector2(0.5885f, 0.957f), new Vector2(180f, 36f));
-            var floorBar = GlassBar(safe, "FloorProgress", new Color(0.36f, 0.78f, 1f), 4f);
-            Place(floorBar.gameObject, safe, new Vector2(0.52f, 0.912f), new Vector2(420f, 28f));
-            var floorProgressLabel = Text(floorBar.transform, "Value", "0 / 10", 17, TextAnchor.MiddleCenter, font);
+            Place(floor.gameObject, floorRibbon.transform, new Vector2(0.7f, 0.62f), new Vector2(190f, 44f));
+            var floorBar = GlassBar(safe, "FloorProgress", new Color(0.5f, 0.92f, 0.4f), 5f);
+            Place(floorBar.gameObject, safe, new Vector2(0.5f, 1f), new Vector2(420f, 36f)).anchoredPosition = new Vector2(0f, -116f);
+            var floorProgressLabel = Text(floorBar.transform, "Value", "0 / 10", 20, TextAnchor.MiddleCenter, font);
             floorProgressLabel.fontStyle = FontStyle.Bold;
             floorProgressLabel.raycastTarget = false;
-            Shade(floorProgressLabel);
             Stretch(floorProgressLabel.rectTransform);
+            IconAt(floorBar.transform, "Skull", Icon("ICON_Skull"), new Vector2(0f, 0.5f), 52f).rectTransform.anchoredPosition = new Vector2(-8f, 0f);
+            IconAt(floorBar.transform, "Door", Icon("ICON_Door"), new Vector2(1f, 0.5f), 52f).rectTransform.anchoredPosition = new Vector2(8f, 0f);
             var timerBack = Graphic(safe, "TimerBack", cardSprite, Color.white);
-            Place(timerBack.gameObject, safe, new Vector2(0.72f, 0.935f), new Vector2(150f, 52f));
-            var timer = Text(safe, "Timer", "00:00", 30, TextAnchor.MiddleCenter, font);
+            Place(timerBack.gameObject, safe, new Vector2(0.5f, 1f), new Vector2(176f, 60f)).anchoredPosition = new Vector2(380f, -48f);
+            IconAt(timerBack.transform, "Icon", Icon("ICON_Clock"), new Vector2(0.06f, 0.5f), 66f);
+            var timer = Text(safe, "Timer", "00:00", 32, TextAnchor.MiddleCenter, font);
             timer.fontStyle = FontStyle.Bold;
             timer.raycastTarget = false;
-            Shade(timer);
-            Place(timer.gameObject, safe, new Vector2(0.72f, 0.935f), new Vector2(150f, 48f));
+            Place(timer.gameObject, safe, new Vector2(0.5f, 1f), new Vector2(130f, 48f)).anchoredPosition = new Vector2(398f, -48f);
             var pause = Button(safe, "Pause", "", font, Color.white, circleGlassSprite);
-            Place(pause.gameObject, safe, new Vector2(0.955f, 0.925f), new Vector2(84f, 84f));
+            AnchorBox((RectTransform)pause.transform, new Vector2(1f, 1f), new Vector2(-128f, -16f), new Vector2(100f, 100f));
             var pauseIcon = Graphic(pause.transform, "Icon", pauseIconSprite, Color.white);
-            Place(pauseIcon.gameObject, pause.transform, new Vector2(0.5f, 0.5f), new Vector2(46f, 46f));
+            Place(pauseIcon.gameObject, pause.transform, new Vector2(0.5f, 0.54f), new Vector2(54f, 54f));
 
             // Top-right under pause: owned skills.
             var slots = new GameObject[4];
@@ -3085,14 +3192,18 @@ namespace SlimeBreaker.EditorTools
             for (int i = 0; i < 4; i++)
             {
                 var slot = new GameObject("Skill" + i, typeof(RectTransform), typeof(Image));
-                ApplyImage(slot.GetComponent<Image>(), slotSprite, Image.Type.Sliced, Color.white);
-                Place(slot, safe, new Vector2(0.955f - i * 0.058f, 0.815f), new Vector2(92f, 92f));
+                ApplyImage(slot.GetComponent<Image>(), skillSlotSprite, Image.Type.Sliced, Color.white);
+                slot.transform.SetParent(safe, false);
+                AnchorBox((RectTransform)slot.transform, new Vector2(1f, 1f), new Vector2(-126f - i * 108f, -136f), new Vector2(98f, 98f));
                 var iconObject = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-                Place(iconObject, slot.transform, new Vector2(0.5f, 0.56f), new Vector2(60f, 60f));
+                Place(iconObject, slot.transform, new Vector2(0.5f, 0.56f), new Vector2(68f, 68f));
                 ApplyImage(iconObject.GetComponent<Image>(), whiteSprite, Image.Type.Simple, Color.white);
                 iconObject.GetComponent<Image>().preserveAspect = true;
-                var levelText = Text(slot.transform, "Level", "Lv 1", 18, TextAnchor.MiddleCenter, font);
-                Place(levelText.gameObject, slot.transform, new Vector2(0.5f, 0.14f), new Vector2(90f, 24f));
+                iconObject.GetComponent<Image>().raycastTarget = false;
+                var levelText = Text(slot.transform, "Level", "Lv 1", 19, TextAnchor.MiddleCenter, font);
+                levelText.fontStyle = FontStyle.Bold;
+                levelText.raycastTarget = false;
+                Place(levelText.gameObject, slot.transform, new Vector2(0.5f, 0.1f), new Vector2(96f, 24f));
                 var hold = slot.AddComponent<SkillSlotHold>();
                 hold.ui = ui;
                 hold.index = i;
@@ -3103,97 +3214,97 @@ namespace SlimeBreaker.EditorTools
                 slot.SetActive(false);
             }
 
-            // Long-press description card under the skill slots: glass card, colour accent, icon,
+            // Long-press description card under the skill slots: card, colour accent, icon,
             // title + level pill, description, stat chips, MAX bonus and boss status.
             var info = new GameObject("SkillInfo", typeof(RectTransform), typeof(Image));
             ApplyImage(info.GetComponent<Image>(), cardSprite, Image.Type.Sliced, Color.white);
             info.GetComponent<Image>().raycastTarget = false;
             Place(info, safe, new Vector2(0.775f, 0.585f), new Vector2(740f, 268f));
             var infoAccent = Graphic(info.transform, "Accent", pillSprite, Color.white);
-            AnchorBox(infoAccent.rectTransform, new Vector2(0f, 1f), new Vector2(14f, -22f), new Vector2(6f, 224f));
+            AnchorBox(infoAccent.rectTransform, new Vector2(0f, 1f), new Vector2(16f, -24f), new Vector2(6f, 220f));
             var infoIconBack = Graphic(info.transform, "IconBack", slotSprite, Color.white);
-            AnchorBox(infoIconBack.rectTransform, new Vector2(0f, 1f), new Vector2(34f, -22f), new Vector2(84f, 84f));
+            AnchorBox(infoIconBack.rectTransform, new Vector2(0f, 1f), new Vector2(34f, -22f), new Vector2(88f, 88f));
             var infoIcon = Graphic(infoIconBack.transform, "Icon", whiteSprite, Color.white);
             infoIcon.preserveAspect = true;
             Stretch(infoIcon.rectTransform);
             infoIcon.rectTransform.offsetMin = new Vector2(10f, 10f);
             infoIcon.rectTransform.offsetMax = new Vector2(-10f, -10f);
-            var infoTitle = Text(info.transform, "Title", "", 30, TextAnchor.MiddleLeft, font);
+            var infoTitle = Text(info.transform, "Title", "", 32, TextAnchor.MiddleLeft, font);
             infoTitle.fontStyle = FontStyle.Bold;
             infoTitle.raycastTarget = false;
-            AnchorBox(infoTitle.rectTransform, new Vector2(0f, 1f), new Vector2(134f, -20f), new Vector2(430f, 40f));
-            var levelPill = Graphic(info.transform, "LevelPill", pillSprite, Color.white);
-            AnchorBox(levelPill.rectTransform, new Vector2(1f, 1f), new Vector2(-26f - 126f, -24f), new Vector2(126f, 36f));
-            var infoLevel = Text(levelPill.transform, "Level", "Lv 1/10", 19, TextAnchor.MiddleCenter, font);
+            AnchorBox(infoTitle.rectTransform, new Vector2(0f, 1f), new Vector2(138f, -20f), new Vector2(430f, 40f));
+            var levelPill = Graphic(info.transform, "LevelPill", tagSprite, Color.white);
+            AnchorBox(levelPill.rectTransform, new Vector2(1f, 1f), new Vector2(-26f - 126f, -22f), new Vector2(126f, 42f));
+            var infoLevel = Text(levelPill.transform, "Level", "Lv 1/10", 20, TextAnchor.MiddleCenter, font);
             infoLevel.fontStyle = FontStyle.Bold;
             infoLevel.raycastTarget = false;
             Stretch(infoLevel.rectTransform);
-            var infoDescription = Text(info.transform, "Description", "", 19, TextAnchor.UpperLeft, font);
-            infoDescription.color = new Color(0.84f, 0.86f, 0.92f);
+            infoLevel.rectTransform.offsetMin = new Vector2(0f, 4f);
+            var infoDescription = Text(info.transform, "Description", "", 20, TextAnchor.UpperLeft, font);
+            infoDescription.color = new Color(0.9f, 0.88f, 0.98f);
             infoDescription.raycastTarget = false;
-            AnchorBox(infoDescription.rectTransform, new Vector2(0f, 1f), new Vector2(134f, -64f), new Vector2(580f, 48f));
-            var divider = Graphic(info.transform, "Divider", whiteSprite, new Color(1f, 1f, 1f, 0.1f));
-            AnchorBox(divider.rectTransform, new Vector2(0f, 1f), new Vector2(34f, -120f), new Vector2(680f, 2f));
+            AnchorBox(infoDescription.rectTransform, new Vector2(0f, 1f), new Vector2(138f, -64f), new Vector2(580f, 52f));
+            var divider = Graphic(info.transform, "Divider", whiteSprite, new Color(1f, 1f, 1f, 0.12f));
+            AnchorBox(divider.rectTransform, new Vector2(0f, 1f), new Vector2(34f, -122f), new Vector2(680f, 2f));
             var chips = new Text[3];
             for (int i = 0; i < chips.Length; i++)
             {
-                var chip = Graphic(info.transform, "Chip" + i, pillSprite, new Color(1f, 1f, 1f, 0.09f));
-                AnchorBox(chip.rectTransform, new Vector2(0f, 1f), new Vector2(34f + i * 228f, -134f), new Vector2(216f, 38f));
-                chips[i] = Text(chip.transform, "Text", "", 18, TextAnchor.MiddleCenter, font);
+                var chip = Graphic(info.transform, "Chip" + i, pillSprite, new Color(1f, 1f, 1f, 0.1f));
+                AnchorBox(chip.rectTransform, new Vector2(0f, 1f), new Vector2(34f + i * 228f, -134f), new Vector2(216f, 40f));
+                chips[i] = Text(chip.transform, "Text", "", 19, TextAnchor.MiddleCenter, font);
                 chips[i].fontStyle = FontStyle.Bold;
                 chips[i].raycastTarget = false;
                 Stretch(chips[i].rectTransform);
             }
-            var infoBonus = Text(info.transform, "Bonus", "", 18, TextAnchor.MiddleLeft, font);
+            var infoBonus = Text(info.transform, "Bonus", "", 19, TextAnchor.MiddleLeft, font);
             infoBonus.raycastTarget = false;
-            AnchorBox(infoBonus.rectTransform, new Vector2(0f, 1f), new Vector2(34f, -184f), new Vector2(680f, 28f));
+            AnchorBox(infoBonus.rectTransform, new Vector2(0f, 1f), new Vector2(34f, -186f), new Vector2(680f, 28f));
             var bossDot = Graphic(info.transform, "BossDot", circleSprite, Color.white);
-            AnchorBox(bossDot.rectTransform, new Vector2(0f, 1f), new Vector2(38f, -224f), new Vector2(14f, 14f));
-            var infoBoss = Text(info.transform, "Boss", "", 18, TextAnchor.MiddleLeft, font);
+            AnchorBox(bossDot.rectTransform, new Vector2(0f, 1f), new Vector2(38f, -226f), new Vector2(14f, 14f));
+            var infoBoss = Text(info.transform, "Boss", "", 19, TextAnchor.MiddleLeft, font);
             infoBoss.raycastTarget = false;
-            AnchorBox(infoBoss.rectTransform, new Vector2(0f, 1f), new Vector2(62f, -217f), new Vector2(650f, 28f));
+            AnchorBox(infoBoss.rectTransform, new Vector2(0f, 1f), new Vector2(62f, -219f), new Vector2(650f, 28f));
             info.SetActive(false);
 
             // Boss HP: under the floor bar, shown only while a boss is alive.
             var bossBar = new GameObject("BossBar", typeof(RectTransform));
-            Place(bossBar, safe, new Vector2(0.52f, 0.818f), new Vector2(780f, 92f));
-            var bossTag = Graphic(bossBar.transform, "Tag", pillSprite, new Color(0.78f, 0.14f, 0.18f));
-            AnchorBox(bossTag.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 0f), new Vector2(112f, 34f));
-            var bossTagText = Text(bossTag.transform, "Text", "BOSS", 19, TextAnchor.MiddleCenter, font);
+            Place(bossBar, safe, new Vector2(0.5f, 1f), new Vector2(780f, 96f)).anchoredPosition = new Vector2(0f, -196f);
+            var bossTag = Graphic(bossBar.transform, "Tag", tagSprite, new Color(0.9f, 0.2f, 0.26f));
+            AnchorBox(bossTag.rectTransform, new Vector2(0f, 1f), new Vector2(40f, 4f), new Vector2(124f, 42f));
+            var bossTagText = Text(bossTag.transform, "Text", "BOSS", 21, TextAnchor.MiddleCenter, font);
             bossTagText.fontStyle = FontStyle.Bold;
             bossTagText.raycastTarget = false;
             Stretch(bossTagText.rectTransform);
-            var bossName = Text(bossBar.transform, "Name", "ROCK SLIME", 26, TextAnchor.MiddleLeft, font);
+            bossTagText.rectTransform.offsetMin = new Vector2(0f, 4f);
+            var bossName = Text(bossBar.transform, "Name", "ROCK SLIME", 30, TextAnchor.MiddleLeft, font);
             bossName.fontStyle = FontStyle.Bold;
             bossName.raycastTarget = false;
-            AnchorBox(bossName.rectTransform, new Vector2(0f, 1f), new Vector2(124f, 0f), new Vector2(420f, 34f));
+            AnchorBox(bossName.rectTransform, new Vector2(0f, 1f), new Vector2(178f, 4f), new Vector2(520f, 40f));
             var bossTrack = Graphic(bossBar.transform, "Track", trackSprite, Color.white);
-            AnchorBox(bossTrack.rectTransform, new Vector2(0f, 1f), new Vector2(0f, -42f), new Vector2(780f, 40f));
-            var bossTrail = Graphic(bossTrack.transform, "Trail", fillSprite, new Color(1f, 0.78f, 0.55f, 0.45f));
+            AnchorBox(bossTrack.rectTransform, new Vector2(0f, 1f), new Vector2(0f, -44f), new Vector2(780f, 48f));
+            var bossTrail = Graphic(bossTrack.transform, "Trail", fillSprite, new Color(1f, 0.86f, 0.6f, 0.6f));
             bossTrail.type = Image.Type.Filled;
             bossTrail.fillMethod = Image.FillMethod.Horizontal;
             bossTrail.fillOrigin = (int)Image.OriginHorizontal.Left;
             Stretch(bossTrail.rectTransform);
-            bossTrail.rectTransform.offsetMin = new Vector2(5f, 5f);
-            bossTrail.rectTransform.offsetMax = new Vector2(-5f, -5f);
+            bossTrail.rectTransform.offsetMin = new Vector2(6f, 6f);
+            bossTrail.rectTransform.offsetMax = new Vector2(-6f, -6f);
             var bossFill = Graphic(bossTrack.transform, "Fill", fillSprite, new Color(0.9f, 0.2f, 0.26f));
             bossFill.type = Image.Type.Filled;
             bossFill.fillMethod = Image.FillMethod.Horizontal;
             bossFill.fillOrigin = (int)Image.OriginHorizontal.Left;
             Stretch(bossFill.rectTransform);
-            bossFill.rectTransform.offsetMin = new Vector2(5f, 5f);
-            bossFill.rectTransform.offsetMax = new Vector2(-5f, -5f);
-            var bossValue = Text(bossTrack.transform, "Value", "10.000 / 10.000", 21, TextAnchor.MiddleCenter, font);
+            bossFill.rectTransform.offsetMin = new Vector2(6f, 6f);
+            bossFill.rectTransform.offsetMax = new Vector2(-6f, -6f);
+            var bossValue = Text(bossTrack.transform, "Value", "10.000 / 10.000", 24, TextAnchor.MiddleCenter, font);
             bossValue.fontStyle = FontStyle.Bold;
             bossValue.raycastTarget = false;
             Stretch(bossValue.rectTransform);
-            var bossValueShadow = bossValue.gameObject.AddComponent<Shadow>();
-            bossValueShadow.effectColor = new Color(0f, 0f, 0f, 0.8f);
-            bossValueShadow.effectDistance = new Vector2(1.5f, -1.5f);
+            IconAt(bossTrack.transform, "Skull", Icon("ICON_Skull"), new Vector2(0f, 0.5f), 78f).rectTransform.anchoredPosition = new Vector2(-6f, 4f);
             bossBar.SetActive(false);
 
             // Boss Breaker countdown under the skill slots.
-            var breaker = Text(safe, "BossBreaker", "BOSS BREAKER 60s", 26, TextAnchor.MiddleRight, font);
+            var breaker = Text(safe, "BossBreaker", "BOSS BREAKER 60s", 28, TextAnchor.MiddleRight, font);
             breaker.fontStyle = FontStyle.Bold;
             breaker.raycastTarget = false;
             breaker.color = SkillController.BreakerColor;
@@ -3226,53 +3337,54 @@ namespace SlimeBreaker.EditorTools
             ApplyImage(stick.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(1f, 1f, 1f, 0f));
             stick.GetComponent<Image>().raycastTarget = true;
             var stickBase = new GameObject("Base", typeof(RectTransform), typeof(Image));
-            ApplyImage(stickBase.GetComponent<Image>(), joystickBaseSprite, Image.Type.Simple, new Color(1f, 1f, 1f, 0.8f));
+            ApplyImage(stickBase.GetComponent<Image>(), joystickBaseSprite, Image.Type.Simple, new Color(1f, 1f, 1f, 0.92f));
             stickBase.GetComponent<Image>().raycastTarget = false;
-            var baseRect = Place(stickBase, stick.transform, new Vector2(0.26f, 0.2f / 0.7f), new Vector2(250f, 250f));
+            var baseRect = Place(stickBase, stick.transform, new Vector2(0.26f, 0.2f / 0.7f), new Vector2(260f, 260f));
             var handle = new GameObject("Handle", typeof(RectTransform), typeof(Image));
             handle.transform.SetParent(stickBase.transform, false);
-            ApplyImage(handle.GetComponent<Image>(), joystickKnobSprite, Image.Type.Simple, new Color(1f, 1f, 1f, 0.95f));
+            ApplyImage(handle.GetComponent<Image>(), joystickKnobSprite, Image.Type.Simple, Color.white);
             handle.GetComponent<Image>().raycastTarget = false;
             var handleRect = handle.GetComponent<RectTransform>();
-            handleRect.sizeDelta = new Vector2(104f, 104f);
+            handleRect.sizeDelta = new Vector2(112f, 112f);
             handleRect.anchoredPosition = Vector2.zero;
             var joystick = stick.GetComponent<VirtualJoystick>();
             joystick.background = baseRect;
             joystick.handle = handleRect;
-            joystick.radius = 78f;
+            joystick.radius = 80f;
 
-            // Bottom-right: glass dash button; a cyan ring sweeps round as the cooldown refills.
-            var dashButton = Button(safe, "Dash", "", font, Color.white, circleGlassSprite);
-            Place(dashButton.gameObject, safe, new Vector2(0.875f, 0.2f), new Vector2(190f, 190f));
-            var dashTrack = Graphic(dashButton.transform, "DashTrack", ringSprite, new Color(1f, 1f, 1f, 0.14f));
+            // Bottom-right: big blue dash button; a ring sweeps round as the cooldown refills.
+            var dashButton = Button(safe, "Dash", "", font, Color.white, dashSprite);
+            Place(dashButton.gameObject, safe, new Vector2(0.885f, 0.2f), new Vector2(214f, 214f));
+            var dashTrack = Graphic(dashButton.transform, "DashTrack", ringSprite, new Color(0.08f, 0.1f, 0.35f, 0.35f));
             Stretch(dashTrack.rectTransform);
-            dashTrack.rectTransform.offsetMin = new Vector2(8f, 8f);
-            dashTrack.rectTransform.offsetMax = new Vector2(-8f, -8f);
+            dashTrack.rectTransform.offsetMin = new Vector2(17f, 25f);
+            dashTrack.rectTransform.offsetMax = new Vector2(-17f, -9f);
             var dashFillObject = new GameObject("DashFill", typeof(RectTransform), typeof(Image));
             dashFillObject.transform.SetParent(dashButton.transform, false);
             var dashFill = dashFillObject.GetComponent<Image>();
-            ApplyImage(dashFill, ringSprite, Image.Type.Filled, new Color(0.4f, 0.88f, 1f, 0.95f));
+            ApplyImage(dashFill, ringSprite, Image.Type.Filled, new Color(1f, 0.97f, 0.7f, 0.98f));
             dashFill.fillMethod = Image.FillMethod.Radial360;
             dashFill.fillOrigin = (int)Image.Origin360.Top;
             dashFill.fillClockwise = true;
             dashFill.fillAmount = 1f;
             dashFill.raycastTarget = false;
             Stretch(dashFill.rectTransform);
-            dashFill.rectTransform.offsetMin = new Vector2(8f, 8f);
-            dashFill.rectTransform.offsetMax = new Vector2(-8f, -8f);
-            var dashLabel = Text(dashButton.transform, "Label2", "DASH", 32, TextAnchor.MiddleCenter, font);
+            dashFill.rectTransform.offsetMin = new Vector2(17f, 25f);
+            dashFill.rectTransform.offsetMax = new Vector2(-17f, -9f);
+            IconAt(dashButton.transform, "Icon", Icon("ICON_Upgrade_Dash"), new Vector2(0.5f, 0.6f), 112f);
+            var dashLabel = Text(dashButton.transform, "Label2", "DASH", 30, TextAnchor.MiddleCenter, font);
             dashLabel.fontStyle = FontStyle.Bold;
             dashLabel.raycastTarget = false;
-            Shade(dashLabel);
-            Stretch(dashLabel.rectTransform);
+            Place(dashLabel.gameObject, dashButton.transform, new Vector2(0.5f, 0.27f), new Vector2(180f, 40f));
 
             // Toast for power-ups and skill grants.
             var toast = new GameObject("Toast", typeof(RectTransform), typeof(Image), typeof(CanvasGroup));
             var toastImage = toast.GetComponent<Image>();
             ApplyImage(toastImage, cardSprite, Image.Type.Sliced, Color.white);
             toastImage.raycastTarget = false;
-            Place(toast, safe, new Vector2(0.5f, 0.73f), new Vector2(760f, 76f));
-            var toastText = Text(toast.transform, "Text", "", 32, TextAnchor.MiddleCenter, font);
+            Place(toast, safe, new Vector2(0.5f, 0.69f), new Vector2(780f, 80f));
+            var toastText = Text(toast.transform, "Text", "", 34, TextAnchor.MiddleCenter, font);
+            toastText.fontStyle = FontStyle.Bold;
             toastText.raycastTarget = false;
             Stretch(toastText.rectTransform);
             var toastGroup = toast.GetComponent<CanvasGroup>();
@@ -3282,25 +3394,32 @@ namespace SlimeBreaker.EditorTools
 
             var warning = new GameObject("BossWarning", typeof(RectTransform), typeof(Image), typeof(CanvasGroup));
             var warningImage = warning.GetComponent<Image>();
-            ApplyImage(warningImage, cardSprite, Image.Type.Sliced, new Color(1f, 0.6f, 0.6f, 1f));
+            ApplyImage(warningImage, cardSprite, Image.Type.Sliced, new Color(1f, 0.62f, 0.66f, 1f));
             warningImage.raycastTarget = false;
-            Place(warning, safe, new Vector2(0.5f, 0.62f), new Vector2(860f, 160f));
-            var warningTitle = Text(warning.transform, "Title", "STAGE BOSS", 42, TextAnchor.MiddleCenter, font);
+            Place(warning, safe, new Vector2(0.5f, 0.55f), new Vector2(900f, 210f));
+            IconAt(warning.transform, "SkullL", Icon("ICON_Skull"), new Vector2(0f, 0.5f), 130f);
+            IconAt(warning.transform, "SkullR", Icon("ICON_Skull"), new Vector2(1f, 0.5f), 130f);
+            var warningTitle = Text(warning.transform, "Title", "STAGE BOSS", 52, TextAnchor.MiddleCenter, font);
             warningTitle.fontStyle = FontStyle.Bold;
-            warningTitle.color = new Color(1f, 0.82f, 0.35f);
+            warningTitle.color = Gold;
             warningTitle.raycastTarget = false;
-            Place(warningTitle.gameObject, warning.transform, new Vector2(0.5f, 0.7f), new Vector2(820f, 60f));
-            var warningName = Text(warning.transform, "Name", "", 36, TextAnchor.MiddleCenter, font);
+            Place(warningTitle.gameObject, warning.transform, new Vector2(0.5f, 0.7f), new Vector2(760f, 66f));
+            var warningName = Text(warning.transform, "Name", "", 40, TextAnchor.MiddleCenter, font);
             warningName.fontStyle = FontStyle.Bold;
             warningName.raycastTarget = false;
-            Place(warningName.gameObject, warning.transform, new Vector2(0.5f, 0.32f), new Vector2(820f, 56f));
+            Place(warningName.gameObject, warning.transform, new Vector2(0.5f, 0.27f), new Vector2(760f, 56f));
             var warningGroup = warning.GetComponent<CanvasGroup>();
             warningGroup.alpha = 0f;
             warningGroup.blocksRaycasts = false;
             warningGroup.interactable = false;
 
-            // Level-up choice panel.
-            var levelPanel = Panel(safe, "LevelUp", font, "Level Up! Choose an upgrade");
+            // Level-up: no window, just the shade, a sunburst title and three rarity-coloured cards.
+            var levelPanel = Panel(safe, "LevelUp", font, "LEVEL UP!", 0.1f, 0.1f, 0.9f, 0.83f, 0f, false);
+            var levelHint = Text(levelPanel.transform, "Hint", "Pilih satu peningkatan", 32, TextAnchor.MiddleCenter, font);
+            levelHint.fontStyle = FontStyle.Bold;
+            levelHint.color = Cream;
+            levelHint.raycastTarget = false;
+            Place(levelHint.gameObject, levelPanel.transform, new Vector2(0.5f, 0.725f), new Vector2(900f, 44f));
             var choices = new Button[3];
             var labels = new Text[3];
             var icons = new Image[3];
@@ -3309,86 +3428,104 @@ namespace SlimeBreaker.EditorTools
             var fills = new Image[3];
             for (int i = 0; i < 3; i++)
             {
-                choices[i] = Button(levelPanel.transform, "Choice" + i, "Upgrade", font, Color.white, ghostSprite);
-                Place(choices[i].gameObject, levelPanel.transform, new Vector2(0.25f + i * 0.25f, 0.46f), new Vector2(330f, 320f));
+                choices[i] = Button(levelPanel.transform, "Choice" + i, "Upgrade", font, Color.white, cardTintSprite);
+                Place(choices[i].gameObject, levelPanel.transform, new Vector2(0.27f + i * 0.23f, 0.39f), new Vector2(380f, 480f));
                 labels[i] = choices[i].GetComponentInChildren<Text>();
                 labels[i].alignment = TextAnchor.UpperCenter;
+                labels[i].fontSize = 40;
                 var labelRect = labels[i].rectTransform;
                 labelRect.anchorMin = new Vector2(0.06f, 0.08f);
-                labelRect.anchorMax = new Vector2(0.94f, 0.5f);
+                labelRect.anchorMax = new Vector2(0.94f, 0.44f);
                 labelRect.offsetMin = Vector2.zero;
                 labelRect.offsetMax = Vector2.zero;
-                var iconObject = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-                Place(iconObject, choices[i].transform, new Vector2(0.5f, 0.74f), new Vector2(120f, 120f));
-                icons[i] = iconObject.GetComponent<Image>();
-                ApplyImage(icons[i], whiteSprite, Image.Type.Simple, Color.white);
-                icons[i].preserveAspect = true;
-                icons[i].raycastTarget = false;
-                // Rarity wash over the whole glass card, behind the icon and text.
-                var fill = Graphic(choices[i].transform, "RarityFill", pillSprite, Color.white);
+                // The whole card takes the rarity colour (green / blue / purple / orange).
+                var fill = Graphic(choices[i].transform, "RarityFill", cardTintSprite, Color.white);
                 fill.raycastTarget = false;
                 Stretch(fill.rectTransform);
                 fill.rectTransform.SetSiblingIndex(0);
                 fills[i] = fill;
-                // Solid rarity band across the top of the card (green / blue / purple / orange) carrying the tag.
-                var band = Graphic(choices[i].transform, "RarityBand", pillSprite, Color.white);
+                var well = Graphic(choices[i].transform, "IconWell", circleSprite, new Color(0.1f, 0.05f, 0.22f, 0.38f));
+                Place(well.gameObject, choices[i].transform, new Vector2(0.5f, 0.68f), new Vector2(210f, 210f));
+                well.rectTransform.SetSiblingIndex(1);
+                var iconObject = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+                Place(iconObject, choices[i].transform, new Vector2(0.5f, 0.68f), new Vector2(176f, 176f));
+                icons[i] = iconObject.GetComponent<Image>();
+                ApplyImage(icons[i], whiteSprite, Image.Type.Simple, Color.white);
+                icons[i].preserveAspect = true;
+                icons[i].raycastTarget = false;
+                // Rarity tag riding the top edge of the card.
+                var band = Graphic(choices[i].transform, "RarityBand", tagSprite, Color.white);
                 band.raycastTarget = false;
-                Place(band.gameObject, choices[i].transform, new Vector2(0.5f, 1.0f), new Vector2(200f, 40f));
-                rarityTags[i] = Text(band.transform, "Rarity", "NORMAL", 22, TextAnchor.MiddleCenter, font);
+                Place(band.gameObject, choices[i].transform, new Vector2(0.5f, 1.0f), new Vector2(230f, 56f));
+                rarityTags[i] = Text(band.transform, "Rarity", "NORMAL", 26, TextAnchor.MiddleCenter, font);
                 rarityTags[i].fontStyle = FontStyle.Bold;
                 rarityTags[i].raycastTarget = false;
                 Stretch(rarityTags[i].rectTransform);
+                rarityTags[i].rectTransform.offsetMin = new Vector2(0f, 5f);
                 bands[i] = band;
             }
             levelPanel.SetActive(false);
 
-            var pausePanel = Panel(safe, "Pause", font, "Jeda");
+            var pausePanel = Panel(safe, "Pause", font, "Jeda", 0.33f, 0.13f, 0.67f, 0.82f, 460f);
             var resume = Button(pausePanel.transform, "Resume", "Lanjut", font, Color.white, goldSprite);
-            Place(resume.gameObject, pausePanel.transform, new Vector2(0.5f, 0.54f), new Vector2(380f, 96f));
-            var settingsButton = Button(pausePanel.transform, "Settings", "Pengaturan", font, Color.white, ghostSprite);
-            Place(settingsButton.gameObject, pausePanel.transform, new Vector2(0.5f, 0.38f), new Vector2(380f, 96f));
+            Place(resume.gameObject, pausePanel.transform, new Vector2(0.5f, 0.64f), new Vector2(480f, 120f));
+            ButtonIcon(resume, playIconSprite, 58f);
+            var settingsButton = Button(pausePanel.transform, "Settings", "Pengaturan", font, Color.white, buttonSprite);
+            Place(settingsButton.gameObject, pausePanel.transform, new Vector2(0.5f, 0.475f), new Vector2(480f, 120f));
+            ButtonIcon(settingsButton, gearSprite, 62f);
             var menu = Button(pausePanel.transform, "Menu", "Menu", font, Color.white, dangerSprite);
-            Place(menu.gameObject, pausePanel.transform, new Vector2(0.5f, 0.22f), new Vector2(380f, 96f));
+            Place(menu.gameObject, pausePanel.transform, new Vector2(0.5f, 0.31f), new Vector2(480f, 120f));
+            ButtonIcon(menu, Icon("ICON_Home"), 64f);
+            foreach (var button in new[] { resume, settingsButton, menu })
+                button.GetComponentInChildren<Text>().fontSize = 40;
             pausePanel.SetActive(false);
             var settings = BuildSettingsOverlay(safe, font);
             BuildInventory(uiObject, safe, font);
 
-            var resultPanel = Panel(safe, "Result", font, "Hasil");
-            var resultTitle = resultPanel.GetComponentInChildren<Text>();
-            var resultBody = Text(resultPanel.transform, "Body", "", 34, TextAnchor.MiddleCenter, font);
-            Place(resultBody.gameObject, resultPanel.transform, new Vector2(0.5f, 0.5f), new Vector2(700f, 160f));
+            var resultPanel = Panel(safe, "Result", font, "Hasil", 0.25f, 0.12f, 0.75f, 0.84f, 700f);
+            var resultTitle = resultPanel.transform.Find("Title").GetComponent<Text>();
+            var resultBody = Text(resultPanel.transform, "Body", "", 36, TextAnchor.MiddleCenter, font);
+            resultBody.fontStyle = FontStyle.Bold;
+            Place(resultBody.gameObject, resultPanel.transform, new Vector2(0.5f, 0.54f), new Vector2(820f, 300f));
             var retry = Button(resultPanel.transform, "Retry", "Ulangi", font, Color.white, goldSprite);
-            Place(retry.gameObject, resultPanel.transform, new Vector2(0.36f, 0.24f), new Vector2(300f, 96f));
+            Place(retry.gameObject, resultPanel.transform, new Vector2(0.385f, 0.25f), new Vector2(360f, 116f));
+            ButtonIcon(retry, Icon("ICON_Retry"), 60f);
             var exit = Button(resultPanel.transform, "Exit", "Menu", font, Color.white, dangerSprite);
-            Place(exit.gameObject, resultPanel.transform, new Vector2(0.64f, 0.24f), new Vector2(300f, 96f));
+            Place(exit.gameObject, resultPanel.transform, new Vector2(0.615f, 0.25f), new Vector2(360f, 116f));
+            ButtonIcon(exit, Icon("ICON_Home"), 62f);
+            foreach (var button in new[] { retry, exit })
+                button.GetComponentInChildren<Text>().fontSize = 38;
             resultPanel.SetActive(false);
 
             // Out of lives: 5-second countdown ring, New Game or Continue (after a full-screen ad).
-            var continuePanel = Panel(safe, "Continue", font, "Nyawa Habis");
-            var continueTrack = Graphic(continuePanel.transform, "RingTrack", ringSprite, new Color(1f, 1f, 1f, 0.14f));
-            Place(continueTrack.gameObject, continuePanel.transform, new Vector2(0.5f, 0.52f), new Vector2(210f, 210f));
-            var continueRing = Graphic(continuePanel.transform, "Ring", ringSprite, new Color(1f, 0.78f, 0.3f, 0.95f));
+            var continuePanel = Panel(safe, "Continue", font, "Nyawa Habis", 0.23f, 0.09f, 0.77f, 0.86f, 620f);
+            var continueTrack = Graphic(continuePanel.transform, "RingTrack", ringSprite, new Color(0.06f, 0.03f, 0.16f, 0.7f));
+            Place(continueTrack.gameObject, continuePanel.transform, new Vector2(0.5f, 0.58f), new Vector2(230f, 230f));
+            var continueRing = Graphic(continuePanel.transform, "Ring", ringSprite, Gold);
             continueRing.type = Image.Type.Filled;
             continueRing.fillMethod = Image.FillMethod.Radial360;
             continueRing.fillOrigin = (int)Image.Origin360.Top;
             continueRing.fillClockwise = false;
             continueRing.fillAmount = 1f;
-            Place(continueRing.gameObject, continuePanel.transform, new Vector2(0.5f, 0.52f), new Vector2(210f, 210f));
-            var continueCount = Text(continuePanel.transform, "Countdown", "5", 104, TextAnchor.MiddleCenter, font);
+            Place(continueRing.gameObject, continuePanel.transform, new Vector2(0.5f, 0.58f), new Vector2(230f, 230f));
+            var continueCount = Text(continuePanel.transform, "Countdown", "5", 120, TextAnchor.MiddleCenter, font);
             continueCount.fontStyle = FontStyle.Bold;
             continueCount.raycastTarget = false;
-            Shade(continueCount);
-            Place(continueCount.gameObject, continuePanel.transform, new Vector2(0.5f, 0.52f), new Vector2(210f, 160f));
-            var continueHint = Text(continuePanel.transform, "Hint", "Lanjutkan dengan HP penuh dan 3 nyawa setelah menonton iklan", 28, TextAnchor.MiddleCenter, font);
-            continueHint.color = TextDim;
+            Place(continueCount.gameObject, continuePanel.transform, new Vector2(0.5f, 0.593f), new Vector2(210f, 160f));
+            var continueHint = Text(continuePanel.transform, "Hint", "Lanjutkan dengan HP penuh dan 3 nyawa setelah menonton iklan", 27, TextAnchor.MiddleCenter, font);
+            continueHint.color = new Color(0.9f, 0.88f, 0.98f);
             continueHint.raycastTarget = false;
-            Place(continueHint.gameObject, continuePanel.transform, new Vector2(0.5f, 0.36f), new Vector2(900f, 44f));
+            Place(continueHint.gameObject, continuePanel.transform, new Vector2(0.5f, 0.395f), new Vector2(940f, 44f));
             var newGame = Button(continuePanel.transform, "NewGame", "Game Baru", font, Color.white, dangerSprite);
-            Place(newGame.gameObject, continuePanel.transform, new Vector2(0.36f, 0.22f), new Vector2(320f, 96f));
-            var continueButton = Button(continuePanel.transform, "ContinueAd", "Lanjutkan", font, Color.white, goldSprite);
-            Place(continueButton.gameObject, continuePanel.transform, new Vector2(0.64f, 0.22f), new Vector2(320f, 96f));
-            var adBadge = Tag(continueButton.transform, "AdBadge", "IKLAN", AccentViolet, font, 15);
-            Place(adBadge.gameObject, continueButton.transform, new Vector2(0.86f, 0.98f), new Vector2(76f, 28f));
+            Place(newGame.gameObject, continuePanel.transform, new Vector2(0.375f, 0.235f), new Vector2(380f, 120f));
+            var continueButton = Button(continuePanel.transform, "ContinueAd", "Lanjutkan", font, Color.white, greenSprite);
+            Place(continueButton.gameObject, continuePanel.transform, new Vector2(0.625f, 0.235f), new Vector2(380f, 120f));
+            continueButton.GetComponentInChildren<Text>().rectTransform.offsetMin = new Vector2(84f, 9f);
+            ButtonIcon(continueButton, Icon("ICON_Ad"), 70f, 0.15f);
+            foreach (var button in new[] { newGame, continueButton })
+                button.GetComponentInChildren<Text>().fontSize = 38;
+            var adBadge = Tag(continueButton.transform, "AdBadge", "IKLAN", AccentViolet, font, 18);
+            Place(adBadge.gameObject, continueButton.transform, new Vector2(0.86f, 1f), new Vector2(104f, 40f));
             continuePanel.SetActive(false);
             var ads = BuildAdOverlay(uiObject, font);
 
@@ -3402,6 +3539,9 @@ namespace SlimeBreaker.EditorTools
 
             var player = dash.GetComponent<PlayerController>();
             player.joystick = joystick;
+            // The hero is a prefab instance: record the override explicitly so the scene keeps the reference.
+            EditorUtility.SetDirty(player);
+            PrefabUtility.RecordPrefabInstancePropertyModifications(player);
             ui.hpSlider = hp;
             ui.hpText = hpText;
             ui.lifeIcons = lifeIcons;
@@ -3481,13 +3621,14 @@ namespace SlimeBreaker.EditorTools
             UnityEventTools.AddPersistentListener(newGame.onClick, flow.NewGame);
             UnityEventTools.AddPersistentListener(continueButton.onClick, flow.ContinueWithAd);
             UnityEventTools.AddPersistentListener(dashButton.onClick, dash.QueueDash);
+            StyleTexts(canvas.transform);
             canvas.sortingOrder = 0;
             return ui;
         }
 
         /// <summary>
-        /// Full-screen interstitial on its own top canvas (covers the notch area too). Until an ad SDK is added it
-        /// shows a house ad; the countdown ring turns into a close (X) button after <see cref="AdService.adSeconds"/>.
+        /// Full-screen interstitial on its own top canvas (covers the notch area too). When no ad SDK ad is ready it
+        /// shows a house ad (key art + logo); the countdown ring turns into a close (X) button after <see cref="AdService.adSeconds"/>.
         /// </summary>
         static AdService BuildAdOverlay(GameObject host, Font font)
         {
@@ -3497,54 +3638,79 @@ namespace SlimeBreaker.EditorTools
             var root = new GameObject("Ad", typeof(RectTransform), typeof(Image), typeof(CanvasGroup));
             root.transform.SetParent(canvas.transform, false);
             Stretch(root.GetComponent<RectTransform>());
-            ApplyImage(root.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(0.05f, 0.03f, 0.11f, 1f));
+            ApplyImage(root.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(0.07f, 0.04f, 0.16f, 1f));
+            if (keyArtSprite != null)
+            {
+                var back = Graphic(root.transform, "KeyArt", keyArtSprite, Color.white);
+                Stretch(back.rectTransform);
+                var fitter = back.gameObject.AddComponent<AspectRatioFitter>();
+                fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+                fitter.aspectRatio = 16f / 9f;
+            }
+            var topFade = Graphic(root.transform, "TopFade", fadeSprite, new Color(0.07f, 0.03f, 0.18f, 0.75f));
+            topFade.rectTransform.anchorMin = new Vector2(0f, 1f);
+            topFade.rectTransform.anchorMax = new Vector2(1f, 1f);
+            topFade.rectTransform.pivot = new Vector2(0.5f, 1f);
+            topFade.rectTransform.sizeDelta = new Vector2(0f, 420f);
+            var bottomFade = Graphic(root.transform, "BottomFade", fadeSprite, new Color(0.07f, 0.03f, 0.18f, 0.9f));
+            bottomFade.rectTransform.anchorMin = new Vector2(0f, 0f);
+            bottomFade.rectTransform.anchorMax = new Vector2(1f, 0f);
+            bottomFade.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            bottomFade.rectTransform.sizeDelta = new Vector2(0f, 420f);
+            bottomFade.rectTransform.anchoredPosition = new Vector2(0f, 210f);
+            bottomFade.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 180f);
             safe.SetParent(root.transform, false);
             Stretch(safe);
-            var glow = Graphic(safe, "Glow", circleSprite, new Color(0.56f, 0.4f, 1f, 0.22f));
-            Place(glow.gameObject, safe, new Vector2(0.5f, 0.53f), new Vector2(560f, 560f));
             var art = new GameObject("Art", typeof(RectTransform));
-            Place(art, safe, new Vector2(0.5f, 0.53f), new Vector2(560f, 560f));
-            var staff = Graphic(art.transform, "Staff", AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Icons/ICON_Item_Staff.png"), Color.white);
-            staff.preserveAspect = true;
-            Place(staff.gameObject, art.transform, new Vector2(0.5f, 0.56f), new Vector2(300f, 300f));
-            string[] skills = { "Fire", "Ice", "Lightning", "Arcane" };
-            for (int i = 0; i < skills.Length; i++)
+            Place(art, safe, new Vector2(0.5f, 0.8f), new Vector2(700f, 360f));
+            if (logoSprite != null)
             {
-                var icon = Graphic(art.transform, "Skill" + skills[i], AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Icons/ICON_Skill_" + skills[i] + ".png"), Color.white);
-                icon.preserveAspect = true;
-                Place(icon.gameObject, art.transform, new Vector2(0.2f + i * 0.2f, 0.1f), new Vector2(96f, 96f));
+                var logo = Graphic(art.transform, "Logo", logoSprite, Color.white);
+                logo.preserveAspect = true;
+                Stretch(logo.rectTransform);
             }
-            var title = Text(safe, "Title", "DUMPLING WITCH", 88, TextAnchor.MiddleCenter, font);
-            title.fontStyle = FontStyle.Bold;
-            title.color = new Color(1f, 0.84f, 0.36f);
-            Shade(title);
-            Place(title.gameObject, safe, new Vector2(0.5f, 0.86f), new Vector2(1200f, 110f));
-            var line = Text(safe, "Line", "Kumpulkan staff Legend & Ultra, kalahkan 10 Boss Dumpling sampai lantai 100!", 32, TextAnchor.MiddleCenter, font);
-            Place(line.gameObject, safe, new Vector2(0.5f, 0.2f), new Vector2(1300f, 50f));
-            var cta = Tag(safe, "Cta", "MAIN TERUS", new Color(1f, 0.7f, 0.22f), font, 30);
-            Place(cta.gameObject, safe, new Vector2(0.5f, 0.1f), new Vector2(320f, 70f));
-            var label = Tag(safe, "AdLabel", "IKLAN", new Color(1f, 1f, 1f, 0.22f), font, 20);
-            Place(label.gameObject, safe, new Vector2(0.055f, 0.94f), new Vector2(110f, 40f));
+            else
+            {
+                var title = Text(art.transform, "Title", "DUMPLING WITCH", 96, TextAnchor.MiddleCenter, font);
+                title.fontStyle = FontStyle.Bold;
+                title.color = Gold;
+                Stretch(title.rectTransform);
+            }
+            var line = Text(safe, "Line", "Kumpulkan staff Legend & Ultra, kalahkan 10 Boss Dumpling sampai lantai 100!", 36, TextAnchor.MiddleCenter, font);
+            line.fontStyle = FontStyle.Bold;
+            Place(line.gameObject, safe, new Vector2(0.5f, 0.21f), new Vector2(1500f, 54f));
+            var cta = Graphic(safe, "Cta", goldSprite, Color.white);
+            Place(cta.gameObject, safe, new Vector2(0.5f, 0.1f), new Vector2(420f, 112f));
+            cta.gameObject.AddComponent<UiPulse>().scaleAmount = 0.04f;
+            var ctaText = Text(cta.transform, "Text", "MAIN TERUS", 44, TextAnchor.MiddleCenter, font);
+            ctaText.fontStyle = FontStyle.Bold;
+            ctaText.raycastTarget = false;
+            Stretch(ctaText.rectTransform);
+            ctaText.rectTransform.offsetMin = new Vector2(0f, 10f);
+            var label = Tag(safe, "AdLabel", "IKLAN", new Color(0.45f, 0.38f, 0.7f), font, 20);
+            Place(label.gameObject, safe, new Vector2(0.055f, 0.94f), new Vector2(116f, 44f));
 
             var countdown = new GameObject("Countdown", typeof(RectTransform));
-            Place(countdown, safe, new Vector2(0.95f, 0.91f), new Vector2(96f, 96f));
-            var back = Graphic(countdown.transform, "Back", circleGlassSprite, Color.white);
-            Stretch(back.rectTransform);
-            var ring = Graphic(countdown.transform, "Ring", ringSprite, new Color(1f, 1f, 1f, 0.9f));
+            Place(countdown, safe, new Vector2(0.95f, 0.91f), new Vector2(100f, 100f));
+            var ringBack = Graphic(countdown.transform, "Back", circleGlassSprite, Color.white);
+            Stretch(ringBack.rectTransform);
+            var ring = Graphic(countdown.transform, "Ring", ringSprite, new Color(1f, 0.97f, 0.75f, 0.95f));
             ring.type = Image.Type.Filled;
             ring.fillMethod = Image.FillMethod.Radial360;
             ring.fillOrigin = (int)Image.Origin360.Top;
             ring.fillClockwise = false;
             Stretch(ring.rectTransform);
-            ring.rectTransform.offsetMin = new Vector2(6f, 6f);
-            ring.rectTransform.offsetMax = new Vector2(-6f, -6f);
-            var count = Text(countdown.transform, "Value", "5", 40, TextAnchor.MiddleCenter, font);
+            ring.rectTransform.offsetMin = new Vector2(9f, 13f);
+            ring.rectTransform.offsetMax = new Vector2(-9f, -5f);
+            var count = Text(countdown.transform, "Value", "5", 44, TextAnchor.MiddleCenter, font);
             count.fontStyle = FontStyle.Bold;
             count.raycastTarget = false;
             Stretch(count.rectTransform);
-            var close = Button(safe, "Close", "X", font, Color.white, circleGlassSprite);
-            Place(close.gameObject, safe, new Vector2(0.95f, 0.91f), new Vector2(96f, 96f));
-            close.GetComponentInChildren<Text>().fontSize = 44;
+            count.rectTransform.offsetMin = new Vector2(0f, 8f);
+            var close = Button(safe, "Close", "", font, Color.white, circleRedSprite);
+            Place(close.gameObject, safe, new Vector2(0.95f, 0.91f), new Vector2(100f, 100f));
+            var closeIcon = Graphic(close.transform, "Icon", closeSprite, Color.white);
+            Place(closeIcon.gameObject, close.transform, new Vector2(0.5f, 0.54f), new Vector2(56f, 56f));
 
             var ads = host.AddComponent<AdService>();
             ads.group = root.GetComponent<CanvasGroup>();
@@ -3554,6 +3720,7 @@ namespace SlimeBreaker.EditorTools
             ads.countdownRing = ring;
             ads.art = art.GetComponent<RectTransform>();
             ads.adSeconds = 5f;
+            StyleTexts(canvas.transform);
             root.SetActive(false);
             return ads;
         }
@@ -3566,16 +3733,14 @@ namespace SlimeBreaker.EditorTools
             rect.sizeDelta = new Vector2(88f, 88f);
             rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = Vector2.zero;
-            var glyph = Text(go.transform, "Glyph", "▲", 56, TextAnchor.MiddleCenter, font);
-            glyph.fontStyle = FontStyle.Bold;
-            glyph.color = color;
-            glyph.raycastTarget = false;
+            var glyph = Graphic(go.transform, "Glyph", pointerSprite, color);
+            glyph.preserveAspect = true;
             Stretch(glyph.rectTransform);
-            var caption = Text(go.transform, "Label", "", 20, TextAnchor.MiddleCenter, font);
+            var caption = Text(go.transform, "Label", "", 22, TextAnchor.MiddleCenter, font);
             caption.fontStyle = FontStyle.Bold;
             caption.color = color;
             caption.raycastTarget = false;
-            Place(caption.gameObject, go.transform, new Vector2(0.5f, -0.18f), new Vector2(160f, 28f));
+            Place(caption.gameObject, go.transform, new Vector2(0.5f, -0.18f), new Vector2(180f, 30f));
             go.SetActive(false);
             return rect;
         }
@@ -3625,7 +3790,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Dumpling Witch";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 48;
+            PlayerSettings.Android.bundleVersionCode = 49;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.dumplingwitch");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;
@@ -3791,26 +3956,53 @@ namespace SlimeBreaker.EditorTools
             return canvas;
         }
 
-        static GameObject Panel(Transform parent, string name, Font font, string title)
+        /// <summary>
+        /// Modal window: a dim shade, the violet frame and a gold title ribbon on its top edge. Content is parented to the
+        /// returned root with full-screen anchors. <paramref name="framed"/> = false leaves only the shade and a big
+        /// title over a sunburst (level-up).
+        /// </summary>
+        static GameObject Panel(Transform parent, string name, Font font, string title, float xMin = 0.14f, float yMin = 0.1f, float xMax = 0.86f, float yMax = 0.9f, float ribbonWidth = 640f, bool framed = true)
         {
-            var dim = new GameObject(name, typeof(RectTransform), typeof(Image));
+            var dim = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(UiPop));
             dim.transform.SetParent(parent, false);
-            ApplyImage(dim.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(0.01f, 0.01f, 0.04f, 0.66f));
+            // The root only blocks input; the shade is an oversized child so it still covers the screen while the root pops in.
+            ApplyImage(dim.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(0f, 0f, 0f, 0f));
             Stretch(dim.GetComponent<RectTransform>());
+            var shade = Graphic(dim.transform, "Shade", whiteSprite, new Color(0.05f, 0.02f, 0.13f, 0.74f));
+            Stretch(shade.rectTransform);
+            shade.rectTransform.offsetMin = new Vector2(-700f, -700f);
+            shade.rectTransform.offsetMax = new Vector2(700f, 700f);
             var panel = new GameObject("Frame", typeof(RectTransform), typeof(Image));
             panel.transform.SetParent(dim.transform, false);
             ApplyImage(panel.GetComponent<Image>(), panelSprite, Image.Type.Sliced, Color.white);
+            panel.GetComponent<Image>().enabled = framed;
             var rect = panel.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.14f, 0.1f);
-            rect.anchorMax = new Vector2(0.86f, 0.9f);
+            rect.anchorMin = new Vector2(xMin, yMin);
+            rect.anchorMax = new Vector2(xMax, yMax);
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
-            var label = Text(dim.transform, "Title", title, 48, TextAnchor.MiddleCenter, font);
-            label.fontStyle = FontStyle.Bold;
-            Shade(label);
-            Place(label.gameObject, dim.transform, new Vector2(0.5f, 0.79f), new Vector2(1000f, 90f));
-            var underline = Graphic(dim.transform, "TitleAccent", pillSprite, AccentViolet);
-            Place(underline.gameObject, dim.transform, new Vector2(0.5f, 0.738f), new Vector2(96f, 8f));
+            if (framed)
+            {
+                var ribbon = Graphic(dim.transform, "TitleAccent", ribbonSprite, Color.white);
+                Place(ribbon.gameObject, dim.transform, new Vector2(0.5f, yMax), new Vector2(ribbonWidth, 104f)).anchoredPosition = new Vector2(0f, -2f);
+                var label = Text(dim.transform, "Title", title, 50, TextAnchor.MiddleCenter, font);
+                label.fontStyle = FontStyle.Bold;
+                label.color = Cream;
+                label.raycastTarget = false;
+                Place(label.gameObject, dim.transform, new Vector2(0.5f, yMax), new Vector2(ribbonWidth - 150f, 76f)).anchoredPosition = new Vector2(0f, 12f);
+            }
+            else
+            {
+                var burst = Graphic(dim.transform, "TitleAccent", burstSprite, new Color(1f, 0.86f, 0.42f, 0.5f));
+                Place(burst.gameObject, dim.transform, new Vector2(0.5f, yMax), new Vector2(1100f, 1100f));
+                burst.gameObject.AddComponent<UiPulse>().spin = 14f;
+                burst.GetComponent<UiPulse>().scaleAmount = 0f;
+                var label = Text(dim.transform, "Title", title, 112, TextAnchor.MiddleCenter, font);
+                label.fontStyle = FontStyle.Bold;
+                label.color = Gold;
+                label.raycastTarget = false;
+                Place(label.gameObject, dim.transform, new Vector2(0.5f, yMax), new Vector2(1400f, 140f));
+            }
             return dim;
         }
 
@@ -3827,71 +4019,141 @@ namespace SlimeBreaker.EditorTools
             text.supportRichText = true;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Overflow;
-            var shadow = go.AddComponent<Shadow>();
-            shadow.effectColor = new Color(0f, 0f, 0f, 0.7f);
-            shadow.effectDistance = new Vector2(2f, -2f);
             return text;
+        }
+
+        /// <summary>
+        /// Final pass over a canvas: headings, buttons and numbers (bold or large text) take the display font with the
+        /// chunky outline; everything else takes the body font with a soft shadow.
+        /// </summary>
+        static void StyleTexts(Transform root)
+        {
+            foreach (var text in root.GetComponentsInChildren<Text>(true))
+            {
+                bool display = text.fontStyle == FontStyle.Bold || text.fontSize >= 30;
+                foreach (var shadow in text.GetComponents<Shadow>())
+                    UnityEngine.Object.DestroyImmediate(shadow);
+                text.fontStyle = FontStyle.Normal;
+                text.font = display ? displayFont : bodyFont;
+                if (display)
+                {
+                    var outline = text.gameObject.AddComponent<UiOutline>();
+                    outline.color = Ink;
+                    outline.width = Mathf.Clamp(text.fontSize * 0.065f, 1.3f, 4.5f);
+                    outline.drop = outline.width * 0.9f;
+                }
+                else
+                {
+                    var shadow = text.gameObject.AddComponent<Shadow>();
+                    shadow.effectColor = new Color(Ink.r, Ink.g, Ink.b, 0.9f);
+                    shadow.effectDistance = new Vector2(0f, -1.6f);
+                }
+            }
         }
 
         static Button Button(Transform parent, string name, string label, Font font, Color color, Sprite sprite = null)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button), typeof(UiPress));
             go.transform.SetParent(parent, false);
             var face = sprite != null ? sprite : buttonSprite;
-            ApplyImage(go.GetComponent<Image>(), face, face.border == Vector4.zero ? Image.Type.Simple : Image.Type.Sliced, color);
+            bool sliced = face.border != Vector4.zero;
+            ApplyImage(go.GetComponent<Image>(), face, sliced ? Image.Type.Sliced : Image.Type.Simple, color);
             var button = go.GetComponent<Button>();
             var colors = button.colors;
             colors.highlightedColor = new Color(1f, 1f, 1f, 1f);
-            colors.pressedColor = new Color(0.75f, 0.75f, 0.8f, 1f);
-            colors.disabledColor = new Color(0.55f, 0.55f, 0.6f, 0.7f);
+            colors.pressedColor = new Color(0.82f, 0.82f, 0.86f, 1f);
+            colors.disabledColor = new Color(0.62f, 0.6f, 0.7f, 0.8f);
+            colors.fadeDuration = 0.06f;
             button.colors = colors;
-            var text = Text(go.transform, "Label", label, 30, TextAnchor.MiddleCenter, font);
+            var text = Text(go.transform, "Label", label, 32, TextAnchor.MiddleCenter, font);
             text.fontStyle = FontStyle.Bold;
             text.raycastTarget = false;
-            Shade(text);
             Stretch(text.rectTransform);
+            // Rectangular buttons have a lip under the face: keep the label on the face.
+            if (sliced)
+            {
+                text.rectTransform.offsetMin = new Vector2(10f, 9f);
+                text.rectTransform.offsetMax = new Vector2(-10f, -1f);
+            }
             return button;
         }
 
-        /// <summary>Settings row: label, draggable slider (large handle for touch) and a percentage readout.</summary>
-        static Slider VolumeSlider(Transform parent, string name, string label, Font font, float y, out Text value)
+        /// <summary>Icon on the left of a button label (the label keeps its centre).</summary>
+        static Image ButtonIcon(Button button, Sprite sprite, float size = 56f, float x = 0.16f)
         {
-            var caption = Text(parent, name + "Label", label, 26, TextAnchor.MiddleLeft, font);
-            Place(caption.gameObject, parent, new Vector2(0.345f, y), new Vector2(300f, 56f));
+            var icon = Graphic(button.transform, "Icon", sprite, Color.white);
+            icon.preserveAspect = true;
+            Place(icon.gameObject, button.transform, new Vector2(x, 0.54f), new Vector2(size, size));
+            return icon;
+        }
+
+        /// <summary>Round red close (X) button, meant for the top-right corner of a window.</summary>
+        static Button CloseButton(Transform parent, Font font, Vector2 anchor)
+        {
+            var close = Button(parent, "Close", "", font, Color.white, circleRedSprite);
+            Place(close.gameObject, parent, anchor, new Vector2(88f, 88f));
+            var icon = Graphic(close.transform, "Icon", closeSprite, Color.white);
+            Place(icon.gameObject, close.transform, new Vector2(0.5f, 0.54f), new Vector2(50f, 50f));
+            return close;
+        }
+
+        /// <summary>Small caps section caption inside windows.</summary>
+        static Text Caption(Transform parent, string name, string value, Font font, Vector2 anchor, Vector2 size, TextAnchor align = TextAnchor.MiddleLeft)
+        {
+            var caption = Text(parent, name, value, 22, align, font);
+            caption.fontStyle = FontStyle.Bold;
+            caption.color = TextDim;
+            caption.raycastTarget = false;
+            Place(caption.gameObject, parent, anchor, size);
+            return caption;
+        }
+
+        /// <summary>Settings row: label, draggable slider (large handle for touch) and a percentage readout.</summary>
+        static Slider VolumeSlider(Transform parent, string name, string label, Font font, float y, out Text value, Sprite iconSprite = null)
+        {
+            if (iconSprite != null)
+            {
+                var icon = Graphic(parent, name + "Icon", iconSprite, Color.white);
+                icon.preserveAspect = true;
+                Place(icon.gameObject, parent, new Vector2(0.285f, y), new Vector2(52f, 52f));
+            }
+            var caption = Text(parent, name + "Label", label, 28, TextAnchor.MiddleLeft, font);
+            caption.fontStyle = FontStyle.Bold;
+            Place(caption.gameObject, parent, new Vector2(0.385f, y), new Vector2(300f, 56f));
             var root = new GameObject(name + "Slider", typeof(RectTransform));
-            Place(root, parent, new Vector2(0.575f, y), new Vector2(520f, 56f));
+            Place(root, parent, new Vector2(0.59f, y), new Vector2(460f, 60f));
             var track = new GameObject("Track", typeof(RectTransform), typeof(Image));
             track.transform.SetParent(root.transform, false);
-            ApplyImage(track.GetComponent<Image>(), whiteSprite, Image.Type.Simple, new Color(1f, 1f, 1f, 0.18f));
+            ApplyImage(track.GetComponent<Image>(), trackSprite, Image.Type.Sliced, Color.white);
             var trackRect = track.GetComponent<RectTransform>();
             trackRect.anchorMin = new Vector2(0f, 0.5f);
             trackRect.anchorMax = new Vector2(1f, 0.5f);
-            trackRect.sizeDelta = new Vector2(0f, 14f);
+            trackRect.sizeDelta = new Vector2(0f, 30f);
             var fillArea = new GameObject("FillArea", typeof(RectTransform));
             fillArea.transform.SetParent(root.transform, false);
             var areaRect = fillArea.GetComponent<RectTransform>();
             areaRect.anchorMin = new Vector2(0f, 0.5f);
             areaRect.anchorMax = new Vector2(1f, 0.5f);
-            areaRect.sizeDelta = new Vector2(-28f, 14f);
+            areaRect.sizeDelta = new Vector2(-12f, 18f);
             var fill = new GameObject("Fill", typeof(RectTransform), typeof(Image));
             fill.transform.SetParent(fillArea.transform, false);
-            ApplyImage(fill.GetComponent<Image>(), whiteSprite, Image.Type.Simple, AccentViolet);
+            ApplyImage(fill.GetComponent<Image>(), fillSprite, Image.Type.Sliced, Gold);
             var fillRect = fill.GetComponent<RectTransform>();
             Stretch(fillRect);
             var handleArea = new GameObject("HandleArea", typeof(RectTransform));
             handleArea.transform.SetParent(root.transform, false);
             // Zero-height strip: the Slider stretches the handle across the area's height, so the handle's own
-            // sizeDelta (48 px) becomes its real height and it stays a circle.
+            // sizeDelta becomes its real height and it stays a circle.
             var handleAreaRect = handleArea.GetComponent<RectTransform>();
             handleAreaRect.anchorMin = new Vector2(0f, 0.5f);
             handleAreaRect.anchorMax = new Vector2(1f, 0.5f);
-            handleAreaRect.sizeDelta = new Vector2(-28f, 0f);
+            handleAreaRect.sizeDelta = new Vector2(-36f, 0f);
             handleAreaRect.anchoredPosition = Vector2.zero;
             var handle = new GameObject("Handle", typeof(RectTransform), typeof(Image));
             handle.transform.SetParent(handleArea.transform, false);
             ApplyImage(handle.GetComponent<Image>(), joystickKnobSprite != null ? joystickKnobSprite : whiteSprite, Image.Type.Simple, Color.white);
             var handleRect = handle.GetComponent<RectTransform>();
-            handleRect.sizeDelta = new Vector2(48f, 48f);
+            handleRect.sizeDelta = new Vector2(60f, 60f);
             var slider = root.AddComponent<Slider>();
             slider.fillRect = fillRect;
             slider.handleRect = handleRect;
@@ -3901,9 +4163,9 @@ namespace SlimeBreaker.EditorTools
             slider.maxValue = 1f;
             slider.value = 1f;
             slider.transition = Selectable.Transition.None;
-            value = Text(parent, name + "Value", "100%", 26, TextAnchor.MiddleRight, font);
+            value = Text(parent, name + "Value", "100%", 28, TextAnchor.MiddleRight, font);
             value.fontStyle = FontStyle.Bold;
-            Place(value.gameObject, parent, new Vector2(0.765f, y), new Vector2(110f, 56f));
+            Place(value.gameObject, parent, new Vector2(0.745f, y), new Vector2(110f, 56f));
             return slider;
         }
 
@@ -3937,21 +4199,60 @@ namespace SlimeBreaker.EditorTools
             return slider;
         }
 
+        /// <summary>
+        /// Loads both UI fonts and returns the body one (Nunito Black). Headings use <see cref="displayFont"/>
+        /// (Lilita One); <see cref="StyleTexts"/> decides per label. Roboto stays as the fallback for missing glyphs.
+        /// </summary>
         static Font Font()
         {
-            var font = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/Roboto-Regular.ttf");
-            if (font == null)
-                font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font == null)
-                font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            if (font == null)
+            var roboto = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/Roboto-Regular.ttf");
+            foreach (var path in new[] { "Assets/Fonts/LilitaOne-Regular.ttf", "Assets/Fonts/Nunito-Black.ttf" })
+            {
+                var importer = AssetImporter.GetAtPath(path) as TrueTypeFontImporter;
+                if (importer == null)
+                    continue;
+                bool changed = false;
+                if (importer.fontTextureCase != FontTextureCase.Dynamic)
+                {
+                    importer.fontTextureCase = FontTextureCase.Dynamic;
+                    changed = true;
+                }
+                if (roboto != null && (importer.fontReferences == null || importer.fontReferences.Length != 1 || importer.fontReferences[0] != roboto))
+                {
+                    importer.fontReferences = new[] { roboto };
+                    changed = true;
+                }
+                if (changed)
+                    importer.SaveAndReimport();
+            }
+            displayFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/LilitaOne-Regular.ttf");
+            bodyFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/Nunito-Black.ttf");
+            var fallback = roboto ?? Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            if (displayFont == null)
+                displayFont = fallback;
+            if (bodyFont == null)
+                bodyFont = fallback;
+            if (bodyFont == null)
                 throw new InvalidOperationException("Font UI tidak ditemukan.");
-            return font;
+            return bodyFont;
         }
 
         static Sprite UiSprite(string name, Sprite fallback)
         {
             return AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Panels/" + name + ".png") ?? fallback;
+        }
+
+        static Sprite Icon(string name)
+        {
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Icons/" + name + ".png");
+            if (sprite == null)
+                Debug.LogWarning("Ikon UI hilang: " + name);
+            return sprite ?? whiteSprite;
+        }
+
+        static Sprite Art(string name)
+        {
+            return AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/Art/" + name + ".png");
         }
 
         static void LoadUiArt()
@@ -3961,23 +4262,42 @@ namespace SlimeBreaker.EditorTools
             buttonSprite = UiSprite("UI_Button", whiteSprite);
             dangerSprite = UiSprite("UI_Button_Danger", buttonSprite);
             goldSprite = UiSprite("UI_Button_Gold", buttonSprite);
+            greenSprite = UiSprite("UI_Button_Green", buttonSprite);
+            blueSprite = UiSprite("UI_Button_Blue", buttonSprite);
             slotSprite = UiSprite("UI_Slot", panelSprite);
+            skillSlotSprite = UiSprite("UI_Slot_Skill", slotSprite);
             barSprite = UiSprite("UI_Bar_Back", null);
             joystickBaseSprite = UiSprite("UI_Joystick_Base", panelSprite);
             joystickKnobSprite = UiSprite("UI_Joystick_Knob", whiteSprite);
             circleSprite = UiSprite("UI_Circle", buttonSprite);
             cardSprite = UiSprite("UI_Card_Glass", panelSprite);
+            cardTintSprite = UiSprite("UI_Card_Tint", cardSprite);
             pillSprite = UiSprite("UI_Pill", whiteSprite);
+            tagSprite = UiSprite("UI_Tag", pillSprite);
+            washSprite = UiSprite("UI_Wash", pillSprite);
             trackSprite = UiSprite("UI_Bar_Track", barSprite);
             fillSprite = UiSprite("UI_Bar_Fill", whiteSprite);
             ghostSprite = UiSprite("UI_Button_Ghost", buttonSprite);
             circleGlassSprite = UiSprite("UI_Circle_Glass", circleSprite);
+            circleGoldSprite = UiSprite("UI_Circle_Gold", circleGlassSprite);
+            circleRedSprite = UiSprite("UI_Circle_Red", circleGlassSprite);
+            dashSprite = UiSprite("UI_Dash", circleGlassSprite);
             ringSprite = UiSprite("UI_Ring", circleSprite);
+            ribbonSprite = UiSprite("UI_Ribbon", pillSprite);
+            ribbonVioletSprite = UiSprite("UI_Ribbon_Violet", ribbonSprite);
+            burstSprite = UiSprite("UI_Burst", circleSprite);
+            fadeSprite = UiSprite("UI_Fade", whiteSprite);
             gearSprite = UiSprite("UI_Icon_Gear", whiteSprite);
             pauseIconSprite = UiSprite("UI_Icon_Pause", whiteSprite);
             arrowSprite = UiSprite("UI_Icon_Arrow", whiteSprite);
             checkSprite = UiSprite("UI_Icon_Check", whiteSprite);
             heartSprite = UiSprite("UI_Icon_Heart", whiteSprite);
+            closeSprite = UiSprite("UI_Icon_Close", whiteSprite);
+            pointerSprite = UiSprite("UI_Icon_Pointer", whiteSprite);
+            playIconSprite = UiSprite("UI_Icon_Play", whiteSprite);
+            logoSprite = Art("ART_Logo");
+            avatarSprite = Art("ART_Avatar");
+            keyArtSprite = Art("ART_KeyArt");
             if (panelSprite == null || buttonSprite == null || whiteSprite == null)
                 throw new InvalidOperationException("Sprite UI tidak ter-load.");
         }
@@ -4032,15 +4352,14 @@ namespace SlimeBreaker.EditorTools
             return rect;
         }
 
+        /// <summary>Marks a label as a heading; <see cref="StyleTexts"/> gives it the display font and outline.</summary>
         static void Shade(Text text)
         {
-            var shadow = text.gameObject.GetComponent<Shadow>() ?? text.gameObject.AddComponent<Shadow>();
-            shadow.effectColor = new Color(0f, 0f, 0f, 0.75f);
-            shadow.effectDistance = new Vector2(1.5f, -1.5f);
+            text.fontStyle = FontStyle.Bold;
         }
 
-        /// <summary>Boss-bar style slider: dark track, glossy tinted fill, bold value text with shadow.</summary>
-        static Slider GlassBar(Transform parent, string name, Color color, float inset = 5f)
+        /// <summary>Chunky bar: dark outlined track, glossy tinted fill.</summary>
+        static Slider GlassBar(Transform parent, string name, Color color, float inset = 6f)
         {
             var slider = Slider(parent, name, color, trackSprite);
             var area = slider.fillRect.parent as RectTransform;
@@ -4054,16 +4373,25 @@ namespace SlimeBreaker.EditorTools
             return slider;
         }
 
-        /// <summary>Coloured capsule with bold centred text (HP / EXP / LANTAI / BOSS tags).</summary>
+        /// <summary>Outlined coloured capsule with bold centred text (level, BOSS, rarity, ad badge).</summary>
         static Image Tag(Transform parent, string name, string label, Color color, Font font, int size)
         {
-            var tag = Graphic(parent, name, pillSprite, color);
+            var tag = Graphic(parent, name, tagSprite, color);
             var text = Text(tag.transform, "Text", label, size, TextAnchor.MiddleCenter, font);
             text.fontStyle = FontStyle.Bold;
             text.raycastTarget = false;
-            Shade(text);
             Stretch(text.rectTransform);
+            text.rectTransform.offsetMin = new Vector2(0f, 4f);
             return tag;
+        }
+
+        /// <summary>Square icon image (keeps its aspect) centred on an anchor of its parent.</summary>
+        static Image IconAt(Transform parent, string name, Sprite sprite, Vector2 anchor, float size)
+        {
+            var icon = Graphic(parent, name, sprite, Color.white);
+            icon.preserveAspect = true;
+            Place(icon.gameObject, parent, anchor, new Vector2(size, size));
+            return icon;
         }
 
         /// <summary>Raycast-free sliced image (or simple, for the white sprite) used for HUD decoration.</summary>

@@ -40,6 +40,10 @@ Kesepuluh boss adalah dumpling jelly berglitter (mesh `BOSS_SlimeKing.fbx`, arma
 
 Konsep "Squishy Dumpling Co.": arena berada di dalam steamer dimsum. Lantai (rumput, pasir, salju, …), properti, dan pencahayaan per bioma tetap; yang berubah adalah tepinya: dinding setinggi 2,5 m berlapis anyaman bambu (twill) dengan bibir kayu pucat membulat, gelang bambu dan simpul di luar. Semua properti yang dulu berdiri di luar batas (pohon di bukit) kini berdiri di dalam, dalam sabuk 2–4 m di sepanjang dinding. Dinding rendah supaya kamera tinggi tidak menutupi hero di tepi. Tahap berikutnya: boss jadi squishy dumpling (lantai 100 pelangi), lalu hero.
 
+## UI: "candy arcade"
+
+Sejak 0.36.0 seluruh UI memakai satu bahasa visual ala game mobile masa kini: bentuk tebal membulat, outline ungu tua `#22123F`, wajah tombol bergradasi mengilap dengan "bibir" lebih gelap di bawah, teks judul Lilita One putih/krem ber-outline. Jendela berbingkai ungu dengan badan indigo gelap dan pita judul emas; tombol emas = aksi utama, hijau = lanjut/konfirmasi, ungu = netral/terpilih, merah = keluar/buang, indigo redup = pilihan tak aktif. Ikon, logo, avatar, dan key art dibuat dengan gflow (Google Flow) lalu dipotong dari latar hijau; bingkai 9-slice digambar prosedural supaya tajam. Menu utama berbentuk lobi (logo kiri atas, emas/rekor/pengaturan di atas, kartu peningkatan kiri bawah, Kesulitan → Lanjutkan → MAIN kanan bawah, hero di tengah). Panel muncul dengan pop (`UiPop`), tombol memantul saat ditekan (`UiPress`), MAIN dan logo bernapas (`UiPulse`).
+
 ## Material
 
 - Tanah: shader `SlimeBreaker/Ground` dengan set PBR 2048/1024 px (albedo, normal, mask AO/smoothness/metallic) dan anti-tiling. Properti: `SlimeBreaker/Lit` dengan daun/rumput beralpha yang bergoyang angin dan penutup bioma (lumut, salju, pasir, abu).

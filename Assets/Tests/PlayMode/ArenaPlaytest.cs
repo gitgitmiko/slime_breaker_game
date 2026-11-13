@@ -37,6 +37,7 @@ namespace SlimeBreaker.Tests
             originalFps60 = saved.fps60;
             saved.fps60 = true;
             SaveService.Save(saved);
+            UiPop.Instant = true;
             SceneManager.LoadScene("GameArena");
             yield return null;
             yield return null;
@@ -211,8 +212,10 @@ namespace SlimeBreaker.Tests
                     Assert.AreEqual("UI_Circle_Glass", button.GetComponent<Image>().sprite.name, "menu settings button is not glass");
                     Assert.IsNotNull(button.transform.Find("Icon"), "menu settings button has no gear icon");
                 }
-                if (button.name == "Continue" || button.name == "Damage")
+                if (button.name == "Damage")
                     Assert.AreEqual("UI_Button_Ghost", button.GetComponent<Image>().sprite.name, button.name + " should be a ghost button");
+                if (button.name == "Continue")
+                    Assert.AreEqual("UI_Button_Green", button.GetComponent<Image>().sprite.name, "Continue should be the green secondary button");
             }
             var showcaseAnimator = menu.showcase.GetComponentInChildren<Animator>();
             Assert.IsNotNull(showcaseAnimator, "menu hero has no Animator");
@@ -504,7 +507,7 @@ namespace SlimeBreaker.Tests
                 Assert.AreEqual("UI_Bar_Fill", bar.fillRect.GetComponent<Image>().sprite.name, bar.name + " fill is not the boss-bar style");
             }
             Assert.AreEqual("UI_Ring", ui.dashFill.sprite.name, "dash cooldown should be a ring");
-            Assert.AreEqual("UI_Circle_Glass", ui.dashFill.GetComponentInParent<Button>().GetComponent<Image>().sprite.name);
+            Assert.AreEqual("UI_Dash", ui.dashFill.GetComponentInParent<Button>().GetComponent<Image>().sprite.name);
             Assert.AreEqual("UI_Circle_Glass", ui.pauseButton.GetComponent<Image>().sprite.name);
             Assert.IsNotNull(ui.pauseButton.transform.Find("Icon"), "pause button has no icon");
             StringAssert.Contains("Lv", ui.levelText.text);

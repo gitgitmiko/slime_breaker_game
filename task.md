@@ -221,3 +221,4 @@
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.
 - Kalau hero masih kurang "anime", langkah lanjut: tekstur wajah hand-painted dan shader toon ramp (`asset_work/scripts/build_assets.py` → `build_hero`).
+- UI modern "candy arcade" (kit prosedural + seni gflow: logo, ikon, avatar, key art; font Lilita One/Nunito; menu lobi; animasi pop/tekan). 0.36.0.

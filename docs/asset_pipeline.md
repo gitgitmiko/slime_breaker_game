@@ -55,6 +55,7 @@ Semua tool ada di `~/game-toolchain` (tanpa sudo; PATH diatur `~/game-toolchain/
 | Tool | Versi | Perintah cek |
 |---|---|---|
 | Unity Editor | 6000.3.26f1 | `~/Unity/Hub/Editor/6000.3.26f1/Editor/Unity` |
+| gflow-cli | 0.96.1 (`~/github-repos/gflow-cli/.venv/bin/gflow`) | `gflow auth status` — gambar UI via Google Flow |
 | Unity CLI | 1.0.0-beta.13 | `unity --version` |
 | Node.js / npm | 24.21.0 / 11.19.0 | `node --version` |
 | gcc / g++ / make / cmake / ninja | 13.3 / 13.3 / 4.3 / 4.4 / 1.13 | `gcc --version` (dipasang dengan sudo) |
@@ -122,7 +123,11 @@ FPS 30/60 adalah tombol terpisah (`GraphicsService.SetFps`, `SaveData.fps60`, ba
 
 `build_audio_hd.py [music|ambience|sfx|all] [nama…]`: komposer prosedural (pretty_midi, progresi akor, voice leading, melodi di-snap ke nada akor) → FluidSynth kering (`-R 0 -C 0`) dengan soundfont GeneralUser GS (`~/game-toolchain/soundfonts/GeneralUser-GS.sf2`) → pedalboard (HP, shelf, kompresor, reverb, tail di-wrap agar loop mulus) → pyloudnorm → soft-knee peak (tanpa make-up gain, puncak ≤ 0,97) → `oggenc`. Hasil: 12 musik (`MUS_Menu`, 10 bioma, `MUS_Boss`, −15 s.d. −19 LUFS), 11 ambience loop 34 s (`AMB_<Bioma>`, `AMB_Night`, sekitar −25 LUFS), 23 SFX/jingle. Tidak ada sampel yang clipping.
 
-Hanya sprite UI dan ikon (audio tidak disentuh): `python3 asset_work/scripts/build_audio_ui.py ui`. Sprite HUD modern: `UI_Card_Glass`, `UI_Pill`, `UI_Bar_Track`, `UI_Bar_Fill` (putih, diwarnai di Unity), `UI_Button_Ghost`, `UI_Circle_Glass`, `UI_Ring`, ikon `UI_Icon_Gear`, `UI_Icon_Pause`, `UI_Icon_Arrow`, dan `UI_Icon_Check`. `UI_Panel`, `UI_Button*`, `UI_Slot`, dan joystick memakai gaya kaca yang sama.
+UI (sejak 0.36.0, gaya "candy arcade" tebal ber-outline): `python3 asset_work/scripts/build_ui_modern.py` (`frames` = sprite prosedural, `art` = potong lembar gflow, `sheet` = lembar kontak `asset_work/previews/UI_Kit.png`). `build_audio_ui.py ui` kini hanya memanggil skrip ini.
+
+- **Prosedural (Pillow, 2× ukuran kanvas, supersampling 3×, diimpor 200 PPU):** `UI_Panel` (jendela), `UI_Card_Glass` (kartu HUD), `UI_Button` / `_Gold` / `_Danger` / `_Green` / `_Blue` / `_Ghost`, `UI_Card_Tint` (kartu putih yang diwarnai rarity), `UI_Slot`, `UI_Slot_Skill`, `UI_Bar_Track`, `UI_Bar_Fill`, `UI_Pill`, `UI_Tag`, `UI_Wash`, `UI_Circle*`, `UI_Dash`, `UI_Ring`, `UI_Ribbon` / `_Violet` (pita judul 3-slice), joystick, `UI_Burst`, `UI_Fade`, glyph `UI_Icon_Pause/Arrow/Check/Close/Pointer/Play/Plus`. Border 9-slice diatur `ProjectSetup.ConfigureTextures`.
+- **gflow-cli (Google Flow, Nano Banana Pro):** logo, ikon skill/upgrade/item/HUD, avatar hero, key art iklan. `python3 asset_work/scripts/gflow_ui_queue.py [job …]` (butuh `gflow auth status` lolos dan `xvfb-run`; satu job sekaligus; gambar gratis, hanya video yang memakai kredit). Lembar mentah disimpan di `asset_work/ui_src/raw/<job>/` (latar hijau chroma), pilihan file dan nama sprite di `asset_work/ui_src/pick.json`. `build_ui_modern.py art` membuang latar (flood-fill dari tepi + kantong hijau), memisah objek per lembar, dan menulis `Icons/ICON_*.png`, `Panels/UI_Icon_Heart|Gear.png`, `Art/ART_Logo|Avatar|KeyArt.png`. Image-to-image (`--ref`) ditolak akun ini (exit 36), jadi hero dideskripsikan dengan teks.
+- **Font:** `Assets/Fonts/LilitaOne-Regular.ttf` (judul, tombol, angka; outline `UiOutline`) dan `Nunito-Black.ttf` (teks isi; instance statis wght 900 dari font variabel, dibuat dengan fontTools). Keduanya OFL (lisensi di folder yang sama); Roboto jadi fallback glyph.
 
 `build_textures.py` membuat `TEX_Forest_Ground` (1024), `TEX_Bark` / `TEX_Rock` (512), plus tanah biome (`TEX_Snow_Ground`, `TEX_Sand_Ground`, `TEX_Thunder_Ground`, `TEX_Swamp_Ground`, `TEX_Shadow_Ground`, `TEX_Volcano_Ground`, `TEX_Storm_Ground`, `TEX_Crystal_Ground`, `TEX_Royal_Ground`) beserta `*_Normal.png` dari value noise tileable (numpy + Pillow). Blender menanamkan tekstur warna di FBX; normal map disalin ke `Assets/Art/Textures` dan dipasang `ProjectSetup` berdasarkan nama material.
 

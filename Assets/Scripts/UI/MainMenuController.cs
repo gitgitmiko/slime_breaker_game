@@ -14,6 +14,10 @@ namespace SlimeBreaker
         public Text damageLabel;
         public Text healthLabel;
         public Text speedLabel;
+        /// <summary>Price tags on the upgrade cards (the labels above carry name + rank).</summary>
+        public Text damageCost;
+        public Text healthCost;
+        public Text speedCost;
         public int baseCost = 30;
         public Transform showcase;
         public float showcaseSpin = 16f;
@@ -24,14 +28,16 @@ namespace SlimeBreaker
         public SettingsPanel settings;
         /// <summary>Easy / Normal / Hard picker for the next new run (index = DifficultyLevel).</summary>
         public Dropdown difficultyDropdown;
-        /// <summary>Continue sits above Play; Play moves up into its place when there is no run to continue.</summary>
+        /// <summary>Unused by the lobby layout (kept for older scenes that sized a card around the buttons).</summary>
         public RectTransform card;
-        /// <summary>Everything from Play down; it moves up (and the card shrinks) when there is no Continue button.</summary>
+        /// <summary>The difficulty block above Continue; it slides by <see cref="continueSlot"/> into Continue's place when there is no run to continue.</summary>
         public RectTransform body;
-        public float continueSlot = 102f;
+        public float continueSlot = -160f;
 
         SaveData save;
         float fullCardHeight;
+        float bodyRest;
+        bool hasBodyRest;
         Quaternion showcaseRest;
         bool hasRest;
 
@@ -112,15 +118,15 @@ namespace SlimeBreaker
         void Refresh()
         {
             if (goldText != null)
-                goldText.text = "Emas " + save.gold;
+                goldText.text = UIController.Thousands(save.gold);
             if (bestText != null)
             {
                 int seconds = Mathf.FloorToInt(save.bestRunTime);
-                bestText.text = "Rekor " + (seconds / 60).ToString("00") + ":" + (seconds % 60).ToString("00");
+                bestText.text = (seconds / 60).ToString("00") + ":" + (seconds % 60).ToString("00");
             }
-            SetButton(damageLabel, damageButton, "Damage", save.damageRank);
-            SetButton(healthLabel, healthButton, "Nyawa", save.healthRank);
-            SetButton(speedLabel, speedButton, "Laju", save.speedRank);
+            SetButton(damageLabel, damageCost, damageButton, "Damage", save.damageRank);
+            SetButton(healthLabel, healthCost, healthButton, "Nyawa", save.healthRank);
+            SetButton(speedLabel, speedCost, speedButton, "Laju", save.speedRank);
             var current = (DifficultyLevel)Mathf.Clamp(save.difficulty, 0, 2);
             if (difficultyDropdown != null)
                 difficultyDropdown.SetValueWithoutNotify((int)current);
@@ -129,7 +135,14 @@ namespace SlimeBreaker
             if (continueButton != null)
                 continueButton.gameObject.SetActive(canContinue);
             if (body != null)
-                body.anchoredPosition = new Vector2(body.anchoredPosition.x, canContinue ? 0f : continueSlot);
+            {
+                if (!hasBodyRest)
+                {
+                    bodyRest = body.anchoredPosition.y;
+                    hasBodyRest = true;
+                }
+                body.anchoredPosition = new Vector2(body.anchoredPosition.x, bodyRest + (canContinue ? 0f : continueSlot));
+            }
             if (card != null)
             {
                 if (fullCardHeight <= 0f)
@@ -137,14 +150,16 @@ namespace SlimeBreaker
                 card.sizeDelta = new Vector2(card.sizeDelta.x, canContinue ? fullCardHeight : fullCardHeight - continueSlot);
             }
             if (continueLabel != null && canContinue)
-                continueLabel.text = "Lanjutkan (Lv " + run.level + " · Lantai " + Mathf.Max(1, run.floor > 0 ? run.floor : run.stage) + " · " + Difficulty.Label((DifficultyLevel)Mathf.Clamp(run.difficulty, 0, 2)) + ")";
+                continueLabel.text = "LANJUTKAN\n<size=26>Lv " + run.level + " · Lantai " + Mathf.Max(1, run.floor > 0 ? run.floor : run.stage) + " · " + Difficulty.Label((DifficultyLevel)Mathf.Clamp(run.difficulty, 0, 2)) + "</size>";
         }
 
-        void SetButton(Text label, Button button, string title, int rank)
+        void SetButton(Text label, Text price, Button button, string title, int rank)
         {
             int cost = baseCost * (rank + 1);
             if (label != null)
-                label.text = title + " +" + rank + "\n" + cost + " emas";
+                label.text = price != null ? title + " +" + rank : title + " +" + rank + "\n" + cost + " emas";
+            if (price != null)
+                price.text = cost.ToString();
             if (button != null)
                 button.interactable = save.gold >= cost;
         }

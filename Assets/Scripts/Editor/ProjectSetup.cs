@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.36.0";
+        const string AppVersion = "0.37.0";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -804,9 +804,21 @@ namespace SlimeBreaker.EditorTools
                 else if (name.Contains("robe") || name.Contains("hat") || name.Contains("cape"))
                     mat.SetFloat("_Smoothness", 0.32f);
                 // The witch is lit a little from within so she stays bright and colourful in shadow and at night.
-                if (name.Contains("hero_") && !name.Contains("blackeye"))
+                if (name.Contains("hero_outline"))
                 {
-                    float glow = name.Contains("boot") ? 0.12f : name.Contains("hat_trim") || name.Contains("hero_trim") ? 0.2f : 0.3f;
+                    // Inverted-hull outline (build_assets.outline_hulls): flat dark ink, back faces culled so only the rim shows.
+                    mat.SetColor("_BaseColor", new Color(0.1f, 0.05f, 0.2f));
+                    mat.SetFloat("_Smoothness", 0f);
+                    mat.SetFloat("_SpecularHighlights", 0f);
+                    mat.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
+                    mat.SetFloat("_Cull", 2f);
+                    mat.DisableKeyword("_EMISSION");
+                    mat.SetColor("_EmissionColor", Color.black);
+                }
+                else if (name.Contains("hero_") && !name.Contains("blackeye"))
+                {
+                    float glow = name.Contains("boot") ? 0.12f : name.Contains("hat_trim") || name.Contains("hero_trim") ? 0.2f
+                        : name.Contains("shine") ? 1f : name.Contains("blush") ? 0.55f : 0.3f;
                     mat.EnableKeyword("_EMISSION");
                     var map = mat.HasProperty("_BaseMap") ? mat.GetTexture("_BaseMap") : null;
                     if (map != null)
@@ -3790,7 +3802,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Dumpling Witch";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 49;
+            PlayerSettings.Android.bundleVersionCode = 50;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.dumplingwitch");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

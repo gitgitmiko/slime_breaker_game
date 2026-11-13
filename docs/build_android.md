@@ -282,6 +282,7 @@ Exit 0 berarti semua test di `Assets/Tests/PlayMode/ArenaPlaytest.cs` lolos: her
 - Setup: `SLIMEBREAKER_SETUP_OK`; EditMode 32/32; PlayMode 49/49; APK + AAB 0.32.0 (versionCode 43): nama game **Dumpling Witch**, paket `com.gitgitmiko.dumplingwitch` (`aapt2 dump badging` memastikan label dan paket).
 - Setup: `SLIMEBREAKER_SETUP_OK`; PlayMode 54/54; APK `SLIMEBREAKER_APK_OK` + AAB `SLIMEBREAKER_AAB_OK` 0.35.0 (versionCode 48): iklan interstitial setiap power-up muncul, kristal jatuh setelah iklan ditutup; tanpa iklan kalau semua skill MAX.
 - Setup: `SLIMEBREAKER_SETUP_OK`; PlayMode 54/54; 0.36.0 (versionCode 49): UI baru bergaya game modern (kit tebal ber-outline, font Lilita One/Nunito, logo + ikon + avatar + key art dari gflow, menu lobi, kartu level-up berwarna rarity, jendela berpita, animasi pop/tekan).
+- Setup: `SLIMEBREAKER_SETUP_OK`; PlayMode 54/54; 0.37.0 (versionCode 50): hero 3D lebih mirip art 2D (kepala besar, rambut tebal, pipi merona, kilau mata, garis tepi gelap).
 
 ## Pasang di HP
 

@@ -392,14 +392,6 @@
     "notes": "generic rig, in-place clips"
   },
   {
-    "id": "CHR_Hero_Main",
-    "file": "Characters/Hero/CHR_Hero_Main.fbx",
-    "kind": "character",
-    "triangles": 19670,
-    "vertices": 10375,
-    "notes": "generic rig, in-place clips"
-  },
-  {
     "id": "ENV_Dimsum_Wall",
     "file": "Environment/Dimsum/ENV_Dimsum_Wall.fbx",
     "kind": "static",
@@ -430,5 +422,13 @@
     "triangles": 80,
     "vertices": 42,
     "notes": "no rig"
+  },
+  {
+    "id": "CHR_Hero_Main",
+    "file": "Characters/Hero/CHR_Hero_Main.fbx",
+    "kind": "character",
+    "triangles": 32922,
+    "vertices": 17494,
+    "notes": "generic rig, in-place clips"
   }
 ]

@@ -553,7 +553,32 @@ def pulse(t, start, end):
 # ---------------------------------------------------------------- hero (chibi witch girl)
 
 
-def hero_bones():
+# The head (with hat and hair) is built at body scale and then enlarged around the neck: the big-headed chibi
+# read of the 2D key art. Bones that live on the head move with it.
+HEAD_SCALE = 1.42
+HEAD_PIVOT = (0.0, 0.0, 0.745)
+HEAD_BONES = ("Hat", "HatTip", "Hair.L", "Hair.L.2", "Hair.R", "Hair.R.2")
+
+
+def head_scaled(point):
+    return tuple(HEAD_PIVOT[i] + (point[i] - HEAD_PIVOT[i]) * HEAD_SCALE for i in range(3))
+
+
+def hero_bones(scaled=True):
+    bones = hero_bones_base()
+    if not scaled:
+        return bones
+    out = []
+    for name, head, tail, parent in bones:
+        if name in HEAD_BONES:
+            head, tail = head_scaled(head), head_scaled(tail)
+        elif name == "Head":
+            tail = head_scaled(tail)
+        out.append((name, head, tail, parent))
+    return out
+
+
+def hero_bones_base():
     return [
         ("Root", (0, 0, 0), (0, 0, 0.2), None),
         ("Hips", (0, 0, 0.40), (0, 0, 0.50), "Root"),
@@ -576,8 +601,9 @@ def hero_bones():
         ("UpperArm.R", (0.13, 0, 0.67), (0.19, -0.01, 0.52), "Shoulder.R"),
         ("Forearm.R", (0.19, -0.01, 0.52), (0.21, -0.04, 0.40), "UpperArm.R"),
         ("Hand.R", (0.21, -0.04, 0.40), (0.22, -0.06, 0.33), "Forearm.R"),
-        ("Staff", (0.225, -0.07, 0.37), (0.225, -0.07, 0.85), "Hand.R"),
-        ("StaffTip", (0.225, -0.07, 1.01), (0.225, -0.07, 1.10), "Staff"),
+        # The staff leans outward (0.22 per unit of height above the hand) so it clears the big head.
+        ("Staff", (0.225, -0.07, 0.37), (0.331, -0.07, 0.85), "Hand.R"),
+        ("StaffTip", (0.333, -0.07, 0.86), (0.353, -0.07, 0.95), "Staff"),
         ("UpLeg.L", (-0.075, 0, 0.40), (-0.084, 0, 0.22), "Hips"),
         ("Leg.L", (-0.084, 0, 0.22), (-0.085, 0, 0.07), "UpLeg.L"),
         ("Foot.L", (-0.085, 0, 0.07), (-0.085, -0.10, 0.02), "Leg.L"),
@@ -762,7 +788,7 @@ def witch_textures():
     # Hat felt: deep violet with soft mottling and tiny lighter flecks.
     noise = periodic_noise(size, 8, 1) * 0.6 + periodic_noise(size, 32, 2) * 0.4
     fleck = (periodic_noise(size, 64, 3) > 0.86).astype(np.float32)
-    base = np.array((0.40, 0.24, 0.66), np.float32)
+    base = np.array((0.47, 0.25, 0.80), np.float32)
     hat = base[None, None, :] * (0.82 + 0.3 * noise[..., None]) + fleck[..., None] * np.array((0.10, 0.07, 0.12), np.float32)
     paths["hat"] = save_texture(os.path.join(TEX, "TEX_Hero_Hat.png"), np.clip(hat, 0, 1))
     # Jacket: lilac twill with a fine diamond weave.
@@ -779,9 +805,9 @@ def witch_textures():
     gradient = np.zeros((256, 8, 3), np.float32)
     for row in range(256):
         t = row / 255.0  # 0 = tips, 1 = crown
-        tips = np.array((1.0, 0.56, 0.72), np.float32)
-        mid = np.array((1.0, 0.82, 0.76), np.float32)
-        crown = np.array((1.0, 0.94, 0.70), np.float32)
+        tips = np.array((1.0, 0.50, 0.70), np.float32)
+        mid = np.array((1.0, 0.78, 0.62), np.float32)
+        crown = np.array((1.0, 0.90, 0.52), np.float32)
         color = tips * (1 - min(1, t * 2.0)) + mid * min(1, t * 2.0) if t < 0.5 else mid * (1 - (t - 0.5) * 2.0) + crown * ((t - 0.5) * 2.0)
         gradient[255 - row, :, :] = color
     paths["hair"] = save_texture(os.path.join(TEX, "TEX_Hero_Hair.png"), gradient)
@@ -809,18 +835,56 @@ def ring_points(center, radius, count=48, oval=(1.0, 1.0), tilt=0.0):
     return points
 
 
+OUTLINE_SKIP = ("hat_stitch", "hat_rim", "hat_flap", "cape_trim", "jacket_trim", "frog", "clasp", "cuff", "waist", "eye", "shine", "blush", "staff_grip")
+
+
+def outline_hulls(parts, mat, thickness):
+    """Inverted hulls: a copy of each main part, pushed out along its normals with the faces flipped. With back-face
+    culling only the rim of the copy shows, which draws the dark cartoon outline of the 2D art on any shader."""
+    hulls = []
+    for part in parts:
+        if part.name.startswith(OUTLINE_SKIP):
+            continue
+        hull = part.copy()
+        hull.data = part.data.copy()
+        hull.name = "outline_" + part.name
+        bpy.context.scene.collection.objects.link(hull)
+        bm = bmesh.new()
+        bm.from_mesh(hull.data)
+        bm.normal_update()
+        for vert in bm.verts:
+            vert.co += vert.normal * thickness
+        bmesh.ops.reverse_faces(bm, faces=bm.faces)
+        bm.to_mesh(hull.data)
+        bm.free()
+        hull.data.materials.clear()
+        hull.data.materials.append(mat)
+        # Blender previews need the culling switched on explicitly; Unity culls back faces by default.
+        mat.use_backface_culling = True
+        hulls.append(hull)
+    return hulls
+
+
 def build_hero(mats):
     """Chibi witch girl: a huge floppy purple hat with gold trim, X stitches and a torn rim, a cream face with two
     black oval eyes, a blonde-to-pink bob, a two-tier capelet, a lilac bell-sleeved jacket, a cream skirt and brown
     boots. Bones and clip names are unchanged, so every animation and the StaffTip socket still work."""
     arm = new_armature("CHR_Hero_Main", hero_bones())
+    # Head parts are modelled at body scale, so their bone weights are measured against the unscaled head bones.
+    scaled_bones = {name: BONES[name] for name in HEAD_BONES}
+    for name, head_pos, tail_pos, _parent in hero_bones(scaled=False):
+        if name in HEAD_BONES:
+            BONES[name] = (head_pos, tail_pos)
     tex = witch_textures()
     cloth = {
         "hat": material("MAT_hero_hat", (1, 1, 1, 1), rough=0.85, image_path=tex["hat"]),
         "jacket": material("MAT_hero_jacket", (1, 1, 1, 1), rough=0.8, image_path=tex["jacket"]),
         "capelet": material("MAT_hero_capelet", (1, 1, 1, 1), rough=0.85, image_path=tex["capelet"]),
         "hair": material("MAT_hero_hair", (1, 1, 1, 1), rough=0.5, image_path=tex["hair"]),
-        "skin": material("MAT_hero_skin", (1.0, 0.86, 0.76, 1), rough=0.55),
+        "skin": material("MAT_hero_skin", (1.0, 0.90, 0.78, 1), rough=0.55),
+        "blush": material("MAT_hero_blush", (1.0, 0.56, 0.62, 1), rough=0.7),
+        "shine": material("MAT_hero_shine", (1.0, 1.0, 1.0, 1), rough=0.3, emission=0.6),
+        "outline": material("MAT_hero_outline", (0.10, 0.05, 0.20, 1), rough=1.0),
         "glove": material("MAT_hero_glove", (1.0, 0.88, 0.80, 1), rough=0.6),
         "skirt": material("MAT_hero_skirt", (1.0, 0.97, 0.92, 1), rough=0.75),
         "legwear": material("MAT_hero_legwear", (0.86, 0.78, 0.98, 1), rough=0.8),
@@ -843,12 +907,19 @@ def build_hero(mats):
     p.append(assign(head, "Head", cloth["skin"]))
     for side in (-1, 1):
         ex, ez = 0.072 * side, 0.885
-        eye = add_sphere(f"eye{side}", 0.03, (ex, surface_y(head, ex, ez, 0.0) + 0.003, ez), scale=(1.05, 0.4, 1.95), seg=20, rings=12)
+        eye = add_sphere(f"eye{side}", 0.026, (ex, surface_y(head, ex, ez, 0.0) + 0.003, ez), scale=(1.05, 0.4, 1.75), seg=20, rings=12)
         p.append(assign(eye, "Head", cloth["blackeye"]))
+        # A small catchlight in each eye and a soft pink cheek under it, as in the 2D art.
+        hx, hz = ex - 0.007, ez + 0.022
+        shine = add_sphere(f"shine{side}", 0.008, (hx, surface_y(head, hx, hz, 0.0) - 0.011, hz), scale=(1.0, 0.5, 1.2), seg=10, rings=6)
+        p.append(assign(shine, "Head", cloth["shine"]))
+        bx, bz = 0.108 * side, 0.815
+        blush = add_sphere(f"blush{side}", 0.03, (bx, surface_y(head, bx, bz, 0.0) + 0.006, bz), scale=(1.25, 0.3, 0.7), seg=16, rings=8)
+        p.append(assign(blush, "Head", cloth["blush"]))
 
     # --- hair: scalloped bob around the head, face opening carved, bangs and flicked pink side locks
-    z_rings = [1.08, 1.06, 1.03, 0.99, 0.95, 0.91, 0.87, 0.83, 0.79, 0.76]
-    r_rings = [0.05, 0.13, 0.185, 0.215, 0.23, 0.237, 0.239, 0.237, 0.23, 0.222]
+    z_rings = [1.08, 1.06, 1.03, 0.99, 0.95, 0.91, 0.87, 0.83, 0.79, 0.755, 0.725]
+    r_rings = [0.05, 0.13, 0.19, 0.222, 0.24, 0.25, 0.255, 0.256, 0.252, 0.24, 0.215]
 
     def scallop(theta, index):
         if index != len(z_rings) - 1:
@@ -856,8 +927,8 @@ def build_hero(mats):
         return -0.02 * (0.5 + 0.5 * math.cos(theta * 14.0)) - 0.01
 
     bob = loft("bob", [(0, 0.012, z) for z in z_rings], r_rings, segments=56, ovals=[(1.0, 0.93)] * len(z_rings), wave=scallop, cap_start=True, cap_end=False)
-    carve(bob, lambda co: co.y < -0.075 and co.z < 1.0 and abs(co.x) < 0.185)
-    uv_height(bob, 0.74, 1.08)
+    carve(bob, lambda co: co.y < -0.075 and co.z < 1.0 and abs(co.x) < 0.16)
+    uv_height(bob, 0.72, 1.08)
     p.append(assign(bob, "Head", cloth["hair"], sharpness=3.0))
     bangs = ((-0.12, 0.17), (-0.06, 0.15), (0.0, 0.14), (0.06, 0.15), (0.12, 0.17))
     for index, (x, drop) in enumerate(bangs):
@@ -878,7 +949,7 @@ def build_hero(mats):
 
     # --- hat: wide floppy brim with a torn gold-trimmed rim, a tall crown bent to one side, X stitches
     hat_z = 1.075
-    brim_r = 0.41
+    brim_r = 0.375
     segs = 72
     rings_r = [0.255, 0.30, 0.36, 0.42, 1.0]  # last one is the rim (fraction of rim radius below)
 
@@ -894,7 +965,7 @@ def build_hero(mats):
     def brim_z(radius, theta):
         t = max(0.0, (radius - 0.25) / (brim_r - 0.25))
         x, y = math.cos(theta), math.sin(theta)
-        droop = -0.10 * t ** 1.8                      # edge sags
+        droop = -0.075 * t ** 1.8                     # edge sags
         front = -0.02 * t * max(0.0, -y)            # front edge a little lower, just over the eyes
         side = -0.03 * t * abs(x)                    # sides droop a bit more
         back = 0.05 * t * max(0.0, y)                # back edge lifts
@@ -995,6 +1066,13 @@ def build_hero(mats):
             part.data.transform(pivot @ tilt @ pivot.inverted())
             part.data.update()
 
+    # Enlarge everything built so far (head, face, hair, hat) around the neck and hand the head bones back.
+    grow = mathutils.Matrix.Translation(HEAD_PIVOT) @ mathutils.Matrix.Scale(HEAD_SCALE, 4) @ mathutils.Matrix.Translation(HEAD_PIVOT).inverted()
+    for part in p:
+        part.data.transform(grow)
+        part.data.update()
+    BONES.update(scaled_bones)
+
     # --- collar, capelet (two tiers with gold-brown trim) and the toggle clasp
     collar = loft("collar", [(0, 0, 0.775), (0, 0, 0.73), (0, 0, 0.70)], [0.085, 0.105, 0.14], segments=32, cap_start=False, cap_end=False, ovals=[(1.0, 0.9)] * 3)
     uv_cylinder(collar, 6.0, 8.0)
@@ -1067,21 +1145,28 @@ def build_hero(mats):
 
     # --- staff (unchanged socket): wooden shaft, curled top holding a crescent moon and a glowing crystal
     sx, sy = 0.225, -0.07
-    p.append(assign(loft("staff", [(sx, sy, 0.03), (sx, sy, 0.55), (sx, sy, 0.93)], [0.016, 0.018, 0.021], segments=10), "Staff", mats["staff_wood"]))
+    top = 0.78  # shorter than before: the crescent has to stay under the enlarged hat brim
+    p.append(assign(loft("staff", [(sx, sy, 0.03), (sx, sy, 0.5), (sx, sy, top)], [0.018, 0.02, 0.023], segments=10), "Staff", mats["staff_wood"]))
     curl = []
     for i in range(22):
         t = i / 21
         angle = -math.pi / 2 + t * math.tau * 0.85
         r = 0.08 * (1 - 0.45 * t)
-        curl.append((sx + math.cos(angle) * r, sy, 1.0 + math.sin(angle) * r))
-    curl = [(sx, sy, 0.915)] + curl
+        curl.append((sx + math.cos(angle) * r, sy, top + 0.07 + math.sin(angle) * r))
+    curl = [(sx, sy, top - 0.015)] + curl
     p.append(assign(path_tube("staff_curl", curl, 0.019, segments=10, taper=lambda t: 1.0 - 0.45 * t), "Staff", mats["staff_wood"]))
     p.append(assign(add_torus("staff_grip", 0.022, 0.007, (sx, sy, 0.37), major_segments=14, minor_segments=6), "Staff", mats["gold"]))
-    moon = add_torus("staff_moon", 0.07, 0.016, (sx, sy - 0.005, 1.02), rot=(math.pi / 2, 0, 0), major_segments=28, minor_segments=8)
+    moon = add_torus("staff_moon", 0.07, 0.016, (sx, sy - 0.005, top + 0.09), rot=(math.pi / 2, 0, 0), major_segments=28, minor_segments=8)
     carve(moon, lambda co: co.x > sx + 0.028)
     p.append(assign(moon, "StaffTip", mats["gold"]))
-    p.append(assign(add_ico("staff_crystal", 0.042, (sx + 0.01, sy - 0.01, 1.02), scale=(0.75, 0.75, 1.3), subdiv=2), "StaffTip", mats["crystal"]))
+    p.append(assign(add_ico("staff_crystal", 0.046, (sx + 0.01, sy - 0.01, top + 0.09), scale=(0.75, 0.75, 1.3), subdiv=2), "StaffTip", mats["crystal"]))
 
+    for part in p:
+        if part.name.startswith("staff"):
+            for vert in part.data.vertices:
+                vert.co.x += (vert.co.z - 0.37) * 0.22
+            part.data.update()
+    p += outline_hulls(p, cloth["outline"], 0.017)
     mesh = join(p, "CHR_Hero_Main")
     bind(mesh, arm)
     actions = animate_hero(arm)

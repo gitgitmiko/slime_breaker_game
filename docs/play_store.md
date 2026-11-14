@@ -19,6 +19,8 @@
 
 Bangun ulang aset store:
 
+Sejak 0.38.1 ikon aplikasi, ikon 512, dan feature graphic memakai art 2D dari gflow (bust penyihir + dumpling pink; key art + logo), disusun `build_store_art.py` dari `asset_work/ui_src` (jalankan `build_ui_modern.py` dulu). `render_store_art.py` tidak lagi diperlukan. Screenshot toko disalin dari `Logs/playtest/` setelah playtest lolos.
+
 ```bash
 blender --background --python asset_work/scripts/render_store_art.py -- "$PWD" asset_work/store/renders
 python3 asset_work/scripts/build_store_art.py

@@ -84,6 +84,11 @@ JOBS = {
         "They fight inside a huge round woven-bamboo dim sum steamer arena with a grassy floor, warm steam and glittery bokeh in the background. "
         "Polished 2D cartoon illustration in the style of modern top mobile games, thick outlines, glossy cel shading, vibrant purple, gold and "
         "mint palette, dynamic composition, the witch on the left third, empty space in the upper centre. No text, no logo, no UI.")),
+    # Store icon / feature graphic companions for the witch bust.
+    "mascots": dict(aspect="16:9", n=2, prompt=STYLE + GRID.format(cols=2, rows=1) + (
+        "Two cute mascot characters: 1) a big glossy translucent pink jelly steamed dumpling (bao) with pleats and a twisted top knot, "
+        "a kawaii face with big shiny dark eyes, rosy cheeks, a small open smiling mouth, and a gold star on its forehead; "
+        "2) a small glossy mint-green jelly slime blob with two little round bumps on top, big shiny eyes and a tiny mouth.")),
 }
 
 

@@ -2,7 +2,8 @@
 
     python3 asset_work/scripts/build_store_art.py
 
-Needs asset_work/store/renders/*.png from render_store_art.py (Blender). Writes:
+The art is the 2D set made with gflow (asset_work/ui_src: avatar bust, mascots, key art) plus the cut logo from
+build_ui_modern.py; run that first. The Blender renders in asset_work/store/renders are no longer used here. Writes:
     asset_work/output/UI/AppIcon/APP_Icon.png             1024 legacy launcher icon (full-bleed)
     asset_work/output/UI/AppIcon/APP_Icon_Background.png  432 adaptive background layer
     asset_work/output/UI/AppIcon/APP_Icon_Foreground.png  432 adaptive foreground layer (art inside the 66% safe zone)
@@ -81,20 +82,44 @@ def place(canvas, sprite, height, center, shadow=True):
     canvas.alpha_composite(sprite, (x, y))
 
 
-def icon_art(size, safe):
-    """Hero head and shoulders (the render's cut edge bleeds off the bottom) with a slime peeking in, inside `safe` × size."""
+def gflow_sprites(job, key="file"):
+    """Keyed objects of a raw gflow sheet (asset_work/ui_src), in reading order."""
+    import json
+    import sys
+
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import build_ui_modern as kit
+
+    with open(os.path.join(kit.SRC, "pick.json")) as handle:
+        spec = json.load(handle)[job]
+    cut = kit.key_out(Image.open(os.path.join(kit.RAW, job, spec[key])))
+    sheet = kit.to_image(cut)
+    return [sheet.crop(box) for box in kit.split(cut, merge=spec.get("merge", 10))]
+
+
+def burst(size, alpha=70):
+    """Soft white rays behind the icon art."""
     layer = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    hero = render("hero_face")
-    slime = render("slime")
+    draw = ImageDraw.Draw(layer)
+    c = size / 2
+    for k in range(14):
+        a0 = k / 14 * math.tau
+        a1 = a0 + math.tau / 28
+        draw.polygon([(c, c), (c + math.cos(a0) * size, c + math.sin(a0) * size), (c + math.cos(a1) * size, c + math.sin(a1) * size)], fill=(255, 255, 255, alpha))
+    return layer.filter(ImageFilter.GaussianBlur(size * 0.004))
+
+
+def icon_art(size, safe):
+    """2D witch bust (gflow avatar) with the pink boss dumpling peeking in, inside `safe` × size."""
+    layer = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    hero = gflow_sprites("avatar")[0]
+    boss = gflow_sprites("mascots")[0]
     box = size * safe
-    margin = (size - box) / 2
-    hero_h = box * 1.12
-    scaled_w = hero.width * hero_h / hero.height
-    if scaled_w > box * 1.05:
-        hero_h *= box * 1.05 / scaled_w
-    # Hat tip at the top of the safe box; whatever is below the box bleeds past the layer edge.
-    place(layer, hero, hero_h, (size / 2 - box * 0.04, margin + hero_h / 2), shadow=False)
-    place(layer, slime, box * 0.36, (size / 2 + box * 0.34, size / 2 + box * 0.36))
+    hero_h = box * 0.98
+    if hero.width * hero_h / hero.height > box * 1.04:
+        hero_h *= box * 1.04 / (hero.width * hero_h / hero.height)
+    place(layer, hero, hero_h, (size / 2 - box * 0.03, size / 2 - box * 0.02))
+    place(layer, boss, box * 0.4, (size / 2 + box * 0.31, size / 2 + box * 0.31))
     return layer
 
 
@@ -107,24 +132,31 @@ def main():
     os.makedirs(ICON_OUT, exist_ok=True)
 
     full = gradient(1024, 1024)
-    sparkles(full, 70, 3, 2.0)
-    full.alpha_composite(icon_art(1024, 0.86))
+    full.alpha_composite(burst(1024))
+    sparkles(full, 50, 3, 2.0)
+    full.alpha_composite(icon_art(1024, 0.9))
     full.convert("RGB").save(os.path.join(ICON_OUT, "APP_Icon.png"))
     full.resize((512, 512), Image.LANCZOS).convert("RGB").save(os.path.join(STORE, "icon_512.png"))
 
     background = gradient(432, 432)
-    sparkles(background, 40, 5, 0.9)
+    background.alpha_composite(burst(432))
+    sparkles(background, 30, 5, 0.9)
     background.convert("RGB").save(os.path.join(ICON_OUT, "APP_Icon_Background.png"))
     icon_art(432, 0.62).save(os.path.join(ICON_OUT, "APP_Icon_Foreground.png"))
 
-    feature = gradient(1024, 500, (96, 70, 230), (255, 128, 180))
-    sparkles(feature, 90, 9, 1.2)
-    draw = ImageDraw.Draw(feature)
-    place(feature, render("boss"), 250, (900, 360))
-    place(feature, render("slime"), 110, (690, 420))
-    place(feature, render("hero_full"), 430, (150, 275))
-    text(draw, (600, 110), "DUMPLING WITCH", 70, fill=(255, 226, 120))
-    text(draw, (600, 185), "100 lantai  •  10 boss  •  skill sihir", 30)
+    # Feature graphic: the gflow key art (witch left, dumplings right) with the logo in its empty upper centre.
+    import json
+
+    ui_src = os.path.join(ROOT, "asset_work", "ui_src")
+    with open(os.path.join(ui_src, "pick.json")) as handle:
+        key_file = json.load(handle)["keyart"]["file"]
+    art = Image.open(os.path.join(ui_src, "raw", "keyart", key_file)).convert("RGBA")
+    scale = 1024 / art.width
+    art = art.resize((1024, int(art.height * scale + 0.5)), Image.LANCZOS)
+    top = max(0, (art.height - 500) // 2 - 6)
+    feature = art.crop((0, top, 1024, top + 500))
+    logo = Image.open(os.path.join(ROOT, "asset_work", "output", "UI", "Art", "ART_Logo.png")).convert("RGBA")
+    place(feature, logo, 200, (640, 112))
     feature.convert("RGB").save(os.path.join(STORE, "feature_graphic_1024x500.png"))
     print("STORE_ART_OK", flush=True)
 

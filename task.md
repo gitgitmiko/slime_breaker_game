@@ -224,3 +224,4 @@
 - UI modern "candy arcade" (kit prosedural + seni gflow: logo, ikon, avatar, key art; font Lilita One/Nunito; menu lobi; animasi pop/tekan). 0.36.0.
 - Hero 3D dibuat lebih mirip art 2D (kepala 1,42×, rambut, pipi, kilau mata, outline inverted hull). 0.37.0.
 - Slime dan boss diberi outline inverted hull seperti hero; shader `SlimeBreaker/Outline`. 0.38.0.
+- Ikon aplikasi, ikon 512, feature graphic dari art 2D gflow; 8 screenshot toko baru. 0.38.1.

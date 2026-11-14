@@ -1,6 +1,6 @@
-# Catatan rilis 0.38.0 (versionCode 51)
+# Catatan rilis 0.38.1 (versionCode 52)
 
-Untuk Play Console. Tempel blok ini di kolom catatan rilis (batas 500 karakter per bahasa). Rilis ini mencakup semua perubahan sejak 0.35.0 (0.36.0 UI baru, 0.37.0 hero, 0.38.0 outline slime dan boss).
+Untuk Play Console. Tempel blok ini di kolom catatan rilis (batas 500 karakter per bahasa). Rilis ini mencakup semua perubahan sejak 0.35.0 (0.36.0 UI baru, 0.37.0 hero, 0.38.0 outline slime dan boss, 0.38.1 ikon aplikasi baru).
 
 ```
 <id-ID>

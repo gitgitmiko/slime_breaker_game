@@ -4,7 +4,7 @@ Gaya: anime 3D fantasy. Hero adalah **penyihir chibi** (tahap 3 konsep "Squishy 
 
 Semua aset dibuat sendiri di mesin ini (Blender, Python/numpy/Pillow, FluidSynth). Tidak ada karakter, logo, atau desain berhak cipta yang disalin.
 
-Sejak 0.37.0 hero dibuat lebih mirip art 2D-nya: kepala (beserta topi dan rambut) diperbesar 1,42× di sekitar leher (`HEAD_SCALE`), bob pirang-merah muda lebih tebal dan membingkai wajah, mata lebih kecil dengan titik kilau, pipi merona, warna topi dan rambut lebih cerah, tongkat lebih pendek dan miring ke luar supaya tidak menutupi wajah, dan seluruh bagian utama diberi garis tepi gelap (inverted hull `MAT_hero_outline`, `outline_hulls` di `build_assets.py`). Tulang dan klip tetap; tulang di kepala ikut bergeser.
+Sejak 0.37.0 hero dibuat lebih mirip art 2D-nya: kepala (beserta topi dan rambut) diperbesar 1,42× di sekitar leher (`HEAD_SCALE`), bob pirang-merah muda lebih tebal dan membingkai wajah, mata lebih kecil dengan titik kilau, pipi merona, warna topi dan rambut lebih cerah, tongkat lebih pendek dan miring ke luar supaya tidak menutupi wajah, dan seluruh bagian utama diberi garis tepi gelap (inverted hull `MAT_hero_outline`, `outline_hulls` di `build_assets.py`). Tulang dan klip tetap; tulang di kepala ikut bergeser. Sejak 0.38.0 ketiga slime dan boss memakai garis tepi yang sama (badan, benjolan, sirip, dan zirah; wajah tidak), dan semua outline memakai shader `SlimeBreaker/Outline` (warna sendiri `_OutlineColor`, jadi tint boss dan kilatan saat terkena serangan tidak mewarnainya).
 
 ## Palet
 

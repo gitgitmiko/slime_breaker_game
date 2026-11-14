@@ -223,3 +223,4 @@
 - Kalau hero masih kurang "anime", langkah lanjut: tekstur wajah hand-painted dan shader toon ramp (`asset_work/scripts/build_assets.py` → `build_hero`).
 - UI modern "candy arcade" (kit prosedural + seni gflow: logo, ikon, avatar, key art; font Lilita One/Nunito; menu lobi; animasi pop/tekan). 0.36.0.
 - Hero 3D dibuat lebih mirip art 2D (kepala 1,42×, rambut, pipi, kilau mata, outline inverted hull). 0.37.0.
+- Slime dan boss diberi outline inverted hull seperti hero; shader `SlimeBreaker/Outline`. 0.38.0.

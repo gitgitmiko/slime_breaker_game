@@ -1,29 +1,5 @@
 [
   {
-    "id": "ENM_Slime_Normal",
-    "file": "Enemies/Slime/ENM_Slime_Normal.fbx",
-    "kind": "character",
-    "triangles": 3668,
-    "vertices": 1856,
-    "notes": "generic rig, in-place clips"
-  },
-  {
-    "id": "ENM_Slime_Fast",
-    "file": "Enemies/Slime/ENM_Slime_Fast.fbx",
-    "kind": "character",
-    "triangles": 3722,
-    "vertices": 1889,
-    "notes": "generic rig, in-place clips"
-  },
-  {
-    "id": "ENM_Slime_Tank",
-    "file": "Enemies/Slime/ENM_Slime_Tank.fbx",
-    "kind": "character",
-    "triangles": 3852,
-    "vertices": 1962,
-    "notes": "generic rig, in-place clips"
-  },
-  {
     "id": "ENV_Forest_Ground",
     "file": "Environment/ForestArena/ENV_Forest_Ground.fbx",
     "kind": "static",
@@ -384,14 +360,6 @@
     "notes": "HD prop: PBR material names MAT_hd_*, vertex colour R=AO A=wind"
   },
   {
-    "id": "BOSS_SlimeKing",
-    "file": "Enemies/SlimeKing/BOSS_SlimeKing.fbx",
-    "kind": "character",
-    "triangles": 6780,
-    "vertices": 3416,
-    "notes": "generic rig, in-place clips"
-  },
-  {
     "id": "ENV_Dimsum_Wall",
     "file": "Environment/Dimsum/ENV_Dimsum_Wall.fbx",
     "kind": "static",
@@ -429,6 +397,38 @@
     "kind": "character",
     "triangles": 32922,
     "vertices": 17494,
+    "notes": "generic rig, in-place clips"
+  },
+  {
+    "id": "ENM_Slime_Normal",
+    "file": "Enemies/Slime/ENM_Slime_Normal.fbx",
+    "kind": "character",
+    "triangles": 5792,
+    "vertices": 2926,
+    "notes": "generic rig, in-place clips"
+  },
+  {
+    "id": "ENM_Slime_Fast",
+    "file": "Enemies/Slime/ENM_Slime_Fast.fbx",
+    "kind": "character",
+    "triangles": 5900,
+    "vertices": 2992,
+    "notes": "generic rig, in-place clips"
+  },
+  {
+    "id": "ENM_Slime_Tank",
+    "file": "Enemies/Slime/ENM_Slime_Tank.fbx",
+    "kind": "character",
+    "triangles": 6136,
+    "vertices": 3122,
+    "notes": "generic rig, in-place clips"
+  },
+  {
+    "id": "BOSS_SlimeKing",
+    "file": "Enemies/SlimeKing/BOSS_SlimeKing.fbx",
+    "kind": "character",
+    "triangles": 11548,
+    "vertices": 5804,
     "notes": "generic rig, in-place clips"
   }
 ]

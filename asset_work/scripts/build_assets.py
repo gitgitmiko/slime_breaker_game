@@ -123,7 +123,7 @@ def parse_args():
         raise SystemExit("Pass output, preview, and texture directories after --")
     args = argv[argv.index("--") + 1 :]
     if len(args) < 3:
-        raise SystemExit("Expected: <out_dir> <preview_dir> <texture_dir> [env|hero|boss|xp]")
+        raise SystemExit("Expected: <out_dir> <preview_dir> <texture_dir> [env|hero|boss|slime|xp]")
     mode = args[3] if len(args) >= 4 else "all"
     return args[0], args[1], args[2], mode
 
@@ -144,7 +144,7 @@ def sh(cmd):
 
 def make_textures():
     script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build_textures.py")
-    if MODE != "hero":
+    if MODE not in ("hero", "slime"):
         sh(["python3", script, TEX])
     return {
         "ground": os.path.join(TEX, "TEX_Forest_Ground.png"),
@@ -838,12 +838,12 @@ def ring_points(center, radius, count=48, oval=(1.0, 1.0), tilt=0.0):
 OUTLINE_SKIP = ("hat_stitch", "hat_rim", "hat_flap", "cape_trim", "jacket_trim", "frog", "clasp", "cuff", "waist", "eye", "shine", "blush", "staff_grip")
 
 
-def outline_hulls(parts, mat, thickness):
+def outline_hulls(parts, mat, thickness, only=None):
     """Inverted hulls: a copy of each main part, pushed out along its normals with the faces flipped. With back-face
     culling only the rim of the copy shows, which draws the dark cartoon outline of the 2D art on any shader."""
     hulls = []
     for part in parts:
-        if part.name.startswith(OUTLINE_SKIP):
+        if part.name.startswith(OUTLINE_SKIP) or (only and not any(tag in part.name for tag in only)):
             continue
         hull = part.copy()
         hull.data = part.data.copy()
@@ -1584,6 +1584,8 @@ def build_slime(name, body_mat, radius, height_scale, kind, mats):
                 p.append(assign(plate, "Body", mats["rock"]))
             for side in (-1, 1):
                 p.append(assign(add_cube(f"{name}_brow{side}", radius * 0.3, (radius * 0.3 * side, surface_y(radius * 0.3, eye_z + radius * 0.22) + radius * 0.02, eye_z + radius * 0.22), scale=(1.1, 0.3, 0.25), rot=(0, 0, 0.35 * side)), "Body", mats["rock"]))
+    # Same ink outline as the hero: body, blobs, fins and armour only (the face stays clean).
+    p += outline_hulls(p, mats["outline"], radius * 0.034, only=("_body", "_blob", "_nub", "_fin", "_crest", "_helmet", "_plate"))
     mesh = join(p, name)
     bind(mesh, arm)
 
@@ -1988,6 +1990,7 @@ def main():
     mats["gem"] = material("MAT_gem", PALETTE["gem"], emission=0.9, rough=0.2)
     mats["xp"] = material("MAT_xp", PALETTE["xp"], emission=0.9, rough=0.25)
     mats["ring"] = material("MAT_ring", PALETTE["ring"], emission=0.7, rough=0.35)
+    mats["outline"] = material("MAT_outline", (0.10, 0.05, 0.20, 1), rough=1.0)
     mats["ice_env"] = material("MAT_ice_env", PALETTE["ice_env"], emission=0.55, rough=0.12)
     mats["lava"] = material("MAT_lava", PALETTE["lava"], emission=1.4, rough=0.25)
     mats["thunder_glow"] = material("MAT_thunder_glow", PALETTE["thunder_glow"], emission=1.1, rough=0.2)
@@ -1999,6 +2002,16 @@ def main():
     hero_only = MODE == "hero"
     if MODE == "boss":
         studio = hero_studio()
+        produce_character("BOSS_SlimeKing", "Enemies/SlimeKing", lambda: build_slime("BOSS_SlimeKing", mats["king"], 0.95, 1.05, "king", mats), 5.5, 2.1, 0.9)
+        hero_studio_off(studio)
+        write_catalog(merge=True)
+        return
+    if MODE == "slime":
+        # The three slimes and the boss only (hero, props and textures are left alone).
+        studio = hero_studio()
+        produce_character("ENM_Slime_Normal", "Enemies/Slime", lambda: build_slime("ENM_Slime_Normal", mats["slime"], 0.48, 0.9, "normal", mats), 3.2, 1.2, 0.4)
+        produce_character("ENM_Slime_Fast", "Enemies/Slime", lambda: build_slime("ENM_Slime_Fast", mats["slime_fast"], 0.36, 0.72, "fast", mats), 2.8, 1.05, 0.3)
+        produce_character("ENM_Slime_Tank", "Enemies/Slime", lambda: build_slime("ENM_Slime_Tank", mats["slime_tank"], 0.62, 1.05, "tank", mats), 3.8, 1.45, 0.55)
         produce_character("BOSS_SlimeKing", "Enemies/SlimeKing", lambda: build_slime("BOSS_SlimeKing", mats["king"], 0.95, 1.05, "king", mats), 5.5, 2.1, 0.9)
         hero_studio_off(studio)
         write_catalog(merge=True)

@@ -7,8 +7,8 @@ namespace SlimeBreaker
     /// <summary>
     /// Full-screen ads: rewarded before a continue, interstitial on entering a boss floor. On Android AdMobProvider serves AdMob.
     /// A continue needs a real rewarded ad: when AdMob has none loaded (offline, ad blocker, no fill) the continue is refused.
-    /// The built-in house ad (audio paused, closable after <see cref="adSeconds"/>) only stands in where no provider exists (editor, tests)
-    /// and for interstitials that failed to load.
+    /// An interstitial that failed to load is skipped. The built-in house ad (audio paused, closable after <see cref="adSeconds"/>)
+    /// only stands in where no provider exists (editor, tests).
     /// </summary>
     public class AdService : MonoBehaviour
     {
@@ -87,16 +87,23 @@ namespace SlimeBreaker
             Refresh();
         }
 
-        /// <summary>Plays an ad with no reward attached; <paramref name="onClosed"/> runs once it has been exited.</summary>
+        /// <summary>Plays an ad with no reward attached; <paramref name="onClosed"/> runs once it has been exited.
+        /// When AdMob has no interstitial loaded (offline, ad blocker, no fill) nothing is shown and <paramref name="onClosed"/> runs at once.</summary>
         public void ShowInterstitial(Action onClosed)
         {
-            Shown++;
-            if (Provider != null && Provider.IsInterstitialReady)
+            if (Provider == null)
             {
-                Provider.ShowInterstitial(onClosed);
+                Shown++;
+                ShowHouseAd(_ => onClosed?.Invoke());
                 return;
             }
-            ShowHouseAd(_ => onClosed?.Invoke());
+            if (!Provider.IsInterstitialReady)
+            {
+                onClosed?.Invoke();
+                return;
+            }
+            Shown++;
+            Provider.ShowInterstitial(onClosed);
         }
 
         void Update()

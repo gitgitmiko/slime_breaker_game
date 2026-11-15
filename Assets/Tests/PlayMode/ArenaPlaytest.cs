@@ -2527,7 +2527,8 @@ namespace SlimeBreaker.Tests
         class FakeAdProvider : AdService.IProvider
         {
             public bool IsInterstitialReady => false;
-            public void ShowInterstitial(System.Action closed) => closed?.Invoke();
+            public int interstitials;
+            public void ShowInterstitial(System.Action closed) { interstitials++; closed?.Invoke(); }
             public bool reward;
             public int shown;
             public bool ready = true;
@@ -2582,7 +2583,7 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
-        public IEnumerator BlockedAdMobRefusesTheContinueWithoutAHouseAd()
+        public IEnumerator BlockedAdMobRefusesTheContinueAndSkipsInterstitialsWithoutAHouseAd()
         {
             yield return null;
             QuietArena();
@@ -2605,6 +2606,12 @@ namespace SlimeBreaker.Tests
                 Assert.IsFalse(flow.WatchingAd);
                 Assert.IsTrue(flow.ui.ContinueVisible);
                 Assert.AreEqual(GameFlowController.AdUnavailableNotice, flow.ui.ContinueHintText);
+
+                bool interstitialClosed = false;
+                AdService.Instance.ShowInterstitial(() => interstitialClosed = true);
+                Assert.IsTrue(interstitialClosed, "a blocked interstitial is skipped at once");
+                Assert.AreEqual(0, fake.interstitials);
+                Assert.IsFalse(AdService.Instance.IsShowing, "a blocked interstitial must not fall back to the house ad");
 
                 fake.ready = true;
                 flow.ContinueWithAd();

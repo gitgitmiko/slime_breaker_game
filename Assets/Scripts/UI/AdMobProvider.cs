@@ -8,7 +8,7 @@ namespace SlimeBreaker
 {
     /// <summary>
     /// Google AdMob: a rewarded ad behind "Lanjutkan" and an interstitial on entering a boss floor. Asks for consent (UMP) on start,
-    /// keeps one ad of each kind loaded, and reports whether the reward was earned. Without a loaded rewarded ad the continue is refused; interstitials fall back to the house ad.
+    /// keeps one ad of each kind loaded, and reports whether the reward was earned. Without a loaded rewarded ad the continue is refused; an interstitial that is not loaded is skipped.
     /// Sideload APKs are built with SB_ADMOB_TEST and only request Google's test ads.
     /// </summary>
     public class AdMobProvider : AdService.IProvider

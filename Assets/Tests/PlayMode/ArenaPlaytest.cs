@@ -2526,7 +2526,11 @@ namespace SlimeBreaker.Tests
 
         class FakeAdProvider : AdService.IProvider
         {
-            public bool IsInterstitialReady => false;
+            public bool interstitialReady;
+            public bool IsInterstitialReady => interstitialReady;
+            public bool InterstitialSkippable { get; set; }
+            public int retries;
+            public void RetryInterstitial() => retries++;
             public int interstitials;
             public void ShowInterstitial(System.Action closed) { interstitials++; closed?.Invoke(); }
             public bool reward;
@@ -2583,7 +2587,7 @@ namespace SlimeBreaker.Tests
         }
 
         [UnityTest]
-        public IEnumerator BlockedAdMobRefusesTheContinueAndSkipsInterstitialsWithoutAHouseAd()
+        public IEnumerator BlockedAdMobRefusesTheContinueAndHoldsInterstitials()
         {
             yield return null;
             QuietArena();
@@ -2607,11 +2611,30 @@ namespace SlimeBreaker.Tests
                 Assert.IsTrue(flow.ui.ContinueVisible);
                 Assert.AreEqual(GameFlowController.AdUnavailableNotice, flow.ui.ContinueHintText);
 
+                var ads = AdService.Instance;
                 bool interstitialClosed = false;
-                AdService.Instance.ShowInterstitial(() => interstitialClosed = true);
-                Assert.IsTrue(interstitialClosed, "a blocked interstitial is skipped at once");
-                Assert.AreEqual(0, fake.interstitials);
-                Assert.IsFalse(AdService.Instance.IsShowing, "a blocked interstitial must not fall back to the house ad");
+                ads.ShowInterstitial(() => interstitialClosed = true);
+                yield return new WaitForSecondsRealtime(ads.blockedDelay + 0.3f);
+                Assert.IsFalse(interstitialClosed, "a blocked interstitial must hold the game");
+                Assert.IsTrue(ads.WaitingForInterstitial);
+                Assert.IsTrue(ads.BlockedVisible, "the blocked screen should tell the player to turn off the ad blocker");
+                yield return new WaitForSecondsRealtime(0.4f);
+                Capture("ad_blocked");
+                Assert.IsFalse(ads.IsShowing, "a blocked interstitial must not fall back to the house ad");
+                ads.retryButton.onClick.Invoke();
+                Assert.AreEqual(1, fake.retries);
+                fake.interstitialReady = true;
+                yield return null;
+                yield return null;
+                Assert.IsTrue(interstitialClosed, "the interstitial plays once AdMob is reachable");
+                Assert.AreEqual(1, fake.interstitials);
+                Assert.IsFalse(ads.BlockedVisible);
+
+                fake.interstitialReady = false;
+                fake.InterstitialSkippable = true;
+                interstitialClosed = false;
+                ads.ShowInterstitial(() => interstitialClosed = true);
+                Assert.IsTrue(interstitialClosed, "no fill from AdMob skips the interstitial");
 
                 fake.ready = true;
                 flow.ContinueWithAd();

@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.38.3";
+        const string AppVersion = "0.38.4";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -3733,6 +3733,21 @@ namespace SlimeBreaker.EditorTools
             ads.countdownRing = ring;
             ads.art = art.GetComponent<RectTransform>();
             ads.adSeconds = 5f;
+
+            // Interstitial blocked (AdGuard, offline): the run waits here until AdMob loads one.
+            var blocked = Panel(canvas.transform, "AdBlocked", font, "Iklan Diblokir", 0.25f, 0.2f, 0.75f, 0.8f, 620f);
+            var blockedBody = Text(blocked.transform, "Body", "Game tidak bisa lanjut tanpa iklan.\nMatikan pemblokir iklan (AdGuard dll.) atau periksa koneksi internet.", 34, TextAnchor.MiddleCenter, font);
+            blockedBody.color = Cream;
+            blockedBody.raycastTarget = false;
+            Place(blockedBody.gameObject, blocked.transform, new Vector2(0.5f, 0.55f), new Vector2(860f, 220f));
+            var retry = Button(blocked.transform, "Retry", "Coba Lagi", font, Color.white, greenSprite);
+            Place(retry.gameObject, blocked.transform, new Vector2(0.5f, 0.31f), new Vector2(400f, 120f));
+            ButtonIcon(retry, Icon("ICON_Retry"), 60f);
+            retry.GetComponentInChildren<Text>().fontSize = 38;
+            blocked.SetActive(false);
+            ads.blockedGroup = blocked.GetComponent<CanvasGroup>();
+            ads.retryButton = retry;
+
             StyleTexts(canvas.transform);
             root.SetActive(false);
             return ads;
@@ -3803,7 +3818,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Dumpling Witch";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 54;
+            PlayerSettings.Android.bundleVersionCode = 55;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.dumplingwitch");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

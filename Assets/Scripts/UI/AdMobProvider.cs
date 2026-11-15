@@ -8,7 +8,7 @@ namespace SlimeBreaker
 {
     /// <summary>
     /// Google AdMob: a rewarded ad behind "Lanjutkan" and an interstitial on entering a boss floor. Asks for consent (UMP) on start,
-    /// keeps one ad of each kind loaded, and reports whether the reward was earned. Without a loaded rewarded ad the continue is refused; an interstitial that is not loaded is skipped.
+    /// keeps one ad of each kind loaded, and reports whether the reward was earned. Without a loaded rewarded ad the continue is refused; without an interstitial the game waits behind a "turn off the ad blocker" screen (only AdMob having no fill skips it).
     /// Sideload APKs are built with SB_ADMOB_TEST and only request Google's test ads.
     /// </summary>
     public class AdMobProvider : AdService.IProvider
@@ -23,12 +23,16 @@ namespace SlimeBreaker
 
         // Short so that a player who just switched off an ad blocker gets an ad on the next try.
         const float RetrySeconds = 3f;
+        // No fill is AdMob having nothing to show, not a blocker: ask again less often.
+        const float NoFillRetrySeconds = 30f;
 
         RewardedAd rewarded;
         InterstitialAd interstitial;
         bool loading;
         bool loadingInterstitial;
         bool initialized;
+        bool consentRefused;
+        bool interstitialNoFill;
         float retryAt;
         float interstitialRetryAt;
 
@@ -55,6 +59,8 @@ namespace SlimeBreaker
                         Debug.LogWarning("AdMob consent form: " + formError.Message);
                     if (ConsentInformation.CanRequestAds())
                         Initialize();
+                    else
+                        consentRefused = true;
                 });
             });
             // Consent from an earlier session lets ads load while the update is still running.
@@ -114,10 +120,14 @@ namespace SlimeBreaker
                 loadingInterstitial = false;
                 if (error != null || ad == null)
                 {
-                    Debug.LogWarning("AdMob interstitial load failed: " + (error != null ? error.GetMessage() : "no ad"));
-                    interstitialRetryAt = Time.realtimeSinceStartup + RetrySeconds;
+                    int code = error != null ? error.GetCode() : -1;
+                    Debug.LogWarning("AdMob interstitial load failed (" + code + "): " + (error != null ? error.GetMessage() : "no ad"));
+                    // 3 = no fill, 9 = mediation no fill. Anything else (network, internal) is what an ad blocker or no connection looks like.
+                    interstitialNoFill = code == 3 || code == 9;
+                    interstitialRetryAt = Time.realtimeSinceStartup + (interstitialNoFill ? NoFillRetrySeconds : RetrySeconds);
                     return;
                 }
+                interstitialNoFill = false;
                 interstitial = ad;
             });
         }
@@ -132,6 +142,15 @@ namespace SlimeBreaker
                     LoadInterstitial();
                 return false;
             }
+        }
+
+        public bool InterstitialSkippable => consentRefused || interstitialNoFill;
+
+        public void RetryInterstitial()
+        {
+            interstitialRetryAt = 0f;
+            if (initialized)
+                LoadInterstitial();
         }
 
         public void ShowInterstitial(Action closed)

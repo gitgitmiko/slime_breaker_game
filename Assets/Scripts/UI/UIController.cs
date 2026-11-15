@@ -34,6 +34,7 @@ namespace SlimeBreaker
         public GameObject continuePanel;
         public Text continueCountdown;
         public Image continueRing;
+        public Text continueHint;
         public Text resultTitle;
         public Text resultBody;
         public Button pauseButton;
@@ -167,9 +168,28 @@ namespace SlimeBreaker
 
         public void ShowContinue(float secondsLeft, float total)
         {
+            bool wasVisible = ContinueVisible;
             if (continuePanel != null)
                 continuePanel.SetActive(true);
+            if (!wasVisible)
+                ShowContinueNotice(null);
             SetContinueCountdown(secondsLeft, total);
+        }
+
+        public const string ContinueHintDefault = "Lanjutkan dengan HP penuh dan 3 nyawa setelah menonton iklan";
+        static readonly Color ContinueHintColor = new Color(0.9f, 0.88f, 0.98f);
+        static readonly Color ContinueNoticeColor = new Color(1f, 0.55f, 0.5f);
+
+        public string ContinueHintText => continueHint != null ? continueHint.text : string.Empty;
+
+        /// <summary>Replaces the hint under the ring with a warning (null restores the normal hint).</summary>
+        public void ShowContinueNotice(string message)
+        {
+            if (continueHint == null)
+                return;
+            bool notice = !string.IsNullOrEmpty(message);
+            continueHint.text = notice ? message : ContinueHintDefault;
+            continueHint.color = notice ? ContinueNoticeColor : ContinueHintColor;
         }
 
         public void HideContinue()

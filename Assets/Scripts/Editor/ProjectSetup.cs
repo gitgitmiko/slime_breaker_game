@@ -24,7 +24,7 @@ namespace SlimeBreaker.EditorTools
         const string OutputRoot = "asset_work/output";
         const string TextureSource = "asset_work/textures";
 
-        const string AppVersion = "0.38.1";
+        const string AppVersion = "0.38.2";
 
         static Sprite panelSprite;
         static Sprite buttonSprite;
@@ -3524,10 +3524,10 @@ namespace SlimeBreaker.EditorTools
             continueCount.fontStyle = FontStyle.Bold;
             continueCount.raycastTarget = false;
             Place(continueCount.gameObject, continuePanel.transform, new Vector2(0.5f, 0.593f), new Vector2(210f, 160f));
-            var continueHint = Text(continuePanel.transform, "Hint", "Lanjutkan dengan HP penuh dan 3 nyawa setelah menonton iklan", 27, TextAnchor.MiddleCenter, font);
+            var continueHint = Text(continuePanel.transform, "Hint", UIController.ContinueHintDefault, 27, TextAnchor.MiddleCenter, font);
             continueHint.color = new Color(0.9f, 0.88f, 0.98f);
             continueHint.raycastTarget = false;
-            Place(continueHint.gameObject, continuePanel.transform, new Vector2(0.5f, 0.395f), new Vector2(940f, 44f));
+            Place(continueHint.gameObject, continuePanel.transform, new Vector2(0.5f, 0.385f), new Vector2(940f, 72f));
             var newGame = Button(continuePanel.transform, "NewGame", "Game Baru", font, Color.white, dangerSprite);
             Place(newGame.gameObject, continuePanel.transform, new Vector2(0.375f, 0.235f), new Vector2(380f, 120f));
             var continueButton = Button(continuePanel.transform, "ContinueAd", "Lanjutkan", font, Color.white, greenSprite);
@@ -3560,6 +3560,7 @@ namespace SlimeBreaker.EditorTools
             ui.continuePanel = continuePanel;
             ui.continueCountdown = continueCount;
             ui.continueRing = continueRing;
+            ui.continueHint = continueHint;
             flow.ads = ads;
             ui.xpSlider = xp;
             ui.levelText = level;
@@ -3802,7 +3803,7 @@ namespace SlimeBreaker.EditorTools
             PlayerSettings.companyName = "Gitgitmiko";
             PlayerSettings.productName = "Dumpling Witch";
             PlayerSettings.bundleVersion = AppVersion;
-            PlayerSettings.Android.bundleVersionCode = 52;
+            PlayerSettings.Android.bundleVersionCode = 53;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.gitgitmiko.dumplingwitch");
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

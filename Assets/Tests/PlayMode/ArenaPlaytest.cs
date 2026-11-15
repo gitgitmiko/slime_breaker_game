@@ -2530,7 +2530,8 @@ namespace SlimeBreaker.Tests
             public void ShowInterstitial(System.Action closed) => closed?.Invoke();
             public bool reward;
             public int shown;
-            public bool IsReady => true;
+            public bool ready = true;
+            public bool IsReady => ready;
 
             public void Show(System.Action<bool> closed)
             {
@@ -2573,6 +2574,43 @@ namespace SlimeBreaker.Tests
                 Assert.AreEqual(GameState.Playing, flow.State, "earned reward should continue the run");
                 Assert.AreEqual(RunRules.HeroLives, hero.Lives);
                 Assert.AreEqual(hero.Max, hero.Current);
+            }
+            finally
+            {
+                AdService.Provider = previous;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator BlockedAdMobRefusesTheContinueWithoutAHouseAd()
+        {
+            yield return null;
+            QuietArena();
+            var flow = GameFlowController.Instance;
+            var hero = PlayerHealth.Instance;
+            var fake = new FakeAdProvider { reward = true, ready = false };
+            var previous = AdService.Provider;
+            AdService.Provider = fake;
+            try
+            {
+                yield return SpendAllLives(hero);
+                Assert.AreEqual(GameState.OutOfLives, flow.State);
+                Assert.AreEqual(UIController.ContinueHintDefault, flow.ui.ContinueHintText);
+                flow.ContinueWithAd();
+                yield return null;
+                Assert.AreEqual(0, fake.shown);
+                Assert.IsFalse(AdService.Instance.IsShowing, "a blocked AdMob ad must not fall back to the house ad");
+                Assert.AreEqual(GameState.OutOfLives, flow.State, "no ad, no continue");
+                Assert.IsTrue(hero.IsDead);
+                Assert.IsFalse(flow.WatchingAd);
+                Assert.IsTrue(flow.ui.ContinueVisible);
+                Assert.AreEqual(GameFlowController.AdUnavailableNotice, flow.ui.ContinueHintText);
+
+                fake.ready = true;
+                flow.ContinueWithAd();
+                yield return null;
+                Assert.AreEqual(1, fake.shown);
+                Assert.AreEqual(GameState.Playing, flow.State, "once AdMob is reachable the continue works");
             }
             finally
             {

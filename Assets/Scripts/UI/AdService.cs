@@ -5,9 +5,10 @@ using UnityEngine.UI;
 namespace SlimeBreaker
 {
     /// <summary>
-    /// Full-screen ads: rewarded before a continue, interstitial on entering a boss floor. On Android AdMobProvider serves AdMob;
-    /// when no ad is loaded (offline, no fill, editor) a built-in house ad covers the whole screen (audio paused)
-    /// and can be closed after <see cref="adSeconds"/>.
+    /// Full-screen ads: rewarded before a continue, interstitial on entering a boss floor. On Android AdMobProvider serves AdMob.
+    /// A continue needs a real rewarded ad: when AdMob has none loaded (offline, ad blocker, no fill) the continue is refused.
+    /// The built-in house ad (audio paused, closable after <see cref="adSeconds"/>) only stands in where no provider exists (editor, tests)
+    /// and for interstitials that failed to load.
     /// </summary>
     public class AdService : MonoBehaviour
     {
@@ -54,16 +55,26 @@ namespace SlimeBreaker
                 Instance = null;
         }
 
-        /// <summary>Plays an ad; <paramref name="onClosed"/> gets true when the player earned the reward.</summary>
-        public void ShowRewarded(Action<bool> onClosed)
+        /// <summary>False when an ad network is installed but has no rewarded ad loaded (e.g. blocked by AdGuard); polling it also retries the load.</summary>
+        public bool RewardedAvailable => Provider == null || Provider.IsReady;
+
+        /// <summary>
+        /// Plays a rewarded ad; <paramref name="onClosed"/> gets true when the player earned the reward.
+        /// Returns false, without calling <paramref name="onClosed"/>, when no AdMob ad is available: there is no house-ad fallback for rewards.
+        /// </summary>
+        public bool ShowRewarded(Action<bool> onClosed)
         {
-            Shown++;
-            if (Provider != null && Provider.IsReady)
+            if (Provider == null)
             {
-                Provider.Show(onClosed);
-                return;
+                Shown++;
+                ShowHouseAd(onClosed);
+                return true;
             }
-            ShowHouseAd(onClosed);
+            if (!Provider.IsReady)
+                return false;
+            Shown++;
+            Provider.Show(onClosed);
+            return true;
         }
 
         void ShowHouseAd(Action<bool> onClosed)

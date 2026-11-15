@@ -8,7 +8,7 @@ namespace SlimeBreaker
 {
     /// <summary>
     /// Google AdMob: a rewarded ad behind "Lanjutkan" and an interstitial on entering a boss floor. Asks for consent (UMP) on start,
-    /// keeps one ad of each kind loaded, and reports whether the reward was earned. Until an ad is loaded <see cref="AdService"/> falls back to its house ad.
+    /// keeps one ad of each kind loaded, and reports whether the reward was earned. Without a loaded rewarded ad the continue is refused; interstitials fall back to the house ad.
     /// Sideload APKs are built with SB_ADMOB_TEST and only request Google's test ads.
     /// </summary>
     public class AdMobProvider : AdService.IProvider
@@ -20,6 +20,9 @@ namespace SlimeBreaker
         const string RewardedUnitId = "ca-app-pub-6808667639334235/8407574176";
         const string InterstitialUnitId = "ca-app-pub-6808667639334235/9848849010";
 #endif
+
+        // Short so that a player who just switched off an ad blocker gets an ad on the next try.
+        const float RetrySeconds = 3f;
 
         RewardedAd rewarded;
         InterstitialAd interstitial;
@@ -82,7 +85,7 @@ namespace SlimeBreaker
                 if (error != null || ad == null)
                 {
                     Debug.LogWarning("AdMob rewarded load failed: " + (error != null ? error.GetMessage() : "no ad"));
-                    retryAt = Time.realtimeSinceStartup + 30f;
+                    retryAt = Time.realtimeSinceStartup + RetrySeconds;
                     return;
                 }
                 rewarded = ad;
@@ -112,7 +115,7 @@ namespace SlimeBreaker
                 if (error != null || ad == null)
                 {
                     Debug.LogWarning("AdMob interstitial load failed: " + (error != null ? error.GetMessage() : "no ad"));
-                    interstitialRetryAt = Time.realtimeSinceStartup + 30f;
+                    interstitialRetryAt = Time.realtimeSinceStartup + RetrySeconds;
                     return;
                 }
                 interstitial = ad;

@@ -16,4 +16,4 @@ MonoBehaviour:
   title: Critical
   description: +30% critical damage
   amount: 0.3
-  icon: {fileID: 21300000, guid: 04466bbbc0b341369bcb6d576449ed4c, type: 3}
+  icon: {fileID: 21300000, guid: 827b3addb3012a78482bc93e61e86293, type: 3}

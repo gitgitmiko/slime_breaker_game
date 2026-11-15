@@ -787,6 +787,27 @@ def impact(rng, length=0.25, low=90, body=0.8, click=0.5):
     return (thump + snap).astype(np.float32)
 
 
+def crack(rng, length=0.3):
+    """Sharp descending zap over high band-passed noise."""
+    n = int(length * SR)
+    t = np.arange(n) / SR
+    zap = np.sign(np.sin(2 * math.pi * np.cumsum(900 + 2600 * np.exp(-t * 28)) / SR)) * np.exp(-t * 26)
+    fizz = Pedalboard([HighpassFilter(cutoff_frequency_hz=2800), LowpassFilter(cutoff_frequency_hz=9000)])(noise(rng, n, "white")[None, :], SR)[0] * np.exp(-t * 16)
+    zap = Pedalboard([LowpassFilter(cutoff_frequency_hz=6000)])(zap.astype(np.float32)[None, :], SR)[0]
+    return (zap * 0.55 + fizz * 0.5).astype(np.float32)
+
+
+def door_creak(rng, length=0.95):
+    """Slow wooden hinge groan: a wobbling low saw through a resonant band."""
+    n = int(length * SR)
+    t = np.arange(n) / SR
+    pitch = 150 + 70 * t / length + 18 * np.sin(2 * math.pi * 7 * t) + 8 * np.sin(2 * math.pi * 19 * t)
+    saw = 2.0 * (np.cumsum(pitch) / SR % 1.0) - 1.0
+    env = np.minimum(1.0, t / 0.08) * np.minimum(1.0, (length - t) / 0.2)
+    body = Pedalboard([HighpassFilter(cutoff_frequency_hz=300), LowpassFilter(cutoff_frequency_hz=1900)])(saw.astype(np.float32)[None, :], SR)[0]
+    return (body * env * 0.8).astype(np.float32)
+
+
 def boom(rng, length=1.4):
     n = int(length * SR)
     t = np.arange(n) / SR
@@ -866,6 +887,9 @@ def sfx_specs():
 
     return {
         "SFX_Hit": mono(lambda r: layer(0.26, (squelch(r, 0.22, 1.2), 0.0, 0.8), (impact(r, 0.2, 140, 0.4, 0.3), 0.0, 1.0))),
+        # Enemy bolt landing on the hero: a bright glassy crack with a fizzing tail, far from the low wet SFX_Hit.
+        "SFX_RangedHit": mono(lambda r: layer(0.34, (crack(r, 0.3), 0.0, 1.0), (sparkle(r, 0.3, 3400, 5), 0.015, 0.45))),
+        "SFX_DoorOpen": mono(lambda r: layer(1.25, (door_creak(r, 0.95), 0.0, 0.9), (impact(r, 0.28, 95, 0.9, 0.5), 0.0, 0.8), (impact(r, 0.3, 70, 1.0, 0.25), 0.92, 0.9))),
         "SFX_EnemyDeath": mono(lambda r: layer(0.55, (squelch(r, 0.4, 0.8), 0.0, 1.0), (squelch(r, 0.3, 1.4), 0.1, 0.6), (droplets(r, int(0.5 * SR), 14, 300, 900), 0.05, 0.3))),
         "SFX_BoltHit": mono(lambda r: layer(0.3, (impact(r, 0.18, 220, 0.35, 0.6), 0.0, 1.0), (sparkle(r, 0.3, 2400, 4), 0.0, 0.8))),
         "SFX_Cast": mono(lambda r: layer(0.36, (whoosh(r, 0.32, 600, 3200), 0.0, 0.7), (sparkle(r, 0.32, 1800, 5), 0.02, 1.0))),

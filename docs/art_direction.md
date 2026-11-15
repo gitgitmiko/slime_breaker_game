@@ -4,6 +4,8 @@ Gaya: anime 3D fantasy. Hero adalah **penyihir chibi** (tahap 3 konsep "Squishy 
 
 Semua aset dibuat sendiri di mesin ini (Blender, Python/numpy/Pillow, FluidSynth). Tidak ada karakter, logo, atau desain berhak cipta yang disalin.
 
+Sejak 0.37.0 hero dibuat lebih mirip art 2D-nya: kepala (beserta topi dan rambut) diperbesar 1,42× di sekitar leher (`HEAD_SCALE`), bob pirang-merah muda lebih tebal dan membingkai wajah, mata lebih kecil dengan titik kilau, pipi merona, warna topi dan rambut lebih cerah, tongkat lebih pendek dan miring ke luar supaya tidak menutupi wajah, dan seluruh bagian utama diberi garis tepi gelap (inverted hull `MAT_hero_outline`, `outline_hulls` di `build_assets.py`). Tulang dan klip tetap; tulang di kepala ikut bergeser. Sejak 0.38.0 ketiga slime dan boss memakai garis tepi yang sama (badan, benjolan, sirip, dan zirah; wajah tidak), dan semua outline memakai shader `SlimeBreaker/Outline` (warna sendiri `_OutlineColor`, jadi tint boss dan kilatan saat terkena serangan tidak mewarnainya).
+
 ## Palet
 
 | Peran | Warna | Hex perkiraan |
@@ -39,6 +41,10 @@ Kesepuluh boss adalah dumpling jelly berglitter (mesh `BOSS_SlimeKing.fbx`, arma
 ## Arena: dinding wadah dimsum
 
 Konsep "Squishy Dumpling Co.": arena berada di dalam steamer dimsum. Lantai (rumput, pasir, salju, …), properti, dan pencahayaan per bioma tetap; yang berubah adalah tepinya: dinding setinggi 2,5 m berlapis anyaman bambu (twill) dengan bibir kayu pucat membulat, gelang bambu dan simpul di luar. Semua properti yang dulu berdiri di luar batas (pohon di bukit) kini berdiri di dalam, dalam sabuk 2–4 m di sepanjang dinding. Dinding rendah supaya kamera tinggi tidak menutupi hero di tepi. Tahap berikutnya: boss jadi squishy dumpling (lantai 100 pelangi), lalu hero.
+
+## UI: "candy arcade"
+
+Sejak 0.36.0 seluruh UI memakai satu bahasa visual ala game mobile masa kini: bentuk tebal membulat, outline ungu tua `#22123F`, wajah tombol bergradasi mengilap dengan "bibir" lebih gelap di bawah, teks judul Lilita One putih/krem ber-outline. Jendela berbingkai ungu dengan badan indigo gelap dan pita judul emas; tombol emas = aksi utama, hijau = lanjut/konfirmasi, ungu = netral/terpilih, merah = keluar/buang, indigo redup = pilihan tak aktif. Ikon, logo, avatar, dan key art dibuat dengan gflow (Google Flow) lalu dipotong dari latar hijau; bingkai 9-slice digambar prosedural supaya tajam. Menu utama berbentuk lobi (logo kiri atas, emas/rekor/pengaturan di atas, kartu peningkatan kiri bawah, Kesulitan → Lanjutkan → MAIN kanan bawah, hero di tengah). Panel muncul dengan pop (`UiPop`), tombol memantul saat ditekan (`UiPress`), MAIN dan logo bernapas (`UiPulse`).
 
 ## Material
 

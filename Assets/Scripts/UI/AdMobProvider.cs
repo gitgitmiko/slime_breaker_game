@@ -7,22 +7,34 @@ using UnityEngine;
 namespace SlimeBreaker
 {
     /// <summary>
-    /// Google AdMob rewarded ad behind "Lanjutkan". Asks for consent (UMP) on start, keeps one rewarded ad loaded,
-    /// and reports whether the reward was earned. Until an ad is loaded <see cref="AdService"/> falls back to its house ad.
+    /// Google AdMob: a rewarded ad behind "Lanjutkan" and an interstitial on entering a boss floor. Asks for consent (UMP) on start,
+    /// keeps one ad of each kind loaded, and reports whether the reward was earned. Without a loaded rewarded ad the continue is refused; without an interstitial the game waits behind a "turn off the ad blocker" screen (only AdMob having no fill skips it).
     /// Sideload APKs are built with SB_ADMOB_TEST and only request Google's test ads.
     /// </summary>
     public class AdMobProvider : AdService.IProvider
     {
 #if SB_ADMOB_TEST
         const string RewardedUnitId = "ca-app-pub-3940256099942544/5224354917";
+        const string InterstitialUnitId = "ca-app-pub-3940256099942544/1033173712";
 #else
         const string RewardedUnitId = "ca-app-pub-6808667639334235/8407574176";
+        const string InterstitialUnitId = "ca-app-pub-6808667639334235/9848849010";
 #endif
 
+        // Short so that a player who just switched off an ad blocker gets an ad on the next try.
+        const float RetrySeconds = 3f;
+        // No fill is AdMob having nothing to show, not a blocker: ask again less often.
+        const float NoFillRetrySeconds = 30f;
+
         RewardedAd rewarded;
+        InterstitialAd interstitial;
         bool loading;
+        bool loadingInterstitial;
         bool initialized;
+        bool consentRefused;
+        bool interstitialNoFill;
         float retryAt;
+        float interstitialRetryAt;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Install()
@@ -47,6 +59,8 @@ namespace SlimeBreaker
                         Debug.LogWarning("AdMob consent form: " + formError.Message);
                     if (ConsentInformation.CanRequestAds())
                         Initialize();
+                    else
+                        consentRefused = true;
                 });
             });
             // Consent from an earlier session lets ads load while the update is still running.
@@ -59,7 +73,11 @@ namespace SlimeBreaker
             if (initialized)
                 return;
             initialized = true;
-            MobileAds.Initialize(_ => Load());
+            MobileAds.Initialize(_ =>
+            {
+                Load();
+                LoadInterstitial();
+            });
         }
 
         void Load()
@@ -73,7 +91,7 @@ namespace SlimeBreaker
                 if (error != null || ad == null)
                 {
                     Debug.LogWarning("AdMob rewarded load failed: " + (error != null ? error.GetMessage() : "no ad"));
-                    retryAt = Time.realtimeSinceStartup + 30f;
+                    retryAt = Time.realtimeSinceStartup + RetrySeconds;
                     return;
                 }
                 rewarded = ad;
@@ -90,6 +108,79 @@ namespace SlimeBreaker
                     Load();
                 return false;
             }
+        }
+
+        void LoadInterstitial()
+        {
+            if (string.IsNullOrEmpty(InterstitialUnitId) || loadingInterstitial || (interstitial != null && interstitial.CanShowAd()))
+                return;
+            loadingInterstitial = true;
+            InterstitialAd.Load(InterstitialUnitId, new AdRequest(), (ad, error) =>
+            {
+                loadingInterstitial = false;
+                if (error != null || ad == null)
+                {
+                    int code = error != null ? error.GetCode() : -1;
+                    Debug.LogWarning("AdMob interstitial load failed (" + code + "): " + (error != null ? error.GetMessage() : "no ad"));
+                    // 3 = no fill, 9 = mediation no fill. Anything else (network, internal) is what an ad blocker or no connection looks like.
+                    interstitialNoFill = code == 3 || code == 9;
+                    interstitialRetryAt = Time.realtimeSinceStartup + (interstitialNoFill ? NoFillRetrySeconds : RetrySeconds);
+                    return;
+                }
+                interstitialNoFill = false;
+                interstitial = ad;
+            });
+        }
+
+        public bool IsInterstitialReady
+        {
+            get
+            {
+                if (interstitial != null && interstitial.CanShowAd())
+                    return true;
+                if (initialized && Time.realtimeSinceStartup >= interstitialRetryAt)
+                    LoadInterstitial();
+                return false;
+            }
+        }
+
+        public bool InterstitialSkippable => consentRefused || interstitialNoFill;
+
+        public void RetryInterstitial()
+        {
+            interstitialRetryAt = 0f;
+            if (initialized)
+                LoadInterstitial();
+        }
+
+        public void ShowInterstitial(Action closed)
+        {
+            var ad = interstitial;
+            interstitial = null;
+            if (ad == null || !ad.CanShowAd())
+            {
+                closed?.Invoke();
+                return;
+            }
+            bool done = false;
+            void Finish()
+            {
+                if (done)
+                    return;
+                done = true;
+                AudioListener.pause = false;
+                ad.Destroy();
+                LoadInterstitial();
+                closed?.Invoke();
+            }
+            ad.OnAdFullScreenContentClosed += Finish;
+            ad.OnAdFullScreenContentFailed += error =>
+            {
+                Debug.LogWarning("AdMob interstitial show failed: " + error.GetMessage());
+                Finish();
+            };
+            AudioListener.pause = true;
+            ad.Show();
         }
 
         public void Show(Action<bool> closed)

@@ -194,12 +194,14 @@ namespace SlimeBreaker
 
         public void ApplyTheme(ArenaTheme theme) => Apply(ForTheme(theme));
 
-        /// <summary>Low turns post-processing off (and the cheap ground path on); Medium/High keep it.</summary>
+        /// <summary>Low turns post-processing off (and the cheap surface paths on); Medium drops bloom; High keeps everything.</summary>
         public void SetQuality(int level)
         {
             lowQuality = level == GraphicsService.Low;
             if (Volume != null)
                 Volume.enabled = !lowQuality;
+            if (bloom != null)
+                bloom.active = level == GraphicsService.High;
             foreach (var camera in Camera.allCameras)
             {
                 var data = camera.GetUniversalAdditionalCameraData();

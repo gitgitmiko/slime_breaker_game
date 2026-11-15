@@ -23,6 +23,10 @@ namespace SlimeBreaker
 
         static readonly Queue<DamagePopup> Pool = new Queue<DamagePopup>(24);
         static Font font;
+        static Font builtin;
+
+        /// <summary>Display font for the numbers (set by the HUD); the built-in font is the fallback.</summary>
+        public static Font PreferredFont;
 
         TextMesh label;
         float age;
@@ -46,11 +50,13 @@ namespace SlimeBreaker
             popup.label = go.AddComponent<TextMesh>();
             popup.label.anchor = TextAnchor.MiddleCenter;
             popup.label.alignment = TextAlignment.Center;
-            popup.label.fontStyle = FontStyle.Bold;
             popup.label.characterSize = 0.08f;
             popup.label.fontSize = 48;
-            if (font == null)
-                font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+            if (builtin == null)
+                builtin = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+            font = PreferredFont != null ? PreferredFont : builtin;
+            // The display font is already heavy; only the thin built-in one needs synthetic bold.
+            popup.label.fontStyle = PreferredFont != null ? FontStyle.Normal : FontStyle.Bold;
             if (font != null)
                 popup.label.font = font;
             var renderer = go.GetComponent<MeshRenderer>();
@@ -96,6 +102,8 @@ namespace SlimeBreaker
             transform.position += velocity * Time.unscaledDeltaTime;
             velocity *= 0.96f;
             float t = Mathf.Clamp01(age / life);
+            // Pop: starts oversized and settles in the first tenth of a second.
+            transform.localScale = Vector3.one * (1f + 0.55f * Mathf.Clamp01(1f - age / 0.1f));
             var fade = color;
             fade.a = 1f - t * t;
             label.color = fade;

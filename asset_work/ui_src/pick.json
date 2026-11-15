@@ -1,0 +1,95 @@
+{
+  "logo": {
+    "file": "17bea69f-1bb8-430e-ba05-f1d7227754ef_2.jpg"
+  },
+  "skills": {
+    "file": "a7457560-a296-48ad-8462-6455abb2218f_1.jpg",
+    "merge": 14,
+    "names": [
+      "ICON_Skill_Ice",
+      "ICON_Skill_Lightning",
+      "ICON_Skill_Fire",
+      "ICON_Skill_Arcane",
+      "ICON_Skill_Breaker",
+      "ICON_PowerUp"
+    ]
+  },
+  "upgrades_a": {
+    "file": "0923d7c1-828b-4cf9-9616-140884d2ef19_2.jpg",
+    "merge": 14,
+    "names": [
+      "ICON_Upgrade_Damage",
+      "ICON_Upgrade_Speed",
+      "ICON_Upgrade_Health",
+      "ICON_Upgrade_AttackRate",
+      "ICON_Upgrade_Dash",
+      "ICON_Upgrade_Range"
+    ]
+  },
+  "upgrades_b": {
+    "file": "848c1c1f-03ef-492a-a440-f543981e9d34_1.jpg",
+    "merge": 14,
+    "names": [
+      "ICON_Upgrade_Xp",
+      "ICON_Upgrade_Armor",
+      "ICON_Upgrade_Lifesteal",
+      "ICON_Upgrade_CritRate",
+      "ICON_Upgrade_CritDamage",
+      "ICON_Coins"
+    ]
+  },
+  "items": {
+    "file": "acafdf12-56f0-4f10-abf3-8f27f0a462f3_1.jpg",
+    "merge": 14,
+    "names": [
+      "ICON_Item_Staff",
+      "ICON_Item_Hat",
+      "ICON_Item_Armor",
+      "ICON_Item_Pants",
+      "ICON_Item_Boots",
+      "ICON_Bag"
+    ]
+  },
+  "hud_a": {
+    "file": "ad0d65fb-ed23-42b9-a645-d4f455a83075_2.jpg",
+    "names": [
+      "UI_Icon_Heart",
+      "ICON_Coin",
+      "ICON_Trophy",
+      "ICON_Clock",
+      "ICON_Skull",
+      "ICON_Door",
+      "ICON_Ad",
+      "ICON_Lock"
+    ]
+  },
+  "hud_b": {
+    "file": "a338b634-bfc6-4d2e-a7d3-e8e177d76a3a_1.jpg",
+    "merge": 14,
+    "names": [
+      "UI_Icon_Gear",
+      "ICON_Home",
+      "ICON_Retry",
+      "ICON_Music",
+      "ICON_Sound",
+      "ICON_Joystick",
+      "ICON_Camera",
+      "ICON_Fps"
+    ]
+  },
+  "avatar": {
+    "file": "5f9bdf82-473b-41bf-b606-473802055349_3.jpg",
+    "zoom": 1.18,
+    "dy": 14
+  },
+  "keyart": {
+    "file": "d9dcd7c8-44c0-4d9d-9317-d85733e7a6f0_2.jpg"
+  },
+  "mascots": {
+    "file": "a7e16d0b-11e8-4cf3-8ed8-c2644713cf67_2.jpg",
+    "names": [
+      "",
+      ""
+    ]
+  }
+}

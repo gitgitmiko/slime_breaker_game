@@ -128,6 +128,8 @@ namespace SlimeBreaker
             ContinueTimeLeft = RunRules.ContinueSeconds;
             ui?.HideLevelUp();
             ui?.ShowContinue(ContinueTimeLeft, RunRules.ContinueSeconds);
+            // Polling starts a fresh load if the last one failed, so the ad has the countdown to arrive.
+            _ = ads != null && ads.RewardedAvailable;
         }
 
         /// <summary>"Game Baru": the run ends as a defeat (gold is banked) and a fresh run starts.</summary>
@@ -139,18 +141,28 @@ namespace SlimeBreaker
             Restart();
         }
 
+        public const string AdUnavailableNotice = "Iklan tidak bisa dimuat. Matikan pemblokir iklan (AdGuard dll.) atau periksa koneksi, lalu coba lagi.";
+
         /// <summary>"Lanjutkan": a full-screen ad plays; when it is closed the hero is back with full HP and every life.</summary>
         public void ContinueWithAd()
         {
             if (State != GameState.OutOfLives || WatchingAd)
                 return;
+            audioService?.Play("ui");
+            if (ads == null)
+            {
+                FinishContinue(true);
+                return;
+            }
             WatchingAd = true;
             ui?.HideContinue();
-            audioService?.Play("ui");
-            if (ads != null)
-                ads.ShowRewarded(FinishContinue);
-            else
-                FinishContinue(true);
+            if (!ads.ShowRewarded(FinishContinue))
+            {
+                // No AdMob ad (offline or blocked): no house ad, the player stays on the choice with the time left.
+                WatchingAd = false;
+                ui?.ShowContinue(ContinueTimeLeft, RunRules.ContinueSeconds);
+                ui?.ShowContinueNotice(AdUnavailableNotice);
+            }
         }
 
         void FinishContinue(bool rewarded)
@@ -168,6 +180,25 @@ namespace SlimeBreaker
             State = GameState.Playing;
             Time.timeScale = 1f;
             PersistRun();
+        }
+
+        /// <summary>Freezes a run in progress behind a full-screen ad; the pause button stays dead until <see cref="EndAdBreak"/>.</summary>
+        public void BeginAdBreak()
+        {
+            if (State != GameState.Playing)
+                return;
+            State = GameState.Paused;
+            Time.timeScale = 0f;
+            WatchingAd = true;
+        }
+
+        public void EndAdBreak()
+        {
+            if (!WatchingAd || State != GameState.Paused)
+                return;
+            WatchingAd = false;
+            State = GameState.Playing;
+            Time.timeScale = 1f;
         }
 
         public void BeginBossIntro()
@@ -255,7 +286,7 @@ namespace SlimeBreaker
 
         public void TogglePause()
         {
-            if (State == GameState.BossIntro || InventoryOpen)
+            if (State == GameState.BossIntro || InventoryOpen || WatchingAd)
                 return;
             if (State == GameState.Playing)
             {

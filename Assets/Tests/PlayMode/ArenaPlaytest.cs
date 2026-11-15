@@ -1,3 +1,4 @@
+using UnityEngine.Rendering.Universal;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -21,6 +22,8 @@ namespace SlimeBreaker.Tests
         readonly List<MeshCollider> groundColliders = new List<MeshCollider>();
 
         int originalDifficulty;
+        int originalGraphics;
+        bool originalFps60;
 
         [UnitySetUp]
         public IEnumerator LoadArena()
@@ -29,10 +32,17 @@ namespace SlimeBreaker.Tests
             var saved = SaveService.Load();
             originalDifficulty = saved.difficulty;
             saved.difficulty = (int)DifficultyLevel.Hard;
+            originalGraphics = saved.graphicsLevel;
+            saved.graphicsLevel = GraphicsService.High;
+            originalFps60 = saved.fps60;
+            saved.fps60 = true;
             SaveService.Save(saved);
+            UiPop.Instant = true;
             SceneManager.LoadScene("GameArena");
             yield return null;
             yield return null;
+            // Tests measure the arena from its middle; the walk through the south door has its own test.
+            Object.FindAnyObjectByType<StageManager>().SkipEntrance();
             previousSettings = InputSystem.settings;
             var settings = Object.Instantiate(previousSettings);
             settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
@@ -53,6 +63,8 @@ namespace SlimeBreaker.Tests
             Time.timeScale = 1f;
             var restored = SaveService.Load();
             restored.difficulty = originalDifficulty;
+            restored.graphicsLevel = originalGraphics;
+            restored.fps60 = originalFps60;
             SaveService.Save(restored);
             Difficulty.Set(DifficultyLevel.Hard);
             yield return null;
@@ -200,8 +212,10 @@ namespace SlimeBreaker.Tests
                     Assert.AreEqual("UI_Circle_Glass", button.GetComponent<Image>().sprite.name, "menu settings button is not glass");
                     Assert.IsNotNull(button.transform.Find("Icon"), "menu settings button has no gear icon");
                 }
-                if (button.name == "Continue" || button.name == "Damage")
+                if (button.name == "Damage")
                     Assert.AreEqual("UI_Button_Ghost", button.GetComponent<Image>().sprite.name, button.name + " should be a ghost button");
+                if (button.name == "Continue")
+                    Assert.AreEqual("UI_Button_Green", button.GetComponent<Image>().sprite.name, "Continue should be the green secondary button");
             }
             var showcaseAnimator = menu.showcase.GetComponentInChildren<Animator>();
             Assert.IsNotNull(showcaseAnimator, "menu hero has no Animator");
@@ -493,7 +507,7 @@ namespace SlimeBreaker.Tests
                 Assert.AreEqual("UI_Bar_Fill", bar.fillRect.GetComponent<Image>().sprite.name, bar.name + " fill is not the boss-bar style");
             }
             Assert.AreEqual("UI_Ring", ui.dashFill.sprite.name, "dash cooldown should be a ring");
-            Assert.AreEqual("UI_Circle_Glass", ui.dashFill.GetComponentInParent<Button>().GetComponent<Image>().sprite.name);
+            Assert.AreEqual("UI_Dash", ui.dashFill.GetComponentInParent<Button>().GetComponent<Image>().sprite.name);
             Assert.AreEqual("UI_Circle_Glass", ui.pauseButton.GetComponent<Image>().sprite.name);
             Assert.IsNotNull(ui.pauseButton.transform.Find("Icon"), "pause button has no icon");
             StringAssert.Contains("Lv", ui.levelText.text);
@@ -611,7 +625,7 @@ namespace SlimeBreaker.Tests
             Assert.AreEqual(60, Application.targetFrameRate, "target frame rate is not 60");
             var audio = AudioService.Instance;
             Assert.IsNotNull(audio, "GameArena has no AudioService");
-            foreach (var id in new[] { "hit", "cast", "bolthit", "enemydeath", "playerhit", "dash", "pickup", "levelup", "powerup", "powerupspawn", "freeze", "lightning", "fire", "arcane", "bosswarn", "slam", "ui", "portal" })
+            foreach (var id in new[] { "hit", "cast", "bolthit", "enemydeath", "playerhit", "dash", "pickup", "levelup", "powerup", "powerupspawn", "freeze", "lightning", "fire", "arcane", "bosswarn", "slam", "ui", "portal", "door", "rangedhit" })
                 Assert.IsTrue(audio.Has(id), "AudioService has no clip for '" + id + "'");
             Assert.IsNotNull(audio.music, "GameArena has no music clip");
             Assert.AreEqual(10, audio.biomeMusic != null ? audio.biomeMusic.Length : 0, "AudioService needs one music track per biome");
@@ -672,10 +686,24 @@ namespace SlimeBreaker.Tests
             }
             yield return null;
             Assert.AreEqual(0, PowerUpPickup.Active.Count, "a power-up spawned before level 20");
+            var ads = flow.ads;
+            ads.adSeconds = 0.5f;
+            int adsBefore = ads.Shown;
             flow.BeginLevelUp();
             flow.ChooseUpgrade(0);
             yield return null;
             yield return null;
+            Assert.AreEqual(adsBefore + 1, ads.Shown, "a power-up appearing plays an ad");
+            Assert.IsTrue(ads.IsShowing);
+            Assert.AreEqual(0, PowerUpPickup.Active.Count, "the crystal must wait until the ad is closed");
+            Assert.AreEqual(0f, Time.timeScale, "the arena stays frozen behind the ad");
+            flow.TogglePause();
+            Assert.IsTrue(flow.WatchingAd, "pause must not resume the run behind the ad");
+            Assert.AreEqual(0f, Time.timeScale);
+            yield return CloseAd(ads);
+            Assert.AreEqual(GameState.Playing, flow.State, "closing the ad resumes the run");
+            Assert.AreEqual(1f, Time.timeScale);
+            Assert.AreEqual(adsBefore + 1, ads.Shown, "only one ad per power-up");
             Assert.AreEqual(20, flow.Stats.level);
             Assert.AreEqual(1, stage.Floor, "power-ups follow hero level, not floor");
             Assert.IsFalse(stage.Intermission, "level 20 is a power-up beat, not a boss stage");
@@ -706,9 +734,39 @@ namespace SlimeBreaker.Tests
             flow.ChooseUpgrade(0);
             yield return null;
             yield return null;
+            Assert.AreEqual(adsBefore + 2, ads.Shown, "the next power-up plays its own ad");
+            yield return CloseAd(ads);
             Assert.AreEqual(1, PowerUpPickup.Active.Count, "no power-up at level 40");
             Assert.AreEqual(BossKind.None, stage.ActiveBoss, "hero level 40 must not spawn a floor boss");
             Assert.AreEqual(1, stage.Floor);
+        }
+
+        static IEnumerator CloseAd(AdService ads)
+        {
+            while (!ads.CanClose)
+                yield return null;
+            ads.Close();
+            yield return null;
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator NoAdWhenThereIsNoPowerUpToGive()
+        {
+            var flow = GameFlowController.Instance;
+            var spawner = Object.FindAnyObjectByType<PowerUpSpawner>();
+            spawner.skills = new SkillDefinition[0];
+            int shown = flow.ads.Shown;
+            while (flow.Stats.level < 20)
+            {
+                flow.BeginLevelUp();
+                flow.ChooseUpgrade(0);
+            }
+            yield return null;
+            yield return null;
+            Assert.AreEqual(shown, flow.ads.Shown, "every skill at MAX: no crystal, so no ad");
+            Assert.AreEqual(0, PowerUpPickup.Active.Count);
+            Assert.AreEqual(GameState.Playing, flow.State);
         }
 
         [UnityTest]
@@ -1214,7 +1272,7 @@ namespace SlimeBreaker.Tests
                 wait += Time.unscaledDeltaTime;
             }
             Assert.AreEqual(2, stage.Floor, "entering the portal should move to lantai 2");
-            yield return Hold(0.8f);
+            yield return Hold(1.8f);
             Assert.IsFalse(stage.FloorCleared);
             Assert.IsNull(ExitPortal.Active, "leftover slimes must not open the next floor immediately");
             spawner.Paused = true;
@@ -1233,6 +1291,101 @@ namespace SlimeBreaker.Tests
             Assert.AreEqual(Biome.Forest, stage.Theme.biome, "floors 1-10 stay on the grass biome");
             Assert.AreNotEqual(firstTheme.weather, stage.Theme.weather, "weather should change between floors");
             Assert.AreNotEqual(firstTheme.seed, stage.Theme.seed, "layout seed should change every floor");
+        }
+
+        [UnityTest]
+        public IEnumerator NewRunStartsWithHeroWalkingInFromSouthDoor()
+        {
+            RunSaveService.Clear();
+            SceneManager.LoadScene("GameArena");
+            yield return null;
+            yield return null;
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            var spawner = Object.FindAnyObjectByType<EnemySpawner>();
+            var hero = PlayerHealth.Instance;
+            Assert.Less(hero.transform.position.z, -20f, "the hero starts in the south door");
+            Assert.IsTrue(stage.entryDoor.IsOpen);
+            Assert.IsTrue(spawner.Paused, "no slimes while the hero walks in");
+            yield return Hold(0.4f);
+            Capture("33_new_run_entrance");
+            yield return Hold(1.4f);
+            Assert.AreEqual(-19.5f, hero.transform.position.z, 0.4f);
+            Assert.IsFalse(stage.entryDoor.IsOpen, "the south door shuts behind the hero");
+            Assert.IsFalse(spawner.Paused, "slimes start once the hero is in");
+        }
+
+        [UnityTest]
+        public IEnumerator DoorsLeadHeroThroughFloorsAndBossFloorPlaysAd()
+        {
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            var spawner = Object.FindAnyObjectByType<EnemySpawner>();
+            var hero = PlayerHealth.Instance;
+            Assert.IsNotNull(stage.entryDoor, "StageManager has no south door");
+            Assert.IsNotNull(stage.exitDoor, "StageManager has no north door");
+            stage.ForceFloor(1);
+            Assert.IsFalse(stage.exitDoor.IsOpen, "the north door stays shut until the floor is cleared");
+            hero.transform.position = new Vector3(0f, 0f, 19f);
+            spawner.Paused = true;
+            XPOrb.Spawn(spawner.normalPrefab.GetComponent<EnemyHealth>().xpOrbPrefab, hero.transform.position + new Vector3(1.6f, 0.5f, 1.6f), 1);
+            yield return Hold(0.5f);
+            Capture("30_doors_closed");
+            KillSlimes(spawner, RunRules.KillQuota(1));
+            yield return null;
+            Assert.IsTrue(stage.exitDoor.IsOpen, "clearing the quota should open the north door");
+            Assert.Greater(ExitPortal.Active.transform.position.z, 20f, "the way out must be at the north door");
+            yield return Hold(1.2f);
+            hero.transform.position = new Vector3(0f, 0f, 19f);
+            yield return Hold(0.6f);
+            Capture("31_door_open");
+            hero.transform.position = new Vector3(0f, 0f, 21.5f);
+            float wait = 0f;
+            while (stage.Floor < 2 && wait < 3f)
+            {
+                yield return null;
+                wait += Time.unscaledDeltaTime;
+            }
+            Assert.AreEqual(2, stage.Floor, "walking into the north door should advance the floor");
+            yield return null;
+            Assert.Less(hero.transform.position.z, -18f, "the next floor starts at the south door");
+            Assert.IsTrue(stage.entryDoor.IsOpen, "the south door is open while the hero walks in");
+            yield return Hold(0.4f);
+            Capture("32_hero_entering");
+            yield return Hold(0.5f);
+            Capture("34_hero_past_door");
+            yield return Hold(0.7f);
+            Assert.IsFalse(stage.entryDoor.IsOpen, "the south door shuts behind the hero");
+            Assert.AreEqual(-19.5f, hero.transform.position.z, 0.4f);
+
+            stage.ForceFloor(9);
+            spawner.Paused = true;
+            KillSlimes(spawner, RunRules.KillQuota(9));
+            yield return null;
+            var ads = GameFlowController.Instance.ads;
+            int shown = ads.Shown;
+            ExitPortal.Active.Enter();
+            wait = 0f;
+            while (stage.Floor < 10 && wait < 3f)
+            {
+                yield return null;
+                wait += Time.unscaledDeltaTime;
+            }
+            yield return null;
+            Assert.AreEqual(shown + 1, ads.Shown, "entering a boss floor plays an ad");
+            Assert.IsTrue(ads.IsShowing);
+            yield return new WaitForSecondsRealtime(1f);
+            Assert.AreEqual(BossKind.None, stage.ActiveBoss, "the boss must not appear before the ad is exited");
+            Assert.IsFalse(ads.CanClose, "the countdown is still running");
+            while (!ads.CanClose)
+                yield return null;
+            ads.Close();
+            wait = 0f;
+            while (stage.ActiveBoss == BossKind.None && wait < 5f)
+            {
+                yield return null;
+                wait += Time.unscaledDeltaTime;
+            }
+            Assert.AreNotEqual(BossKind.None, stage.ActiveBoss, "the boss appears once the ad is closed");
+            Assert.AreEqual(shown + 1, ads.Shown, "only one ad per boss floor");
         }
 
         [UnityTest]
@@ -2149,6 +2302,92 @@ namespace SlimeBreaker.Tests
             Capture("16_damage_numbers");
         }
 
+        /// <summary>Scene load from the gameplay camera, counted from the meshes themselves (GPU counters are empty in batch mode).</summary>
+        static void MeasureView(out int triangles, out int casters, out int renderers)
+        {
+            triangles = casters = renderers = 0;
+            var planes = GeometryUtility.CalculateFrustumPlanes(Camera.main);
+            foreach (var renderer in Object.FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None))
+            {
+                if (!renderer.enabled || !GeometryUtility.TestPlanesAABB(planes, renderer.bounds))
+                    continue;
+                var filter = renderer.GetComponent<MeshFilter>();
+                if (filter == null || filter.sharedMesh == null)
+                    continue;
+                renderers++;
+                if (renderer.shadowCastingMode != UnityEngine.Rendering.ShadowCastingMode.Off)
+                    casters++;
+                int first = renderer.subMeshStartIndex;
+                int count = Mathf.Min(renderer.sharedMaterials.Length, filter.sharedMesh.subMeshCount - first);
+                for (int i = 0; i < count; i++)
+                    triangles += (int)filter.sharedMesh.GetIndexCount(first + i) / 3;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator GraphicsPresetsChangeWhatIsRendered()
+        {
+            var stage = Object.FindAnyObjectByType<StageManager>();
+            var graphics = Object.FindAnyObjectByType<GraphicsService>();
+            var generator = Object.FindAnyObjectByType<ArenaGenerator>();
+            QuietArena();
+            stage.ForceFloor(1);
+            PlayerHealth.Instance.GiveInvulnerability(600f);
+            int[] triangles = new int[3];
+            int[] trees = new int[3];
+            string[] names = { "low", "medium", "high" };
+            for (int level = 0; level < 3; level++)
+            {
+                graphics.Apply(level, persist: false);
+                yield return null;
+                yield return null;
+                yield return Hold(0.3f);
+                MeasureView(out triangles[level], out int casters, out int renderers);
+                foreach (var t in generator.Root.GetComponentsInChildren<Transform>())
+                {
+                    if (t.parent == generator.Root && t.name.StartsWith("ENV_Forest_Tree"))
+                        trees[level]++;
+                }
+                var pipeline = (UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset)QualitySettings.renderPipeline;
+                Debug.Log("PLAYTEST graphics " + names[level] + " fps=" + Application.targetFrameRate + " trees=" + trees[level]
+                    + " viewTris=" + triangles[level] + " viewRenderers=" + renderers + " shadowCasters=" + casters
+                    + " msaa=" + pipeline.msaaSampleCount + " shadowDist=" + pipeline.shadowDistance + " shadowMap=" + pipeline.mainLightShadowmapResolution
+                    + " hdr=" + pipeline.supportsHDR + " post=" + Camera.main.GetUniversalAdditionalCameraData().renderPostProcessing);
+                Capture("50_graphics_" + names[level]);
+                Assert.AreEqual(60, Application.targetFrameRate, "the graphics level must not touch the frame cap");
+                Assert.AreEqual(level, QualitySettings.GetQualityLevel(), "each preset is its own quality level");
+            }
+            Assert.Less(trees[0], trees[1], "Low holds fewer trees than Medium");
+            Assert.Less(trees[1], trees[2], "Medium holds fewer trees than High");
+            Assert.Less(triangles[0], triangles[1], "Low draws less than Medium");
+            Assert.Less(triangles[1], triangles[2], "Medium draws less than High");
+        }
+
+        [UnityTest]
+        public IEnumerator FpsToggleIsIndependentOfTheGraphicsLevel()
+        {
+            yield return null;
+            var graphics = Object.FindAnyObjectByType<GraphicsService>();
+            var panel = GameFlowController.Instance.ui.settings;
+            Assert.IsNotNull(panel.fpsButton, "settings need an FPS toggle");
+            graphics.Apply(GraphicsService.Low, persist: false);
+            panel.Show();
+            yield return null;
+            Assert.AreEqual("FPS: 60", panel.fpsLabel.text);
+            Assert.AreEqual(60, Application.targetFrameRate, "Low can run at 60");
+            Capture("51_settings_fps");
+            panel.fpsButton.onClick.Invoke();
+            Assert.AreEqual("FPS: 30", panel.fpsLabel.text);
+            Assert.AreEqual(30, Application.targetFrameRate);
+            Assert.AreEqual(GraphicsService.Low, graphics.Level, "the toggle leaves the graphics level alone");
+            Assert.IsFalse(SaveService.Load().fps60, "the choice is saved");
+            graphics.Apply(GraphicsService.High, persist: false);
+            Assert.AreEqual(30, Application.targetFrameRate, "High can run at 30");
+            panel.fpsButton.onClick.Invoke();
+            Assert.AreEqual(60, Application.targetFrameRate);
+            Assert.IsTrue(SaveService.Load().fps60);
+        }
+
         [UnityTest]
         public IEnumerator GraphicsPresetsApply()
         {
@@ -2287,9 +2526,17 @@ namespace SlimeBreaker.Tests
 
         class FakeAdProvider : AdService.IProvider
         {
+            public bool interstitialReady;
+            public bool IsInterstitialReady => interstitialReady;
+            public bool InterstitialSkippable { get; set; }
+            public int retries;
+            public void RetryInterstitial() => retries++;
+            public int interstitials;
+            public void ShowInterstitial(System.Action closed) { interstitials++; closed?.Invoke(); }
             public bool reward;
             public int shown;
-            public bool IsReady => true;
+            public bool ready = true;
+            public bool IsReady => ready;
 
             public void Show(System.Action<bool> closed)
             {
@@ -2332,6 +2579,68 @@ namespace SlimeBreaker.Tests
                 Assert.AreEqual(GameState.Playing, flow.State, "earned reward should continue the run");
                 Assert.AreEqual(RunRules.HeroLives, hero.Lives);
                 Assert.AreEqual(hero.Max, hero.Current);
+            }
+            finally
+            {
+                AdService.Provider = previous;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator BlockedAdMobRefusesTheContinueAndHoldsInterstitials()
+        {
+            yield return null;
+            QuietArena();
+            var flow = GameFlowController.Instance;
+            var hero = PlayerHealth.Instance;
+            var fake = new FakeAdProvider { reward = true, ready = false };
+            var previous = AdService.Provider;
+            AdService.Provider = fake;
+            try
+            {
+                yield return SpendAllLives(hero);
+                Assert.AreEqual(GameState.OutOfLives, flow.State);
+                Assert.AreEqual(UIController.ContinueHintDefault, flow.ui.ContinueHintText);
+                flow.ContinueWithAd();
+                yield return null;
+                Assert.AreEqual(0, fake.shown);
+                Assert.IsFalse(AdService.Instance.IsShowing, "a blocked AdMob ad must not fall back to the house ad");
+                Assert.AreEqual(GameState.OutOfLives, flow.State, "no ad, no continue");
+                Assert.IsTrue(hero.IsDead);
+                Assert.IsFalse(flow.WatchingAd);
+                Assert.IsTrue(flow.ui.ContinueVisible);
+                Assert.AreEqual(GameFlowController.AdUnavailableNotice, flow.ui.ContinueHintText);
+
+                var ads = AdService.Instance;
+                bool interstitialClosed = false;
+                ads.ShowInterstitial(() => interstitialClosed = true);
+                yield return new WaitForSecondsRealtime(ads.blockedDelay + 0.3f);
+                Assert.IsFalse(interstitialClosed, "a blocked interstitial must hold the game");
+                Assert.IsTrue(ads.WaitingForInterstitial);
+                Assert.IsTrue(ads.BlockedVisible, "the blocked screen should tell the player to turn off the ad blocker");
+                yield return new WaitForSecondsRealtime(0.4f);
+                Capture("ad_blocked");
+                Assert.IsFalse(ads.IsShowing, "a blocked interstitial must not fall back to the house ad");
+                ads.retryButton.onClick.Invoke();
+                Assert.AreEqual(1, fake.retries);
+                fake.interstitialReady = true;
+                yield return null;
+                yield return null;
+                Assert.IsTrue(interstitialClosed, "the interstitial plays once AdMob is reachable");
+                Assert.AreEqual(1, fake.interstitials);
+                Assert.IsFalse(ads.BlockedVisible);
+
+                fake.interstitialReady = false;
+                fake.InterstitialSkippable = true;
+                interstitialClosed = false;
+                ads.ShowInterstitial(() => interstitialClosed = true);
+                Assert.IsTrue(interstitialClosed, "no fill from AdMob skips the interstitial");
+
+                fake.ready = true;
+                flow.ContinueWithAd();
+                yield return null;
+                Assert.AreEqual(1, fake.shown);
+                Assert.AreEqual(GameState.Playing, flow.State, "once AdMob is reachable the continue works");
             }
             finally
             {

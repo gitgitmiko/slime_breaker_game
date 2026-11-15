@@ -16,6 +16,8 @@ Hero punya **3 nyawa** per run (hati merah di bawah pil Lv; nyawa terpakai jadi 
 - **Lanjutkan** — iklan layar penuh tampil (audio game dijeda, hitung mundur panel berhenti). Tombol tutup (X) baru muncul setelah 5 detik; setelah ditutup hero bangkit dengan HP penuh dan 3 nyawa lagi, lantai/level/item tetap.
 - Hitung mundur habis tanpa pilihan → layar hasil **Kalah** seperti biasa.
 
+Iklan interstitial tampil saat masuk lantai boss dan setiap power-up muncul. Untuk power-up, arena beku dan kristal baru jatuh setelah iklan ditutup (tepat setelah kartu level-up dipilih); kalau semua skill sudah MAX tidak ada kristal, jadi tidak ada iklan.
+
 Nyawa ikut tersimpan di run-save (`RunSave.lives`; save lama = 3). Belum ada SDK jaringan iklan di proyek, jadi `AdService` menampilkan iklan internal (house ad) layar penuh; SDK seperti AdMob bisa dipasang lewat `AdService.Provider` tanpa mengubah alur. Keluar di tengah run menyimpan progres ke `slimebreaker-run.json`; tombol **Lanjutkan** di menu memulihkan lantai, level, skill, HP, dan EXP.
 
 Hero adalah penyihir chibi bertopi raksasa dengan rambut bob pirang-merah muda (lihat `docs/art_direction.md`). Serangan dasar dianimasikan sebagai pukulan tongkat; bolt sihir lepas tepat saat tongkat menghantam. Mengambil power-up atau Boss Breaker memutar animasi Cast; mengalahkan boss memutar Victory. Menu utama menampilkan hero dengan animasi Menu (melambai, memutar tongkat) yang berayun pelan menghadap kamera.

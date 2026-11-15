@@ -215,8 +215,13 @@
 - Persiapan Google Play: ikon aplikasi, target API 36, AAB bertanda tangan upload key, aset store (ikon 512, feature graphic, 8 screenshot), kebijakan privasi, panduan `docs/play_store.md`. APK/AAB 0.30.1.
 - AdMob Rewarded di tombol Lanjutkan (`AdMobProvider`, consent UMP, house ad sebagai cadangan); APK sideload = iklan uji, AAB Play = iklan asli. APK/AAB 0.31.0.
 - Nama game jadi **Dumpling Witch** (judul menu, house ad, nama aplikasi, feature graphic, teks store, kebijakan privasi); paket `com.gitgitmiko.dumplingwitch`. APK/AAB 0.32.0.
+- Iklan interstitial setiap power-up muncul (arena beku, kristal jatuh setelah iklan ditutup; tanpa iklan kalau semua skill MAX). APK/AAB 0.35.0.
 
 ## Berikutnya
 
 - Uji pasang di perangkat Android ARM64 (Android 7.1+) dan cek frame rate di perangkat kelas menengah.
 - Kalau hero masih kurang "anime", langkah lanjut: tekstur wajah hand-painted dan shader toon ramp (`asset_work/scripts/build_assets.py` → `build_hero`).
+- UI modern "candy arcade" (kit prosedural + seni gflow: logo, ikon, avatar, key art; font Lilita One/Nunito; menu lobi; animasi pop/tekan). 0.36.0.
+- Hero 3D dibuat lebih mirip art 2D (kepala 1,42×, rambut, pipi, kilau mata, outline inverted hull). 0.37.0.
+- Slime dan boss diberi outline inverted hull seperti hero; shader `SlimeBreaker/Outline`. 0.38.0.
+- Ikon aplikasi, ikon 512, feature graphic dari art 2D gflow; 8 screenshot toko baru. 0.38.1.

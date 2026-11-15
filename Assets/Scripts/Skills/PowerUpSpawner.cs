@@ -15,6 +15,9 @@ namespace SlimeBreaker
 
         public int SpawnedTiers { get; private set; }
 
+        /// <summary>False once every skill is at MAX, or when there is no prefab to drop.</summary>
+        public bool CanSpawn => pickupPrefab != null && Choose() != null;
+
         public PowerUpPickup Spawn()
         {
             var definition = Choose();

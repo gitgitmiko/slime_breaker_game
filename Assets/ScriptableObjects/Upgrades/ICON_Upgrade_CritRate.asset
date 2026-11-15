@@ -16,4 +16,4 @@ MonoBehaviour:
   title: Crit Rate
   description: +8% critical chance
   amount: 0.08
-  icon: {fileID: 21300000, guid: 9630c6068027aeb888f1e266a1f41cbb, type: 3}
+  icon: {fileID: 21300000, guid: de46cf9f120984e6eb706486ed26d156, type: 3}

@@ -12,6 +12,12 @@ namespace SlimeBreaker.Tests
             Assert.AreEqual(999, RunRules.MaxHeroLevel);
             Assert.AreEqual(100, RunRules.MaxFloor);
             Assert.AreEqual(20, RunRules.PowerUpEvery);
+            Assert.AreEqual(5, Difficulty.For(DifficultyLevel.Easy).powerUpEvery);
+            Assert.AreEqual(10, Difficulty.For(DifficultyLevel.Normal).powerUpEvery);
+            Assert.AreEqual(20, Difficulty.For(DifficultyLevel.Hard).powerUpEvery);
+            Assert.AreEqual(30, GraphicsService.FpsFor(new SaveData()));
+            Assert.AreEqual(2f / 3f, GraphicsService.For(GraphicsService.Low).RenderScale(1080f, 0.55f), 0.001f);
+            Assert.AreEqual(1f, GraphicsService.For(GraphicsService.High).RenderScale(720f, 0.55f), 0.001f);
             Assert.AreEqual(10, RunRules.BossEvery);
         }
 

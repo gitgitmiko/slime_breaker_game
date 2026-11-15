@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace SlimeBreaker
 {
-    /// <summary>Glowing gate that appears after an arena is cleared; walking into it moves the run to the next arena.</summary>
+    /// <summary>Glowing curtain in the open north door after an arena is cleared; walking into it moves the run to the next floor.</summary>
     public class ExitPortal : MonoBehaviour
     {
         public static ExitPortal Active { get; private set; }
@@ -10,7 +10,7 @@ namespace SlimeBreaker
         public Transform frame;
         public Transform core;
         public Light glow;
-        public float enterRadius = 1.35f;
+        public float enterRadius = 1.5f;
         public float spin = 40f;
         public Color color = new Color(0.3f, 0.9f, 1f);
 
@@ -35,14 +35,6 @@ namespace SlimeBreaker
             frameScale = frame != null ? frame.localScale : Vector3.one;
             block = new MaterialPropertyBlock();
             Tint();
-            var hero = PlayerHealth.Instance;
-            if (hero != null)
-            {
-                Vector3 to = hero.transform.position - transform.position;
-                to.y = 0f;
-                if (to.sqrMagnitude > 0.01f)
-                    transform.rotation = Quaternion.LookRotation(to.normalized, Vector3.up);
-            }
         }
 
         void Tint()

@@ -851,20 +851,20 @@ def icons():
 def main():
     import sys
     # Audio is now produced by build_audio_hd.py; the old synth SFX/MIDI only run with "legacy-audio".
+    # UI sprites now come from build_ui_modern.py (chunky kit + gflow art). The glass kit painted by
+    # panels() / modern_ui() / icons() below is kept only as reference and is no longer written.
+    import build_ui_modern
     if len(sys.argv) <= 1 or sys.argv[1] != "legacy-audio":
-        # UI sprites only; leaves audio untouched.
-        panels()
-        modern_ui()
-        icons()
+        build_ui_modern.frames()
+        build_ui_modern.art()
         print("AUDIO_UI_OK", flush=True)
         return
     os.makedirs(TMP, exist_ok=True)
     build_sfx()
     arena_music()
     menu_music()
-    panels()
-    modern_ui()
-    icons()
+    build_ui_modern.frames()
+    build_ui_modern.art()
     print("AUDIO_UI_OK", flush=True)
 
 

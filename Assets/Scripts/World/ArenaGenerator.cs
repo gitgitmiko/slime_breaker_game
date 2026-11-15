@@ -603,6 +603,7 @@ namespace SlimeBreaker
         /// <summary>Scatters big trees at random spots (they keep clear of the spawn point, the four lanes and other props).</summary>
         void Trees(GameObject prefab, int count, float minScale, float maxScale, System.Random rng)
         {
+            count = Mathf.CeilToInt(count * GraphicsService.Current.treeDensity);
             if (prefab == null || count <= 0)
                 return;
             int placed = 0;
@@ -627,6 +628,7 @@ namespace SlimeBreaker
         {
             if (prefab == null)
                 return;
+            count = Mathf.CeilToInt(count * GraphicsService.Current.propDensity);
             for (int i = 0; i < count; i++)
             {
                 float angle = (i + 0.5f) * Mathf.PI * 2f / count + (float)(rng.NextDouble() - 0.5) * jitter;
@@ -653,6 +655,7 @@ namespace SlimeBreaker
         {
             if (prefab == null)
                 return;
+            count = Mathf.CeilToInt(count * GraphicsService.Current.scatterDensity);
             for (int i = 0; i < count; i++)
             {
                 float angle = (float)rng.NextDouble() * Mathf.PI * 2f;
@@ -802,7 +805,7 @@ namespace SlimeBreaker
             if (allowed.Count == 0)
                 return;
 
-            int wanted = rng.Next(minObstacles, maxObstacles + 1);
+            int wanted = Mathf.CeilToInt(rng.Next(minObstacles, maxObstacles + 1) * GraphicsService.Current.propDensity);
             int placed = 0;
             for (int attempt = 0; attempt < wanted * 14 && placed < wanted; attempt++)
             {
@@ -974,8 +977,22 @@ namespace SlimeBreaker
                 instance.name = rig.name;
                 if (instance.GetComponent<WeatherRig>() == null)
                     instance.AddComponent<WeatherRig>();
+                ThinParticles(instance, GraphicsService.Current.weatherDensity);
             }
             SpawnMist(theme);
+        }
+
+        static void ThinParticles(GameObject rig, float density)
+        {
+            if (density >= 0.999f)
+                return;
+            foreach (var particles in rig.GetComponentsInChildren<ParticleSystem>())
+            {
+                var emission = particles.emission;
+                emission.rateOverTimeMultiplier *= density;
+                var main = particles.main;
+                main.maxParticles = Mathf.Max(1, Mathf.CeilToInt(main.maxParticles * density));
+            }
         }
 
         public bool HasMist { get; private set; }
@@ -984,7 +1001,7 @@ namespace SlimeBreaker
         void SpawnMist(ArenaTheme theme)
         {
             HasMist = false;
-            if (mistRig == null)
+            if (mistRig == null || !GraphicsService.Current.mist)
                 return;
             bool damp = theme.biome == Biome.Swamp || theme.biome == Biome.Storm || theme.biome == Biome.Shadow
                 || theme.weather == Weather.Rain || (theme.IsNight && theme.biome == Biome.Forest);

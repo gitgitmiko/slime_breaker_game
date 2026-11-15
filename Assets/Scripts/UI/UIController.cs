@@ -34,6 +34,7 @@ namespace SlimeBreaker
         public GameObject continuePanel;
         public Text continueCountdown;
         public Image continueRing;
+        public Text continueHint;
         public Text resultTitle;
         public Text resultBody;
         public Button pauseButton;
@@ -85,11 +86,20 @@ namespace SlimeBreaker
 
         static readonly Color MaxLevelColor = new Color(1f, 0.82f, 0.25f);
 
+        /// <summary>Display font handed to the world-space damage numbers.</summary>
+        public Font popupFont;
+
         PlayerHealth health;
         DashController dash;
         SkillController skills;
         float toastTimer;
         float bossWarningTimer;
+
+        void Awake()
+        {
+            if (popupFont != null)
+                DamagePopup.PreferredFont = popupFont;
+        }
 
         void Start()
         {
@@ -142,14 +152,15 @@ namespace SlimeBreaker
                 skills.Changed -= RefreshSkills;
         }
 
-        static readonly Color LifeColor = new Color(1f, 0.32f, 0.42f);
-        static readonly Color SpentLifeColor = new Color(0.3f, 0.3f, 0.38f, 0.75f);
+        static readonly Color LifeColor = Color.white;
+        static readonly Color LifeToastColor = new Color(1f, 0.32f, 0.42f);
+        static readonly Color SpentLifeColor = new Color(0.22f, 0.18f, 0.34f, 0.8f);
 
         void OnLifeLost()
         {
             if (health == null)
                 return;
-            ShowToast("Nyawa berkurang!  Sisa " + health.Lives, LifeColor);
+            ShowToast("Nyawa berkurang!  Sisa " + health.Lives, LifeToastColor);
         }
 
         public bool ContinueVisible => continuePanel != null && continuePanel.activeSelf;
@@ -157,9 +168,28 @@ namespace SlimeBreaker
 
         public void ShowContinue(float secondsLeft, float total)
         {
+            bool wasVisible = ContinueVisible;
             if (continuePanel != null)
                 continuePanel.SetActive(true);
+            if (!wasVisible)
+                ShowContinueNotice(null);
             SetContinueCountdown(secondsLeft, total);
+        }
+
+        public const string ContinueHintDefault = "Lanjutkan dengan HP penuh dan 3 nyawa setelah menonton iklan";
+        static readonly Color ContinueHintColor = new Color(0.9f, 0.88f, 0.98f);
+        static readonly Color ContinueNoticeColor = new Color(1f, 0.55f, 0.5f);
+
+        public string ContinueHintText => continueHint != null ? continueHint.text : string.Empty;
+
+        /// <summary>Replaces the hint under the ring with a warning (null restores the normal hint).</summary>
+        public void ShowContinueNotice(string message)
+        {
+            if (continueHint == null)
+                return;
+            bool notice = !string.IsNullOrEmpty(message);
+            continueHint.text = notice ? message : ContinueHintDefault;
+            continueHint.color = notice ? ContinueNoticeColor : ContinueHintColor;
         }
 
         public void HideContinue()
@@ -522,7 +552,7 @@ namespace SlimeBreaker
                 var offer = choices[i];
                 Color tint = UpgradeRarities.Color(offer.rarity);
                 // Card body takes the rarity colour (green / blue / purple / orange), title and tag stay readable.
-                choiceLabels[i].text = offer.Title + "\n<size=22>" + offer.Description + "</size>";
+                choiceLabels[i].text = offer.Title + "\n<size=26>" + offer.Description + "</size>";
                 if (choiceRarityLabels != null && i < choiceRarityLabels.Length && choiceRarityLabels[i] != null)
                 {
                     choiceRarityLabels[i].text = UpgradeRarities.Name(offer.rarity);
@@ -531,7 +561,7 @@ namespace SlimeBreaker
                 if (choiceRarityBands != null && i < choiceRarityBands.Length && choiceRarityBands[i] != null)
                     choiceRarityBands[i].color = tint;
                 if (choiceRarityFills != null && i < choiceRarityFills.Length && choiceRarityFills[i] != null)
-                    choiceRarityFills[i].color = new Color(tint.r, tint.g, tint.b, 0.42f);
+                    choiceRarityFills[i].color = new Color(tint.r, tint.g, tint.b, 1f);
                 if (choiceIcons != null && i < choiceIcons.Length && choiceIcons[i] != null)
                 {
                     choiceIcons[i].sprite = offer.definition.icon;
@@ -716,7 +746,6 @@ namespace SlimeBreaker
                     bool max = definition != null && definition.IsMax(skill.level);
                     skillLevels[i].text = max ? "MAX" : "Lv " + skill.level;
                     skillLevels[i].color = max ? MaxLevelColor : Color.white;
-                    skillLevels[i].fontStyle = max ? FontStyle.Bold : FontStyle.Normal;
                 }
                 if (skillFrames != null && i < skillFrames.Length && skillFrames[i] != null && definition != null)
                     skillFrames[i].color = Color.Lerp(definition.color, Color.white, 0.25f);

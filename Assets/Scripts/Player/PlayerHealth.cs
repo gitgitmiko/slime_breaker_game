@@ -138,7 +138,7 @@ namespace SlimeBreaker
             chillUntil = Mathf.Max(chillUntil, Time.time + seconds);
         }
 
-        public void TakeDamage(int amount)
+        public void TakeDamage(int amount, string hitSound = "playerhit")
         {
             if (IsInvulnerable || amount <= 0)
                 return;
@@ -150,7 +150,7 @@ namespace SlimeBreaker
             Changed?.Invoke();
             if (animator != null)
                 animator.SetTrigger("Hit");
-            AudioService.Instance?.Play("playerhit");
+            AudioService.Instance?.Play(hitSound);
             VfxPlayer.Instance?.Play("playerhit", transform.position + Vector3.up * 0.8f);
             var camera = Camera.main != null ? Camera.main.GetComponent<FollowCamera>() : null;
             if (camera != null)

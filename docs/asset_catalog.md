@@ -1,6 +1,6 @@
 # Katalog aset
 
-Sumber geometri: Blender 5.2.2, skrip `asset_work/scripts/build_assets.py`. Tekstur: `asset_work/scripts/build_textures.py` (numpy + Pillow). Audio dan UI: `asset_work/scripts/build_audio_ui.py`. Angka poligon dihitung di Blender sebelum ekspor dan tersimpan di `asset_work/output/catalog.json`. `ProjectSetup.BuildAll` menyalin `asset_work/output` ke `Assets/Art` dan `Assets/Audio`.
+Sumber geometri: Blender 5.2.2, skrip `asset_work/scripts/build_assets.py`. Tekstur: `asset_work/scripts/build_textures.py` (numpy + Pillow). Audio lama: `asset_work/scripts/build_audio_ui.py`; UI: `asset_work/scripts/build_ui_modern.py` (+ lembar gflow di `asset_work/ui_src`). Angka poligon dihitung di Blender sebelum ekspor dan tersimpan di `asset_work/output/catalog.json`. `ProjectSetup.BuildAll` menyalin `asset_work/output` ke `Assets/Art` dan `Assets/Audio`.
 
 ## Karakter
 

@@ -5,9 +5,11 @@ using UnityEngine.UI;
 namespace SlimeBreaker
 {
     /// <summary>
-    /// Full-screen rewarded ad played before a continue. On Android AdMobProvider serves AdMob;
-    /// when no ad is loaded (offline, no fill, editor) a built-in house ad covers the whole screen (audio paused)
-    /// and can be closed after <see cref="adSeconds"/>.
+    /// Full-screen ads: rewarded before a continue, interstitial on entering a boss floor. On Android AdMobProvider serves AdMob.
+    /// A continue needs a real rewarded ad: when AdMob has none loaded (offline, ad blocker, no fill) the continue is refused.
+    /// An interstitial that is blocked (ad blocker, offline) holds the game behind <see cref="blockedGroup"/> until it loads and plays;
+    /// only AdMob having no ad to give (no fill) skips it. The built-in house ad (audio paused, closable after <see cref="adSeconds"/>)
+    /// only stands in where no provider exists (editor, tests).
     /// </summary>
     public class AdService : MonoBehaviour
     {
@@ -16,6 +18,11 @@ namespace SlimeBreaker
             bool IsReady { get; }
             /// <summary>Shows the ad; <c>closed(true)</c> only when the reward was earned.</summary>
             void Show(Action<bool> closed);
+            bool IsInterstitialReady { get; }
+            /// <summary>True when the interstitial is missing for a reason that is not the player's (AdMob no fill, consent refused).</summary>
+            bool InterstitialSkippable { get; }
+            void RetryInterstitial();
+            void ShowInterstitial(Action closed);
         }
 
         public static AdService Instance { get; private set; }
@@ -28,20 +35,32 @@ namespace SlimeBreaker
         public Image countdownRing;
         public RectTransform art;
         public float adSeconds = 5f;
+        public CanvasGroup blockedGroup;
+        public Button retryButton;
+        /// <summary>Waiting this long (unscaled) for an interstitial brings up the blocked screen; a quick load shows nothing.</summary>
+        public float blockedDelay = 1f;
 
         public bool IsShowing { get; private set; }
         public float Remaining { get; private set; }
         public bool CanClose => IsShowing && Remaining <= 0f;
         public int Shown { get; private set; }
+        /// <summary>An interstitial is due but AdMob has none: the game stays frozen until it arrives.</summary>
+        public bool WaitingForInterstitial => pendingInterstitial != null;
+        public bool BlockedVisible => blockedGroup != null && blockedGroup.gameObject.activeSelf;
 
         Action<bool> closed;
+        Action pendingInterstitial;
+        float waitedFor;
 
         void Awake()
         {
             Instance = this;
             if (closeButton != null)
                 closeButton.onClick.AddListener(Close);
+            if (retryButton != null)
+                retryButton.onClick.AddListener(Retry);
             SetVisible(false);
+            SetBlockedVisible(false);
         }
 
         void OnDestroy()
@@ -52,15 +71,30 @@ namespace SlimeBreaker
                 Instance = null;
         }
 
-        /// <summary>Plays an ad; <paramref name="onClosed"/> gets true when the player earned the reward.</summary>
-        public void ShowRewarded(Action<bool> onClosed)
+        /// <summary>False when an ad network is installed but has no rewarded ad loaded (e.g. blocked by AdGuard); polling it also retries the load.</summary>
+        public bool RewardedAvailable => Provider == null || Provider.IsReady;
+
+        /// <summary>
+        /// Plays a rewarded ad; <paramref name="onClosed"/> gets true when the player earned the reward.
+        /// Returns false, without calling <paramref name="onClosed"/>, when no AdMob ad is available: there is no house-ad fallback for rewards.
+        /// </summary>
+        public bool ShowRewarded(Action<bool> onClosed)
         {
-            Shown++;
-            if (Provider != null && Provider.IsReady)
+            if (Provider == null)
             {
-                Provider.Show(onClosed);
-                return;
+                Shown++;
+                ShowHouseAd(onClosed);
+                return true;
             }
+            if (!Provider.IsReady)
+                return false;
+            Shown++;
+            Provider.Show(onClosed);
+            return true;
+        }
+
+        void ShowHouseAd(Action<bool> onClosed)
+        {
             closed = onClosed;
             IsShowing = true;
             Remaining = Mathf.Max(0f, adSeconds);
@@ -69,8 +103,63 @@ namespace SlimeBreaker
             Refresh();
         }
 
+        /// <summary>Plays an ad with no reward attached; <paramref name="onClosed"/> runs once it has been exited.
+        /// When AdMob has no interstitial loaded (offline, ad blocker, no fill) nothing is shown and <paramref name="onClosed"/> runs at once.</summary>
+        public void ShowInterstitial(Action onClosed)
+        {
+            if (Provider == null)
+            {
+                Shown++;
+                ShowHouseAd(_ => onClosed?.Invoke());
+                return;
+            }
+            if (Provider.IsInterstitialReady)
+            {
+                Shown++;
+                Provider.ShowInterstitial(onClosed);
+                return;
+            }
+            if (Provider.InterstitialSkippable)
+            {
+                onClosed?.Invoke();
+                return;
+            }
+            pendingInterstitial = onClosed;
+            waitedFor = 0f;
+        }
+
+        /// <summary>"Coba Lagi" on the blocked screen: asks AdMob again right away.</summary>
+        public void Retry()
+        {
+            Provider?.RetryInterstitial();
+        }
+
+        void UpdatePendingInterstitial()
+        {
+            var provider = Provider;
+            if (provider == null || provider.IsInterstitialReady || provider.InterstitialSkippable)
+            {
+                var callback = pendingInterstitial;
+                pendingInterstitial = null;
+                SetBlockedVisible(false);
+                if (provider != null && provider.IsInterstitialReady)
+                {
+                    Shown++;
+                    provider.ShowInterstitial(callback);
+                }
+                else
+                    callback?.Invoke();
+                return;
+            }
+            waitedFor += Time.unscaledDeltaTime;
+            if (waitedFor >= blockedDelay && !BlockedVisible)
+                SetBlockedVisible(true);
+        }
+
         void Update()
         {
+            if (pendingInterstitial != null)
+                UpdatePendingInterstitial();
             if (!IsShowing)
                 return;
             Remaining = Mathf.Max(0f, Remaining - Time.unscaledDeltaTime);
@@ -102,6 +191,16 @@ namespace SlimeBreaker
             var callback = closed;
             closed = null;
             callback?.Invoke(true);
+        }
+
+        void SetBlockedVisible(bool visible)
+        {
+            if (blockedGroup == null)
+                return;
+            blockedGroup.alpha = visible ? 1f : 0f;
+            blockedGroup.blocksRaycasts = visible;
+            blockedGroup.interactable = visible;
+            blockedGroup.gameObject.SetActive(visible);
         }
 
         void SetVisible(bool visible)

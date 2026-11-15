@@ -91,6 +91,7 @@ Shader "SlimeBreaker/Lit"
             #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
+            #pragma multi_compile_fragment _ SB_QUALITY_LOW
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "SBCommon.hlsl"
@@ -156,11 +157,15 @@ Shader "SlimeBreaker/Lit"
                 clip(albedo.a - _Cutoff);
             #endif
                 half4 mask = SAMPLE_TEXTURE2D(_MaskMap, sampler_BaseMap, input.uv);
+            #if defined(SB_QUALITY_LOW)
+                half3 normalTS = half3(0, 0, 1);
+            #else
                 half3 normalTS = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BaseMap, input.uv), _BumpScale);
+            #endif
 
                 // Foliage cards carry authored up/outward normals; flipping them on the back face would light them from below.
                 half sign = _FlipBackNormals > 0.5 ? IS_FRONT_VFACE(face, 1.0, -1.0) : 1.0;
-            #if defined(_COVER)
+            #if defined(_COVER) && !defined(SB_QUALITY_LOW)
                 // Moss / snow / sand settles on upward faces; the albedo alpha (height) lets it fill crevices first.
                 half amount = _SB_CoverAmount * _CoverWeight;
                 half up = SafeNormalize(float3(input.normalWS)).y * sign;
